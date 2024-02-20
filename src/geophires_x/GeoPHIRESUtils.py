@@ -369,12 +369,13 @@ def RecoverableHeat(Twater_degC: float) -> float:
 
 
 @lru_cache
-def vapor_pressure_water_kPa(temperature_degC: float) -> float:
+def vapor_pressure_water_kPa(temperature_degC: float, pressure: Optional[PlainQuantity] = None) -> float:
     """
     Calculate the vapor pressure of water as a function of temperature.
 
     Args:
         temperature_degC: the temperature of water in degrees C
+        pressure: Pressure - should be provided as a Pint quantity that knows its units
     Returns:
         The vapor pressure of water as a function of temperature in kPa
     Raises:
@@ -388,8 +389,16 @@ def vapor_pressure_water_kPa(temperature_degC: float) -> float:
         raise ValueError(f'Input temperature ({temperature_degC}C) must be greater than or equal to 0')
 
     try:
-        return (quantity(CP.PropsSI('P', 'T', celsius_to_kelvin(temperature_degC), 'Q', 0, 'Water'), 'Pa')
-                .to('kPa').magnitude)
+        if pressure is not None:
+            return (quantity(
+                CP.PropsSI('P', 'T', celsius_to_kelvin(temperature_degC), 'P', pressure.to('Pa').magnitude, 'Water'),
+                'Pa',
+            )
+                    .to('kPa').magnitude)
+        else:
+            _logger.warning(f'vapor_pressure_water: No pressure provided, using vapor quality=0 instead')
+            return (quantity(CP.PropsSI('P', 'T', celsius_to_kelvin(temperature_degC), 'Q', 0, 'Water'), 'Pa')
+                    .to('kPa').magnitude)
 
     except (NotImplementedError, ValueError) as e:
         raise ValueError(f'Input temperature ({temperature_degC}C) is out of range or otherwise not implemented') from e
