@@ -346,6 +346,10 @@ class Outputs:
                 f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} ' + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
                 f.write(f'      {model.wellbores.injection_well_casing_inner_diameter.display_name}:                          {model.wellbores.injection_well_casing_inner_diameter.value:10.3f} {model.wellbores.injection_well_casing_inner_diameter.CurrentUnits.value}\n')
                 f.write(f'      {model.wellbores.production_well_casing_inner_diameter.display_name}:                         {model.wellbores.production_well_casing_inner_diameter.value:10.3f} {model.wellbores.production_well_casing_inner_diameter.CurrentUnits.value}\n')
+                if model.wellbores.IsAGS.value and model.wellbores.tot_vert_m.value > 0:
+                    f.write(f'      Vertical length of wellbore (per vertical):         {(model.wellbores.tot_vert_m.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.1f} ' + model.wellbores.tot_vert_m.CurrentUnits.value + NL)
+                if model.wellbores.IsAGS.value and model.wellbores.tot_lateral_m.value > 0:
+                    f.write(f'      Lateral length of wellbore (per lateral):           {(model.wellbores.tot_lateral_m.value/model.wellbores.numnonverticalsections.value):10.1f} ' + model.wellbores.tot_lateral_m.CurrentUnits.value + NL)
                 f.write(f'      {model.wellbores.redrill.display_name}:                    {model.wellbores.redrill.value:10.0f}\n')
                 if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
                     f.write('      Power plant type:                                       ' + str(model.surfaceplant.plant_type.value.value) + NL)
