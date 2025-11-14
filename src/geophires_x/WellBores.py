@@ -1092,6 +1092,62 @@ class WellBores:
                         "(doubling cost compared to uncased)."
         )
 
+        lateral_casing_k = floatParameter(
+            "Lateral Casing Thermal Conductivity",
+            DefaultValue=45.0,
+            Min=0.0,
+            Max=500.0,
+            UnitType=Units.THERMAL_CONDUCTIVITY,
+            PreferredUnits=ThermalConductivityUnit.WPERMPERK,
+            CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            ErrMessage="assume default for Lateral Casing Thermal Conductivity (45 W/m/K)",
+            ToolTipText="Thermal conductivity of the steel casing in lateral sections"
+        )
+        self.lateral_casing_thermal_conductivity = lateral_casing_k
+        self.ParameterDict[lateral_casing_k.Name] = lateral_casing_k
+
+        lateral_cement_k = floatParameter(
+            "Lateral Cement Thermal Conductivity",
+            DefaultValue=1.0,
+            Min=0.0,
+            Max=50.0,
+            UnitType=Units.THERMAL_CONDUCTIVITY,
+            PreferredUnits=ThermalConductivityUnit.WPERMPERK,
+            CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            ErrMessage="assume default for Lateral Cement Thermal Conductivity (1 W/m/K)",
+            ToolTipText="Thermal conductivity of the cement sheath surrounding lateral casing"
+        )
+        self.lateral_cement_thermal_conductivity = lateral_cement_k
+        self.ParameterDict[lateral_cement_k.Name] = lateral_cement_k
+
+        lateral_casing_thickness = floatParameter(
+            "Lateral Casing Thickness",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=5.0,
+            UnitType=Units.LENGTH,
+            PreferredUnits=LengthUnit.METERS,
+            CurrentUnits=LengthUnit.METERS,
+            ErrMessage="assume default for Lateral Casing Thickness (0 m)",
+            ToolTipText="Radial thickness of the lateral casing wall"
+        )
+        self.lateral_casing_thickness = lateral_casing_thickness
+        self.ParameterDict[lateral_casing_thickness.Name] = lateral_casing_thickness
+
+        lateral_cement_thickness = floatParameter(
+            "Lateral Cement Thickness",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=5.0,
+            UnitType=Units.LENGTH,
+            PreferredUnits=LengthUnit.METERS,
+            CurrentUnits=LengthUnit.METERS,
+            ErrMessage="assume default for Lateral Cement Thickness (0 m)",
+            ToolTipText="Radial thickness of the cement sheath outside the lateral casing"
+        )
+        self.lateral_cement_thickness = lateral_cement_thickness
+        self.ParameterDict[lateral_cement_thickness.Name] = lateral_cement_thickness
+
         # local variable initiation
         self.Pinjwellhead = 0.0
         self.usebuiltinhydrostaticpressurecorrelation = True
@@ -1270,6 +1326,11 @@ class WellBores:
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS
         )
+
+    @property
+    def lateral_cased(self) -> bool:
+        """Return True when lateral sections are modeled as cased."""
+        return bool(self.NonverticalsCased.value)
 
     def __str__(self):
         return "WellBores"

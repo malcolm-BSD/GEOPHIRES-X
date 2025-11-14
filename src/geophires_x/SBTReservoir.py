@@ -1518,8 +1518,35 @@ class SBTReservoir(CylindricalReservoir):
             else:
                 Nulateral = np.ones(model.wellbores.numnonverticalsections.value)  # At low flow rates, we assume we are simulating the condition of well shut-in and set the Nusselt number to 1 (i.e., conduction only) [-]
 
-            hlateral = Nulateral * model.surfaceplant.k_fluid.value / (2 * (model.wellbores.nonverticalwellborediameter.quantity().to('m').magnitude / 2.0))  # Heat transfer coefficient in lateral [W/m2/K]
-            Rtlateral = 1 / (np.pi * hlateral * 2 * (model.wellbores.nonverticalwellborediameter.quantity().to('m').magnitude / 2.0))  # Thermal resistance in lateral (open-hole assumed)
+            lateral_inner_radius = model.wellbores.nonverticalwellborediameter.quantity().to('m').magnitude / 2.0
+            hlateral = Nulateral * model.surfaceplant.k_fluid.value / (2 * lateral_inner_radius)  # Heat transfer coefficient in lateral [W/m2/K]
+
+            lateral_cased = getattr(model.wellbores, "lateral_cased", None)
+            if lateral_cased is None:
+                lateral_cased = model.wellbores.NonverticalsCased.value
+
+            if lateral_cased:
+                casing_thickness = model.wellbores.lateral_casing_thickness.quantity().to('m').magnitude
+                cement_thickness = model.wellbores.lateral_cement_thickness.quantity().to('m').magnitude
+                casing_conductivity = model.wellbores.lateral_casing_thermal_conductivity.quantity().to('W/m/K').magnitude
+                cement_conductivity = model.wellbores.lateral_cement_thermal_conductivity.quantity().to('W/m/K').magnitude
+
+                casing_outer_radius = lateral_inner_radius + casing_thickness
+                cement_outer_radius = casing_outer_radius + cement_thickness
+
+                R_convective = 1 / (2 * np.pi * lateral_inner_radius * hlateral)
+
+                R_casing = 0.0
+                if casing_thickness > 0 and casing_conductivity > 0 and casing_outer_radius > lateral_inner_radius:
+                    R_casing = np.log(casing_outer_radius / lateral_inner_radius) / (2 * np.pi * casing_conductivity)
+
+                R_cement = 0.0
+                if cement_thickness > 0 and cement_conductivity > 0 and cement_outer_radius > casing_outer_radius:
+                    R_cement = np.log(cement_outer_radius / casing_outer_radius) / (2 * np.pi * cement_conductivity)
+
+                Rtlateral = R_convective + R_casing + R_cement
+            else:
+                Rtlateral = 1 / (np.pi * hlateral * 2 * lateral_inner_radius)  # Thermal resistance in lateral (open-hole assumed)
 
             Rtvector = Rtvertical * np.ones(len(radiusvector))  # Store thermal resistance of each element in a vector
 
