@@ -150,11 +150,17 @@ class SurfacePlant:
         # calculate electricity/heat - first, calculate the total amount of heat extracted from geofluid [MWth] (same for all)
         HeatExtracted = nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
 
+        def _clamp_electricity(electricity: np.ndarray) -> np.ndarray:
+            if np.any(electricity < 0):
+                # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
+                if hasattr(self, 'logger'):
+                    self.logger.warning('Electricity production calculated as negative. Clamping to zero.')
+                electricity = np.maximum(electricity, 0)
+
+            return electricity
+
         # next do the electricity produced - the same for all, except enduse=5, where it is recalculated
-        ElectricityProduced = availability * etau * nprod * prodwellflowrate
-        if ElectricityProduced.max() < 0:
-            # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
-            raise RuntimeError('Electricity production calculated as negative.')
+        ElectricityProduced = _clamp_electricity(availability * etau * nprod * prodwellflowrate)
 
         if enduse_option == EndUseOptions.ELECTRICITY:
             # pure electricity
@@ -175,7 +181,9 @@ class SurfacePlant:
         elif enduse_option in [EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT]:
             # enduse_option = 5: cogen split of mass flow rate
             # electricity part [MWe]
-            ElectricityProduced = availability * etau * nprod * prodwellflowrate * (1. - chp_fraction)
+            ElectricityProduced = _clamp_electricity(
+                availability * etau * nprod * prodwellflowrate * (1. - chp_fraction)
+            )
             # useful heat part for direct-use application [MWth]
             HeatProduced = enduse_efficiency_factor * chp_fraction * nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
             HeatExtractedTowardsElectricity = (1. - chp_fraction) * nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
