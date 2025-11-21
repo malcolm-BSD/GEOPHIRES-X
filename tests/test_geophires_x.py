@@ -971,6 +971,22 @@ Print Output to Console, 1"""
             client.get_geophires_result(params)
         self.assertIn('Electricity production calculated as negative', str(e.exception))
 
+    def test_negative_electricity_production_direct_use_heat_clamped(self):
+        client = GeophiresXClient()
+        params = GeophiresInputParameters(
+            {
+                'Reservoir Depth': 5,
+                'Gradient 1': 112,
+                'Power Plant Type': 2,
+                'Maximum Temperature': 600,
+                'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
+            }
+        )
+
+        result = client.get_geophires_result(params)
+
+        self.assertIsNotNone(result)
+
     def test_sbt_coaxial_raises_error(self):
         client = GeophiresXClient()
         with self.assertRaises(RuntimeError) as e:

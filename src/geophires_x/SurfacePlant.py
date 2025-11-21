@@ -152,9 +152,11 @@ class SurfacePlant:
 
         # next do the electricity produced - the same for all, except enduse=5, where it is recalculated
         ElectricityProduced = availability * etau * nprod * prodwellflowrate
-        if ElectricityProduced.max() < 0:
+        if np.any(ElectricityProduced < 0):
             # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
-            raise RuntimeError('Electricity production calculated as negative.')
+            if hasattr(self, 'logger'):
+                self.logger.warning('Electricity production calculated as negative. Clamping to zero.')
+            ElectricityProduced = np.maximum(ElectricityProduced, 0)
 
         if enduse_option == EndUseOptions.ELECTRICITY:
             # pure electricity
