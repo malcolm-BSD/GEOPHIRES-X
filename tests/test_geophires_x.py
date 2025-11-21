@@ -957,19 +957,40 @@ Print Output to Console, 1"""
             client.get_geophires_result(params)
         self.assertIn('failed to validate CLGS input value', str(e.exception))
 
-    def test_negative_electricity_production_raises_error(self):
+    def test_negative_electricity_production_clamped(self):
         client = GeophiresXClient()
-        with self.assertRaises(RuntimeError) as e:
-            params = GeophiresInputParameters(
-                {
-                    'Reservoir Depth': 5,
-                    'Gradient 1': 112,
-                    'Power Plant Type': 2,
-                    'Maximum Temperature': 600,
-                }
-            )
-            client.get_geophires_result(params)
-        self.assertIn('Electricity production calculated as negative', str(e.exception))
+        params = GeophiresInputParameters(
+            {
+                'Reservoir Depth': 5,
+                'Gradient 1': 112,
+                'Power Plant Type': 2,
+                'Maximum Temperature': 600,
+            }
+        )
+
+        with self.assertLogs(level='WARNING') as cm:
+            result = client.get_geophires_result(params)
+
+        self.assertIsNotNone(result)
+        self.assertTrue(
+            any('Electricity production calculated as negative. Clamping to zero.' in message for message in cm.output)
+        )
+
+    def test_negative_electricity_production_direct_use_heat_clamped(self):
+        client = GeophiresXClient()
+        params = GeophiresInputParameters(
+            {
+                'Reservoir Depth': 5,
+                'Gradient 1': 112,
+                'Power Plant Type': 2,
+                'Maximum Temperature': 600,
+                'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
+            }
+        )
+
+        result = client.get_geophires_result(params)
+
+        self.assertIsNotNone(result)
 
     def test_negative_electricity_production_direct_use_heat_clamped(self):
         client = GeophiresXClient()
