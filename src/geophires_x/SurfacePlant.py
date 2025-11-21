@@ -154,7 +154,11 @@ class SurfacePlant:
         ElectricityProduced = availability * etau * nprod * prodwellflowrate
         if ElectricityProduced.max() < 0:
             # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
-            raise RuntimeError('Electricity production calculated as negative.')
+            if enduse_option == EndUseOptions.HEAT:
+                # Electricity is not produced for direct-use heat applications, so clamp negative values to zero
+                ElectricityProduced = np.zeros_like(ElectricityProduced)
+            else:
+                raise RuntimeError('Electricity production calculated as negative.')
 
         if enduse_option == EndUseOptions.ELECTRICITY:
             # pure electricity
