@@ -160,7 +160,14 @@ class SurfacePlant:
             return electricity
 
         # next do the electricity produced - the same for all, except enduse=5, where it is recalculated
-        ElectricityProduced = _clamp_electricity(availability * etau * nprod * prodwellflowrate)
+        ElectricityProduced = availability * etau * nprod * prodwellflowrate
+        if np.any(ElectricityProduced < 0):
+            # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
+            if enduse_option == EndUseOptions.HEAT:
+                # Electricity is not produced for direct-use heat applications, so clamp negative values to zero
+                ElectricityProduced = np.zeros_like(ElectricityProduced)
+            else:
+                raise RuntimeError('Electricity production calculated as negative.')
 
         if enduse_option == EndUseOptions.ELECTRICITY:
             # pure electricity
