@@ -1521,11 +1521,9 @@ class SBTReservoir(CylindricalReservoir):
             lateral_inner_radius = model.wellbores.nonverticalwellborediameter.quantity().to('m').magnitude / 2.0
             hlateral = Nulateral * model.surfaceplant.k_fluid.value / (2 * lateral_inner_radius)  # Heat transfer coefficient in lateral [W/m2/K]
 
-            lateral_cased = getattr(model.wellbores, "lateral_cased", None)
-            if lateral_cased is None:
-                lateral_cased = model.wellbores.NonverticalsCased.value
-
-            if lateral_cased:
+            # handle the cased vs. uncased lateral option
+            Rtlateral = 0.0
+            if model.wellbores.NonverticalsCased.value:
                 casing_thickness = model.wellbores.lateral_casing_thickness.quantity().to('m').magnitude
                 cement_thickness = model.wellbores.lateral_cement_thickness.quantity().to('m').magnitude
                 casing_conductivity = model.wellbores.lateral_casing_thermal_conductivity.quantity().to('W/m/K').magnitude

@@ -982,6 +982,42 @@
       "minimum": null,
       "maximum": null
     },
+    "Lateral Casing Thermal Conductivity": {
+      "description": "Thermal conductivity of the steel casing in lateral sections",
+      "type": "number",
+      "units": "W/m/K",
+      "category": "Well Bores",
+      "default": 45.0,
+      "minimum": 0.0,
+      "maximum": 500.0
+    },
+    "Lateral Cement Thermal Conductivity": {
+      "description": "Thermal conductivity of the cement sheath surrounding lateral casing",
+      "type": "number",
+      "units": "W/m/K",
+      "category": "Well Bores",
+      "default": 1.0,
+      "minimum": 0.0,
+      "maximum": 50.0
+    },
+    "Lateral Casing Thickness": {
+      "description": "Radial thickness of the lateral casing wall",
+      "type": "number",
+      "units": "meter",
+      "category": "Well Bores",
+      "default": 0.0,
+      "minimum": 0.0,
+      "maximum": 5.0
+    },
+    "Lateral Cement Thickness": {
+      "description": "Radial thickness of the cement sheath outside the lateral casing",
+      "type": "number",
+      "units": "meter",
+      "category": "Well Bores",
+      "default": 0.0,
+      "minimum": 0.0,
+      "maximum": 5.0
+    },
     "Closed Loop Calculation Start Year": {
       "description": "Closed Loop Calculation Start Year",
       "type": "number",
