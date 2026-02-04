@@ -3,9 +3,8 @@
 [Multiple Construction Years example web interface link](https://gtp.scientificwebservices.com/geophires/?geophires-example-id=example_SAM-single-owner-PPA-5)
 
 GEOPHIRES SAM Economic Models support multi-year construction timelines to deliver accurate, time-adjusted financial
-metrics, including IRR and NPV, for projects with extended development periods.
-This feature models the pre-revenue phase to capture the real-world economic impact of Interest During Construction (
-IDC), inflation, and capital deployment timing.
+metrics, including LCOE, IRR and NPV for projects with extended development periods.
+This feature models the pre-revenue phase to capture the real-world economic impact of Interest During Construction (IDC), inflation, and capital deployment timing.
 This ensures that key investment decision metrics correctly reflect the time value of money leading up to the Commercial
 Operation Date (COD).
 
@@ -17,7 +16,7 @@ drawdowns (funding early years purely with equity) and adjust `Inflation Rate Du
 
 ## Construction Cash Flows
 
-Multiple Construction Years example cash flow CSV: [example_SAM-single-owner-PPA-5.csv](https://github.com/softwareengineerprogrammer/GEOPHIRES/blob/main/tests/examples/example_SAM-single-owner-PPA-5.csv)
+Multiple Construction Years example cash flow CSV: [example_SAM-single-owner-PPA-5_cash-flow.csv](https://github.com/softwareengineerprogrammer/GEOPHIRES/blob/main/tests/examples/example_SAM-single-owner-PPA-5_cash-flow.csv)
 
 The `CONSTRUCTION` cash flow category displays detailed financial movements during the pre-operational phase.
 Construction-specific line items are suffixed with `[construction]`.
@@ -26,6 +25,7 @@ A project with three construction years will have cash flows in Year -2, Year -1
 A project with seven construction years, as in the example below, will start in Year -6.
 
 ![](_images/sam-em-mcy-construction-cash-flow-category.png)
+
 
 ## Construction Years Calculations
 
@@ -60,7 +60,11 @@ ratio that is passed to SAM (`debt_percent`).
 ## Post-Processing (Timeline-adjusted Metrics)
 
 After SAM computes the operational cash flows, GEOPHIRES merges the construction phase and
-operational phase net cash flows together to report accurate project-level metrics.
+operational phase net cash flows. It then post-processes applicable line items to calculate timeline-adjusted project-level metrics, as described below.
+
+Standard SAM line items that are not subject to post-processing, such as `Cash flow from investing activities ($)`
+and `Total pre-tax returns ($)`, reflect the capitalized equivalent basis at Year 0, displaying no values during the
+pre-revenue construction period.
 
 ### IRR and NPV
 The merged `After-tax net cash flow ($)` row represents the complete project lifecycle:
