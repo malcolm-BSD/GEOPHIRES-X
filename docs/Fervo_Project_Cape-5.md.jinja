@@ -25,10 +25,10 @@
 
 ## Introduction
 
-The GEOPHIRES example `Fervo_Project_Cape-5`[^author] is a case study of a 500 MWe EGS project modeled
-on Phases I and II of [Fervo Energy's Cape Station](https://capestation.com/).
+The GEOPHIRES example `Fervo_Project_Cape-5` is a case study of a 500 MWe EGS project modeled
+on Phases I and II of [Fervo Energy's Cape Station](https://capestation.com/)[^author].
 
-[^author]: Author: Jonathan Pezzino, Scientific Web Services LLC (GitHub: [softwareengineerprogrammer](https://github.com/softwareengineerprogrammer))
+[^author]: Case Study Author: Jonathan Pezzino, Scientific Web Services LLC. GitHub profile: [softwareengineerprogrammer](https://github.com/softwareengineerprogrammer).
 
 Key results include LCOE = {{ '$' ~ lcoe_usd_per_mwh ~ '/MWh' }} and IRR = {{ irr_pct ~ '%' }}. ([Jump to the Results section](#results)).
 
@@ -66,10 +66,10 @@ interactively explore the case study example in the GEOPHIRES web interface.
 
 ### Modeling Overview: A Consensus-Based Second-of-a-Kind Analog
 
-This case study models a 500 MWe Enhanced Geothermal System (EGS) project designed to represent a "Second-of-a-Kind" (
+This case study models a 500 MWe Enhanced Geothermal System (EGS) project designed to represent a Second-of-a-Kind (
 SOAK) deployment.
 Rather than serving as an exact facsimile of Cape Station as built, this study estimates what a non-Fervo developer
-could achieve on a geologically identical site, relying primarily on publicly available data and standardized
+could achieve on a geologically analogous site, relying primarily on publicly available data and standardized
 engineering estimates.
 The model assumes the developer is a "fast follower": benefiting from the proof-of-concept established by Cape Station
 Phase I but operating without access to Fervo’s private supply chain or proprietary optimization data.
@@ -82,16 +82,26 @@ correlations.
 **Conservative Constraints:** To ensure the model serves as a robust feasibility test, some inputs are intentionally
 conservative compared to Fervo’s stated targets, such as drilling costs and water loss.
 
+**Commercial Viability Threshold:** Implicit in this design is a screening for investment-grade returns.
+While inputs prioritized the most realistic and verifiable data available, in select instances where public data
+provided a range of potential values rather than a precise figure, inputs were selected from within those bounds to
+satisfy a minimum profitability constraint (IRR ≈ 20%).
+This approach reflects the reality that a Second-of-a-Kind commercial deployment would generally only proceed if
+projected returns offered a sufficient premium to justify the remaining technology risk.
+An illustrative example is Fracture Height, which was tuned to yield an effective fracture surface area sufficient
+to sustain commercial flow rates and delay thermal breakthrough, ensuring the project meets its long-term revenue
+targets.
+
 **Fast Follower Advantage:** By entering the market after Fervo’s initial de-risking campaigns, the modeled developer
-avoids the high "tuition costs" of early experimentation.
+avoids the high tuition costs of early experimentation.
 For example, while Fervo’s initial drilling costs at Cape Station ranged
 from [$9.4M down to $4.8M per well](https://houston.innovationmap.com/fervo-energy-drilling-utah-project-2667300142.html)
 as they climbed the learning curve,
 this model assumes a developer can bypass those initial high-cost outliers,
 instead initiating their campaign at a stabilized commercial baseline (modeled here
 at {{ '$' ~ drilling_costs_per_well_musd ~ 'M/well' }}, aligned with the NREL ATB and 2025 cost curves).
-This reflects a developer who capitalizes on established industry knowledge to skip the "First-of-a-Kind" (FOAK)
-premiums but has not yet achieved the fully optimized learning rates of a mature "Nth-of-a-kind" operator.
+This reflects a developer who capitalizes on established industry knowledge to skip the First-of-a-Kind (FOAK)
+premiums but has not yet achieved the fully optimized learning rates of a mature Nth-of-a-Kind (NOAK) operator.
 
 ### Intended Use Cases
 
@@ -103,7 +113,7 @@ It tests the premise that Fervo’s success at Cape Station is a replicable stan
 industry.
 The results serve as reference points for what is achievable using current technology in high-grade resources.
 
-**Template for Resource Assessment & Custom Modeling:** The example input file (`Fervo_Project_Cape-5.txt`) is intended
+**Template for Resource Assessment & Custom Modeling:** The example input file ([Fervo_Project_Cape-5.txt](https://github.com/softwareengineerprogrammer/GEOPHIRES/blob/main/tests/examples/Fervo_Project_Cape-5.txt)) is intended
 as customizable template for modeling other resources.
 Users can input local geologic data (gradient, rock properties) into this template to evaluate how a Cape Station-style
 design would perform in different geographies (e.g., Nevada vs. Utah vs. International).
@@ -111,6 +121,15 @@ Different plant sizes and performance targets can be modeled by adjusting the nu
 and other technical & engineering parameters.
 The model allows users to stress-test economic assumptions, such as the PPA price or Investment Tax Credit (ITC), to see
 how policy changes impact the feasibility of replicating this design elsewhere.
+
+### Disclaimer: Independent Analysis
+
+This case study is an independent techno-economic analysis developed by the author and contributors to the GEOPHIRES
+open-source project. It is not affiliated with, sponsored by, or endorsed by Fervo Energy.
+The author and contributors are not employees or agents of Fervo Energy, and this work has not been reviewed or
+approved by the company. All modeling assumptions, including those derived from public data sources, represent the
+independent interpretation of the author and the GEOPHIRES open-source community and do not constitute proprietary
+information or official company projections.
 
 ## Methodology
 
@@ -295,8 +314,8 @@ See [GEOPHIRES output parameters documentation](parameters.html#economic-paramet
 | Maximum Net Electricity Generation   | {{ max_net_generation_mwe}} MW | | |
 | Maximum Total Electricity Generation | {{ max_total_generation_mwe }} MW | Upper bound: 600 MW  | Combined nameplate capacity of 10×60 MWe Gen 2 ORCs. A total of 8×60 MWe Gen 2 ORCs have been announced for Phase II; 3 from Turboden and 5 from Baker Hughes (Turboden, 2025; Jacobs, 2025). This equates to 480 MW gross capacity for Phase II's 400 MW net capacity. An equivalent SOAK 500 MW project would therefore require 10 Gen 2 ORC units. (Note that the modular Gen 2 ORCs are not individually modeled in this case study, and are assumed to be combined into a single power plant). |
 | 2-year Average Net Power Production per Production Well | {{ two_year_avg_net_power_mwe_per_production_well }} MW | 7.6–11.5 MW | Figures 4 and 12 (Singh et al., 2025). |
-| Injection Pumping Parasitic Load <br/> (Average Pumping Power/Average Total Electricity Generation) | {{ parasitic_loss_pct ~ '%' }}  | Upper bound: 16.7% | Procurement of 480 MW of Gen 2 ORC units for 400 MW net capacity in Phase II allows for up to 16.7% total on-site consumption (80 MW; including injection pumping power).  |
-| Total fracture surface area per well | {{ total_fracture_surface_area_per_well_mm2 }}×10⁶ m² <br/> ({{ total_fracture_surface_area_per_well_mft2 }} million ft²) | Project Red: 2.787×10⁶ m² <br/> (30 million ft²) | Greater fracture surface area expected than Project Red (Fercho et al, 2025). |
+| Injection Pumping Parasitic Load <br/> ({Average Pumping Power}/{Average Total Electricity Generation}) | {{ parasitic_loss_pct ~ '%' }}  | Upper bound: 16.7% | The Phase II procurement strategy (480 MW gross / 400 MW net) implies a design ceiling of 16.7% for total on-site consumption (including injection pumping). Current SOAK targets for parasitic consumption range from 15–20%, reflecting a planned reduction from the ~25–30% observed in Phase I operations (Norbeck, 2026). |
+| Total fracture surface area per well | {{ total_fracture_surface_area_per_well_mm2 }}×10⁶ m² <br/> ({{ total_fracture_surface_area_per_well_mft2 }} million ft²) | Project Red: 2.787×10⁶ m² <br/> (30 million ft²) | Greater fracture surface area expected than Project Red (Fercho et al., 2025). |
 | Reservoir Volume | {{ reservoir_volume_m3 }} m³ | | Calculated from fracture area × fracture separation × number of fractures per well × number of wells |
 | Bottom-hole Temperature <br/> (BHT) | {{ bht_temp_degc ~ '℃' }} | 200–241℃ | Fercho et al., 2024; Singh et al., 2025. |
 | Initial Production Temperature       | {{ initial_production_temperature_degc ~ '℃' }} | 196–208℃ | Approximate range of initial production temperatures between shallower and deeper producers (Singh et al., 2025). |
@@ -336,15 +355,21 @@ The bars for each row show the deltas of the metric value from the baseline case
 that parameter.
 Green bars indicate favorable outcomes, such as lower LCOE or higher IRR, while gray bars indicate unfavorable outcomes,
 such as higher LCOE or lower IRR.
-
 Click the bars to view the sensitivity analysis result for the input value in the web interface.
 
-Note that the sensitivity analysis scenarios do not necessarily conform to all constraints and assumptions documented in the case study methodology.
+The parameter values tested below represent discrete sensitivity ranges intended to illustrate the magnitude of economic impact.
+They do not imply a specific statistical probability of occurrence.
+Future versions of this case study may incorporate formal uncertainty quantification to map the likelihood of these outcomes.
+
+The sensitivity analysis scenarios do not necessarily conform to all constraints and assumptions documented in the case study methodology.
 For example, scenarios for Bond Interest Rate have different weighted average cost of capital (WACC) values due to the effect of interest rate on WACC.
 This is particularly relevant for technical parameters pertaining to reservoir engineering.
 In a real-world design, these variables are physically coupled; for instance, targeting a higher production flow rate
 would typically necessitate a larger fracture surface area to mitigate the resulting acceleration in thermal drawdown.
 See the [discussion of flow rate below](#impact-of-flow-rate-on-project-economics-section).
+
+Users may wish to perform their own sensitivity analysis
+using [GEOPHIRES's Monte Carlo simulation module](Monte-Carlo-User-Guide.html) or other data analysis tools.
 
 ### LCOE
 
@@ -396,8 +421,6 @@ tax liability, and decreases the resulting LCOE.
          alt="NPV Sensitivity Analysis Chart"
          class="sensitivity-chart-print">
 
-Users may wish to perform their own sensitivity analysis
-using [GEOPHIRES's Monte Carlo simulation module](Monte-Carlo-User-Guide.html) or other data analysis tools.
 
 <a id="impact-of-flow-rate-on-project-economics-section"></a>
 
@@ -471,7 +494,7 @@ Key differences:
     1. BLM royalties
     1. Refined discount and interest rates
     1. Refined tax rates including addition of property tax
-1. Fervo_Project_Cape-5 includes substantially expanded sensitivity analysis
+1. Fervo_Project_Cape-5 includes more comprehensive sensitivity analysis
 {# @formatter:off #}
 
 {# TODO others e.g. Fervo_Project_Cape-3... #}
@@ -504,6 +527,7 @@ Including these may reduce the levered IRR.
 1. Seasonal and Hourly Performance Granularity: As noted in the Surface Plant Parameters, this study uses a fixed annual average ambient temperature. It does not model the seasonal or hourly impacts on air-cooled condenser efficiency. In reality, power output would likely dip during peak summer hours and increase during winter. Future versions of GEOPHIRES may add support for these considerations; [click here](https://github.com/NatLabRockies/GEOPHIRES-X/issues/395) to view the relevant GEOPHIRES tracking issue on GitHub.
 1. Redrilling Assumptions: Management of thermal decline is modeled as periodic redrilling events that reset the reservoir's heat content to initial conditions at intervals determined by the `Maximum Drawdown` parameter. The cost of these events is amortized into a uniform annual operating expense. In reality, these events may be scheduled as discrete capital-intensive campaigns punctuated by years of lower spending, or as a continuous program of make-up well drilling to mitigate decline. [Click here](https://github.com/NatLabRockies/GEOPHIRES-X/issues/381) to view the relevant GEOPHIRES tracking issue on GitHub.
 1. Reservoir Modeling Fidelity: The base case utilizes the Gringarten analytical model, which produces a characteristic thermal plateau maintained until a sharp breakthrough event. A key open question is whether this idealized profile provides an acceptably accurate approximation of drawdown over time, or if it masks the gradual dispersion caused by flow channeling and heterogeneity. Future work should evaluate whether Gringarten remains the optimal scoping proxy, or if an alternative analytical solution[^alt-analytical-solution-proposal] would offer a superior balance of speed and realism by better mimicking the shape of numerical simulation outputs.
+1. ORC Efficiency: The power generation results rely on the GEOPHIRES built-in supercritical ORC efficiency correlation, which assumes the selection of an optimal working fluid for each specific geofluid temperature. For further details, please refer to the [Surface Plant section in the Theoretical Basis for GEOPHIRES](Theoretical-Basis-for-GEOPHIRES.html#surface-plant). This limitation may be addressed in the future by [FGEM integration](https://github.com/NatLabRockies/GEOPHIRES-X/issues/395).
 
 [^alt-analytical-solution-proposal]: Possible alternatives might include Residence Time Distribution (RTD) modeling, or a parameterized profile generator based on the Bezier curve approach used in the "ResFrac Profile" variant.
 
@@ -587,6 +611,10 @@ https://atb.nrel.gov/electricity/2024/geothermal
 
 NREL. (2025, February 26). Annual Technology Baseline: Geothermal (2024b).
 https://atb.nrel.gov/electricity/2024b/geothermal
+
+Norbeck, J. (2026, February 9). An Update of Activities and Plans at Fervo.
+Oral presentation at the 51st Workshop on Geothermal Reservoir Engineering, Stanford University, Stanford, CA.
+https://pangea.stanford.edu/ERE/db/GeoConf/Abstract.php?PaperID=9496
 
 Norbeck, J., Gradl, C., Latimer, T. (2024, September 10). Deployment of Enhanced Geothermal System Technology Leads to
 Rapid Cost Reductions and Performance Improvements. https://doi.org/10.31223/X5VH8C
