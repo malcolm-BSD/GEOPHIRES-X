@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import csv
+import math
 
 import sys
 from array import array
@@ -10,6 +12,11 @@ from collections.abc import Iterable
 from typing import List, Optional, Any
 from dataclasses import dataclass, field
 from enum import IntEnum
+from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import urlopen
+
+import numpy as np
 from forex_python.converter import CurrencyRates, CurrencyCodes
 
 from abc import ABC
@@ -156,6 +163,10 @@ class Parameter(HasQuantity):
     parameter_category: str = None
 
     ValuesEnum:GeophiresInputEnum = None
+    AllowPairVectorInput: bool = False
+    PairVectorAsNumpyArray: bool = True
+    PairVectorValue: Optional[np.ndarray] = None
+    PairVectorAxisLabel: Optional[str] = None
 
     def __post_init__(self):
         if self.PreferredUnits is None:
@@ -315,7 +326,11 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         return
 
     # deal with the case where the value has a unit involved - that will be indicated by a space in it
-    if ' ' in ParameterReadIn.sValue:
+    if (
+        ' ' in ParameterReadIn.sValue
+        and not isinstance(ParamToModify, listParameter)
+        and not _is_pair_vector_candidate(ParameterReadIn, ParamToModify)
+    ):
         new_str = ConvertUnits(ParamToModify, ParameterReadIn.sValue, model)
         if len(new_str) > 0:
             ParameterReadIn.sValue = new_str
@@ -334,6 +349,17 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         )
 
     if isinstance(ParamToModify, intParameter):
+        if ParamToModify.AllowPairVectorInput:
+            pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
+            if pair_vector is not None:
+                ParamToModify.value = pair_vector if ParamToModify.PairVectorAsNumpyArray else pair_vector.tolist()
+                ParamToModify.PairVectorValue = pair_vector
+                ParamToModify.Provided = True
+                ParamToModify.Valid = True
+                model.logger.info(f'Parsed pair-vector input for {ParamToModify.Name}: {pair_vector}')
+                model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+                return
+
         New_val = int(float(ParameterReadIn.sValue))
 
         if New_val == ParamToModify.DefaultValue:
@@ -362,6 +388,17 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
             ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
     elif isinstance(ParamToModify, floatParameter):
+        if ParamToModify.AllowPairVectorInput:
+            pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
+            if pair_vector is not None:
+                ParamToModify.value = pair_vector if ParamToModify.PairVectorAsNumpyArray else pair_vector.tolist()
+                ParamToModify.PairVectorValue = pair_vector
+                ParamToModify.Provided = True
+                ParamToModify.Valid = True
+                model.logger.info(f'Parsed pair-vector input for {ParamToModify.Name}: {pair_vector}')
+                model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+                return
+
         New_val = float(ParameterReadIn.sValue)
 
         if New_val == ParamToModify.DefaultValue:
@@ -440,11 +477,33 @@ def _read_list_parameter(ParameterReadIn: ParameterEntry, ParamToModify, model) 
             ParamToModify.value.pop(position)
             ParamToModify.value.insert(position, New_val)
     else:
-        # In an ideal world this would be handled in ParameterEntry such that its sValue and Comment are
-        # correct; however that would only be practical if ParameterEntry had typing information to know
-        # whether to treat text after a second comma as a comment or list entry.
-        ParamToModify.value = [float(x.strip()) for x in ParameterReadIn.raw_entry.split('--')[0].split(',')[1:]
-                               if x.strip() != '']
+        source_values = _try_read_numeric_list_from_source(ParameterReadIn, ParamToModify, model)
+        if source_values is not None:
+            ParamToModify.value = source_values
+        else:
+            # In an ideal world this would be handled in ParameterEntry such that its sValue and Comment are
+            # correct; however that would only be practical if ParameterEntry had typing information to know
+            # whether to treat text after a second comma as a comment or list entry.
+            parsed_values = []
+            for x in ParameterReadIn.raw_entry.split('--')[0].split(',')[1:]:
+                raw_value = x.strip()
+                if raw_value == '':
+                    continue
+
+                if raw_value.startswith('['):
+                    raw_value = raw_value[1:]
+                if raw_value.endswith(']'):
+                    raw_value = raw_value[:-1]
+                raw_value = raw_value.strip()
+                if raw_value == '':
+                    continue
+
+                if ' ' in raw_value:
+                    raw_value = ConvertUnits(ParamToModify, raw_value, model)
+
+                parsed_values.append(float(raw_value))
+
+            ParamToModify.value = parsed_values
 
     ParamToModify.Provided = True
 
@@ -461,6 +520,266 @@ def _read_list_parameter(ParameterReadIn: ParameterEntry, ParamToModify, model) 
             valid = False
 
     ParamToModify.Valid = valid
+
+
+_PAIR_VECTOR_MAX_BYTES = 1_000_000
+
+
+def _parse_csv_pair_line(line: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    row = next(csv.reader([line]), None)
+    if row is None or len(row) != 2:
+        return None
+
+    converted_row: list[str] = []
+    for raw_component in row:
+        component = raw_component.strip()
+        if param_to_modify is not None and model is not None and ' ' in component:
+            try:
+                component = ConvertUnits(param_to_modify, component, model)
+            except Exception:
+                # Fall back to scalar parsing behavior if conversion fails.
+                return None
+        converted_row.append(component)
+
+    try:
+        x = float(converted_row[0])
+        y = float(converted_row[1])
+    except ValueError:
+        return None
+
+    if not math.isfinite(x) or not math.isfinite(y):
+        return None
+
+    return np.array([x, y], dtype=float)
+
+
+def _try_parse_pair_vector_inline(raw_value: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    candidate = raw_value.strip()
+    if candidate == '':
+        return None
+
+    if candidate.startswith('[') and candidate.endswith(']'):
+        candidate = candidate[1:-1].strip()
+
+    return _parse_csv_pair_line(candidate, param_to_modify=param_to_modify, model=model)
+
+
+def _pair_vector_from_csv_text(csv_text: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    for line in csv_text.splitlines():
+        stripped = line.strip()
+        if stripped == '' or stripped.startswith('#') or stripped.startswith('--') or stripped.startswith('*'):
+            continue
+        return _parse_csv_pair_line(stripped, param_to_modify=param_to_modify, model=model)
+
+    return None
+
+
+def _try_parse_pair_vector_csv_file(path_str: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    path = Path(path_str)
+    if not path.is_file():
+        return None
+
+    if path.stat().st_size > _PAIR_VECTOR_MAX_BYTES:
+        return None
+
+    with path.open(encoding='UTF-8') as f:
+        text = f.read(_PAIR_VECTOR_MAX_BYTES + 1)
+        if len(text) > _PAIR_VECTOR_MAX_BYTES:
+            return None
+
+    return _pair_vector_from_csv_text(text, param_to_modify=param_to_modify, model=model)
+
+
+def _try_parse_pair_vector_csv_url(url_str: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    parsed = urlparse(url_str)
+    if parsed.scheme not in ['http', 'https']:
+        return None
+
+    with urlopen(url_str, timeout=5) as response:
+        data = response.read(_PAIR_VECTOR_MAX_BYTES + 1)
+
+    if len(data) > _PAIR_VECTOR_MAX_BYTES:
+        return None
+
+    try:
+        text = data.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+
+    return _pair_vector_from_csv_text(text, param_to_modify=param_to_modify, model=model)
+
+
+def _parse_numeric_list_tokens(tokens: list[str], param_to_modify, model) -> Optional[list[float]]:
+    values: list[float] = []
+
+    for raw_token in tokens:
+        token = raw_token.strip()
+        if token == '':
+            continue
+
+        if token.startswith('['):
+            token = token[1:]
+        if token.endswith(']'):
+            token = token[:-1]
+        token = token.strip()
+        if token == '':
+            continue
+
+        if ' ' in token:
+            try:
+                token = ConvertUnits(param_to_modify, token, model)
+            except Exception:
+                return None
+
+        try:
+            value = float(token)
+        except ValueError:
+            return None
+
+        if not math.isfinite(value):
+            return None
+
+        values.append(value)
+
+    return values
+
+
+def _parse_numeric_list_text(csv_text: str, param_to_modify, model) -> Optional[list[float]]:
+    values: list[float] = []
+
+    for raw_line in csv_text.splitlines():
+        line = raw_line.strip()
+        if line == '' or line.startswith('#') or line.startswith('--') or line.startswith('*'):
+            continue
+
+        row = next(csv.reader([line]), None)
+        if row is None:
+            continue
+
+        parsed_row = _parse_numeric_list_tokens(row, param_to_modify, model)
+        if parsed_row is None:
+            return None
+
+        values.extend(parsed_row)
+
+    return values if len(values) > 0 else None
+
+
+def _try_read_numeric_list_from_source(parameter_read_in: ParameterEntry, param_to_modify, model) -> Optional[list[float]]:
+    candidates: list[str] = []
+
+    rhs = _raw_input_rhs(parameter_read_in.raw_entry)
+    if rhs is not None:
+        candidates.append(rhs)
+
+    if parameter_read_in.sValue is not None:
+        candidates.append(parameter_read_in.sValue.strip())
+
+    for candidate in candidates:
+        if candidate == '':
+            continue
+
+        parsed_url = urlparse(candidate)
+        if parsed_url.scheme in ['http', 'https']:
+            try:
+                with urlopen(candidate, timeout=5) as response:
+                    data = response.read(_PAIR_VECTOR_MAX_BYTES + 1)
+                if len(data) > _PAIR_VECTOR_MAX_BYTES:
+                    continue
+                text = data.decode('utf-8')
+            except Exception:
+                continue
+
+            parsed_values = _parse_numeric_list_text(text, param_to_modify, model)
+            if parsed_values is not None:
+                return parsed_values
+            continue
+
+        file_path = Path(candidate)
+        if file_path.is_file():
+            if file_path.stat().st_size > _PAIR_VECTOR_MAX_BYTES:
+                continue
+
+            try:
+                with file_path.open(encoding='UTF-8') as f:
+                    text = f.read(_PAIR_VECTOR_MAX_BYTES + 1)
+                if len(text) > _PAIR_VECTOR_MAX_BYTES:
+                    continue
+            except Exception:
+                continue
+
+            parsed_values = _parse_numeric_list_text(text, param_to_modify, model)
+            if parsed_values is not None:
+                return parsed_values
+
+    return None
+
+
+def _raw_input_rhs(raw_entry: Optional[str]) -> Optional[str]:
+    if raw_entry is None or ',' not in raw_entry:
+        return None
+
+    # keep behavior aligned with list-parameter parsing: text after '--' is comment
+    entry = raw_entry.split('--')[0]
+    if ',' not in entry:
+        return None
+
+    return entry.split(',', 1)[1].strip()
+
+
+def _is_pair_vector_candidate(parameter_read_in: ParameterEntry, param_to_modify=None) -> bool:
+    if param_to_modify is None or not getattr(param_to_modify, 'AllowPairVectorInput', False):
+        return False
+
+    candidates = []
+    rhs = _raw_input_rhs(parameter_read_in.raw_entry)
+    if rhs is not None:
+        candidates.append(rhs)
+    if parameter_read_in.sValue is not None:
+        candidates.append(parameter_read_in.sValue.strip())
+
+    for candidate in candidates:
+        lowered = candidate.lower()
+        if ',' in candidate or candidate.startswith('[') or lowered.endswith('.csv'):
+            return True
+        parsed = urlparse(candidate)
+        if parsed.scheme in ['http', 'https']:
+            return True
+
+    return False
+
+
+def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    candidates = []
+
+    rhs = _raw_input_rhs(parameter_read_in.raw_entry)
+    if rhs is not None:
+        candidates.append(rhs)
+
+    if parameter_read_in.sValue is not None:
+        candidates.append(parameter_read_in.sValue.strip())
+
+    for candidate in candidates:
+        if candidate == '':
+            continue
+
+        parsed = _try_parse_pair_vector_inline(candidate, param_to_modify=param_to_modify, model=model)
+        if parsed is not None:
+            return parsed
+
+        parsed = _try_parse_pair_vector_csv_file(candidate, param_to_modify=param_to_modify, model=model)
+        if parsed is not None:
+            return parsed
+
+        try:
+            parsed = _try_parse_pair_vector_csv_url(candidate, param_to_modify=param_to_modify, model=model)
+            if parsed is not None:
+                return parsed
+        except Exception:
+            # Fall back to scalar parsing if URL retrieval/parsing fails.
+            continue
+
+    return None
 
 
 def ConvertUnits(ParamToModify, strUnit: str, model) -> str:
