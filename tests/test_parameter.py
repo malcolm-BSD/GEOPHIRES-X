@@ -7,6 +7,9 @@ from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
+from geophires_x.Parameter import ParameterEntry
+from geophires_x.Parameter import ReadParameter
+from geophires_x.Parameter import _is_historical_array_candidate
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import listParameter
 from geophires_x.Units import CostPerMassUnit
@@ -14,6 +17,7 @@ from geophires_x.Units import CurrencyUnit
 from geophires_x.Units import EnergyCostUnit
 from geophires_x.Units import LengthUnit
 from geophires_x.Units import PressureUnit
+from geophires_x.Units import TemperatureUnit
 from geophires_x.Units import Units
 from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
@@ -227,6 +231,47 @@ class ParameterTestCase(BaseTestCase):
         ]
         self.assertEqual('kilogram', total_avoided_carbon_emissions_vu['unit'])
         self.assertEqual(int(total_avoided_carbon_emissions_vu['value']), total_capacity_payment_revenue_usd)
+
+    def test_historical_array_candidate_ignores_trailing_value_comma_before_comment(self):
+        param = floatParameter(Name='Ambient Temperature', DefaultValue=10.0, Min=-50.0, Max=100.0)
+        param.AllowHistoricalArrayInput = True
+
+        parameter_entry = ParameterEntry(
+            Name='Ambient Temperature',
+            sValue='8 degC',
+            raw_entry='Ambient Temperature, 8 degC, -- per the paper',
+        )
+
+        self.assertFalse(_is_historical_array_candidate(parameter_entry, param))
+
+    def test_read_parameter_historical_array_allows_scalar_with_units(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name='Ambient Temperature',
+            DefaultValue=15.0,
+            Min=-50.0,
+            Max=50.0,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+        )
+        param.AllowHistoricalArrayInput = True
+        param.HistoricalXDimension = 'time'
+        param.HistoricalYDimension = 'temperature'
+        param.HistoricalDefaultXUnits = 'hour'
+        param.HistoricalDefaultYUnits = 'celsius'
+        param.HistoricalResampleToHourlyYear = True
+
+        entry = ParameterEntry(
+            Name='Ambient Temperature',
+            sValue='10 degC',
+            raw_entry='Ambient Temperature, 10 degC',
+        )
+        ReadParameter(entry, param, model)
+
+        self.assertTrue(param.Provided)
+        self.assertTrue(param.Valid)
+        self.assertAlmostEqual(10.0, param.value, places=6)
 
     # noinspection PyMethodMayBeStatic
     def _new_model(self) -> Model:
