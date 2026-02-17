@@ -25,6 +25,7 @@ from pint.facets.plain import PlainQuantity
 
 from geophires_x.OptionList import GeophiresInputEnum
 from geophires_x.Units import *
+from geophires_x.historical_arrays import HistoricalXYSeries, load_xy_series_from_source
 
 _ureg = get_unit_registry()
 _DISABLE_FOREX_API = True  # See https://github.com/NREL/GEOPHIRES-X/issues/236#issuecomment-2414681434
@@ -167,6 +168,14 @@ class Parameter(HasQuantity):
     PairVectorAsNumpyArray: bool = True
     PairVectorValue: Optional[np.ndarray] = None
     PairVectorAxisLabel: Optional[str] = None
+    AllowHistoricalArrayInput: bool = False
+    HistoricalXDimension: Optional[str] = None
+    HistoricalYDimension: Optional[str] = None
+    HistoricalDefaultXUnits: Optional[str] = None
+    HistoricalDefaultYUnits: Optional[str] = None
+    HistoricalResampleToHourlyYear: bool = False
+    HistoricalData: Optional[HistoricalXYSeries] = None
+
 
     def __post_init__(self):
         if self.PreferredUnits is None:
@@ -330,6 +339,7 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         ' ' in ParameterReadIn.sValue
         and not isinstance(ParamToModify, listParameter)
         and not _is_pair_vector_candidate(ParameterReadIn, ParamToModify)
+        and not getattr(ParamToModify, 'AllowHistoricalArrayInput', False)
     ):
         new_str = ConvertUnits(ParamToModify, ParameterReadIn.sValue, model)
         if len(new_str) > 0:
@@ -347,6 +357,31 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             f'Consider removing {param_to_modify_name} from the input file unless you wish '
             f'to change it from the default value of ({str(default_value)})'
         )
+
+    if getattr(ParamToModify, 'AllowHistoricalArrayInput', False):
+        try:
+            series = load_xy_series_from_source(
+                ParameterReadIn.sValue,
+                x_dimension=ParamToModify.HistoricalXDimension or 'time',
+                y_dimension=ParamToModify.HistoricalYDimension or 'generic',
+                default_x_units=ParamToModify.HistoricalDefaultXUnits or 'hour',
+                default_y_units=ParamToModify.HistoricalDefaultYUnits or 'degC',
+                resample_to_hourly=bool(ParamToModify.HistoricalResampleToHourlyYear),
+                raw_entry=ParameterReadIn.raw_entry,
+            )
+            ParamToModify.HistoricalData = series
+            if isinstance(ParamToModify, listParameter):
+                ParamToModify.value = series.y_canonical.tolist()
+            elif len(series.y_canonical) > 0:
+                ParamToModify.value = float(series.y_canonical[0])
+            ParamToModify.Provided = True
+            ParamToModify.Valid = True
+            model.logger.info(f'Parsed historical XY input for {ParamToModify.Name} with {len(series.y_canonical)} samples')
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            return
+        except Exception:
+            # Fall back to existing scalar/list parsing behavior for backward compatibility
+            pass
 
     if isinstance(ParamToModify, intParameter):
         if ParamToModify.AllowPairVectorInput:

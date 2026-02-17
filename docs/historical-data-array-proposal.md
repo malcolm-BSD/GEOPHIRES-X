@@ -12,11 +12,11 @@ This proposal is implementation-oriented and staged to minimize risk and preserv
 
 1. `Annual Heat Demand` (`SurfacePlant.HeatDemand`)
 2. `Annual Cooling Demand` (`SurfacePlant.CoolingDemand`)
-3. `Annual Electrcity Demand` (`SurfacePlant.electricitydemand`)
+3. `Annual Electricity Demand` (`SurfacePlant.ElectricityDemand`)
 
-These will initially be added as fully supported historical array parameters (parsing, normalization, validation, storage, reporting hooks). Their downstream use in plant calculations can be enabled later. Cooling/Heating/Electrcity demand series should be resampled to 8760 points when not already that length.
+These will initially be added as fully supported historical array parameters (parsing, normalization, validation, storage, reporting hooks). Their downstream use in plant calculations can be enabled later. Cooling/Heating/Electricity demand series should be resampled to 8760 points when not already that length.
 
-The X and Y columns for `SurfacePlant.electricitydemand` should use the same semantics and units as `SurfacePlant.coolingdemand`.
+The X and Y columns for `SurfacePlant.ElectricityDemand` should use the same semantics and units as `SurfacePlant.CoolingDemand`.
 
 ### Existing parameters to upgrade for array support
 
@@ -131,7 +131,7 @@ Apply to:
 - Heat Rate
 - Annual CoolingDemand
 - Annual HeatingDemand (`SurfacePlant.HeatingDemand`, alias `SurfacePlant.HeatDemand`)
-- Annual ElectrcityDemand
+- Annual ElectricityDemand (`SurfacePlant.ElectricityDemand`)
 
 ### Recommended algorithm
 
@@ -217,9 +217,9 @@ In `ReadParameter` flow:
 | `SurfacePlant.heat_price` | time | hour | cost_rate | USD/kWh | yes |
 | `SurfacePlant.HeatingDemand` (`SurfacePlant.HeatDemand` alias) | time* | hour* | demand* | TBD* | yes (resample to 8760) |
 | `SurfacePlant.CoolingDemand` | time* | hour* | demand* | TBD* | yes (resample to 8760) |
-| `SurfacePlant.electricitydemand` | time* | hour* | demand* | TBD* | yes (resample to 8760) |
+| `SurfacePlant.ElectricityDemand` | time* | hour* | demand* | TBD* | yes (resample to 8760) |
 
-`*` Heat/Cooling/Electrcity demand arrays are added now; exact computational usage and potentially final Y-axis units can be finalized in follow-on implementation.
+`*` Heat/Cooling/Electricity demand arrays are added now; exact computational usage and potentially final Y-axis units can be finalized in follow-on implementation.
 
 ## Validation and warning matrix
 
@@ -320,7 +320,7 @@ The same URL shape applies to the other assets by swapping the filename (includi
 1. Currency conversion source for `EUR/kWh` → `USD/kWh` (fixed user-supplied factor vs. dynamic rates).
 2. Interpolation mode default for price series (linear vs. step/previous).
 3. Whether scalar legacy inputs for upgraded parameters should auto-expand to flat 8760 arrays or remain scalar until first array use.
-4. Exact Y-axis unit semantics for Heating/Cooling/Electrcity demand (e.g., `kW`, `MW`, `kWh per interval`).
+4. Exact Y-axis unit semantics for Heating/Cooling/Electricity demand (e.g., `kW`, `MW`, `kWh per interval`).
 
 ## Expected user-facing benefits
 
