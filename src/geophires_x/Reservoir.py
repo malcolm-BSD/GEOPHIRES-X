@@ -14,6 +14,14 @@ import geophires_x.Model as Model
 from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K, quantity, static_pressure_MPa
 from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3
 
+
+
+def _derive_numseg_from_gradient_thickness(gradient_values: list[float], thickness_values: list[float]) -> int:
+    if not gradient_values or not thickness_values:
+        raise ValueError('Gradient and thickness arrays are required to derive number of segments')
+
+    return min(len(gradient_values), len(thickness_values))
+
 class Reservoir:
     """
     This class is the parent class for modeling the Reservoir.
@@ -104,7 +112,13 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERM,
             Required=True,
             ErrMessage="assume default geothermal gradients 1 (50, 0, 0, 0 deg.C/km)",
-            ToolTipText="Geothermal gradient(s)"
+            ToolTipText="Geothermal gradient(s)",
+            AllowHistoricalArrayInput=True,
+            HistoricalXDimension="distance",
+            HistoricalYDimension="temperature",
+            HistoricalDefaultXUnits="meter",
+            HistoricalDefaultYUnits="celsius",
+            HistoricalResampleToHourlyYear=False
         )
 
         self.gradient1 = self.ParameterDict[self.gradient1.Name] = floatParameter(
@@ -405,7 +419,13 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default surface temperature (15 deg.C)",
             ToolTipText="Surface temperature used for calculating bottom-hole temperature "
-                        "(with geothermal gradient and reservoir depth)"
+                        "(with geothermal gradient and reservoir depth)",
+            AllowHistoricalArrayInput=True,
+            HistoricalXDimension="time",
+            HistoricalYDimension="temperature",
+            HistoricalDefaultXUnits="hour",
+            HistoricalDefaultYUnits="celsius",
+            HistoricalResampleToHourlyYear=True
         )
 
         self.usebuiltintough2model = False
@@ -631,6 +651,19 @@ class Reservoir:
             model.logger.info("No parameters read because no content provided")
 
         coerce_int_params_to_enum_values(self.ParameterDict)
+
+        if model.reserv.gradient.Provided and model.reserv.layerthickness.Provided:
+            derived_numseg = _derive_numseg_from_gradient_thickness(
+                model.reserv.gradient.value, model.reserv.layerthickness.value
+            )
+            if model.reserv.numseg.value != derived_numseg:
+                msg = (
+                    f'Number of Segments ({model.reserv.numseg.value}) does not match derived value from '
+                    f'Gradients/Thicknesses ({derived_numseg}); GEOPHIRES will use {derived_numseg}.'
+                )
+                print(f'Warning: {msg}')
+                model.logger.warning(msg)
+                model.reserv.numseg.value = derived_numseg
 
         for position in range(len(model.reserv.gradient.value)):
             if model.reserv.gradient.value[position] > 1.0:
