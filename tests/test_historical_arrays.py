@@ -12,6 +12,8 @@ from geophires_x.Parameter import ReadParameter
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import listParameter
 from geophires_x.Reservoir import _derive_numseg_from_gradient_thickness
+from geophires_x.Units import TemperatureUnit
+from geophires_x.Units import Units
 from geophires_x.historical_arrays import detect_header_units
 from geophires_x.historical_arrays import load_xy_series_from_source
 
@@ -52,7 +54,15 @@ class HistoricalArrayTestCase(unittest.TestCase):
 
     def test_read_parameter_historical_array_sets_series_and_scalar(self):
         model = self._new_model()
-        param = floatParameter(Name='Ambient Temperature', DefaultValue=15.0, Min=-50, Max=50)
+        param = floatParameter(
+            Name='Ambient Temperature',
+            DefaultValue=15.0,
+            Min=-50,
+            Max=50,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+        )
         param.AllowHistoricalArrayInput = True
         param.HistoricalXDimension = 'time'
         param.HistoricalYDimension = 'temperature'
@@ -72,6 +82,37 @@ class HistoricalArrayTestCase(unittest.TestCase):
         self.assertIsNotNone(param.HistoricalData)
         self.assertEqual(8760, len(param.HistoricalData.y_canonical))
         self.assertAlmostEqual(20.0, param.value, places=6)
+
+
+    def test_read_parameter_historical_array_allows_scalar_with_units(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name='Ambient Temperature',
+            DefaultValue=15.0,
+            Min=-50,
+            Max=50,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+        )
+        param.AllowHistoricalArrayInput = True
+        param.HistoricalXDimension = 'time'
+        param.HistoricalYDimension = 'temperature'
+        param.HistoricalDefaultXUnits = 'hour'
+        param.HistoricalDefaultYUnits = 'celsius'
+        param.HistoricalResampleToHourlyYear = True
+
+        entry = ParameterEntry(
+            Name='Ambient Temperature',
+            sValue='10 degC',
+            raw_entry='Ambient Temperature, 10 degC',
+        )
+        ReadParameter(entry, param, model)
+
+        self.assertTrue(param.Provided)
+        self.assertTrue(param.Valid)
+        self.assertIsNone(param.HistoricalData)
+        self.assertAlmostEqual(10.0, param.value, places=6)
 
     def test_read_parameter_historical_gradient_keeps_array_length(self):
         model = self._new_model()
