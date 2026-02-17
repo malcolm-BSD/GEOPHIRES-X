@@ -339,7 +339,7 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         ' ' in ParameterReadIn.sValue
         and not isinstance(ParamToModify, listParameter)
         and not _is_pair_vector_candidate(ParameterReadIn, ParamToModify)
-        and not getattr(ParamToModify, 'AllowHistoricalArrayInput', False)
+        and not _is_historical_array_candidate(ParameterReadIn, ParamToModify)
     ):
         new_str = ConvertUnits(ParamToModify, ParameterReadIn.sValue, model)
         if len(new_str) > 0:
@@ -776,6 +776,28 @@ def _is_pair_vector_candidate(parameter_read_in: ParameterEntry, param_to_modify
     for candidate in candidates:
         lowered = candidate.lower()
         if ',' in candidate or candidate.startswith('[') or lowered.endswith('.csv'):
+            return True
+        parsed = urlparse(candidate)
+        if parsed.scheme in ['http', 'https']:
+            return True
+
+    return False
+
+
+def _is_historical_array_candidate(parameter_read_in: ParameterEntry, param_to_modify=None) -> bool:
+    if param_to_modify is None or not getattr(param_to_modify, 'AllowHistoricalArrayInput', False):
+        return False
+
+    candidates = []
+    rhs = _raw_input_rhs(parameter_read_in.raw_entry)
+    if rhs is not None:
+        candidates.append(rhs)
+    if parameter_read_in.sValue is not None:
+        candidates.append(parameter_read_in.sValue.strip())
+
+    for candidate in candidates:
+        lowered = candidate.lower()
+        if ',' in candidate or '\n' in candidate or lowered.endswith('.csv'):
             return True
         parsed = urlparse(candidate)
         if parsed.scheme in ['http', 'https']:
