@@ -81,6 +81,8 @@ class GeophiresXResult:
                 'Accrued financing during construction',
                 # Displayed for economic models that don't treat inflation costs as capital costs (non-SAM-EM)
                 'Inflation costs during construction',
+                # Displayed as economic parameter for SAM-EM (non-SAM-EMs treat as capital cost)
+                'Investment Tax Credit',
                 'Project lifetime',
                 'Capacity factor',
                 'Project NPV',
@@ -266,8 +268,10 @@ class GeophiresXResult:
                 'Total surface equipment costs',
                 'Exploration costs',
                 'Investment Tax Credit',
+                'Overnight Capital Cost',
                 # Displayed for economic models that treat inflation costs as capital costs (SAM-EM)
                 'Inflation costs during construction',
+                'Interest during construction',
                 'Total Add-on CAPEX',
                 'Total capital costs',
                 'Annualized capital costs',
@@ -715,7 +719,7 @@ class GeophiresXResult:
         return None
 
     @property
-    def power_generation_profile(self):
+    def power_generation_profile(self) -> list[list[str | float]]:
         return self.result['POWER GENERATION PROFILE']
 
     def _get_power_generation_profile(self):

@@ -1,9 +1,12 @@
 import numpy as np
 
+from .EconomicsUtils import CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME
 from .GeoPHIRESUtils import quantity
+from .NumpyUtils import np_trapz
 from .OptionList import EndUseOptions, PlantType
 from .Parameter import floatParameter, intParameter, OutputParameter, ReadParameter, \
     coerce_int_params_to_enum_values
+from .SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from .Units import *
 import geophires_x.Model as Model
 
@@ -31,7 +34,7 @@ class SurfacePlant:
 
         dx_steps = len(_slice) - 1
 
-        integral = np.trapz(
+        integral = np_trapz(
             _slice,
             dx=1. / dx_steps * 365. * 24.
         )
@@ -425,17 +428,22 @@ class SurfacePlant:
             ErrMessage="assume default heat rate ($0.02/kWh)",
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode."
         )
+
+        default_construction_years = 1
         self.construction_years = self.ParameterDict[self.construction_years.Name] = intParameter(
             "Construction Years",
-            DefaultValue=1,
-            AllowableRange=list(range(1, 15, 1)),
+            DefaultValue=default_construction_years,
+            AllowableRange=list(range(1, MAX_CONSTRUCTION_YEARS + 1, 1)),
             UnitType=Units.NONE,
-            ErrMessage="assume default number of years in construction (1)",
-            ToolTipText='Number of years spent in construction (assumes whole years, no fractions). '
-                        'Capital costs are spread evenly over construction years e.g. if total capital costs are '
-                        '$500M and there are 2 construction years, '
-                        'then $250M will be spent in both the first and second construction years.'
+            ErrMessage=f'assume default number of years in construction ({default_construction_years})',
+            ToolTipText=f'Number of years spent in construction (assumes whole years, no fractions). '
+                        f'By default, capital costs are spread evenly over construction years e.g. if total capital '
+                        f'costs are $500M and there are 2 construction years, '
+                        f'then $250M will be spent in both the first and second construction years. '
+                        f'For SAM Economic Models, provide {CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME} to use a '
+                        f'custom spread instead.'
         )
+
         self.cp_fluid = self.ParameterDict[self.cp_fluid.Name] = floatParameter(
             "Working Fluid Heat Capacity",
             UnitType=Units.HEAT_CAPACITY,
@@ -547,10 +555,11 @@ class SurfacePlant:
             CurrentUnits=EnergyFrequencyUnit.KWPERYEAR
         )
         self.ElectricityProduced = self.OutputParameterDict[self.ElectricityProduced.Name] = OutputParameter(
-            Name="Total Electricity Generation",
+            Name="Total Electricity Production",
             UnitType=Units.POWER,
             PreferredUnits=PowerUnit.MW,
             CurrentUnits=PowerUnit.MW
+            # TODO tooltip text - should reference that this is gross production
         )
         self.NetElectricityProduced = self.OutputParameterDict[self.NetElectricityProduced.Name] = OutputParameter(
             Name="Net Electricity Production",
@@ -687,6 +696,12 @@ class SurfacePlant:
                             if ParameterToModify.value in [PlantType.SINGLE_FLASH, PlantType.DOUBLE_FLASH]:
                                 model.wellbores.impedancemodelallowed.value = False
                                 self.setinjectionpressurefixed = True
+                        if model.wellbores.impedancemodelused.value and \
+                            ParameterToModify.value in [PlantType.SINGLE_FLASH, PlantType.DOUBLE_FLASH]:
+                            msg = ('Flash plant is being used with impedance model. When reservoir impedance '
+                                   'is specified, no flashing is allowed in production wells or at surface.')
+                            print(f'Warning: {msg}')
+                            model.logger.warning(msg)
                     elif ParameterToModify.Name == 'Plant Outlet Pressure':
                         if ParameterToModify.value < self.plant_outlet_pressure.Min or ParameterToModify.value > self.plant_outlet_pressure.Max:
                                 if self.setinjectionpressurefixed:

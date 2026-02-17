@@ -13,7 +13,7 @@ def read(*names, **kwargs):
 
 setup(
     name='geophires-x',
-    version='3.9.65',
+    version='3.11.12',
     license='MIT',
     description='GEOPHIRES is a free and open-source geothermal techno-economic simulator.',
     long_description='{}\n{}'.format(
@@ -56,7 +56,7 @@ setup(
     project_urls={
         'Changelog': 'https://github.com/NREL/GEOPHIRES-X/blob/master/CHANGELOG.rst',
         'Issue Tracker': 'https://github.com/NREL/GEOPHIRES-X/issues',
-        'Documentation': 'https://nrel.github.io/GEOPHIRES-X/',
+        'Documentation': 'https://softwareengineerprogrammer.github.io/GEOPHIRES/',
     },
     keywords=['geothermal'],
     python_requires='>=3.8',
