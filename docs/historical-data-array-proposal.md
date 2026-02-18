@@ -10,13 +10,11 @@ This proposal is implementation-oriented and staged to minimize risk and preserv
 
 ### New parameters to add
 
-1. `Annual Heat Demand` (`SurfacePlant.HeatDemand`)
+1. `Annual Heating Demand` (`SurfacePlant.HeatingDemand`)
 2. `Annual Cooling Demand` (`SurfacePlant.CoolingDemand`)
 3. `Annual Electricity Demand` (`SurfacePlant.ElectricityDemand`)
 
 These will initially be added as fully supported historical array parameters (parsing, normalization, validation, storage, reporting hooks). Their downstream use in plant calculations can be enabled later. Cooling/Heating/Electricity demand series should be resampled to 8760 points when not already that length.
-
-The X and Y columns for `SurfacePlant.ElectricityDemand` should use the same semantics and units as `SurfacePlant.CoolingDemand`.
 
 ### Existing parameters to upgrade for array support
 
@@ -58,10 +56,10 @@ Use existing source precedence and extend consistently:
 
 ### CSV/header convention
 
-The first line may provide axis names and units:
+The first line may provide axis names and units, for example:
 
-- `Time (minutes), Temperature (Fahrenheit)`
-- `Distance (feet), Temperature (Kelvin)`
+- `Time (minutes), Temperature (degF)`
+- `Distance (feet), Temperature (K)`
 - `Time (days), Cost (EUR/kWh)`
 
 If header is absent:
@@ -98,14 +96,14 @@ If header is absent:
 
 - X axis semantic: distance
 - X default unit: meters
-- Y axis semantic: temperature
-- Y default unit: Celsius (`degC`)
+- Y axis semantic: Gradient temperature change per distance
+- Y default unit: Celsius/m (`degC/m`)
 
 #### Required behavior
 
 1. Parse distance units from header (feet/meters/centimeters/inches/etc.).
 2. Convert X values to meters.
-3. Parse temperature units from header and convert Y values to Celsius.
+3. Parse gradient units from header and convert Y values to Celsius/m.
 4. Do **not** resample/downsample/interpolate array length.
 
 ### 3) Electricity Rate and Heat Rate
@@ -130,8 +128,8 @@ Apply to:
 - Electricity Rate
 - Heat Rate
 - Annual CoolingDemand
-- Annual HeatingDemand (`SurfacePlant.HeatingDemand`, alias `SurfacePlant.HeatDemand`)
-- Annual ElectricityDemand (`SurfacePlant.ElectricityDemand`)
+- Annual HeatingDemand
+- Annual ElectricityDemand
 
 ### Recommended algorithm
 
@@ -208,18 +206,18 @@ In `ReadParameter` flow:
 
 ## Parameter-by-parameter proposed defaults
 
-| Parameter | X semantic | X default | Y semantic | Y default | Resample to 8760h |
-|---|---|---|---|---|---|
-| `SurfacePlant.ambient_temperature` | time | hour | temperature | degC | yes |
-| `Reservoir.Tsurf` | time | hour | temperature | degC | yes |
-| `SurfacePlant.gradient` | distance | meter | temperature | degC | no |
-| `SurfacePlant.electricity_cost_to_buy` | time | hour | cost_rate | USD/kWh | yes |
-| `SurfacePlant.heat_price` | time | hour | cost_rate | USD/kWh | yes |
-| `SurfacePlant.HeatingDemand` (`SurfacePlant.HeatDemand` alias) | time* | hour* | demand* | TBD* | yes (resample to 8760) |
-| `SurfacePlant.CoolingDemand` | time* | hour* | demand* | TBD* | yes (resample to 8760) |
-| `SurfacePlant.ElectricityDemand` | time* | hour* | demand* | TBD* | yes (resample to 8760) |
+| Parameter                              | X semantic | X default | Y semantic  | Y default | Resample to 8760h |
+|----------------------------------------|---|---|-------------|-----------|---|
+| `SurfacePlant.ambient_temperature`     | time | hour | temperature | degC      | yes |
+| `Reservoir.Tsurf`                      | time | hour | temperature | degC      | yes |
+| `SurfacePlant.gradient`                | distance | meter | gradient    | degC/m  | no |
+| `SurfacePlant.electricity_cost_to_buy` | time | hour | cost        | USD/kWh   | yes |
+| `SurfacePlant.heat_price`              | time | hour | cost        | USD/kWh   | yes |
+| `SurfacePlant.HeatingDemand`           | time* | hour* | demand*     | MWh*      | yes |
+| `SurfacePlant.CoolingDemand`           | time* | hour* | demand*     | MWh*      | yes |
+| `SurfacePlant.ElectricityDemand`       | time* | hour* | demand*     | MWh*      | yes |
 
-`*` Heat/Cooling/Electricity demand arrays are added now; exact computational usage and potentially final Y-axis units can be finalized in follow-on implementation.
+`*` Heating/Cooling/Electricity demand arrays are added now; exact computational usage and potentially final Y-axis units will be finalized in follow-on implementation.
 
 ## Validation and warning matrix
 
@@ -248,13 +246,15 @@ Warnings (non-fatal unless specified):
 
 ### Phase 3: Add new demand parameters
 
-- Add `SurfacePlant.HeatDemand` and `SurfacePlant.CoolingDemand` parameter definitions.
+- Add `SurfacePlant.HeatingDemand`, `SurfacePlant.CoolingDemand`, and `SurfacePlant.ElectricityDemand` parameter definitions.
 - Enable ingestion, normalization, storage, and output reporting.
 - Leave computational coupling guarded/feature-flagged until demand usage rules are specified.
 
 ### Phase 4: Hardening and documentation
 
 - Add full integration tests with inline/file/URL data.
+- Add full documentation of new input formats, header conventions, and unit policies.
+- Add docstrings, code inlines comments and usage examples in code and docs.
 - Document CSV header/unit grammar and defaults.
 - Provide migration notes and examples.
 
@@ -282,12 +282,12 @@ The same URL shape applies to the other assets by swapping the filename (includi
 ### Test categories
 
 1. Header parsing and defaults:
-   - `Time (minutes), Temperature (Fahrenheit)` recognized and converted.
+   - `Time (minutes), Temperature (degF)` recognized and converted.
    - Missing header uses defaults (hours, Celsius or family defaults).
 2. Unit conversion:
    - time (`s`, `min`, `day`, `month`) to hour.
    - distance (`ft`, `cm`, `in`) to meter.
-   - temperature (`F`, `K`) to Celsius.
+   - temperature (`degF`, `K`) to Celsius.
    - cost rate (`EUR/kWh`) to `USD/kWh` (using configured currency conversion policy).
 3. Resampling/interpolation:
    - downsample, upsample, irregular intervals, short-span, long-span.
@@ -313,14 +313,14 @@ The same URL shape applies to the other assets by swapping the filename (includi
 - Heat rate from local file + URL, verify hour/USD-kWh normalization and 8760 output.
 - Annual heating demand from local file + URL, verify expected ingestion/normalization behavior and resampling to 8760 samples.
 - Annual cooling demand from local file + URL, verify expected ingestion/normalization behavior and resampling to 8760 samples.
-- Annual electrcity demand from local file + URL, verify expected ingestion/normalization behavior and resampling to 8760 samples.
+- Annual electricity demand from local file + URL, verify expected ingestion/normalization behavior and resampling to 8760 samples.
 
 ## Open design decisions to finalize
 
 1. Currency conversion source for `EUR/kWh` → `USD/kWh` (fixed user-supplied factor vs. dynamic rates).
 2. Interpolation mode default for price series (linear vs. step/previous).
 3. Whether scalar legacy inputs for upgraded parameters should auto-expand to flat 8760 arrays or remain scalar until first array use.
-4. Exact Y-axis unit semantics for Heating/Cooling/Electricity demand (e.g., `kW`, `MW`, `kWh per interval`).
+4. Exact Y-axis unit semantics for Heating/Cooling/Electricity demand (e.g., `kWh`, `MWh`, `kWh per interval`).
 
 ## Expected user-facing benefits
 
