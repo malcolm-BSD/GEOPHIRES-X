@@ -69,4 +69,4 @@ target-version = ["py38"]
 skip-string-normalization = true
 
 [tool.ruff.lint.flake8-quotes]
-inline-quotes = "single"
+inline-quotes = "double"
