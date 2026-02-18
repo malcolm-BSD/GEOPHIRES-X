@@ -759,7 +759,9 @@ def _raw_input_rhs(raw_entry: Optional[str]) -> Optional[str]:
     if ',' not in entry:
         return None
 
-    return entry.split(',', 1)[1].strip()
+    # Drop incidental trailing delimiters (e.g. "Parameter, 8 degC, -- comment") so scalar
+    # values with comments are not misclassified as CSV-like pair/historical arrays.
+    return entry.split(',', 1)[1].strip().rstrip(',').strip()
 
 
 def _is_pair_vector_candidate(parameter_read_in: ParameterEntry, param_to_modify=None) -> bool:

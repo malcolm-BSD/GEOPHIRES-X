@@ -13,6 +13,7 @@ from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
 from geophires_x.Parameter import ParameterEntry
 from geophires_x.Parameter import ReadParameter
+from geophires_x.Parameter import _is_historical_array_candidate
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import listParameter
 from geophires_x.Units import CostPerMassUnit
@@ -126,6 +127,18 @@ class ParameterTestCase(BaseTestCase):
         self.assertIsInstance(param.value, np.ndarray)
         self.assertAlmostEqual(param.value[0], 10.0, places=6)
         self.assertAlmostEqual(param.value[1], 100.0, places=6)
+
+    def test_historical_array_candidate_ignores_trailing_value_comma_before_comment(self):
+        param = floatParameter(Name='Ambient Temperature', DefaultValue=10.0, Min=-50.0, Max=100.0)
+        param.AllowHistoricalArrayInput = True
+
+        parameter_entry = ParameterEntry(
+            Name='Ambient Temperature',
+            sValue='8 degC',
+            raw_entry='Ambient Temperature, 8 degC, -- per the paper'
+        )
+
+        self.assertFalse(_is_historical_array_candidate(parameter_entry, param))
 
     def test_read_list_parameter_allows_csv_file_input_with_units(self):
         model = self._new_model()
