@@ -2,6 +2,10 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+from unittest.mock import patch
+
+import numpy as np
 
 from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
@@ -26,6 +30,184 @@ from tests.base_test_case import BaseTestCase
 
 
 class ParameterTestCase(BaseTestCase):
+
+    def test_read_parameter_allows_pair_vector_inline_for_float_parameter(self):
+        model = self._new_model()
+        param = floatParameter(Name='Reservoir Temperature', DefaultValue=150.0, Min=0.0, Max=500.0)
+        param.AllowPairVectorInput = True
+
+        ReadParameter(
+            ParameterEntry(
+                Name='Reservoir Temperature',
+                sValue='[1000',
+                raw_entry='Reservoir Temperature, [1000, 200]',
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, np.ndarray)
+        self.assertTrue(np.array_equal(param.value, np.array([1000.0, 200.0])))
+        self.assertTrue(param.Provided)
+        self.assertTrue(param.Valid)
+
+    def test_read_parameter_allows_pair_vector_csv_file_for_float_parameter(self):
+        model = self._new_model()
+        param = floatParameter(Name='Reservoir Temperature', DefaultValue=150.0, Min=0.0, Max=500.0)
+        param.AllowPairVectorInput = True
+
+        with NamedTemporaryFile(mode='w+', suffix='.csv', delete=False) as f:
+            f.write('1000,200\n')
+            csv_file = f.name
+
+        try:
+            ReadParameter(
+                ParameterEntry(
+                    Name='Reservoir Temperature',
+                    sValue=csv_file,
+                    raw_entry=f'Reservoir Temperature, {csv_file}',
+                ),
+                param,
+                model,
+            )
+        finally:
+            Path(csv_file).unlink()
+
+        self.assertIsInstance(param.value, np.ndarray)
+        self.assertTrue(np.array_equal(param.value, np.array([1000.0, 200.0])))
+
+    def test_read_parameter_allows_pair_vector_csv_url_for_float_parameter(self):
+        model = self._new_model()
+        param = floatParameter(Name='Reservoir Temperature', DefaultValue=150.0, Min=0.0, Max=500.0)
+        param.AllowPairVectorInput = True
+
+        class _MockResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self, n=-1):
+                return b'1000,200\n'
+
+        with patch('geophires_x.Parameter.urlopen', return_value=_MockResponse()):
+            ReadParameter(
+                ParameterEntry(
+                    Name='Reservoir Temperature',
+                    sValue='https://example.com/pair.csv',
+                    raw_entry='Reservoir Temperature, https://example.com/pair.csv',
+                ),
+                param,
+                model,
+            )
+
+        self.assertIsInstance(param.value, np.ndarray)
+        self.assertTrue(np.array_equal(param.value, np.array([1000.0, 200.0])))
+
+    def test_read_parameter_pair_vector_applies_convert_units_in_loop(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name='Reservoir Temperature',
+            DefaultValue=150.0,
+            Min=0.0,
+            Max=500.0,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+        )
+        param.AllowPairVectorInput = True
+
+        ReadParameter(
+            ParameterEntry(
+                Name='Reservoir Temperature',
+                sValue='[10, 212 degF]',
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, np.ndarray)
+        self.assertAlmostEqual(param.value[0], 10.0, places=6)
+        self.assertAlmostEqual(param.value[1], 100.0, places=6)
+
+    def test_historical_array_candidate_ignores_trailing_value_comma_before_comment(self):
+        param = floatParameter(Name='Ambient Temperature', DefaultValue=10.0, Min=-50.0, Max=100.0)
+        param.AllowHistoricalArrayInput = True
+
+        parameter_entry = ParameterEntry(
+            Name='Ambient Temperature',
+            sValue='8 degC',
+            raw_entry='Ambient Temperature, 8 degC, -- per the paper',
+        )
+
+        self.assertFalse(_is_historical_array_candidate(parameter_entry, param))
+
+    def test_read_list_parameter_allows_csv_file_input_with_units(self):
+        model = self._new_model()
+        param = listParameter(
+            Name='Thicknesses',
+            DefaultValue=[1000.0],
+            Min=0.0,
+            Max=100000.0,
+            UnitType=Units.LENGTH,
+            PreferredUnits=LengthUnit.METERS,
+            CurrentUnits=LengthUnit.METERS,
+        )
+
+        with NamedTemporaryFile(mode='w+', suffix='.csv', delete=False) as f:
+            f.write('1 km\n2 km\n3 km\n')
+            csv_file = f.name
+
+        try:
+            ReadParameter(
+                ParameterEntry(
+                    Name='Thicknesses',
+                    sValue=csv_file,
+                    raw_entry=f'Thicknesses, {csv_file}',
+                ),
+                param,
+                model,
+            )
+        finally:
+            Path(csv_file).unlink()
+
+        self.assertEqual([1000.0, 2000.0, 3000.0], param.value)
+
+    def test_read_list_parameter_allows_csv_url_input_with_units(self):
+        model = self._new_model()
+        param = listParameter(
+            Name='Thicknesses',
+            DefaultValue=[1000.0],
+            Min=0.0,
+            Max=100000.0,
+            UnitType=Units.LENGTH,
+            PreferredUnits=LengthUnit.METERS,
+            CurrentUnits=LengthUnit.METERS,
+        )
+
+        class _MockResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self, n=-1):
+                return b'1 km\n2 km\n'
+
+        with patch('geophires_x.Parameter.urlopen', return_value=_MockResponse()):
+            ReadParameter(
+                ParameterEntry(
+                    Name='Thicknesses',
+                    sValue='https://example.com/thicknesses.csv',
+                    raw_entry='Thicknesses, https://example.com/thicknesses.csv',
+                ),
+                param,
+                model,
+            )
+
+        self.assertEqual([1000.0, 2000.0], param.value)
     def test_convert_units_back(self):
         model = self._new_model()  # TODO mock instead
 
@@ -231,18 +413,6 @@ class ParameterTestCase(BaseTestCase):
         ]
         self.assertEqual('kilogram', total_avoided_carbon_emissions_vu['unit'])
         self.assertEqual(int(total_avoided_carbon_emissions_vu['value']), total_capacity_payment_revenue_usd)
-
-    def test_historical_array_candidate_ignores_trailing_value_comma_before_comment(self):
-        param = floatParameter(Name='Ambient Temperature', DefaultValue=10.0, Min=-50.0, Max=100.0)
-        param.AllowHistoricalArrayInput = True
-
-        parameter_entry = ParameterEntry(
-            Name='Ambient Temperature',
-            sValue='8 degC',
-            raw_entry='Ambient Temperature, 8 degC, -- per the paper',
-        )
-
-        self.assertFalse(_is_historical_array_candidate(parameter_entry, param))
 
     def test_read_parameter_historical_array_allows_scalar_with_units(self):
         model = self._new_model()
