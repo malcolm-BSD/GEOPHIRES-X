@@ -16,7 +16,7 @@ from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3
 
 
 
-def _derive_numseg_from_gradient_thickness(gradient_values: list[float], thickness_values: list[float]) -> int:
+def derive_numseg_from_gradient_thickness(gradient_values: list[float], thickness_values: list[float]) -> int:
     if not gradient_values or not thickness_values:
         raise ValueError('Gradient and thickness arrays are required to derive number of segments')
 
@@ -113,12 +113,6 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradients 1 (50, 0, 0, 0 deg.C/km)",
             ToolTipText="Geothermal gradient(s)",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="distance",
-            HistoricalYDimension="temperature",
-            HistoricalDefaultXUnits="meter",
-            HistoricalDefaultYUnits="celsius",
-            HistoricalResampleToHourlyYear=False
         )
 
         self.gradient1 = self.ParameterDict[self.gradient1.Name] = floatParameter(
@@ -184,7 +178,7 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thicknesses (100,000, 0, 0, 0 km)",
-            ToolTipText="Thicknesses of rock segments"
+            ToolTipText="Thicknesses of rock segments",
         )
 
         self.layerthickness1 = self.ParameterDict[self.layerthickness1.Name] = floatParameter(
@@ -420,12 +414,6 @@ class Reservoir:
             ErrMessage="assume default surface temperature (15 deg.C)",
             ToolTipText="Surface temperature used for calculating bottom-hole temperature "
                         "(with geothermal gradient and reservoir depth)",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="temperature",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="celsius",
-            HistoricalResampleToHourlyYear=True
         )
 
         self.usebuiltintough2model = False
@@ -653,7 +641,7 @@ class Reservoir:
         coerce_int_params_to_enum_values(self.ParameterDict)
 
         if model.reserv.gradient.Provided and model.reserv.layerthickness.Provided:
-            derived_numseg = _derive_numseg_from_gradient_thickness(
+            derived_numseg = derive_numseg_from_gradient_thickness(
                 model.reserv.gradient.value, model.reserv.layerthickness.value
             )
             if model.reserv.numseg.value != derived_numseg:

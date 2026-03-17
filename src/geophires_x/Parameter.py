@@ -1,31 +1,28 @@
-# copyright, 2023, Malcolm I Ross
+
 from __future__ import annotations
 
 import copy
 import dataclasses
 import csv
 import math
-
-import sys
-from array import array
-from collections.abc import Iterable
-from typing import List, Optional, Any
+from typing import Optional
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlopen
-
 import numpy as np
-from forex_python.converter import CurrencyRates, CurrencyCodes
-
+import ast
+from forex_python.converter import CurrencyRates, CurrencyCodes, get_rate
 from abc import ABC
-
 from pint.facets.plain import PlainQuantity
 
 from geophires_x.OptionList import GeophiresInputEnum
 from geophires_x.Units import *
-from geophires_x.historical_arrays import HistoricalXYSeries, load_xy_series_from_source
+from geophires_x.GeoPHIRESUtils import is_numeric_sequence_string, is_existing_file_path, url_returns_content, \
+    parse_container_string_simple, _try_parse_multiline_list
+from geophires_x.GeoPHIRESUtils import _looks_like_comment, get_data_from_file_or_url, get_data_from_file_or_url_as_string
+from geophires_x.GeoPHIRESUtils import _try_parse_multiline, header_is_present, resample_to_hourly_year
 
 _ureg = get_unit_registry()
 _DISABLE_FOREX_API = True  # See https://github.com/NREL/GEOPHIRES-X/issues/236#issuecomment-2414681434
@@ -90,7 +87,7 @@ class OutputParameter(HasQuantity):
     json_parameter_type: str = None
 
     @property
-    def UnitsMatch(self) -> str:
+    def UnitsMatch(self) -> bool:
         return self.CurrentUnits == self.PreferredUnits
 
     def with_preferred_units(self) -> Any:  # Any is a proxy for Self
@@ -133,7 +130,7 @@ class Parameter(HasQuantity):
         Required (bool, False): Is this parameter required to be set?  See user manual.
         Provided (bool, False): Has this value been provided by the user?
         Valid (bool, True): has this value been successfully validated?
-        ErrMessage (str): the error message that the user sees if the va;ue they provide does not pass validation -
+        ErrMessage (str): the error message that the user sees if the value they provide does not pass validation -
               by default, it is: "assuming default value (see manual)"
         InputComment (str): The optional comment that the user provided with that parameter in the text file
         ToolTipText (str): Text to place in a ToolTip in a UI
@@ -141,6 +138,14 @@ class Parameter(HasQuantity):
         PreferredUnits (Enum): The units as required by GEOPHIRES (or your algorithms)
         CurrentUnits (Enum): The units that the parameter is provided in (usually the same PreferredUnits)
         UnitsMatch (boolean): Internal flag set when units are different
+        AllowExtendedInput (boolean, False): Whether to allow extended input for this parameter, such as a list of values,
+             a filename, or a URL, instead of a single value.  If True, the code will check if the user provided value is
+             a list of values (in the form of a string), a filename, or a URL, and if so, it will try to read the content
+             and use that as the value for this parameter instead of the original value.  This allows for more flexible input
+             for parameters that may need to be provided as a list of values or as a file or URL containing the values,
+             but it also bypasses the normal validation and conversion of the value, so it should be used with caution
+             and only for parameters where this kind of input is appropriate. Note that the code that uses this parameter
+             MUST know how to handle the values that were in the list, file, or URL correctly!
     """
 
     Name: str = ""
@@ -152,6 +157,7 @@ class Parameter(HasQuantity):
     ToolTipText: str = Name
     UnitType: IntEnum = Units.NONE
     PreferredUnits: Enum = None
+    AllowExtendedInput: bool = False
 
     # set to PreferredUnits assuming that the current units are the preferred units
     # - they will only change if the read function reads a different unit associated with a parameter
@@ -162,19 +168,7 @@ class Parameter(HasQuantity):
         return self.PreferredUnits == self.CurrentUnits
 
     parameter_category: str = None
-
     ValuesEnum:GeophiresInputEnum = None
-    AllowPairVectorInput: bool = False
-    PairVectorAsNumpyArray: bool = True
-    PairVectorValue: Optional[np.ndarray] = None
-    PairVectorAxisLabel: Optional[str] = None
-    AllowHistoricalArrayInput: bool = False
-    HistoricalXDimension: Optional[str] = None
-    HistoricalYDimension: Optional[str] = None
-    HistoricalDefaultXUnits: Optional[str] = None
-    HistoricalDefaultYUnits: Optional[str] = None
-    HistoricalResampleToHourlyYear: bool = False
-    HistoricalData: Optional[HistoricalXYSeries] = None
 
 
     def __post_init__(self):
@@ -195,6 +189,7 @@ class boolParameter(Parameter):
     def __post_init__(self):
         if self.value is None:
             self.value: bool = self.DefaultValue
+        super().__post_init__()
 
     value: bool = None
     DefaultValue: bool = value
@@ -216,6 +211,7 @@ class intParameter(Parameter):
     def __post_init__(self):
         if self.value is None:
             self.value:int = self.DefaultValue
+        super().__post_init__()
 
     value: int = None
     DefaultValue: int = value
@@ -249,7 +245,6 @@ class floatParameter(Parameter):
         super().__post_init__()
 
     value: float = None
-
     DefaultValue: float = 0.0
     Min: float = -1.8e30
     Max: float = 1.8e30
@@ -269,6 +264,7 @@ class strParameter(Parameter):
     def __post_init__(self):
         if self.value is None:
             self.value: str = self.DefaultValue
+        super().__post_init__()
 
     value: str = None
     DefaultValue: str = value
@@ -286,13 +282,14 @@ class listParameter(Parameter):
         DefaultValue (list, []):  The default value of that parameter
         Min (float, -1.8e308): minimum valid value of each value in the list - not that it is set to a very small value,
               which means that any value is valid by default
-        Min (float, 1.8e308): maximum valid value of each va;ue in the list - not that it is set to a very large value,
+        Min (float, 1.8e308): maximum valid value of each value in the list - not that it is set to a very large value,
             which means that any value is valid by default
     """
 
     def __post_init__(self):
         if self.value is None:
             self.value: str = self.DefaultValue
+        super().__post_init__()
 
     value: List[float] = None
     DefaultValue: List[float] = field(default_factory=list)
@@ -300,6 +297,59 @@ class listParameter(Parameter):
     Max: float = 1.8e308
     json_parameter_type: str = _JSON_PARAMETER_TYPE_ARRAY
 
+
+@dataclass
+class filenameParameter(Parameter):
+    """
+    filenameParameter: a dataclass that stores the values for a filename value.  Includes the default value and the
+    validation values (if appropriate).  Child of Parameter, so it gets all the Attributes of that class.
+
+    Attributes:
+        value (str): The value of that parameter
+        DefaultValue (str, ""):  The default value of that parameter
+    """
+    def __post_init__(self):
+        if self.value is None:
+            self.value: str = self.DefaultValue
+        super().__post_init__()
+
+    value: str = None
+    DefaultValue: str = value
+    json_parameter_type: str = _JSON_PARAMETER_TYPE_STRING
+
+
+@dataclass
+class TimeSeriesParameter(listParameter):
+    """
+    TimeSeriesParameter: a dataclass that stores the values for a Historical List of values (time, and value).
+    Derived from listParameter because it is still a list of values, but it has some additional attributes that are specific to historical lists.
+    Includes the default value and the validation values (if appropriate).
+    Child of listParameter, and thus Parameter, so it gets all the Attributes of that class.
+
+    Attributes:
+        PairVectorAsNumpyArray (bool, True): Whether to store the pair vector as a numpy array (if False, will store as list of lists)
+        PreferredXUnits (Optional[str], None): Specifies the name of the preferred x dimension units, default = "hours"
+        PreferredYUnits (Optional[str], None): Specifies the name of the preferred y dimension units
+        CurrentXUnits (Optional[str], None): Holds the current units of the x dimension (determined from file)
+        CurrentYUnits (Optional[str], None): Holds the current units of the y dimension (determined from file)
+        ResampleToHourlyYear (bool, False): specify whether to resample the historical array to an hourly year (8760 hours)
+    """
+
+    def __post_init__(self):
+        if self.value is None:
+            self.value: str = self.DefaultValue
+        super().__post_init__()
+
+    PairVectorAsNumpyArray: bool = True
+    PreferredXUnits: Optional[str] = r"hours"
+    PreferredYUnits: Optional[str] = r"Temperature"
+    CurrentXUnits: Optional[str] = PreferredXUnits
+    CurrentYUnits: Optional[str] = PreferredYUnits
+    ResampleToHourlyYear: bool = False
+    XMax: float = 1.8e30
+    XMin: float = -1.8e30
+    YMax: float = 1.8e30
+    YMin: float = -1.8e30
 
 def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None:
     """
@@ -318,250 +368,159 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     """
     model.logger.info(f'Init {str(__name__)}: {sys._getframe().f_code.co_name} for {ParamToModify.Name}')
 
-    # these Parameter Types don't have units so don't do anything fancy, and ignore it if the user has supplied units
-    if isinstance(ParamToModify, boolParameter) or isinstance(ParamToModify, strParameter):
-        if isinstance(ParamToModify, boolParameter):
-            if ParameterReadIn.sValue in ['0', 'false', 'False', 'f', 'F', 'no', 'No', 'n', 'N']:
-                ParamToModify.value = False
-            elif ParameterReadIn.sValue in ['1', 'true', 'True', 't', 'T', 'yes', 'Yes', 'y', 'Y']:
-                ParamToModify.value = True
+    #First, check to see if they are trying to set something to its default value.
+    # If so, notify and return without doing any of the rest of the processing, since we know that the default value
+    # is valid and in the correct units, so there is no need to do any of the validation or conversion that we do for other values.
+    if ParameterReadIn.sValue == str(ParamToModify.DefaultValue):
+        # let the user know then have provided a value that is the same as the default value or the existing value,
+        # and that they can remove it from the input file if they want to use the default value
+        model.logger.info(default_parameter_value_message(ParameterReadIn.sValue, ParamToModify.Name, ParamToModify.DefaultValue))
+        ParamToModify.value = ParamToModify.DefaultValue
+        return
+
+    # If the ParamToModify allows ExtendedInput
+    # then the first thing to do is to see if the user has specified a list, URL or a File,
+    # and if so, the first thing we need to do is read the content of that file or URL and use it as the value for this parameter
+    # instead of the original value, which is just a string that is the filename or URL
+    if ParamToModify.AllowExtendedInput:
+        seems_like_file = seems_like_URL = False
+        content = ""
+        if ParameterReadIn.sValue.startswith('http'):
+            content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
+            if content:
+                seems_like_URL = True
+                ParameterReadIn.sValue = content
+        elif is_existing_file_path(ParameterReadIn.sValue):
+            content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
+            if content:
+                seems_like_file = True
+                ParameterReadIn.sValue = content
             else:
-                ParamToModify.value = bool(ParameterReadIn.sValue)
+                seems_like_file = False
+        # if the file or URL is provided but not valid, log an error and raise an exception
+        if (seems_like_file or seems_like_URL) and not content:
+            err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a valid file path.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+    # Validate the type of Parameter read in, and set The Parameter they wish to modify if it is valid -
+    # we have to do this separately for each type because of the different validation rules and the different ways of setting the value
+
+    # Boolean and String Parameter Types don't have units and don't do anything fancy with the value,
+    # so we can just deal with them right here, without needing to worry about any of the unit conversion or other validation
+    # that we do for the other parameter types.
+    # just do the conversion for bools with multiple options for when true and false are more flexible for the user,
+    # but for strings, just take the value as is and assign it to the parameter
+    if isinstance(ParamToModify, strParameter):
+            #must be a string, so just assign it - any string is a valid string, so no validation needed
+            ParamToModify.value = str(ParameterReadIn.sValue)
+            ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
+            ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            return
+
+    elif isinstance(ParamToModify, boolParameter):
+        if ParameterReadIn.sValue.strip() in ['0', 'false', 'False', 'f', 'F', 'no', 'No', 'n', 'N']:
+            ParamToModify.value = False
+        elif ParameterReadIn.sValue.strip() in ['1', 'true', 'True', 't', 'T', 'yes', 'Yes', 'y', 'Y']:
+            ParamToModify.value = True
         else:
-            ParamToModify.value = ParameterReadIn.sValue
+            ParamToModify.value = ParamToModify.DefaultValue
         ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
         ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
         model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
         return
 
-    # deal with the case where the value has a unit involved - that will be indicated by a space in it
-    if (
-        ' ' in ParameterReadIn.sValue
-        and not isinstance(ParamToModify, listParameter)
-        and not _is_pair_vector_candidate(ParameterReadIn, ParamToModify)
-        and not _is_historical_array_candidate(ParameterReadIn, ParamToModify)
-    ):
-        new_str = ConvertUnits(ParamToModify, ParameterReadIn.sValue, model)
-        if len(new_str) > 0:
-            ParameterReadIn.sValue = new_str
-    #else:
-        # The value came in without any units
-        # TODO: determine the proper action in this case
-        # (previously, it was assumed that the value must be
-        # using the default PreferredUnits, which was not always
-        # valid and led to incorrect units in the output)
+    # Int Parameter
+    if isinstance(ParamToModify, intParameter):
+        process_int_or_float_parameter(ParameterReadIn, ParamToModify, model)
 
-    def default_parameter_value_message(new_val: Any, param_to_modify_name: str, default_value: Any) -> str:
-        return (
-            f'Parameter given ({str(new_val)}) for {param_to_modify_name} is the same as the default value. '
-            f'Consider removing {param_to_modify_name} from the input file unless you wish '
-            f'to change it from the default value of ({str(default_value)})'
-        )
+    # Float Parameter
+    elif isinstance(ParamToModify, floatParameter):
+        process_int_or_float_parameter(ParameterReadIn, ParamToModify, model)
 
-    if getattr(ParamToModify, 'AllowHistoricalArrayInput', False):
-        try:
-            series = load_xy_series_from_source(
-                ParameterReadIn.sValue,
-                x_dimension=ParamToModify.HistoricalXDimension or 'time',
-                y_dimension=ParamToModify.HistoricalYDimension or 'generic',
-                default_x_units=ParamToModify.HistoricalDefaultXUnits or 'hour',
-                default_y_units=ParamToModify.HistoricalDefaultYUnits or 'degC',
-                resample_to_hourly=bool(ParamToModify.HistoricalResampleToHourlyYear),
-                raw_entry=ParameterReadIn.raw_entry,
-            )
-            ParamToModify.HistoricalData = series
-            if isinstance(ParamToModify, listParameter):
-                ParamToModify.value = series.y_canonical.tolist()
-            elif len(series.y_canonical) > 0:
-                ParamToModify.value = float(series.y_canonical[0])
+    # List Parameter and Timeseries List (since it is a child of list)
+    elif isinstance(ParamToModify, listParameter):
+        # if it is a list, replace the list is a text for with a list as a python list
+        pair_vector = parse_container_string_simple(ParameterReadIn.sValue, ParamToModify, model)
+        if pair_vector is None:
+            pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
+        if pair_vector is None:
+            err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a list.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+        # If there is a header in the pair_vector, and it has units, then we need to do the unit conversion
+        header = header_is_present(pair_vector)
+        if header:
+            pair_vector = _try_parse_multiline_list(pair_vector, header, ParamToModify=ParamToModify)
+
+        ParamToModify.value = pair_vector
+        ParamToModify.Provided = True
+        ParamToModify.Valid = True
+
+        # if this is a Time Series, and the length of the series is reuired to be the same as the number of hours in a year,
+        # then check that and interpolate it if not
+        if isinstance(ParamToModify, TimeSeriesParameter) and ParamToModify.ResampleToHourlyYear:
+            if len(ParamToModify.value) != 8760:
+                data = list(map(list, ParamToModify.value))
+                x, y = zip(*data)
+                x,y,notes = resample_to_hourly_year(x,y)
+                ParamToModify.value = list(zip(x, y))
+                model.logger.info(f'Resampling {ParamToModify.Name} with comment {notes} to hourly year (8760 hours) since it has {len(ParamToModify.value)} entries and ResampleToHourlyYear is True')
+
+
+    # Filename Parameter (new)
+    elif isinstance(ParamToModify, filenameParameter):
+        # for a filename, make sure the file exists. The user can also provide a URL, so make sure that is valid.
+        # If they are OK, then just assign the input text string to the Parameter.
+        # When the Parameter is used, the code is responsible for reading the content of the file or URL and using it correctly.
+        if is_existing_file_path(ParameterReadIn.sValue) or url_returns_content(ParameterReadIn.sValue):
+            ParamToModify.value = ParameterReadIn.sValue
             ParamToModify.Provided = True
             ParamToModify.Valid = True
-            model.logger.info(f'Parsed historical XY input for {ParamToModify.Name} with {len(series.y_canonical)} samples')
-            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-            return
-        except Exception:
-            # Fall back to existing scalar/list parsing behavior for backward compatibility
-            pass
-
-    if isinstance(ParamToModify, intParameter):
-        if ParamToModify.AllowPairVectorInput:
-            pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
-            if pair_vector is not None:
-                ParamToModify.value = pair_vector if ParamToModify.PairVectorAsNumpyArray else pair_vector.tolist()
-                ParamToModify.PairVectorValue = pair_vector
-                ParamToModify.Provided = True
-                ParamToModify.Valid = True
-                model.logger.info(f'Parsed pair-vector input for {ParamToModify.Name}: {pair_vector}')
-                model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-                return
-
-        New_val = int(float(ParameterReadIn.sValue))
-
-        if New_val == ParamToModify.DefaultValue:
-            if len(ParamToModify.ErrMessage) > 0:
-                msg = default_parameter_value_message(New_val, ParamToModify.Name, ParamToModify.DefaultValue)
-                model.logger.info(msg)
-
-            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-            return
-
-        if New_val == ParamToModify.value:
-            # We have nothing to change - user provide value that was the same as the
-            # existing value (likely, the default value)
-            return
-
-        if not (New_val in ParamToModify.AllowableRange):
-            # user provided value is out of range, so announce it, leave set to whatever it was set to (default value)
-            err_msg = f"Error: Parameter given ({New_val}) for {ParamToModify.Name} outside of valid range."
+            model.logger.info(f'Validated filename input for {ParamToModify.Name}: {ParameterReadIn.sValue}')
+        else:
+            err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a valid file path or URL.'
             print(err_msg)
             model.logger.fatal(err_msg)
             model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
             raise ValueError(err_msg)
-        else:
-            # All is good
-            ParamToModify.value = New_val  # set the new value
-            ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
-            ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
-    elif isinstance(ParamToModify, floatParameter):
-        if ParamToModify.AllowPairVectorInput:
-            pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
-            if pair_vector is not None:
-                ParamToModify.value = pair_vector if ParamToModify.PairVectorAsNumpyArray else pair_vector.tolist()
-                ParamToModify.PairVectorValue = pair_vector
-                ParamToModify.Provided = True
-                ParamToModify.Valid = True
-                model.logger.info(f'Parsed pair-vector input for {ParamToModify.Name}: {pair_vector}')
-                model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-                return
 
-        New_val = float(ParameterReadIn.sValue)
-
-        if New_val == ParamToModify.DefaultValue:
-            # Warning - the value read in is the same as the default value, making it superfluous
-            # - add a warning and suggestion
-
-            ParamToModify.Provided = True
-            if len(ParamToModify.ErrMessage) > 0:
-                msg = default_parameter_value_message(New_val, ParamToModify.Name, ParamToModify.DefaultValue)
-                model.logger.info(msg)
-
-            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-        if New_val == ParamToModify.value:
-            # We have nothing to change - user provided value that was the same as the
-            # existing value (likely, the default value)
-            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-            return
-
-        if (New_val < float(ParamToModify.Min)) or (New_val > float(ParamToModify.Max)):
-            # user provided value is out of range, so announce it, leave set to whatever it was set to (default value)
-            err_msg = f'Error: Parameter given ({New_val}) for {ParamToModify.Name} outside of valid range.'
-            print(err_msg)
-            model.logger.fatal(err_msg)
-            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-            raise ValueError(err_msg)
-        else:
-            # All is good
-            ParamToModify.value = New_val  # set the new value
-            ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
-            ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
-    elif isinstance(ParamToModify, listParameter):
-        _read_list_parameter(ParameterReadIn, ParamToModify, model)
-
-    elif isinstance(ParamToModify, boolParameter):
-        if ParameterReadIn.sValue == "0":
-            New_val = False
-        if ParameterReadIn.sValue == "false" or ParameterReadIn.sValue == "False" or ParameterReadIn.sValue == "FALSE":
-            New_val = False
-        else:
-            New_val = True
-        if New_val == ParamToModify.value:
-            model.logger.info(f'Complete {str(__name__)}": {sys._getframe().f_code.co_name}')
-            # We have nothing to change - user provide value that was the same as the existing value (likely, the default value)
-            return
-
-        ParamToModify.value = New_val  # set the new value
-        ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
-        ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
-    elif isinstance(ParamToModify, strParameter):
-        New_val = str(ParameterReadIn.sValue)
-        if New_val == ParamToModify.value:
-            # We have nothing to change - user provide value that was the same as the existing value (likely, the default value)
-            return
-        ParamToModify.value = New_val  # set the new value
-        ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
-        ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
+    #Make sure that the units are set to something - if the user provided a value with units,
+    # then the CurrentUnits will have been updated by the ConvertUnits function, but if they provided a value without units,
+    # then we want to make sure that the PreferredUnits is still set to something reasonable (i.e., the default PreferredUnits for that parameter)
+    if ParamToModify.PreferredUnits is None:
+        ParamToModify.PreferredUnits = ParamToModify.CurrentUnits
 
     model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
-
-
-def _read_list_parameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None:
-    """
-    :type ParamToModify: :class:`~geophires_x.Parameter.Parameter`
-    :type model: :class:`~geophires_x.Model.Model`
-    """
-
-    if ' ' in ParamToModify.Name:
-        New_val = float(ParameterReadIn.sValue)
-        # Some list parameters are read in with enumerated parameter names;  in these cases we use the last
-        # character of the description to get the position i.e., "Gradient 1" is position 0.
-        parts = ParameterReadIn.Name.split(' ')
-        position = int(parts[1]) - 1
-        if position >= len(ParamToModify.value):
-            ParamToModify.value.append(New_val)  # we are adding to the list, so use append
-        else:  # we are replacing a value, so pop the value we want to replace, then insert a new one
-            ParamToModify.value.pop(position)
-            ParamToModify.value.insert(position, New_val)
-    else:
-        source_values = _try_read_numeric_list_from_source(ParameterReadIn, ParamToModify, model)
-        if source_values is not None:
-            ParamToModify.value = source_values
-        else:
-            # In an ideal world this would be handled in ParameterEntry such that its sValue and Comment are
-            # correct; however that would only be practical if ParameterEntry had typing information to know
-            # whether to treat text after a second comma as a comment or list entry.
-            parsed_values = []
-            for x in ParameterReadIn.raw_entry.split('--')[0].split(',')[1:]:
-                raw_value = x.strip()
-                if raw_value == '':
-                    continue
-
-                if raw_value.startswith('['):
-                    raw_value = raw_value[1:]
-                if raw_value.endswith(']'):
-                    raw_value = raw_value[:-1]
-                raw_value = raw_value.strip()
-                if raw_value == '':
-                    continue
-
-                if ' ' in raw_value:
-                    raw_value = ConvertUnits(ParamToModify, raw_value, model)
-
-                parsed_values.append(float(raw_value))
-
-            ParamToModify.value = parsed_values
-
-    ParamToModify.Provided = True
-
-    valid = True
-    for i in range(len(ParamToModify.value)):
-        New_val = ParamToModify.value[i]
-        if (New_val < float(ParamToModify.Min)) or (New_val > float(ParamToModify.Max)):
-            msg = (
-                f'Value given ({str(New_val)}) for {ParamToModify.Name} outside of valid range '
-                f'({ParamToModify.Min}–{ParamToModify.Max}).'
-            )
-            print(f'Warning: {msg}')
-            model.logger.warning(msg)
-            valid = False
-
-    ParamToModify.Valid = valid
 
 
 _PAIR_VECTOR_MAX_BYTES = 1_000_000
 
 
 def _parse_csv_pair_line(line: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
-    row = next(csv.reader([line]), None)
+    """
+    Function to parse a single line of text as a pair vector, which is a common format for historical data input.
+    The line should contain two values separated by a comma, which represent the x and y values of the pair vector.
+    The function will try to convert the values to floats and return them as a numpy array. If the line is not in the correct format,
+    or if the values cannot be converted to floats, or if they are not finite numbers, the function will return None.
+
+    :param line: The line of text to parse as a pair vector
+    :type line: str
+    :param param_to_modify: The Parameter that will be modified (assuming it passes validation and conversion) -
+        this is the object that will be modified by this method - see Parameter class for details on the fields in it
+    :type param_to_modify: :class:`~geophires_x.Parameter.Parameter`
+    :param model: The container class of the application, giving access to everything else, including the logger
+    :type model: :class:`~geophires_x.Model.Model`
+    :return: A numpy array containing the x and y values of the pair vector if successful, or None if any step fails
+    :rtype: Optional[np.ndarray]
+    """
+    row = next(csv.reader([line], quotechar='"'), None)
     if row is None or len(row) != 2:
         return None
 
@@ -588,16 +547,27 @@ def _parse_csv_pair_line(line: str, param_to_modify=None, model=None) -> Optiona
     return np.array([x, y], dtype=float)
 
 
+import csv
+from typing import Optional
+import numpy as np
+
 def _try_parse_pair_vector_inline(raw_value: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
     candidate = raw_value.strip()
+
+    # if blank, parsing fails.
     if candidate == '':
         return None
 
-    if candidate.startswith('[') and candidate.endswith(']'):
-        candidate = candidate[1:-1].strip()
+    # Inline parsing is for *one CSV row*. If it contains newlines, it's not inline.
+    # Let caller fall through to file/url parsing, and ultimately scalar parsing.
+    if '\n' in candidate or '\r' in candidate:
+        return None
 
-    return _parse_csv_pair_line(candidate, param_to_modify=param_to_modify, model=model)
-
+    try:
+        return _parse_csv_pair_line(candidate, param_to_modify=param_to_modify, model=model)
+    except csv.Error:
+        # Not a valid single-line CSV row
+        return None
 
 def _pair_vector_from_csv_text(csv_text: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
     for line in csv_text.splitlines():
@@ -610,6 +580,23 @@ def _pair_vector_from_csv_text(csv_text: str, param_to_modify=None, model=None) 
 
 
 def _try_parse_pair_vector_csv_file(path_str: str, param_to_modify=None, model=None) -> Optional[np.ndarray]:
+    """
+    A function to try to read a pair vector from a CSV file, given the path to the file as a string.
+    It checks that the file exists and is not too large, then reads the content of the file and tries to parse it as a pair vector.
+    If any of these steps fail, it returns None.
+    :param path_str: The path to the CSV file as a string
+    :type path_str: str
+    :param param_to_modify: The Parameter that will be modified (assuming it passes validation and conversion) -
+        this is the object that will be modified by this method - see Parameter class for details on the fields in it
+    :type param_to_modify: :class:`~geophires_x.Parameter.Parameter`
+    :param model: The container class of the application, giving access to everything else, including the logger
+    :type model: :class:`~geophires_x.Model.Model`
+    :return: A numpy array containing the pair vector if successful, or None if any step fails
+    :rtype: Optional[np.ndarray]
+    """
+    if path_str.startswith('http'):
+        return None
+
     path = Path(path_str)
     if not path.is_file():
         return None
@@ -811,10 +798,15 @@ def _is_historical_array_candidate(parameter_read_in: ParameterEntry, param_to_m
 def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=None, model=None) -> Optional[np.ndarray]:
     candidates = []
 
-    rhs = _raw_input_rhs(parameter_read_in.raw_entry)
-    if rhs is not None:
-        candidates.append(rhs)
+    #rhs = _raw_input_rhs(parameter_read_in.raw_entry)
+    #if rhs is not None:
+    #    candidates.append(rhs)
 
+    # If the string, make a list out of it
+    if isinstance(parameter_read_in.sValue, str):
+        if len(__import__('re').findall(r'\r\n|\n\r|\r|\n', parameter_read_in.sValue.strip())) > 0:
+            parameter_read_in.sValue = str([float(x) if __import__('re').fullmatch(r'[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?', x) else x
+                      for x in (l.strip() for l in __import__('re').split(r'\r\n|\n|\r', parameter_read_in.sValue.strip())) if x])
     if parameter_read_in.sValue is not None:
         candidates.append(parameter_read_in.sValue.strip())
 
@@ -822,7 +814,14 @@ def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=Non
         if candidate == '':
             continue
 
+        # Try inline parsing first, which is the most restrictive format and least expensive to parse.
+        # that looks like a single line of CSV text, which is the format we expect for inline pair vector input, so try to parse it as that first.
         parsed = _try_parse_pair_vector_inline(candidate, param_to_modify=param_to_modify, model=model)
+        if parsed is not None:
+            return parsed
+
+        # This option is a multiline string
+        parsed = _try_parse_multiline(candidate, ParamToModify=param_to_modify, model=model)
         if parsed is not None:
             return parsed
 
@@ -1029,9 +1028,9 @@ def ConvertUnitsBack(ParamToModify: Parameter, model):
     """
     CovertUnitsBack: Converts units back to what the user specified they as.  It does this so that the user can see them
     in the report as the units they specified. We know that because CurrentUnits contains the desired units
-    :param param: The Parameter that will be modified (assuming it passes validation and conversion) - this is
-        the object that will be modified by this method - see Parameter class for details on the fields in it
-    :type param: :class:`~geophires_x.Parameter.Parameter`
+    :param ParamToModify: The Parameter that will be modified (assuming it passes validation and conversion)
+        - this is the object that will be modified by this method - see Parameter class for details on the fields in it
+    :type ParamToModify: :class:`~geophires_x.Parameter.Parameter`
     :param model: The container class of the application, giving access to everything else, including the logger
     :type model: :class:`~geophires_x.Model.Model`
     :return: None
@@ -1064,7 +1063,6 @@ def ConvertUnitsBack(ParamToModify: Parameter, model):
             model.logger.critical(msg)
 
             raise RuntimeError(msg)
-
 
     model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
 
@@ -1419,7 +1417,6 @@ def ConvertOutputUnits(oparam: OutputParameter, newUnit: Units, model):
             )
 
             print(msg)
-
             model.logger.critical(str(ex))
             model.logger.critical(msg)
 
@@ -1442,3 +1439,131 @@ def coerce_int_params_to_enum_values(parameter_dict:dict[str,Parameter]) -> None
     for param_name, param in parameter_dict.items():
         if isinstance(param, intParameter):
             parameter_dict[param_name].coerce_value_to_enum()
+
+
+
+def default_parameter_value_message(new_val: Any, param_to_modify_name: str, default_value: Any) -> str:
+    return (
+        f'Parameter given ({str(new_val)}) for {param_to_modify_name} is the same as the default value. '
+        f'Consider removing {param_to_modify_name} from the input file unless you wish '
+        f'to change it from the default value of ({str(default_value)})'
+    )
+
+
+def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_modify: Parameter, model):
+    # Process a floatParameter or intParameter in the same way, except the conversion type is different.
+    # :param parameter_read_in: The ParameterEntry that was read in from the input file, which contains the value
+    #       to be processed and put into the Parameter object
+    # :type parameter_read_in: :class:`~geophires_x.Parameter.ParameterEntry`
+    # :param param_to_modify: The Parameter object that we are trying to set the value for, which contains the default value,
+    #     the allowable range, the preferred units, and other information that we need to know in order to process the value
+    #     correctly and validate it
+    # :type param_to_modify: :class:`~geophires_x.Parameter.Parameter`
+    is_simple_conversion = True
+    is_list = False
+    try:
+        # Very first thing - try to convert the value to a float or int, If it is a clean conversion, go on with the validation.
+        # If it is not clean, then it means it could be a list, file, URL that needs processing, or it just needs unit conversion.
+        if isinstance(param_to_modify, intParameter):
+            param_to_modify.value = int(float(parameter_read_in.sValue))
+        else:
+            param_to_modify.value = float(parameter_read_in.sValue)
+    except ValueError:
+        #didn't make a clean conversion, so set a flag
+        is_simple_conversion = False
+
+    if not is_simple_conversion:  # I could do all this is the except clause, but that is not pythonic, so I set a flag and then do it outside the try/except block
+        # test to see if we are working on a parameter that allows extended input. If we are,
+        # and the user has supplied a normal parameter as a list (in the form of a  string), as a filename, or as a URL instead of a value
+        # then process the list, file, or URL and replace the value of the parameter with the content of the list, file, or URL.
+        # it does try to handle the units correctly, if it can.
+        # This allows for more flexible input for parameters, but it also bypasses the normal validation and conversion of the value,
+        # so it should be used with caution and only for parameters where this kind of input is appropriate.
+        # also note that the code that uses this parameter MUST know how to handle the values that were in the list, file, or URL correctly!
+        # we need to do this before the check for a space in the value because if there is a space in the value,
+        # we will try to do unit conversion on it, and that will fail if it is a list, file, or URL instead of a simple value with units.
+        # this also allows us to have the file or URL return a value with units in it,
+        # and then we can do the unit conversion, which is more flexible for the user.
+        if param_to_modify.AllowExtendedInput:
+            if is_numeric_sequence_string(parameter_read_in.sValue):  # must be a simple list without units
+                result = parse_container_string_simple(parameter_read_in.sValue, param_to_modify, model)
+                if result is not None:
+                    param_to_modify.value = result
+                    is_list = True
+                # if it is None, then it did not successfully parse out as a list, so it is likely just a simple value with units,
+                # so we will try to process it as that below
+            elif parameter_read_in.sValue.strip().startswith('http') or is_existing_file_path(parameter_read_in.sValue):
+                param_to_modify.value = get_data_from_file_or_url(parameter_read_in.sValue, param_to_modify, model)
+
+                # the file or URl may have returned a list, so set the flag
+                is_list = is_numeric_sequence_string(str(param_to_modify.value))
+
+        # deal with the case where the user has provided units. That will be indicated by a space in it
+        # the strategy is to look for a space in the value, and if there is one, then we will assume that the value has a unit in it,
+        # and we will try to convert it to the preferred units. If it can, it will replace the value with the converted value
+        # (without the unit, which is now implicit because it is in the preferred units) and then later onn, process it as normal.
+        # If it can't, then it will leave the value as is and we will try to process it as is,
+        # which may lead to an error later on but at least we will have tried to convert it if we could.
+        # lists doesn't have units
+        if not is_list and ' ' in parameter_read_in.sValue:
+            new_str = ConvertUnits(param_to_modify, parameter_read_in.sValue, model)
+            if len(new_str) > 0:
+                parameter_read_in.sValue = new_str
+                if isinstance(param_to_modify, intParameter):
+                    param_to_modify.value = int(float(parameter_read_in.sValue))
+                else:
+                    param_to_modify.value = float(parameter_read_in.sValue)
+        # else:
+        # The value came in without any units
+        # TODO: determine the proper action in this case
+        # (previously, it was assumed that the value must be
+        # using the default PreferredUnits, which was not always
+        # valid and led to incorrect units in the output)
+
+    # Check the valid range for the parameter. If it is outside the valid range, set Valid to False and set the value back to the default value.
+    # Note that now it could be a list of integers or float but that may be too complex to check ranges for.
+    in_range = False
+    if isinstance(param_to_modify, intParameter) and not isinstance(param_to_modify.value, list):
+        # just check to see if it is in the AllowRange list
+        in_range = param_to_modify.value in param_to_modify.AllowableRange
+
+    elif isinstance(param_to_modify, floatParameter) and not isinstance(param_to_modify.value, list):
+        in_range = param_to_modify.Min <= param_to_modify.value <= param_to_modify.Max
+
+    elif isinstance(param_to_modify, intParameter) and isinstance(param_to_modify.value, list):
+        # It is really hard to do a range check on a list because it may be long and complex list with many data types in it,
+        # so we will just skip the range check in that case, and hope that the code that uses this parameter can handle it correctly.
+        # We will log a warning about this.
+        # TODO We want to have range checking for lists, but that is complicated for complex lists.
+        #  We need to check each value in the list against that range but only for the columns we are intereste in.
+        #  That is a more complex implementation, but it would be more robust and would allow us to have range checking for lists.
+        msg = (
+            f'Warning: GEOPHIRES failed to validate the range of the values provided for {param_to_modify.Name} because it could not convert all of the values to int. This may be because you provided a long and complex list with many data types in it. GEOPHIRES will skip the range check for this parameter, and hope that the code that uses this parameter can handle it correctly. If you want to have range checking for this parameter, please provide a simple list of integer values that can be converted to int. The current value provided is: {parameter_read_in.sValue}'
+        )
+        print(msg)
+        model.logger.warning(msg)
+        in_range = True  # set it to true so that we don't fail the validation just because we can't convert to int
+
+    elif isinstance(param_to_modify, floatParameter) and isinstance(param_to_modify.value, list):
+        # It is really hard to do a range check on a list because it may be long and complex list with many data types in it,
+        # so we will just skip the range check in that case, and hope that the code that uses this parameter can handle it correctly.
+        # We will log a warning about this.
+        msg = (
+            f'Warning: GEOPHIRES failed to validate the range of the values provided for {param_to_modify.Name} because it could not convert all of the values to float. This may be because you provided a long and complex list with many data types in it. GEOPHIRES will skip the range check for this parameter, and hope that the code that uses this parameter can handle it correctly. If you want to have range checking for this parameter, please provide a simple list of numeric values that can be converted to float. The current value provided is: {parameter_read_in.sValue}'
+        )
+        print(msg)
+        model.logger.warning(msg)
+        in_range = True  # set it to true so that we don't fail the validation just because we can't convert to float
+
+    if not in_range:
+        param_to_modify.Valid = False
+        err_msg = f"Warning: Parameter given ({parameter_read_in.sValue}) for {param_to_modify.Name} is outside of valid range. Please use a value in the valid range."
+        print(err_msg)
+        model.logger.info(err_msg)
+        param_to_modify.value = param_to_modify.DefaultValue #set it to the default value, but log a warning about it
+        model.logger.info(f'Continuing with default value ({param_to_modify.DefaultValue}) for {param_to_modify.Name}')
+
+    # All is good
+    param_to_modify.Provided = True  # set provided to true because we are using a user provide value now
+    param_to_modify.Valid = True  # set Valid to true because it passed the validation tests
+    model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')

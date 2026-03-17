@@ -369,12 +369,7 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default ambient temperature (15 deg.C)",
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="temperature",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="celsius",
-            HistoricalResampleToHourlyYear=True
+            AllowExtendedInput = True,
         )
         self.plant_lifetime = self.ParameterDict[self.plant_lifetime.Name] = intParameter(
             "Plant Lifetime",
@@ -419,12 +414,6 @@ class SurfacePlant:
             ErrMessage="assume default electricity rate ($0.07/kWh)",
             ToolTipText="Price of electricity to calculate pumping costs in direct-use heat only mode or revenue" +
             " from electricity sales in CHP mode.",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="cost_rate",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="USD/kWh",
-            HistoricalResampleToHourlyYear=True
         )
         self.heat_price = self.ParameterDict[self.heat_price.Name] = floatParameter(
             "Heat Rate",
@@ -436,12 +425,6 @@ class SurfacePlant:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default heat rate ($0.02/kWh)",
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="cost_rate",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="USD/kWh",
-            HistoricalResampleToHourlyYear=True
         )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = listParameter(
             "Annual Heat Demand",
@@ -450,13 +433,7 @@ class SurfacePlant:
             Max=1.8e30,
             UnitType=Units.NONE,
             ErrMessage="assume default annual heat demand profile (none)",
-            ToolTipText="Historical annual heating demand profile",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="generic",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="",
-            HistoricalResampleToHourlyYear=True
+            ToolTipText="Historical annual heating demand profile"
         )
         self.HeatDemand = self.HeatingDemand
         self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = listParameter(
@@ -467,12 +444,6 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default annual cooling demand profile (none)",
             ToolTipText="Historical annual cooling demand profile",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="generic",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="",
-            HistoricalResampleToHourlyYear=True
         )
         self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = listParameter(
             "Annual Electricity Demand",
@@ -480,14 +451,8 @@ class SurfacePlant:
             Min=-1.8e30,
             Max=1.8e30,
             UnitType=Units.NONE,
-            ErrMessage="assume default annual electrcity demand profile (none)",
-            ToolTipText="Historical annual electrcity demand profile",
-            AllowHistoricalArrayInput=True,
-            HistoricalXDimension="time",
-            HistoricalYDimension="generic",
-            HistoricalDefaultXUnits="hour",
-            HistoricalDefaultYUnits="",
-            HistoricalResampleToHourlyYear=True
+            ErrMessage="assume default annual electricity demand profile (none)",
+            ToolTipText="Historical annual electricity demand profile",
         )
         self.electricitydemand = self.ElectricityDemand
         self.construction_years = self.ParameterDict[self.construction_years.Name] = intParameter(
