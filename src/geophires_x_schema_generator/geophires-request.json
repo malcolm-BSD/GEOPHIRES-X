@@ -1296,6 +1296,33 @@
       "minimum": 0.0,
       "maximum": 1.0
     },
+    "Annual Heat Demand": {
+      "description": "Historical annual heating demand profile",
+      "type": "array",
+      "units": null,
+      "category": "Surface Plant",
+      "default": [],
+      "minimum": -1.8e+30,
+      "maximum": 1.8e+30
+    },
+    "Annual Cooling Demand": {
+      "description": "Historical annual cooling demand profile",
+      "type": "array",
+      "units": null,
+      "category": "Surface Plant",
+      "default": [],
+      "minimum": -1.8e+30,
+      "maximum": 1.8e+30
+    },
+    "Annual Electricity Demand": {
+      "description": "Historical annual electricity demand profile",
+      "type": "array",
+      "units": null,
+      "category": "Surface Plant",
+      "default": [],
+      "minimum": -1.8e+30,
+      "maximum": 1.8e+30
+    },
     "Construction Years": {
       "description": "Number of years spent in construction (assumes whole years, no fractions). Capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years.",
       "type": "integer",
