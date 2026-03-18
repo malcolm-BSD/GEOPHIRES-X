@@ -1,9 +1,8 @@
-import sys
-from .Parameter import strParameter
+from .Parameter import filenameParameter
 from .Units import *
 import geophires_x.Model as Model
 from .Reservoir import Reservoir
-
+from GeoPHIRESUtils import get_data_from_file_or_url_as_string
 
 class UPPReservoir(Reservoir):
     """
@@ -35,7 +34,7 @@ class UPPReservoir(Reservoir):
         # these parameters to your class.
         # specific to this class:
 
-        self.filenamereservoiroutput = self.ParameterDict[self.filenamereservoiroutput.Name] = strParameter(
+        self.filenamereservoiroutput = self.ParameterDict[self.filenamereservoiroutput.Name] = filenameParameter(
             "Reservoir Output File Name",
             value='ReservoirOutput.txt',
             UnitType=Units.NONE,
@@ -79,9 +78,10 @@ class UPPReservoir(Reservoir):
         super().Calculate(model)    # run calculations for the parent.
 
         model.reserv.Tresoutput.value[0] = model.reserv.Trock.value
+        contentprodtemp = []
         try:
-            with open(model.reserv.filenamereservoiroutput.value, encoding='UTF-8') as f:
-                contentprodtemp = f.readlines()
+            contentprodtemp = get_data_from_file_or_url_as_string(model.reserv.filenamereservoiroutput.value).split('\n')
+            contentprodtemp = [s for s in contentprodtemp if s.strip()]
         except:
             model.logger.critical('Error: GEOPHIRES could not read reservoir output file ('
                                   + model.reserv.filenamereservoiroutput.value+') and will abort simulation.')
