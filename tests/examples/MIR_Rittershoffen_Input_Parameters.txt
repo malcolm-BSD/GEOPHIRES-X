@@ -1,0 +1,43 @@
+# Rittershoffen Geothermal Direct-Use Example Problem using a Linear Heat Sweep Model.
+# This exercise considers an EGS reservoir at 2.5km depth.
+# Ramey's model is applied to simulate production wellbore heat losses. The heat is used in direct-use heat application
+
+# ***Subsurface Technical Parameters***
+# *************************************
+Reservoir Model, 2, -- -Linear Heat Sweep Model
+Reservoir Depth, 2.5, -- -[km] ** published as "Reservoir depth: 2500 m"
+Number of Segments, 1, -- -[-]
+Gradient 1, 66, -- -[deg.C/km] **BHT published as "Bottom hole temperature: 177C"; therefore the gradient must be 177-12 = (gradient)/2.5
+Production Wellhead Pressure, 2500, kPa ** published as "Pressurized geothermal loop (25 bar)"
+Number of Production Wells, 1, -- -[-]  **GRT-2
+Number of Injection Wells, 1, -- -[-]  **GRT-1
+Production Well Diameter, 8.5, -- -[inch] ** published as 8.5 in diagram
+Injection Well Diameter, 8.5, -- -[inch] ** published as 8.5 in diagram
+Ramey Production Wellbore Model, 1, -- -Should be 0 (disable) or 1(enable)
+Production Flow Rate per Well, 77.9, -- -[kg/s]  ** published as "Average production flowrate: 280 m3/h"
+Fracture Shape, 2, -- -Should be 1 2 3 or 4. See manual for option details
+Fracture Height, 300, -- -[m]
+Reservoir Volume Option, 2, -- -Should be 1 2 3 or 4. See manual for option details
+Reservoir Impedance, 0.07, -- -[GPa*s/m3]  ** published as "pumping power 550 kW"
+Injection Temperature, 70, -- -[deg.C] ** published as "40°C instead of 70°C" but 40°C is produces too much energy
+Reservoir Density, 2600, -- -[kg/m3]  ** published as "rock density: Fractured sandstone and Carboniferous granite"
+
+# ***Surface Technical Parameters***
+# **********************************
+End-Use Option, 2, -- -Direct Use Heat
+Utilization Factor, .95, -- -[-] ** published as "Over 95% of availability"
+Surface Temperature, 12, -- -[deg.C]  ** From the web, the mean annual temperature is 12C
+Ambient Temperature, 12, -- -[deg.C] ** same as surface temperature
+
+# ***Financial Parameters***
+# **************************
+Construction Years, 4, -- -[-]  ** from financial report
+
+
+RESULTS To look for:
+Bottom hole temperature (BHT): 177°C ** 177°C
+Max heat capacity: 27.5 MWth ** 30.65 MWth
+heat supplied: 180 GWh ** 196.967 GWh
+Well head temperature: 168°C ** 151.4°C
+Total plant electrical consumption: 550 kW  ** .54 MW
+funding needed: €55 mil  ** 24.57 MUSD
