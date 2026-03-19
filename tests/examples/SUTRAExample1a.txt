@@ -4,9 +4,9 @@
 # ***Subsurface technical parameters***
 # *************************************
 Reservoir Model,7,                        			---Reads in SUTRA result for seasonal reservoir thermal energy storage
-SUTRA Annual Heat File Name,Examples/annual_heat.csv,			---SUTRA file with heat stored, heat supplied and efficiency for each year
-SUTRA Heat Budget File Name,Examples/heat_budget.csv,			---SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime
-SUTRA Balance and Storage Well Output File Name,Examples/balance_and_storage_well_output.csv,	---SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime
+SUTRA Annual Heat File Name,https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.9/tests/assets/params/annual_heat.csv,			---SUTRA file with heat stored, heat supplied and efficiency for each year
+SUTRA Heat Budget File Name,https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.9/tests/assets/params/heat_budget.csv,			---SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime
+SUTRA Balance and Storage Well Output File Name,https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.9/tests/assets/params/balance_and_storage_well_output.csv,	---SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime
 Number of Production Wells,1,            			---[-]
 Number of Injection Wells,1,            			---[-]
 Reservoir Depth,0.6,                   				---[km]
