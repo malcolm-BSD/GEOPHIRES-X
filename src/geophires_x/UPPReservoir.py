@@ -2,7 +2,7 @@ from .Parameter import filenameParameter
 from .Units import *
 import geophires_x.Model as Model
 from .Reservoir import Reservoir
-from GeoPHIRESUtils import get_data_from_file_or_url_as_string
+from geophires_x.GeoPHIRESUtils import get_data_from_file_or_url_as_string
 
 class UPPReservoir(Reservoir):
     """
