@@ -525,17 +525,13 @@ def UtilEff_func(temperature_degC: float) -> float:
     return util_eff
 
 
-def read_input_file(return_dict_1, logger=None, input_file_name=None):
+def read_input_file(logger=None, input_file_name=None) -> dict:
     """
     Read input file and return a dictionary of parameters
-    :param return_dict_1: dictionary of parameters
     :param logger: logger object
     :param input_file_name: name of input file
     :return: dictionary of parameters
     :rtype: dict
-
-    FIXME modifies dict instead of returning it - it should do what the doc says it does and return a dict instead,
-      relying on mutation of parameters is Bad
     """
     from geophires_x.Parameter import ParameterEntry
 
@@ -543,6 +539,7 @@ def read_input_file(return_dict_1, logger=None, input_file_name=None):
         logger = logging.getLogger(__name__)
 
     logger.info(f'Init {__name__}')
+    return_dict_1 = {}
 
     # Specify path of input file - it will always be the first command line argument.
     # If it doesn't exist, simply run the default model without any inputs
@@ -554,7 +551,14 @@ def read_input_file(return_dict_1, logger=None, input_file_name=None):
             input_file_name = sys.argv[1]
             logger.warning(f'Using input file from sys.argv: {input_file_name}')
 
-    if input_file_name:
+    if not input_file_name:
+        logger.warning(
+            'No input parameter file specified on the command line. '
+            'Proceeding with default parameter run...'
+        )
+        return return_dict_1
+
+    if input_file_name and not input_file_name.startswith('http'):
         if not exists(input_file_name):
             raise FileNotFoundError(
                 f'Unable to read input file: File {input_file_name} not found'
@@ -564,60 +568,62 @@ def read_input_file(return_dict_1, logger=None, input_file_name=None):
             f'Found filename: {input_file_name}. Proceeding with run using input parameters from that file'
         )
 
-        with open(input_file_name, encoding='utf-8') as f:
-            content = f.readlines()
+    # make it possible to read the parameters via a physical file or a URL.
+    content = get_data_from_file_or_url_as_string(input_file_name).splitlines()
 
-        # successful read of data into list.  Now make a dictionary with all the parameter entries.
-        # Index will be the unique name of the parameter.
-        # The value will be a "ParameterEntry" structure, with name, value (optionally with units), optional comment
-        for raw_line in content:
-            line = raw_line.strip()
-            if any([line.startswith(x) for x in ['#', '--', '*']]):
-                # skip any line that starts with "#" - # will be the comment parameter
-                continue
-
-            # now deal with the comma-delimited parameters
-            # split on a comma - that should give us major divisions,
-            # Could be:
-            # 1) Desc and Val (2 elements),
-            # 2) Desc and Val with Unit (2 elements, Unit split from Val by space),
-            # 3) Desc, Val, and comment (3 elements),
-            # 4) Desc, Val with Unit, Comment (3 elements, Unit split from Val by space)
-            # If there are more than 3 commas, we are going to assume it is parseable,
-            # and that the commas are in the comment
-            elements = parse_param_line(line)
-
-            # Skip blank/comment/invalid lines (parser returns empty strings)
-            if not elements[0]:
-                continue
-
-            if len(elements) < 2:
-                # not enough commas, so must not be data to parse
-                continue
-
-                # we have good data, so make initial assumptions
-            description = elements[0].strip()
-            s_val = elements[1].strip()
-            comment = ""  # cases 1 & 2 - no comment
-            if len(elements) == 3:  # cases 3 & 4
-                comment = elements[2].strip()
-
-            if len(elements) > 3:
-                # too many commas, so assume they are in comments
-                for i in range(2, len(elements), 1):
-                    comment = comment + elements[i]
-
-            # done with parsing, now create the object and add to the dictionary
-            p_entry = ParameterEntry(description, s_val, comment, line)
-            return_dict_1[description] = p_entry  # make the dictionary element
-
-    else:
+    if not content:
         logger.warning(
-            'No input parameter file specified on the command line. '
+            'No contents in the input parameter file specified on the command line. '
             'Proceeding with default parameter run...'
         )
+        return return_dict_1
+
+    # successful read of data into list.  Now make a dictionary with all the parameter entries.
+    # Index will be the unique name of the parameter.
+    # The value will be a "ParameterEntry" structure, with name, value (optionally with units), optional comment
+    for raw_line in content:
+        line = raw_line.strip()
+        if any([line.startswith(x) for x in ['#', '--', '*']]):
+            # skip any line that starts with "#" - # will be the comment parameter
+            continue
+
+        # now deal with the comma-delimited parameters
+        # split on a comma - that should give us major divisions,
+        # Could be:
+        # 1) Desc and Val (2 elements),
+        # 2) Desc and Val with Unit (2 elements, Unit split from Val by space),
+        # 3) Desc, Val, and comment (3 elements),
+        # 4) Desc, Val with Unit, Comment (3 elements, Unit split from Val by space)
+        # If there are more than 3 commas, we are going to assume it is parseable,
+        # and that the commas are in the comment
+        elements = parse_param_line(line)
+
+        # Skip blank/comment/invalid lines (parser returns empty strings)
+        if not elements[0]:
+            continue
+
+        if len(elements) < 2:
+            # not enough commas, so must not be data to parse
+            continue
+
+            # we have good data, so make initial assumptions
+        description = elements[0].strip()
+        s_val = elements[1].strip()
+        comment = ""  # cases 1 & 2 - no comment
+        if len(elements) == 3:  # cases 3 & 4
+            comment = elements[2].strip()
+
+        if len(elements) > 3:
+            # too many commas, so assume they are in comments
+            for i in range(2, len(elements), 1):
+                comment = comment + elements[i]
+
+        # done with parsing, now create the object and add to the dictionary
+        p_entry = ParameterEntry(description, s_val, comment, line)
+        return_dict_1[description] = p_entry  # make the dictionary element
 
     logger.info(f'Complete {__name__}: {sys._getframe().f_code.co_name}')
+    return return_dict_1
 
 
 class _EnhancedJSONEncoder(json.JSONEncoder):
