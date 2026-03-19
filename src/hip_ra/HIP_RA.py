@@ -604,7 +604,7 @@ class HIP_RA:
         # that they want to change from the default.
         # we do this as soon as possible because what we instantiate may depend on settings in this file
 
-        read_input_file(self.InputParameters, logger=self.logger)
+        self.InputParameters = read_input_file(logger=self.logger)
 
         # Deal with all the parameter values that the user has provided.  They should really only provide values
         # that they want to change from the default values, but they can provide a value that is already set because

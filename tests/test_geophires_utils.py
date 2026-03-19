@@ -532,9 +532,8 @@ class TestEnthalpyWater(unittest.TestCase):
 
 class GeophiresUtilsTestCase(BaseTestCase):
     def test_input_comments(self):
-        d = {}
-        GeoPHIRESUtils.read_input_file(
-            d, input_file_name=Path(self._get_test_file_path('geophires_x_client_tests/input_comments.txt')).absolute()
+        d = GeoPHIRESUtils.read_input_file(
+            input_file_name=Path(self._get_test_file_path('geophires_x_client_tests/input_comments.txt')).absolute()
         )
         self.assertIsNotNone(d)
         self.assertDictEqual(
