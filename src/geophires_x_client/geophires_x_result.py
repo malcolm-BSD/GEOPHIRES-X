@@ -248,6 +248,7 @@ class GeophiresXResult:
                 'Average Round-Trip Efficiency',
             ],
             'CAPITAL COSTS (M$)': [
+                'Exploration costs',
                 'Drilling and completion costs',
                 'Drilling and completion costs per well',
                 'Drilling and completion costs per production well',
@@ -267,14 +268,16 @@ class GeophiresXResult:
                 'District Heating System Cost',
                 'Field gathering system costs',
                 'Total surface equipment costs',
-                'Exploration costs',
                 'Investment Tax Credit',
+                'One-time Flat License Fees Etc',
+                'Other Incentives',
+                'One-time Grants Etc',
+                'Total Add-on CAPEX',
                 'Overnight Capital Cost',
                 # Displayed for economic models that treat inflation costs as capital costs (SAM-EM)
                 'Inflation costs during construction',
                 'Royalty supplemental payments during construction',
                 'Interest during construction',
-                'Total Add-on CAPEX',
                 'Total capital costs',
                 'Annualized capital costs',
                 # AGS/CLGS

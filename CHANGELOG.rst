@@ -4,8 +4,17 @@ Changelog
 
 GEOPHIRES v3 (2023-2026)
 ------------------------
+
+3.12
+^^^^
+
+3.12: `SAM Economic Models Carbon Credit Support <https://github.com/NatLabRockies/GEOPHIRES-X/pull/474>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.12.1>`__ | `documentation <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#carbon-revenue>`__ | **Changed:** Note that inputs with SAM Economic Models and carbon price/credit parameters will now calculate carbon revenue instead of ignoring carbon parameters. See documentation for details.
+
+
 3.11
 ^^^^
+
+3.11.27: `Data Center example; Output additional CAPEX modifiers <https://github.com/NatLabRockies/GEOPHIRES-X/pull/474>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.27>`__
 
 3.11.25: `Royalty Rate Schedule & Royalty Supplemental Payments <https://github.com/NatLabRockies/GEOPHIRES-X/pull/472>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.25>`__ |  `documentation <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#royalties>`__ | **Changed:** The calculation for Royalty Holder Average Annual Revenue now averages over the entire project timeline (construction + operations) rather than just the operational phase. For projects with multi-year construction periods, this will result in a lower average value than in previous versions. See documentation for further details.
 

@@ -391,6 +391,11 @@
     "CAPITAL COSTS (M$)": {
       "type": "object",
       "properties": {
+        "Exploration costs": {
+          "type": "number",
+          "description": "Exploration cost. The built-in exploration cost correlation considers drilling of a slim-hole well at 60% of the cost of a regular well, $1M for geophysical and field work, plus 15% contingency plus 12% indirect costs. Provide Exploration Capital Cost Adjustment Factor to multiply the default correlation. Provide Exploration Capital Cost to override the default correlation and set your own cost.",
+          "units": "MUSD"
+        },
         "Drilling and completion costs": {
           "type": "number",
           "description": "Wellfield cost. Includes total drilling and completion cost of all injection and production wells and laterals, plus indirect costs (default: 5%).",
@@ -442,14 +447,17 @@
           "units": "MUSD"
         },
         "Total surface equipment costs": {},
-        "Exploration costs": {
-          "type": "number",
-          "description": "Exploration cost. The built-in exploration cost correlation considers drilling of a slim-hole well at 60% of the cost of a regular well, $1M for geophysical and field work, plus 15% contingency plus 12% indirect costs. Provide Exploration Capital Cost Adjustment Factor to multiply the default correlation. Provide Exploration Capital Cost to override the default correlation and set your own cost.",
-          "units": "MUSD"
-        },
         "Investment Tax Credit": {
           "type": "number",
           "description": "Investment Tax Credit Value. Represents the total undiscounted ITC sum. For SAM Economic Models, this accounts for the standard Year 1 Federal ITC as well as any applicable State ITCs or multi-year credit schedules.",
+          "units": "MUSD"
+        },
+        "One-time Flat License Fees Etc": {},
+        "Other Incentives": {},
+        "One-time Grants Etc": {},
+        "Total Add-on CAPEX": {
+          "type": "number",
+          "description": "AddOn CAPEX Total",
           "units": "MUSD"
         },
         "Overnight Capital Cost": {
@@ -470,11 +478,6 @@
         "Interest during construction": {
           "type": "number",
           "description": "Interest During Construction (IDC) is the total accumulated interest incurred on debt during the construction phase. This cost is capitalized (added to the loan principal and total installed cost) rather than paid in cash.",
-          "units": "MUSD"
-        },
-        "Total Add-on CAPEX": {
-          "type": "number",
-          "description": "AddOn CAPEX Total",
           "units": "MUSD"
         },
         "Total capital costs": {

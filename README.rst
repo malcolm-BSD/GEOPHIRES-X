@@ -58,9 +58,9 @@ Free software: `MIT license <LICENSE>`__
     :alt: Supported implementations
     :target: https://pypi.org/project/geophires-x
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/softwareengineerprogrammer/GEOPHIRES-X/v3.11.25.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/softwareengineerprogrammer/GEOPHIRES-X/v3.12.1.svg
     :alt: Commits since latest release
-    :target: https://github.com/softwareengineerprogrammer/GEOPHIRES-X/compare/v3.11.25...main
+    :target: https://github.com/softwareengineerprogrammer/GEOPHIRES-X/compare/v3.12.1...main
 
 .. |docs| image:: https://readthedocs.org/projects/GEOPHIRES-X/badge/?style=flat
     :target: https://softwareengineerprogrammer.github.io/GEOPHIRES
@@ -236,6 +236,10 @@ Example-specific web interface deeplinks are listed in the Link column.
      - `example13.txt <tests/examples/example13.txt>`__
      - `.out <tests/examples/example13.out>`__
      - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example13>`__
+   * - Example 14: Data Center
+     - `example14_data-center.txt <tests/examples/example14_data-center.txt>`__
+     - `.out <tests/examples/example14_data-center.out>`__
+     - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example14_data-center>`__
    * - CLGS: Coaxial sCO2: Heat
      - `[...]Coaxial_sCO2_heat.txt <tests/examples/Beckers_et_al_2023_Tabulated_Database_Coaxial_sCO2_heat.txt>`__
      - `.out <tests/examples/Beckers_et_al_2023_Tabulated_Database_Coaxial_sCO2_heat.out>`__
@@ -340,6 +344,10 @@ Example-specific web interface deeplinks are listed in the Link column.
      - `example_SAM-single-owner-PPA-5.txt <tests/examples/example_SAM-single-owner-PPA-5.txt>`__
      - `.out <tests/examples/example_SAM-single-owner-PPA-5.out>`__
      - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example_SAM-single-owner-PPA-5>`__
+   * - SAM Single Owner PPA: Carbon Revenue
+     - `example_SAM-single-owner-PPA-6_carbon-revenue.txt <tests/examples/example_SAM-single-owner-PPA-6_carbon-revenue.txt>`__
+     - `.out <tests/examples/example_SAM-single-owner-PPA-6_carbon-revenue.out>`__
+     - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example_SAM-single-owner-PPA-6_carbon-revenue>`__
 .. raw:: html
 
    <embed>
