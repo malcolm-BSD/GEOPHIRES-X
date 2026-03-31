@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 import pandas as pd
 from geophires_x.Outputs import Outputs
 from geophires_x.OutputsUtils import OutputTableItem
@@ -12,6 +13,14 @@ class OutputsAddOns(Outputs):
     """
     Class to handle output of the AddOns values
     """
+    @staticmethod
+    def _build_price_profile(price_value, construction_years: int, plant_lifetime: int) -> list[float]:
+        if isinstance(price_value, Sequence) and not isinstance(price_value, (str, bytes)):
+            operating_profile = list(price_value)
+        else:
+            operating_profile = [price_value] * plant_lifetime
+        return ([0.0] * construction_years) + operating_profile
+
     def PrintOutputs(self, model) -> tuple[pd.DataFrame, list]:
 
         """
@@ -65,9 +74,10 @@ class OutputsAddOns(Outputs):
 
                     ae = model.addeconomics
                     construction_years = model.surfaceplant.construction_years.value
-                    project_years = construction_years + model.surfaceplant.plant_lifetime.value
-                    elec_price_profile = ([0.0] * construction_years) + ae.ElecPrice.value
-                    heat_price_profile = ([0.0] * construction_years) + ae.HeatPrice.value
+                    plant_lifetime = model.surfaceplant.plant_lifetime.value
+                    project_years = construction_years + plant_lifetime
+                    elec_price_profile = self._build_price_profile(ae.ElecPrice.value, construction_years, plant_lifetime)
+                    heat_price_profile = self._build_price_profile(ae.HeatPrice.value, construction_years, plant_lifetime)
 
                     # Build the data frame to hold the SDAC result profile
                     addon_df = pd.DataFrame()
