@@ -614,7 +614,10 @@ class HIP_RA_X:
         """
         self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
-        self.InputParameters = read_input_file(logger=self.logger)
+        read_dict = read_input_file(logger=self.logger)
+
+        # append the read_dict to what is already there
+        self.InputParameters = self.InputParameters | read_dict
 
         if len(self.InputParameters) > 0:
             for item in self.ParameterDict.items():

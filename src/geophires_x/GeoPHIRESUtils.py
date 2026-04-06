@@ -558,7 +558,7 @@ def read_input_file(logger=None, input_file_name=None) -> dict:
         )
         return return_dict_1
 
-    if input_file_name and not input_file_name.startswith('http'):
+    if input_file_name and not str(input_file_name).startswith('http'):
         if not exists(input_file_name):
             raise FileNotFoundError(
                 f'Unable to read input file: File {input_file_name} not found'
@@ -569,7 +569,7 @@ def read_input_file(logger=None, input_file_name=None) -> dict:
         )
 
     # make it possible to read the parameters via a physical file or a URL.
-    content = get_data_from_file_or_url_as_string(input_file_name).splitlines()
+    content = get_data_from_file_or_url_as_string(str(input_file_name)).splitlines()
 
     if not content:
         logger.warning(
@@ -1308,7 +1308,7 @@ def get_data_from_file_or_url_as_string(source: str) -> str:
 
     else:
         # Read the whole file as text, split into lines, and strip BOM if present (utf-8-sig)
-        if not source.startswith("http"):
+        if not str(source).startswith("http"):
             raw_text = Path(source).read_text(encoding="utf-8-sig")
         else:
             return ""

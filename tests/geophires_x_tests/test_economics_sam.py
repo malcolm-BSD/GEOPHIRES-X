@@ -593,7 +593,7 @@ class EconomicsSamTestCase(BaseTestCase):
 
         self.assertGreater(add_ons_result.result["CAPITAL COSTS (M$)"]["Total Add-on CAPEX"]["value"], 0)
 
-        self.assertGreater(
+        self.assertEqual(
             add_ons_result.result["OPERATING AND MAINTENANCE COSTS (M$/yr)"]["Total operating and maintenance costs"][
                 "value"
             ],
