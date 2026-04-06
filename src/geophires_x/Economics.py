@@ -550,11 +550,11 @@ def CalculateLCOELCOHLCOC(econ, model: Model) -> tuple[float, float, float]:
         elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
             PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
             HeatPumpElecCosts = model.surfaceplant.heat_pump_electricity_kwh_used.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            NPV_oandm = np.sum((econ.Coam.value + PumpingCosts + HeatPumpElecCosts) * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOH = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(
-                model.surfaceplant.HeatkWhProduced.value * inflation_vector * discount_vector) * 1E8
-            LCOH = LCOH * 2.931  # $/MMBTU
+            NPVoandm = np.sum((self.Coam.value + PumpingCosts + HeatPumpElecCosts) * inflationvector * discountvector)
+            NPVgrt = self.GTR.value / (1 - self.GTR.value) * (NPVcap + NPVoandm + NPVfc + NPVit - NPVitc)
+            LCOH = (NPVcap + NPVoandm + NPVfc + NPVit + NPVgrt - NPVitc) / np.sum(
+                model.surfaceplant.HeatkWhProduced.value * inflationvector * discountvector) * 1E8
+            LCOH = self.LCOH.value * 2.931  # $/MMBTU
 
         elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
             PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
