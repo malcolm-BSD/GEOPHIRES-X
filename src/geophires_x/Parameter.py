@@ -376,6 +376,9 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         # and that they can remove it from the input file if they want to use the default value
         model.logger.info(default_parameter_value_message(ParameterReadIn.sValue, ParamToModify.Name, ParamToModify.DefaultValue))
         ParamToModify.value = ParamToModify.DefaultValue
+        # Preserve the fact that the user explicitly supplied this parameter even if it matches the default.
+        ParamToModify.Provided = True
+        ParamToModify.Valid = True
         return
 
     # If the ParamToModify allows ExtendedInput
