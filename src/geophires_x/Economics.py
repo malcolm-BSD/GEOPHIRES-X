@@ -24,6 +24,7 @@ from geophires_x.Parameter import intParameter, floatParameter, OutputParameter,
 from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from geophires_x.Units import *
 from geophires_x.WellBores import calculate_total_drilling_lengths_m
+from geophires_x.xlcoe import calculate_xlcoe_outputs
 
 
 def calculate_cost_of_one_vertical_well(model: Model, depth_m: float, well_correlation: int,
@@ -982,6 +983,27 @@ class Economics:
                         "Discount Rate is synonymous with Fixed Internal Rate. If one is provided, the other's value "
                         "will be automatically set to the same value."
         )
+        self.social_discountrate = self.ParameterDict[self.social_discountrate.Name] = floatParameter(
+            "Social Discount Rate",
+            DefaultValue=discount_rate_default_val,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.PERCENT,
+            PreferredUnits=PercentUnit.TENTH,
+            CurrentUnits=PercentUnit.TENTH,
+            ErrMessage=f'assume default social discount rate ({discount_rate_default_val})',
+            ToolTipText="Social discount rate for XLCOE Market + Social calculations. "
+                        "This parameter is ignored unless XLCOE calculations are enabled."
+        )
+        self.DoXLCOECalculations = self.ParameterDict[self.DoXLCOECalculations.Name] = boolParameter(
+            "Do XLCOE Calculations",
+            DefaultValue=False,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default: no XLCOE calculations",
+            ToolTipText="Enable Extended Levelized Cost of Electricity (XLCOE) calculations. "
+                        "Phase 1 scaffolding exposes the interface but does not yet implement the XLCOE equations."
+        )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
                                                              "Schedule is invalid and will result in an error.")
@@ -1927,6 +1949,20 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             ToolTipText="For SAM economic models, this is the nominal LCOE value (as opposed to real)."
         )
+        self.XLCOE_Market = self.OutputParameterDict[self.XLCOE_Market.Name] = OutputParameter(
+            Name="XLCOE_Market",
+            display_name='Extended Electricity Breakeven Price (XLCOE Market)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.XLCOE_MarketSocial = self.OutputParameterDict[self.XLCOE_MarketSocial.Name] = OutputParameter(
+            Name="XLCOE_MarketSocial",
+            display_name='Extended Electricity Breakeven Price (XLCOE Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
         self.LCOH = self.OutputParameterDict[self.LCOH.Name] = OutputParameter(
             Name="LCOH",
             display_name='Direct-Use heat breakeven price (LCOH)',
@@ -2848,6 +2884,7 @@ class Economics:
 
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
+        self.XLCOE_Market.value, self.XLCOE_MarketSocial.value = calculate_xlcoe_outputs(self, model)
 
         # https://github.com/NREL/GEOPHIRES-X/issues/232
         self.jobs_created.value = round(

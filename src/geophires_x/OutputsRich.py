@@ -100,6 +100,15 @@ def print_outputs_rich(
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
+        if model.economics.DoXLCOECalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
+                                model.economics.XLCOE_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_MarketSocial.value),
+                                model.economics.XLCOE_MarketSocial.CurrentUnits.value))
     elif model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
@@ -118,6 +127,15 @@ def print_outputs_rich(
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
+        if model.economics.DoXLCOECalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
+                                model.economics.XLCOE_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_MarketSocial.value),
+                                model.economics.XLCOE_MarketSocial.CurrentUnits.value))
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
