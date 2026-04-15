@@ -4,11 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from geophires_x.formula_evaluator import evaluate_formula_expression
 from geophires_x.formula_evaluator import resolve_parameter_formulas
 from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
+from geophires_x.Parameter import ParameterEntry
+from geophires_x.Parameter import ReadParameter
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import intParameter
 from geophires_x.Parameter import listParameter
@@ -25,6 +28,62 @@ from tests.base_test_case import BaseTestCase
 
 
 class ParameterTestCase(BaseTestCase):
+    def test_evaluate_formula_expression_supports_numeric_literals(self):
+        result = evaluate_formula_expression('42.5', lambda _: None)
+
+        self.assertEqual(42.5, result)
+
+    def test_evaluate_formula_expression_supports_arithmetic_operators_and_parentheses(self):
+        result = evaluate_formula_expression('(2 + 3) * 4 - 5 / (1 + 1)', lambda _: None)
+
+        self.assertAlmostEqual(17.5, result)
+
+    def test_evaluate_formula_expression_supports_small_set_of_math_functions(self):
+        result = evaluate_formula_expression(
+            'sqrt(81) + abs(-4) + max(1, 5, 3) - min(2, 7) + round(2.49)',
+            lambda _: None,
+        )
+
+        self.assertEqual(18.0, result)
+
+    def test_evaluate_formula_expression_supports_named_variables_from_symbol_table(self):
+        symbols = {
+            'number_of_injection_wells': 2,
+            'well_spacing': 1000,
+        }
+
+        result = evaluate_formula_expression(
+            'number_of_injection_wells * 1.5 + well_spacing / 1000',
+            lambda name: symbols[name],
+        )
+
+        self.assertEqual(4.0, result)
+
+    def test_read_parameter_rejects_formula_when_parameter_does_not_allow_formula_input(self):
+        model = self._new_model()
+        param = intParameter(
+            'Number of Injection Wells',
+            DefaultValue=2,
+            AllowableRange=list(range(201)),
+            UnitType=Units.NONE,
+        )
+
+        with self.assertRaises(ValueError) as exc:
+            ReadParameter(
+                ParameterEntry(Name='Number of Injection Wells', sValue='= number_of_production_wells'),
+                param,
+                model,
+            )
+
+        self.assertIn('does not allow formula input', str(exc.exception))
+        self.assertIn('Number of Injection Wells', str(exc.exception))
+
+    def test_evaluate_formula_expression_rejects_non_finite_values(self):
+        with self.assertRaises(ValueError) as exc:
+            evaluate_formula_expression('1e309', lambda _: None)
+
+        self.assertIn('did not evaluate to a finite number', str(exc.exception))
+
     def test_number_of_production_wells_allows_formula_from_number_of_injection_wells(self):
         with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
             tmp.write('Number of Injection Wells, 2\n')
@@ -100,6 +159,31 @@ class ParameterTestCase(BaseTestCase):
 
         self.assertIn('Number of Production Wells', str(exc.exception))
         self.assertIn('Circular formula dependency detected', str(exc.exception))
+
+    def test_parameter_formula_resolved_value_fails_min_max_validation(self):
+        nprod = intParameter(
+            'Number of Production Wells',
+            DefaultValue=2,
+            AllowableRange=list(range(1, 5)),
+            UnitType=Units.NONE,
+            AllowFormulaInput=True,
+            FormulaExpression='number_of_injection_wells * 3',
+        )
+        ninj = intParameter(
+            'Number of Injection Wells',
+            value=2,
+            DefaultValue=2,
+            AllowableRange=list(range(201)),
+            UnitType=Units.NONE,
+        )
+
+        model = self._new_model()
+
+        with self.assertRaises(ValueError) as exc:
+            resolve_parameter_formulas([nprod, ninj], model.logger)
+
+        self.assertIn('Number of Production Wells', str(exc.exception))
+        self.assertIn('outside of valid range', str(exc.exception))
 
     def test_convert_units_back(self):
         model = self._new_model()  # TODO mock instead
