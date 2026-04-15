@@ -719,6 +719,7 @@ class WellBores:
             DefaultValue=2,
             AllowableRange=list(range(1, max_doublets+1, 1)),
             UnitType=Units.NONE,
+            AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume default number of production wells (2)",
             ToolTipText="Number of (identical) production wells"

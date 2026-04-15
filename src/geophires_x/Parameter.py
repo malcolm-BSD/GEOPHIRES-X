@@ -168,6 +168,9 @@ class Parameter(HasQuantity):
     parameter_category: str = None
 
     ValuesEnum: GeophiresInputEnum = None
+    AllowFormulaInput: bool = False
+    FormulaExpression: Optional[str] = None
+    EvaluatedFromFormula: bool = False
 
     def __post_init__(self):
         if self.PreferredUnits is None:
@@ -316,6 +319,31 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     :return: None
     """
     model.logger.info(f'Init {str(__name__)}: {sys._getframe().f_code.co_name} for {ParamToModify.Name}')
+
+    stripped_value = ParameterReadIn.sValue.strip()
+    if stripped_value.startswith('='):
+        if not isinstance(ParamToModify, (intParameter, floatParameter)) or not ParamToModify.AllowFormulaInput:
+            err_msg = f'Error: Parameter given ({ParameterReadIn.sValue}) for {ParamToModify.Name} does not allow formula input.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+        formula_expression = stripped_value[1:].strip()
+        if len(formula_expression) == 0:
+            err_msg = f'Error: Parameter given ({ParameterReadIn.sValue}) for {ParamToModify.Name} has an empty formula.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+        ParamToModify.FormulaExpression = formula_expression
+        ParamToModify.EvaluatedFromFormula = False
+        ParamToModify.Provided = True
+        ParamToModify.Valid = False
+        model.logger.info(f'Deferred formula read for {ParamToModify.Name}: {formula_expression}')
+        model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+        return
 
     # these Parameter Types don't have units so don't do anything fancy, and ignore it if the user has supplied units
     if isinstance(ParamToModify, boolParameter) or isinstance(ParamToModify, strParameter):

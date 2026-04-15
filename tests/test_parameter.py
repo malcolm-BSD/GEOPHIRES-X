@@ -1,13 +1,16 @@
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
+from geophires_x.formula_evaluator import resolve_parameter_formulas
 from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
 from geophires_x.Parameter import floatParameter
+from geophires_x.Parameter import intParameter
 from geophires_x.Parameter import listParameter
 from geophires_x.Units import CostPerMassUnit
 from geophires_x.Units import CurrencyUnit
@@ -22,6 +25,82 @@ from tests.base_test_case import BaseTestCase
 
 
 class ParameterTestCase(BaseTestCase):
+    def test_number_of_production_wells_allows_formula_from_number_of_injection_wells(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Injection Wells, 2\n')
+            tmp.write('Number of Production Wells, = number_of_injection_wells * 1.5\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(2, model.wellbores.ninj.value)
+            self.assertEqual(3, model.wellbores.nprod.value)
+            self.assertEqual('number_of_injection_wells * 1.5', model.wellbores.nprod.FormulaExpression)
+            self.assertTrue(model.wellbores.nprod.EvaluatedFromFormula)
+            self.assertTrue(model.wellbores.nprod.Valid)
+        finally:
+            Path(input_file).unlink()
+
+    def test_number_of_production_wells_formula_resolution_is_order_independent(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Production Wells, = number_of_injection_wells * 1.5\n')
+            tmp.write('Number of Injection Wells, 2\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(2, model.wellbores.ninj.value)
+            self.assertEqual(3, model.wellbores.nprod.value)
+            self.assertTrue(model.wellbores.nprod.EvaluatedFromFormula)
+        finally:
+            Path(input_file).unlink()
+
+    def test_number_of_production_wells_formula_unknown_symbol_raises_clear_error(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Production Wells, = unknown_parameter * 1.5\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+
+            with self.assertRaises(ValueError) as exc:
+                model.read_parameters()
+
+            self.assertIn('Number of Production Wells', str(exc.exception))
+            self.assertIn('unknown_parameter', str(exc.exception))
+        finally:
+            Path(input_file).unlink()
+
+    def test_parameter_formula_circular_dependency_raises_clear_error(self):
+        nprod = intParameter(
+            'Number of Production Wells',
+            DefaultValue=2,
+            AllowableRange=list(range(1, 201)),
+            UnitType=Units.NONE,
+            AllowFormulaInput=True,
+            FormulaExpression='number_of_injection_wells + 1',
+        )
+        ninj = intParameter(
+            'Number of Injection Wells',
+            DefaultValue=2,
+            AllowableRange=list(range(201)),
+            UnitType=Units.NONE,
+            AllowFormulaInput=True,
+            FormulaExpression='number_of_production_wells - 1',
+        )
+
+        model = self._new_model()
+
+        with self.assertRaises(ValueError) as exc:
+            resolve_parameter_formulas([nprod, ninj], model.logger)
+
+        self.assertIn('Number of Production Wells', str(exc.exception))
+        self.assertIn('Circular formula dependency detected', str(exc.exception))
+
     def test_convert_units_back(self):
         model = self._new_model()  # TODO mock instead
 
