@@ -317,19 +317,19 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     """
     model.logger.info(f'Init {str(__name__)}: {sys._getframe().f_code.co_name} for {ParamToModify.Name}')
 
-    # these Parameter Types don't have units so don't do anything fancy, and ignore it if the user has supplied units
-    if isinstance(ParamToModify, boolParameter) or isinstance(ParamToModify, strParameter):
-        if isinstance(ParamToModify, boolParameter):
-            if ParameterReadIn.sValue in ['0', 'false', 'False', 'f', 'F', 'no', 'No', 'n', 'N']:
-                ParamToModify.value = False
-            elif ParameterReadIn.sValue in ['1', 'true', 'True', 't', 'T', 'yes', 'Yes', 'y', 'Y']:
-                ParamToModify.value = True
-            else:
-                ParamToModify.value = bool(ParameterReadIn.sValue)
-        else:
-            ParamToModify.value = ParameterReadIn.sValue
-        ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
-        ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
+    def default_parameter_value_message(new_val: Any, param_to_modify_name: str, default_value: Any) -> str:
+        return (
+            f'Parameter given ({str(new_val)}) for {param_to_modify_name} is the same as the default value. '
+            f'Consider removing {param_to_modify_name} from the input file unless you wish '
+            f'to change it from the default value of ({str(default_value)})'
+        )
+
+    # Preserve the fact that the user explicitly supplied a value even if it matches the default.
+    if ParameterReadIn.sValue == str(ParamToModify.DefaultValue):
+        model.logger.info(default_parameter_value_message(ParameterReadIn.sValue, ParamToModify.Name, ParamToModify.DefaultValue))
+        ParamToModify.value = ParamToModify.DefaultValue
+        ParamToModify.Provided = True
+        ParamToModify.Valid = True
         model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
         return
 
@@ -345,13 +345,6 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         # using the default PreferredUnits, which was not always
         # valid and led to incorrect units in the output)
         pass
-
-    def default_parameter_value_message(new_val: Any, param_to_modify_name: str, default_value: Any) -> str:
-        return (
-            f'Parameter given ({str(new_val)}) for {param_to_modify_name} is the same as the default value. '
-            f'Consider removing {param_to_modify_name} from the input file unless you wish '
-            f'to change it from the default value of ({str(default_value)})'
-        )
 
     if isinstance(ParamToModify, intParameter):
         New_val = int(float(ParameterReadIn.sValue))
