@@ -256,6 +256,7 @@ class Model(object):
         # re-read the parameters for the newly instantiated surface plant
         self.surfaceplant.read_parameters(self)
         resolve_model_parameter_formulas(self)
+        self.wellbores._set_well_counts_from_parameters(self)
 
         # if end-use option is 8 (district heating), some calculations are required prior to the reservoir and wellbore simulations
         if self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:

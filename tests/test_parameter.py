@@ -118,6 +118,57 @@ class ParameterTestCase(BaseTestCase):
         finally:
             Path(input_file).unlink()
 
+    def test_number_of_injection_wells_allows_formula_from_number_of_production_wells(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Production Wells, 4\n')
+            tmp.write('Number of Injection Wells, = number_of_production_wells - 1\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(4, model.wellbores.nprod.value)
+            self.assertEqual(3, model.wellbores.ninj.value)
+            self.assertEqual('number_of_production_wells - 1', model.wellbores.ninj.FormulaExpression)
+            self.assertTrue(model.wellbores.ninj.EvaluatedFromFormula)
+        finally:
+            Path(input_file).unlink()
+
+    def test_number_of_doublets_formula_sets_production_and_injection_wells(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Segments, 3\n')
+            tmp.write('Number of Doublets, = number_of_segments + 1\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(4, model.wellbores.doublets_count.value)
+            self.assertEqual(4, model.wellbores.nprod.value)
+            self.assertEqual(4, model.wellbores.ninj.value)
+            self.assertTrue(model.wellbores.doublets_count.EvaluatedFromFormula)
+        finally:
+            Path(input_file).unlink()
+
+    def test_number_of_injection_wells_per_production_well_formula_sets_injection_wells(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
+            tmp.write('Number of Production Wells, 4\n')
+            tmp.write('Number of Injection Wells per Production Well, = number_of_production_wells / 8\n')
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(4, model.wellbores.nprod.value)
+            self.assertEqual(2, model.wellbores.ninj.value)
+            self.assertEqual(0.5, model.wellbores.ninj_per_production_well.value)
+            self.assertTrue(model.wellbores.ninj_per_production_well.EvaluatedFromFormula)
+        finally:
+            Path(input_file).unlink()
+
     def test_number_of_production_wells_formula_unknown_symbol_raises_clear_error(self):
         with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
             tmp.write('Number of Production Wells, = unknown_parameter * 1.5\n')

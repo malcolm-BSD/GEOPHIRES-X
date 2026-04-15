@@ -23,6 +23,7 @@ Contents
    :caption: Examples
 
    GEOPHIRES-Examples
+   Parameter-Formulas
    Fervo_Project_Cape-5
 
 
