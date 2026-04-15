@@ -254,8 +254,9 @@ class CylindricalReservoir(Reservoir):
         model.logger.info(f'complete {str(__class__)}: {sys._getframe().f_code.co_name}')
 
     def lithostatic_pressure(self) -> PlainQuantity:
-        """@override"""
-        Standard reservoir implementation uses depth but CylindricalReservoir sets depth to total drilled length
+        """@override
+
+        Standard reservoir implementation uses depth but CylindricalReservoir sets depth to total drilled length.
         """
         return quantity(static_pressure_MPa(self.rhorock.quantity().to('kg/m**3').magnitude,
                                             self.InputDepth.quantity().to('m').magnitude), 'MPa')
