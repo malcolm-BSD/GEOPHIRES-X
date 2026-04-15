@@ -302,7 +302,7 @@
       "maximum": 10000
     },
     "Fracture Width": {
-      "description": "Width of each fracture",
+      "description": "Total horizontal length of each fracture plane (from tip to tip). Note: In some contexts this is called 'Fracture Length'; it refers to the fracture's lateral extent, not its aperture or thickness.",
       "type": "number",
       "units": "meter",
       "category": "Reservoir",
@@ -317,7 +317,16 @@
       "category": "Reservoir",
       "default": 10,
       "minimum": 1,
-      "maximum": 99999
+      "maximum": 1000000
+    },
+    "Number of Fractures per Stimulated Well": {
+      "description": "Number of identical parallel fractures per stimulated well in EGS fracture-based reservoir model. (Note that injection wells are assumed to be stimulated by default; production wells are assumed to be stimulated if Reservoir Stimulation Capital Cost per Production Well is provided.)",
+      "type": "integer",
+      "units": null,
+      "category": "Reservoir",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 1000000
     },
     "Fracture Separation": {
       "description": "Separation of identical parallel fractures with uniform spatial distribution             in EGS fracture-based reservoir",
@@ -417,6 +426,33 @@
       "default": 15,
       "minimum": 8,
       "maximum": 15
+    },
+    "Reservoir Output File Name": {
+      "description": "File name of reservoir output in case reservoir model 5 is selected",
+      "type": "string",
+      "units": null,
+      "category": "Reservoir",
+      "default": null,
+      "minimum": null,
+      "maximum": null
+    },
+    "Reservoir Output Profile": {
+      "description": "Temperature profile data as a comma-separated list of values in Celsius. Example: 200,195,190,185 for a 4-point temperature decline profile. Values are interpolated over the time range determined by the number of profile data points and Reservoir Output Profile Time Step. If the profile is shorter than the plant lifetime, the temperature trend is extrapolated based on the last ~20% of the data, with the injection temperature used as a minimum. ",
+      "type": "array",
+      "units": "degC",
+      "category": "Reservoir",
+      "default": [],
+      "minimum": 0,
+      "maximum": 600
+    },
+    "Reservoir Output Profile Time Step": {
+      "description": "Time interval between temperature values in the Reservoir Output Profile. For example, if set to 0.25, the profile values represent temperatures at 0, 0.25, 0.5, 0.75, 1.0 years, etc.",
+      "type": "number",
+      "units": "yr",
+      "category": "Reservoir",
+      "default": 1.0,
+      "minimum": 0.01,
+      "maximum": 100.0
     },
     "Cylindrical Reservoir Input Depth": {
       "description": "Depth of the inflow end of a cylindrical reservoir",
@@ -651,6 +687,15 @@
       "default": 2,
       "minimum": 0,
       "maximum": 200
+    },
+    "Number of Injection Wells per Production Well": {
+      "description": "Number of (identical) injection wells per production well. For example, provide 0.666 to specify a 3:2 production:injection well ratio. The number of injection wells will be rounded up to the nearest integer.",
+      "type": "number",
+      "units": null,
+      "category": "Well Bores",
+      "default": 1,
+      "minimum": 0,
+      "maximum": 199
     },
     "Production Well Diameter": {
       "description": "Inner diameter of production wellbore (assumed constant along the wellbore) to calculate             frictional pressure drop and wellbore heat transmission with Rameys model",
@@ -1321,13 +1366,13 @@
       "maximum": 1.8e+30
     },
     "Construction Years": {
-      "description": "Number of years spent in construction (assumes whole years, no fractions). Capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years.",
+      "description": "Number of years spent in construction (assumes whole years, no fractions). By default, capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years. For SAM Economic Models, provide Construction CAPEX Schedule to use a custom spread instead.",
       "type": "integer",
       "units": null,
       "category": "Surface Plant",
       "default": 1,
       "minimum": 1,
-      "maximum": 14
+      "maximum": 15
     },
     "Working Fluid Heat Capacity": {
       "description": "Heat capacity of the working fluid",
@@ -1654,7 +1699,7 @@
       "maximum": 10
     },
     "Total Capital Cost": {
-      "description": "Total initial capital cost.",
+      "description": "Total initial capital cost. For SAM Economic Models, this is treated as the Overnight Capital Cost.",
       "type": "number",
       "units": "MUSD",
       "category": "Economics",
@@ -1699,7 +1744,7 @@
       "maximum": 1.0
     },
     "Royalty Rate": {
-      "description": "The fraction of the project's gross annual revenue paid to the royalty holder. This is modeled as a variable production-based operating expense, reducing the developer's taxable income.",
+      "description": "The fraction of the project's gross annual revenue paid to the royalty holder. This is modeled as a variable production-based operating expense, reducing the developer's taxable income. It is calculated in addition to any scheduled Royalty Supplemental Payments. Note: Providing both Royalty Rate and Royalty Rate Schedule is invalid and will result in an error.",
       "type": "number",
       "units": "",
       "category": "Economics",
@@ -1708,7 +1753,7 @@
       "maximum": 1.0
     },
     "Royalty Rate Escalation": {
-      "description": "The additive amount the royalty rate increases each year. For example, a value of 0.001 increases a 4% rate (0.04) to 4.1% (0.041) in the next year.",
+      "description": "The additive amount the royalty rate increases each year. For example, a value of 0.001 increases a 4% rate (0.04) to 4.1% (0.041) in the next year. Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
       "type": "number",
       "units": "",
       "category": "Economics",
@@ -1716,14 +1761,41 @@
       "minimum": 0.0,
       "maximum": 1.0
     },
+    "Royalty Rate Escalation Start Year": {
+      "description": "The first year that the Royalty Rate Escalation is applied. The value is specified as a project year index corresponding to the Year row in the cash flow profile. Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
+      "type": "integer",
+      "units": "yr",
+      "category": "Economics",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 99
+    },
     "Royalty Rate Maximum": {
-      "description": "The maximum royalty rate after escalation, expressed as a fraction (e.g., 0.06 for a 6% cap). Defaults to 100% (no effective cap).",
+      "description": "The maximum royalty rate after escalation, expressed as a fraction (e.g., 0.06 for a 6% cap). Defaults to 100% (no effective cap). Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
       "type": "number",
       "units": "",
       "category": "Economics",
       "default": 1.0,
       "minimum": 0.0,
       "maximum": 1.0
+    },
+    "Royalty Rate Schedule": {
+      "description": "A schedule DSL string defining the royalty rate for each year of the project, starting at the first year of plant operations (Year 1, post-construction). Syntax: \"<rate> * <years>, <rate> * <years>, ..., <terminal_rate>\". For example \"0.0175 * 10, 0.035\" means 1.75% for 10 years then 3.5% thereafter. Note: Providing both Royalty Rate and Royalty Rate Schedule is invalid and will result in an error.",
+      "type": "array",
+      "units": "",
+      "category": "Economics",
+      "default": [],
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "Royalty Supplemental Payments": {
+      "description": "A schedule DSL string defining the royalty supplemental payments for each year of the project. Unlike the Royalty Rate Schedule which begins at operations, this schedule begins at the first year of project construction. Syntax: \"<amount> * <years>, <amount> * <years>, ..., <terminal_amount_per_year>\". For example \"1 * 2, 0.25\" means $1M for 2 years (e.g., during construction) then $250k/year thereafter.",
+      "type": "array",
+      "units": "MUSD/yr",
+      "category": "Economics",
+      "default": [],
+      "minimum": 0.0,
+      "maximum": 100000.0
     },
     "Royalty Holder Discount Rate": {
       "description": "The discount rate used to calculate the Net Present Value (NPV) of the royalty holder's income stream. This rate should reflect the royalty holder's specific risk profile and is separate from the main project discount rate.",
@@ -1744,7 +1816,7 @@
       "maximum": null
     },
     "Fraction of Investment in Bonds": {
-      "description": "Fraction of geothermal project financing through bonds (debt).",
+      "description": "Fraction of geothermal project financing through bonds (debt/loans).",
       "type": "number",
       "units": "",
       "category": "Economics",
@@ -1753,7 +1825,16 @@
       "maximum": 1.0
     },
     "Inflated Bond Interest Rate": {
-      "description": "Inflated bond interest rate (see docs)",
+      "description": "Inflated bond interest rate (for debt/loans)",
+      "type": "number",
+      "units": "",
+      "category": "Economics",
+      "default": 0.05,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "Inflated Bond Interest Rate During Construction": {
+      "description": "Inflated bond interest rate during construction (for debt/loans)",
       "type": "number",
       "units": "",
       "category": "Economics",
@@ -1823,6 +1904,26 @@
       "default": 0.0,
       "minimum": 0.0,
       "maximum": 1.0
+    },
+    "Construction CAPEX Schedule": {
+      "description": "A list of fractions of the total overnight CAPEX spent in each construction year. For example, for 3 construction years with 10% in the first year, 40% in the second, and 50% in the third, provide Construction CAPEX Schedule = 0.1,0.4,0.5. The schedule will be automatically interpolated to match the number of construction years and normalized to sum to 1.0.",
+      "type": "array",
+      "units": null,
+      "category": "Economics",
+      "default": [
+        1.0
+      ],
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "Bond Financing Start Year": {
+      "description": "By default, bond financing (debt/loans) starts during the first construction year (if Fraction of Investment in Bonds is >0). Provide Bond Financing Start Year to delay the start of bond financing during construction; years prior to Bond Financing Start Year will be financed with equity only. The value is specified as a project year index corresponding to the Year row in the cash flow profile; the first construction year has the year index {(Construction Years - 1) * -1}) and the final construction year index is 0. For example, a project with 4 construction years where bond financing starts on the third construction year would have a Bond Financing Start Year value of -1; construction starts in Year -3, the second year is Year -2, and the final 2 bond-financed construction years are Year -1 and Year 0. Bond financing will start on the first construction year if the specified year index is prior to the first construction year.",
+      "type": "integer",
+      "units": "yr",
+      "category": "Economics",
+      "default": -14,
+      "minimum": -14,
+      "maximum": 0
     },
     "Contingency Percentage": {
       "description": "The contingency percentage applied to the direct capital costs for stimulation, field gathering system, exploration, and surface plant. (Note: well drilling and completion costs do not have contingency applied and are not affected by this parameter.)",
@@ -1930,7 +2031,7 @@
       ]
     },
     "Do AddOn Calculations": {
-      "description": "Set to true if you want the add-on economics calculations to be made",
+      "description": "By default, add-on calculations are automatically enabled if add-ons parameters are provided. Set this value to false to disable add-on economics calculations. (If, for example, you wish to quickly compare between economics with and without add-ons.)",
       "type": "boolean",
       "units": null,
       "category": "Economics",
@@ -1939,7 +2040,7 @@
       "maximum": null
     },
     "Do Carbon Price Calculations": {
-      "description": "Set to true if you want the Carbon Credit economics calculations to be made",
+      "description": "By default, carbon credit calculations are automatically enabled if carbon credit parameters are provided. Set this value to false to disable carbon credit calculations.",
       "type": "boolean",
       "units": null,
       "category": "Economics",
@@ -1948,7 +2049,7 @@
       "maximum": null
     },
     "Do S-DAC-GT Calculations": {
-      "description": "Set to true if you want the S-DAC-GT economics calculations to be made",
+      "description": "By default, S-DAC-GT economics calculations are automatically enabled if S-DAC-GT parameters are provided. Set this value to false to disable S-DAC-GT economics calculations.",
       "type": "boolean",
       "units": null,
       "category": "Economics",

@@ -1,6 +1,6 @@
 # Example: SAM Single Owner PPA Economic Model: 50 MWe with Add-Ons
 # This example models example_SAM-single-owner with a Waste Heat Absorption Chiller Add-on
-# See "SAM Economic Models" in GEOPHIRES documentation: https://nrel.github.io/GEOPHIRES-X/SAM-Economic-Models.html#add-ons
+# See "SAM Economic Models" in GEOPHIRES documentation: https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#add-ons
 
 # *** ADD-ONS ***
 # ***************
@@ -36,6 +36,7 @@ Property Tax Rate, 0
 End-Use Option, 1, -- Electricity
 Power Plant Type, 2, -- Supercritical ORC
 Plant Lifetime, 20
+Construction Years, 1
 
 Reservoir Model, 1
 

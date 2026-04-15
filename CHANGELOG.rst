@@ -2,8 +2,37 @@
 Changelog
 =========
 
-GEOPHIRES v3 (2023-2025)
+GEOPHIRES v3 (2023-2026)
 ------------------------
+
+3.12
+^^^^
+
+3.12: `SAM Economic Models Carbon Credit Support <https://github.com/NatLabRockies/GEOPHIRES-X/pull/474>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.12.1>`__ | `documentation <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#carbon-revenue>`__ | **Changed:** Note that inputs with SAM Economic Models and carbon price/credit parameters will now calculate carbon revenue instead of ignoring carbon parameters. See documentation for details.
+
+
+3.11
+^^^^
+
+3.11.27: `Data Center example; Output additional CAPEX modifiers <https://github.com/NatLabRockies/GEOPHIRES-X/pull/474>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.27>`__
+
+3.11.25: `Royalty Rate Schedule & Royalty Supplemental Payments <https://github.com/NatLabRockies/GEOPHIRES-X/pull/472>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.25>`__ |  `documentation <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#royalties>`__ | **Changed:** The calculation for Royalty Holder Average Annual Revenue now averages over the entire project timeline (construction + operations) rather than just the operational phase. For projects with multi-year construction periods, this will result in a lower average value than in previous versions. See documentation for further details.
+
+3.11.17: `Add Total CAPEX ($/kW) output for SAM-EM in Summary of Results category <https://github.com/NREL/GEOPHIRES-X/pull/470>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.17>`__
+
+3.11.15: `SBT fixes + ULoop support <https://github.com/NatLabRockies/GEOPHIRES-X/pull/464>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.15>`__
+
+3.11.13: `Fervo_Project_Cape-5: 500 MW EGS Modeled on Fervo Cape Station (2026 Update Public Release) <https://github.com/NatLabRockies/GEOPHIRES-X/pull/464>`__ | `documentation <https://softwareengineerprogrammer.github.io/GEOPHIRES/Fervo_Project_Cape-5.html>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.13>`__
+
+3.11: `Fervo_Project_Cape-5: Multi-Year Construction & Reservoir Engineering (2026 Update Preview); SAM-EM Payback Period; SAM-EM ITC; User-Provided Reservoir Profile updates; SAM-EM MCY Levelized Metrics update <https://github.com/NatLabRockies/GEOPHIRES-X/pull/457>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.11.12>`__
+
+
+3.10
+^^^^
+
+3.10.25: `Add Number of Injection Wells per Production Well parameter <https://github.com/softwareengineerprogrammer/GEOPHIRES/pull/119>`__
+
+3.10: `SAM Economic Models: Multiple Construction Years; Number of Fractures per Stimulated Well parameter; Royalty Rate Escalation Start Year parameter <https://github.com/NREL/GEOPHIRES-X/pull/440>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.10.24>`__
 
 3.9
 ^^^
@@ -25,7 +54,7 @@ GEOPHIRES v3 (2023-2025)
 
 3.9.48: `Well diameter outputs, surface plant cost, non-SAM-EM Inflation costs during construction <https://github.com/NREL/GEOPHIRES-X/pull/412>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.48>`__
 
-3.9.47: `Add-Ons support for SAM Economic Models <https://nrel.github.io/GEOPHIRES-X/SAM-Economic-Models.html#add-ons>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.47>`__
+3.9.47: `Add-Ons support for SAM Economic Models <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html#add-ons>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.47>`__
 
 3.9.43: `Inflation costs <https://github.com/NREL/GEOPHIRES-X/pull/409>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.43>`__
 
@@ -49,7 +78,7 @@ GEOPHIRES v3 (2023-2025)
 
 3.9.8: `Missing percent unit fixes <https://github.com/NREL/GEOPHIRES-X/pull/388>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.8>`__
 
-3.9: `SAM Single Owner PPA Economic Model <https://nrel.github.io/GEOPHIRES-X/SAM-Economic-Models.html>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.7>`__
+3.9: `SAM Single Owner PPA Economic Model <https://softwareengineerprogrammer.github.io/GEOPHIRES/SAM-Economic-Models.html>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.9.7>`__
 
 3.8
 ^^^

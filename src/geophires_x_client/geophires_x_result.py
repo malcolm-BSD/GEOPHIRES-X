@@ -44,6 +44,7 @@ class GeophiresXResult:
                 'Average Net Electricity Production',
                 'Electricity breakeven price',
                 'Total CAPEX',
+                'Total CAPEX ($/kW)',
                 'Average Direct-Use Heat Production',
                 'Direct-Use heat breakeven price',
                 'Direct-Use heat breakeven price (LCOH)',
@@ -81,6 +82,8 @@ class GeophiresXResult:
                 'Accrued financing during construction',
                 # Displayed for economic models that don't treat inflation costs as capital costs (non-SAM-EM)
                 'Inflation costs during construction',
+                # Displayed as economic parameter for SAM-EM (non-SAM-EMs treat as capital cost)
+                'Investment Tax Credit',
                 'Project lifetime',
                 'Capacity factor',
                 'Project NPV',
@@ -245,6 +248,7 @@ class GeophiresXResult:
                 'Average Round-Trip Efficiency',
             ],
             'CAPITAL COSTS (M$)': [
+                'Exploration costs',
                 'Drilling and completion costs',
                 'Drilling and completion costs per well',
                 'Drilling and completion costs per production well',
@@ -264,11 +268,16 @@ class GeophiresXResult:
                 'District Heating System Cost',
                 'Field gathering system costs',
                 'Total surface equipment costs',
-                'Exploration costs',
                 'Investment Tax Credit',
+                'One-time Flat License Fees Etc',
+                'Other Incentives',
+                'One-time Grants Etc',
+                'Total Add-on CAPEX',
+                'Overnight Capital Cost',
                 # Displayed for economic models that treat inflation costs as capital costs (SAM-EM)
                 'Inflation costs during construction',
-                'Total Add-on CAPEX',
+                'Royalty supplemental payments during construction',
+                'Interest during construction',
                 'Total capital costs',
                 'Annualized capital costs',
                 # AGS/CLGS
@@ -715,7 +724,7 @@ class GeophiresXResult:
         return None
 
     @property
-    def power_generation_profile(self):
+    def power_generation_profile(self) -> list[list[str | float]]:
         return self.result['POWER GENERATION PROFILE']
 
     def _get_power_generation_profile(self):
