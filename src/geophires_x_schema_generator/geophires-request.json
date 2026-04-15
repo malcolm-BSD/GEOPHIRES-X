@@ -121,7 +121,7 @@
       "category": "Reservoir",
       "default": 1,
       "minimum": 1,
-      "maximum": 4
+      "maximum": 1
     },
     "Gradients": {
       "description": "Geothermal gradient(s)",
@@ -129,10 +129,7 @@
       "units": "degC/m",
       "category": "Reservoir",
       "default": [
-        0.05,
-        0.0,
-        0.0,
-        0.0
+        0.05
       ],
       "minimum": 0.0,
       "maximum": 500.0

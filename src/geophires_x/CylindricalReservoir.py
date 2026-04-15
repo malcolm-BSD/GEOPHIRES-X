@@ -6,7 +6,7 @@ from functools import lru_cache
 import numpy as np
 from pint.facets.plain import PlainQuantity
 
-from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3, lithostatic_pressure_MPa, quantity
+from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3, quantity, static_pressure_MPa
 
 from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K
 import geophires_x.Model as Model
@@ -263,7 +263,5 @@ class CylindricalReservoir(Reservoir):
     def lithostatic_pressure(self) -> PlainQuantity:
         """@override"""
 
-        Standard reservoir implementation uses depth but CylindricalReservoir sets depth to total drilled length
-        """
         return quantity(static_pressure_MPa(self.rhorock.quantity().to('kg/m**3').magnitude,
                                             self.InputDepth.quantity().to('m').magnitude), 'MPa')

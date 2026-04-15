@@ -558,7 +558,7 @@ def read_input_file(logger=None, input_file_name=None) -> dict:
         )
         return return_dict_1
 
-    if input_file_name and not input_file_name.startswith('http'):
+    if input_file_name and not str(input_file_name).startswith('http'):
         if not exists(input_file_name):
             raise FileNotFoundError(
                 f'Unable to read input file: File {input_file_name} not found'
@@ -1308,7 +1308,7 @@ def get_data_from_file_or_url_as_string(source: str) -> str:
 
     else:
         # Read the whole file as text, split into lines, and strip BOM if present (utf-8-sig)
-        if not source.startswith("http"):
+        if not str(source).startswith("http"):
             raw_text = Path(source).read_text(encoding="utf-8-sig")
         else:
             return ""
@@ -1968,3 +1968,9 @@ def resample_to_hourly_year(x_values: np.ndarray, y_values: np.ndarray) -> Tuple
 
     y_target = np.interp(x_target, x, y, left=y[0], right=y[-1])
     return x_target, y_target, notes
+
+def set_or_append(lst: list, index: int, value) -> None:
+    if index < len(lst):
+        lst[index] = value
+    else:
+        lst.append(value)

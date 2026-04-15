@@ -11,7 +11,7 @@ from .Parameter import intParameter, floatParameter, listParameter, OutputParame
 from .Units import *
 import geophires_x.Model as Model
 
-from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K, quantity, static_pressure_MPa
+from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K, quantity, static_pressure_MPa, set_or_append
 from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3
 
 
@@ -95,7 +95,7 @@ class Reservoir:
         self.numseg = self.ParameterDict[self.numseg.Name] = intParameter(
             "Number of Segments",
             DefaultValue=1,
-            AllowableRange=[1, 2, 3, 4],
+            AllowableRange=[1],
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume default number of segments (1)",
@@ -104,14 +104,14 @@ class Reservoir:
 
         self.gradient = self.ParameterDict[self.gradient.Name] = listParameter(
             "Gradients",
-            DefaultValue=[0.05, 0.0, 0.0, 0.0],
+            DefaultValue=[0.05],
             Min=0.0,
             Max=500.0,
             UnitType=Units.TEMP_GRADIENT,
             PreferredUnits=TemperatureGradientUnit.DEGREESCPERKM,
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERM,
             Required=True,
-            ErrMessage="assume default geothermal gradients 1 (50, 0, 0, 0 deg.C/km)",
+            ErrMessage="assume default geothermal gradients 1 (50 deg.C/km)",
             ToolTipText="Geothermal gradient(s)",
         )
 
@@ -609,14 +609,14 @@ class Reservoir:
                     elif ParameterToModify.Name.startswith('Gradient '):
                         parts = ParameterReadIn.Name.split(' ')
                         position = int(parts[1]) - 1
-                        model.reserv.gradient.value[position] = ParameterToModify.value
+                        set_or_append(model.reserv.gradient.value, position, ParameterToModify.value)
 
                     elif ParameterToModify.Name.startswith('Thickness '):
                         parts = ParameterReadIn.Name.split(' ')
                         position = int(parts[1]) - 1
                         num_segments = len(model.reserv.layerthickness.value)
                         if position < num_segments:
-                            model.reserv.layerthickness.value[position] = ParameterToModify.value
+                            set_or_append(model.reserv.layerthickness.value, position, ParameterToModify.value)
                         else:
                             model.logger.error(f'Cannot set {ParameterToModify.Name} to {ParameterToModify.value} '
                                                f'because only {num_segments} segments are defined.')
@@ -640,18 +640,16 @@ class Reservoir:
 
         coerce_int_params_to_enum_values(self.ParameterDict)
 
-        if model.reserv.gradient.Provided and model.reserv.layerthickness.Provided:
-            derived_numseg = derive_numseg_from_gradient_thickness(
-                model.reserv.gradient.value, model.reserv.layerthickness.value
+        #if model.reserv.gradient.Provided and model.reserv.layerthickness.Provided:
+        derived_numseg = derive_numseg_from_gradient_thickness(model.reserv.gradient.value, model.reserv.layerthickness.value)
+        if model.reserv.numseg.value != derived_numseg:
+            msg = (
+                f'Number of Segments ({model.reserv.numseg.value}) does not match derived value from '
+                f'Gradients/Thicknesses ({derived_numseg}); GEOPHIRES will use {derived_numseg}.'
             )
-            if model.reserv.numseg.value != derived_numseg:
-                msg = (
-                    f'Number of Segments ({model.reserv.numseg.value}) does not match derived value from '
-                    f'Gradients/Thicknesses ({derived_numseg}); GEOPHIRES will use {derived_numseg}.'
-                )
-                print(f'Warning: {msg}')
-                model.logger.warning(msg)
-                model.reserv.numseg.value = derived_numseg
+            print(f'Warning: {msg}')
+            model.logger.warning(msg)
+            model.reserv.numseg.value = derived_numseg
 
         for position in range(len(model.reserv.gradient.value)):
             if model.reserv.gradient.value[position] > 1.0:

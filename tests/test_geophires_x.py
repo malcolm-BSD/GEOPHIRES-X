@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import os
 import tempfile
+import unittest
 import uuid
 from pathlib import Path
 from typing import Any
@@ -353,6 +354,9 @@ Print Output to Console, 1"""
             str(re.exception), "GEOPHIRES encountered an exception: failed with the following error codes: [5500.]"
         )
 
+    @unittest.skip(
+        "Skip this test because there is now code that handles the case where a parameter is out of range without throwing a runtime error"
+    )
     def test_parameter_value_outside_of_allowable_range_error(self):
         client = GeophiresXClient()
 
