@@ -1037,6 +1037,26 @@ class Economics:
             ErrMessage="assume default REC price (0.0 USD/MWh)",
             ToolTipText="Renewable Energy Credit price used for XLCOE market benefits."
         )
+        self.XLCOEDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOEDisplacedWaterUseIntensity.Name] = floatParameter(
+            "XLCOE Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default displaced water use intensity (0.0 m3/MWh)",
+            ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh."
+        )
+        self.XLCOEWaterShadowPrice = self.ParameterDict[self.XLCOEWaterShadowPrice.Name] = floatParameter(
+            "XLCOE Water Shadow Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default water shadow price (0.0 USD per m3)",
+            ToolTipText="Water shadow price used for XLCOE social water-offset benefits, interpreted as USD per m3."
+        )
         self.IdleRigDiscountRate = self.ParameterDict[self.IdleRigDiscountRate.Name] = floatParameter(
             "Idle Rig Discount Rate",
             DefaultValue=0.0,
@@ -1049,6 +1069,44 @@ class Economics:
             ErrMessage="assume default idle rig discount rate (0.0)",
             ToolTipText="Reserved XLCOE market input for drilling-capex idle-rig discounts. "
                         "This input is parsed now and will be applied in a later XLCOE phase."
+        )
+        self.XLCOEConstructionJobsPerRig = self.ParameterDict[self.XLCOEConstructionJobsPerRig.Name] = floatParameter(
+            "XLCOE Construction Jobs Per Rig",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default construction jobs per rig (0.0)",
+            ToolTipText="Construction jobs per rig-equivalent used for XLCOE social jobs benefits."
+        )
+        self.XLCOEOperationsJobsPerMW = self.ParameterDict[self.XLCOEOperationsJobsPerMW.Name] = floatParameter(
+            "XLCOE Operations Jobs Per MW",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default operations jobs per MW (0.0)",
+            ToolTipText="Operations jobs per average MW used for XLCOE social jobs benefits."
+        )
+        self.XLCOEIndirectJobsMultiplier = self.ParameterDict[self.XLCOEIndirectJobsMultiplier.Name] = floatParameter(
+            "XLCOE Indirect Jobs Multiplier",
+            DefaultValue=1.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default indirect jobs multiplier (1.0)",
+            ToolTipText="Multiplier applied to XLCOE direct construction and operations jobs benefits."
+        )
+        self.XLCOEAverageMonthlyWage = self.ParameterDict[self.XLCOEAverageMonthlyWage.Name] = floatParameter(
+            "XLCOE Average Monthly Wage",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default average monthly wage (0.0 USD)",
+            ToolTipText="Average monthly wage used for XLCOE social jobs benefits."
         )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
