@@ -92,6 +92,10 @@ class XLCOETestCase(BaseTestCase):
         self.assertIn('XLCOC Operations Jobs Per MW', model.economics.ParameterDict)
         self.assertIn('XLCOE_Market', model.economics.OutputParameterDict)
         self.assertIn('XLCOE_MarketSocial', model.economics.OutputParameterDict)
+        self.assertIn('XLCOH_Market', model.economics.OutputParameterDict)
+        self.assertIn('XLCOH_MarketSocial', model.economics.OutputParameterDict)
+        self.assertIn('XLCOC_Market', model.economics.OutputParameterDict)
+        self.assertIn('XLCOC_MarketSocial', model.economics.OutputParameterDict)
 
         self.assertFalse(model.economics.DoXLCOECalculations.value)
         self.assertEqual(0.07, model.economics.social_discountrate.value)
@@ -127,6 +131,10 @@ class XLCOETestCase(BaseTestCase):
         self.assertEqual(CostPerMassUnit.DOLLARSPERTONNE, model.economics.XLCOCCarbonPrice.CurrentUnits)
         self.assertEqual(EnergyCostUnit.DOLLARSPERMWH, model.economics.XLCOCCoolingCreditPrice.CurrentUnits)
         self.assertEqual(CurrencyUnit.DOLLARS, model.economics.XLCOCWaterShadowPrice.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.XLCOH_Market.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.XLCOH_MarketSocial.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.XLCOC_Market.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.XLCOC_MarketSocial.CurrentUnits)
 
     def test_xlcoe_disabled_leaves_lcoe_unchanged_and_outputs_zero(self):
         baseline_model = self._new_model(
@@ -155,6 +163,31 @@ class XLCOETestCase(BaseTestCase):
         self.assertAlmostEqual(model.economics.LCOE.value, model.economics.XLCOE_Market.value, places=7)
         self.assertAlmostEqual(model.economics.XLCOE_Market.value, model.economics.XLCOE_MarketSocial.value, places=7)
 
+    def test_xlcoh_enabled_with_zero_inputs_matches_lcoh(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example2.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.LCOH.value, 0.0)
+        self.assertAlmostEqual(model.economics.LCOH.value, model.economics.XLCOH_Market.value, places=7)
+        self.assertAlmostEqual(model.economics.XLCOH_Market.value, model.economics.XLCOH_MarketSocial.value, places=7)
+        self.assertEqual(0.0, model.economics.XLCOE_Market.value)
+        self.assertEqual(0.0, model.economics.XLCOC_Market.value)
+
+    def test_xlcoc_enabled_with_zero_inputs_matches_lcoc(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example11_AC.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.LCOC.value, 0.0)
+        self.assertAlmostEqual(model.economics.LCOC.value, model.economics.XLCOC_Market.value, places=7)
+        self.assertAlmostEqual(model.economics.XLCOC_Market.value, model.economics.XLCOC_MarketSocial.value, places=7)
+        self.assertEqual(0.0, model.economics.XLCOE_Market.value)
+
     def test_xlcoe_market_benefits_reduce_breakeven_price(self):
         baseline_model = self._new_model(
             input_file=Path(self._get_test_file_path('../examples/example1.txt')),
@@ -177,6 +210,31 @@ class XLCOETestCase(BaseTestCase):
         self.assertAlmostEqual(
             benefit_model.economics.XLCOE_Market.value,
             benefit_model.economics.XLCOE_MarketSocial.value,
+            places=7,
+        )
+
+    def test_xlcoh_market_benefits_reduce_heat_breakeven_price(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example2.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example2.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'XLCOH Avoided Emissions Intensity': 0.25,
+                'XLCOH Carbon Price': 30.0,
+                'XLCOH Thermal Credit Price': 4.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertLess(benefit_model.economics.XLCOH_Market.value, baseline_model.economics.XLCOH_Market.value)
+        self.assertLessEqual(benefit_model.economics.XLCOH_Market.value, benefit_model.economics.LCOH.value)
+        self.assertAlmostEqual(
+            benefit_model.economics.XLCOH_Market.value,
+            benefit_model.economics.XLCOH_MarketSocial.value,
             places=7,
         )
 
@@ -235,6 +293,43 @@ class XLCOETestCase(BaseTestCase):
             social_model.economics.XLCOE_MarketSocial.value,
             social_model.economics.XLCOE_Market.value,
         )
+
+    def test_xlcoc_social_benefits_reduce_market_social_breakeven_price(self):
+        market_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example11_AC.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        social_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example11_AC.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'XLCOC Displaced Water Use Intensity': 1.2,
+                'XLCOC Water Shadow Price': 0.4,
+                'XLCOC Operations Jobs Per MW': 1.1,
+                'XLCOE Indirect Jobs Multiplier': 1.0,
+                'XLCOE Average Monthly Wage': 4000.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(social_model.economics.XLCOC_Market.value, market_model.economics.XLCOC_Market.value, places=7)
+        self.assertLess(
+            social_model.economics.XLCOC_MarketSocial.value,
+            social_model.economics.XLCOC_Market.value,
+        )
+
+    def test_cogeneration_project_computes_both_electricity_and_heat_extended_outputs(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.LCOE.value, 0.0)
+        self.assertGreater(model.economics.LCOH.value, 0.0)
+        self.assertAlmostEqual(model.economics.LCOE.value, model.economics.XLCOE_Market.value, places=7)
+        self.assertAlmostEqual(model.economics.LCOH.value, model.economics.XLCOH_Market.value, places=7)
 
     def test_xlcoe_social_discount_rate_only_changes_social_output(self):
         low_discount_model = self._new_model(
