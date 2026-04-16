@@ -30,7 +30,9 @@ def _discounted_market_benefits_musd(econ: Economics, model: Model) -> float:
     total_market_benefit_usd_per_mwh = carbon_benefit_usd_per_mwh + rec_benefit_usd_per_mwh
 
     annual_market_benefits_musd = annual_net_generation_mwh * total_market_benefit_usd_per_mwh / 1_000_000.0
-    return float(np.sum(annual_market_benefits_musd * discount_vector))
+    discounted_operational_market_benefits = float(np.sum(annual_market_benefits_musd * discount_vector))
+    idle_rig_discount_benefit_musd = float(econ.Cwell.value) * float(econ.IdleRigDiscountRate.value)
+    return discounted_operational_market_benefits + idle_rig_discount_benefit_musd
 
 
 def _discounted_social_benefits_musd(econ: Economics, model: Model) -> float:

@@ -98,6 +98,28 @@ class XLCOETestCase(BaseTestCase):
             places=7,
         )
 
+    def test_xlcoe_idle_rig_discount_reduces_market_output(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        idle_rig_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'Idle Rig Discount Rate': 0.05,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(idle_rig_model.economics.Cwell.value, 0.0)
+        self.assertLess(idle_rig_model.economics.XLCOE_Market.value, baseline_model.economics.XLCOE_Market.value)
+        self.assertLessEqual(
+            idle_rig_model.economics.XLCOE_MarketSocial.value,
+            idle_rig_model.economics.XLCOE_Market.value,
+        )
+
     def test_xlcoe_social_benefits_reduce_market_social_breakeven_price(self):
         market_model = self._new_model(
             input_file=Path(self._get_test_file_path('../examples/example1.txt')),

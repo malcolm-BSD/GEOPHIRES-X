@@ -1067,8 +1067,7 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Required=False,
             ErrMessage="assume default idle rig discount rate (0.0)",
-            ToolTipText="Reserved XLCOE market input for drilling-capex idle-rig discounts. "
-                        "This input is parsed now and will be applied in a later XLCOE phase."
+            ToolTipText="XLCOE market input for idle-rig discounts applied to drilling and completion CAPEX only."
         )
         self.XLCOEConstructionJobsPerRig = self.ParameterDict[self.XLCOEConstructionJobsPerRig.Name] = floatParameter(
             "XLCOE Construction Jobs Per Rig",
