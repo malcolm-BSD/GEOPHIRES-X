@@ -1002,7 +1002,53 @@ class Economics:
             Required=False,
             ErrMessage="assume default: no XLCOE calculations",
             ToolTipText="Enable Extended Levelized Cost of Electricity (XLCOE) calculations. "
-                        "Phase 1 scaffolding exposes the interface but does not yet implement the XLCOE equations."
+                        "Phase 2 implements market-priced carbon and REC modifiers for electricity projects."
+        )
+        self.AvoidedEmissionsIntensity = self.ParameterDict[self.AvoidedEmissionsIntensity.Name] = floatParameter(
+            "Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default avoided emissions intensity (0.0 tCO2/MWh)",
+            ToolTipText="Avoided emissions intensity used for XLCOE carbon-offset benefits."
+        )
+        self.XLCOECarbonPrice = self.ParameterDict[self.XLCOECarbonPrice.Name] = floatParameter(
+            "XLCOE Carbon Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            Required=False,
+            ErrMessage="assume default carbon price (0.0 USD/tonne)",
+            ToolTipText="Carbon price used for XLCOE market carbon-offset benefits."
+        )
+        self.XLCOERECPrice = self.ParameterDict[self.XLCOERECPrice.Name] = floatParameter(
+            "XLCOE REC Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default REC price (0.0 USD/MWh)",
+            ToolTipText="Renewable Energy Credit price used for XLCOE market benefits."
+        )
+        self.IdleRigDiscountRate = self.ParameterDict[self.IdleRigDiscountRate.Name] = floatParameter(
+            "Idle Rig Discount Rate",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.PERCENT,
+            PreferredUnits=PercentUnit.TENTH,
+            CurrentUnits=PercentUnit.TENTH,
+            Required=False,
+            ErrMessage="assume default idle rig discount rate (0.0)",
+            ToolTipText="Reserved XLCOE market input for drilling-capex idle-rig discounts. "
+                        "This input is parsed now and will be applied in a later XLCOE phase."
         )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "

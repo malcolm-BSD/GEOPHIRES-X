@@ -18,11 +18,19 @@ class XLCOETestCase(BaseTestCase):
 
         self.assertIn('Do XLCOE Calculations', model.economics.ParameterDict)
         self.assertIn('Social Discount Rate', model.economics.ParameterDict)
+        self.assertIn('Avoided Emissions Intensity', model.economics.ParameterDict)
+        self.assertIn('XLCOE Carbon Price', model.economics.ParameterDict)
+        self.assertIn('XLCOE REC Price', model.economics.ParameterDict)
+        self.assertIn('Idle Rig Discount Rate', model.economics.ParameterDict)
         self.assertIn('XLCOE_Market', model.economics.OutputParameterDict)
         self.assertIn('XLCOE_MarketSocial', model.economics.OutputParameterDict)
 
         self.assertFalse(model.economics.DoXLCOECalculations.value)
         self.assertEqual(0.07, model.economics.social_discountrate.value)
+        self.assertEqual(0.0, model.economics.AvoidedEmissionsIntensity.value)
+        self.assertEqual(0.0, model.economics.XLCOECarbonPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOERECPrice.value)
+        self.assertEqual(0.0, model.economics.IdleRigDiscountRate.value)
         self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.XLCOE_Market.CurrentUnits)
         self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.XLCOE_MarketSocial.CurrentUnits)
 
@@ -42,13 +50,41 @@ class XLCOETestCase(BaseTestCase):
         self.assertEqual(0.0, disabled_model.economics.XLCOE_Market.value)
         self.assertEqual(0.0, disabled_model.economics.XLCOE_MarketSocial.value)
 
-    def test_xlcoe_enabled_raises_not_implemented_error(self):
-        with self.assertRaisesRegex(NotImplementedError, 'XLCOE calculations are not implemented yet'):
-            self._new_model(
-                input_file=Path(self._get_test_file_path('../examples/Fervo_Project_Cape-5.txt')),
-                additional_params={'Do XLCOE Calculations': True},
-                read_and_calculate=True,
-            )
+    def test_xlcoe_enabled_with_zero_market_inputs_matches_lcoe(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.LCOE.value, 0.0)
+        self.assertAlmostEqual(model.economics.LCOE.value, model.economics.XLCOE_Market.value, places=7)
+        self.assertAlmostEqual(model.economics.XLCOE_Market.value, model.economics.XLCOE_MarketSocial.value, places=7)
+
+    def test_xlcoe_market_benefits_reduce_breakeven_price(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'Avoided Emissions Intensity': 0.44,
+                'XLCOE Carbon Price': 35.0,
+                'XLCOE REC Price': 7.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertLess(benefit_model.economics.XLCOE_Market.value, baseline_model.economics.XLCOE_Market.value)
+        self.assertLessEqual(benefit_model.economics.XLCOE_Market.value, benefit_model.economics.LCOE.value)
+        self.assertAlmostEqual(
+            benefit_model.economics.XLCOE_Market.value,
+            benefit_model.economics.XLCOE_MarketSocial.value,
+            places=7,
+        )
 
     # noinspection PyMethodMayBeStatic
     def _new_model(
