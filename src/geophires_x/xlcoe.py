@@ -20,6 +20,47 @@ def _discount_vector(rate: float, count: int, start: int = 0) -> np.ndarray:
     return 1.0 / np.power(1.0 + rate, np.arange(start, start + count))
 
 
+def calculate_xlcoe_from_explicit_streams(
+    annual_baseline_costs_musd: np.ndarray,
+    annual_net_generation_kwh: np.ndarray,
+    annual_market_benefits_musd: np.ndarray,
+    annual_social_benefits_musd: np.ndarray,
+    market_discount_rate: float,
+    social_discount_rate: float,
+) -> tuple[float, float, float]:
+    annual_baseline_costs_musd = np.asarray(annual_baseline_costs_musd, dtype=float)
+    annual_net_generation_kwh = np.asarray(annual_net_generation_kwh, dtype=float)
+    annual_market_benefits_musd = np.asarray(annual_market_benefits_musd, dtype=float)
+    annual_social_benefits_musd = np.asarray(annual_social_benefits_musd, dtype=float)
+
+    year_count = len(annual_net_generation_kwh)
+    if not (
+        len(annual_baseline_costs_musd) == len(annual_market_benefits_musd) == len(annual_social_benefits_musd) == year_count
+    ):
+        raise ValueError('Explicit XLCOE streams must have the same length.')
+
+    discounted_energy_kwh = float(np.sum(annual_net_generation_kwh * _discount_vector(market_discount_rate, year_count)))
+    if discounted_energy_kwh <= 0.0:
+        return 0.0, 0.0, 0.0
+
+    discounted_baseline_cost_musd = float(
+        np.sum(annual_baseline_costs_musd * _discount_vector(market_discount_rate, year_count))
+    )
+    discounted_market_benefits_musd = float(
+        np.sum(annual_market_benefits_musd * _discount_vector(market_discount_rate, year_count))
+    )
+    discounted_social_benefits_musd = float(
+        np.sum(annual_social_benefits_musd * _discount_vector(social_discount_rate, year_count))
+    )
+
+    lcoe = discounted_baseline_cost_musd / discounted_energy_kwh * 1.0e8
+    xlcoe_market = (discounted_baseline_cost_musd - discounted_market_benefits_musd) / discounted_energy_kwh * 1.0e8
+    xlcoe_market_social = (
+        discounted_baseline_cost_musd - discounted_market_benefits_musd - discounted_social_benefits_musd
+    ) / discounted_energy_kwh * 1.0e8
+    return lcoe, xlcoe_market, xlcoe_market_social
+
+
 def _discounted_market_benefits_musd(econ: Economics, model: Model) -> float:
     plant_lifetime = model.surfaceplant.plant_lifetime.value
     discount_vector = _discount_vector(econ.discountrate.value, plant_lifetime)
