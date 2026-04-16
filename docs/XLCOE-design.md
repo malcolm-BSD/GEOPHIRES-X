@@ -62,7 +62,7 @@ This is not a request to replace `LCOE`.
 
 ## Locked Design Decisions
 
-These decisions are fixed for v1:
+These decisions were fixed for the original electricity-only v1:
 
 1. Expose both `XLCOE_Market` and `XLCOE_MarketSocial`
 2. Implement all five ESG categories in v1
@@ -70,9 +70,17 @@ These decisions are fixed for v1:
 4. Make the first example mirror the paper's closed-loop California framing
 5. Add tests and examples that reproduce the paper's published results-table values exactly
 
+These decisions are fixed for the next extension:
+
+1. Preserve all existing `XLCOE_*` inputs and outputs for backward compatibility
+2. Add parallel extended outputs for heat and cooling rather than overloading the electricity outputs
+3. Generalize the implementation around commodity-specific extended levelized-cost calculations
+4. Reuse the same market-versus-social split for electricity, heat, and cooling
+5. Allocate shared project-level ESG benefits across active commodities using baseline discounted-cost share by default
+
 ## Proposed Terminology
 
-To stay faithful to the paper and avoid ambiguity, GEOPHIRES should treat `XLCOE` as a family of outputs rather than a single scalar with shifting meaning.
+To stay faithful to the paper and avoid ambiguity, GEOPHIRES should treat extended levelized cost as a family of outputs rather than a single scalar with shifting meaning.
 
 Recommended output names:
 
@@ -80,25 +88,285 @@ Recommended output names:
   - display name: `Extended Electricity Breakeven Price (XLCOE Market)`
 - `XLCOE_MarketSocial`
   - display name: `Extended Electricity Breakeven Price (XLCOE Market + Social)`
+- `XLCOH_Market`
+  - display name: `Extended Heat Breakeven Price (XLCOH Market)`
+- `XLCOH_MarketSocial`
+  - display name: `Extended Heat Breakeven Price (XLCOH Market + Social)`
+- `XLCOC_Market`
+  - display name: `Extended Cooling Breakeven Price (XLCOC Market)`
+- `XLCOC_MarketSocial`
+  - display name: `Extended Cooling Breakeven Price (XLCOC Market + Social)`
 
-Optional aliasing for presentation can still use `XLCOE`, but internally the code should keep the two variants distinct.
+Optional aliasing for presentation can still use `XLCOE`, `XLCOH`, and `XLCOC`, but internally the code should keep the market and market-plus-social variants distinct.
+
+When discussing the generalized implementation, this document will use `XLC*` as shorthand for:
+
+- `XLCOE`
+- `XLCOH`
+- `XLCOC`
 
 ## Scope Boundaries
 
 ### In Scope
 
-- electricity-focused extension of `LCOE`
+- electricity extension of `LCOE`
+- heat extension of `LCOH`
+- cooling extension of `LCOC`
 - explicit period-by-period market and social ESG benefit streams
-- configurable monetization inputs for the paper's five benefit categories
+- configurable monetization inputs for the same five ESG benefit categories
 - discounting of social benefits using a distinct social discount rate
-- outputs in electricity breakeven-price units consistent with `LCOE`
+- outputs in units consistent with the corresponding baseline `LCOE`, `LCOH`, or `LCOC`
+- projects that produce any active combination of electricity, heat, and cooling
 
 ### Out Of Scope For Initial Delivery
 
-- heat/cooling analogues such as `XLCOH` or `XLCOC`
 - automatic regional data lookup for carbon, RECs, water, labor, or rig markets
 - new policy optimization solvers
 - probabilistic ESG distributions
+
+## XLC Star Generalization
+
+The next implementation step should promote the current electricity-only `XLCOE` logic into a generalized `XLC*`
+framework that supports electricity, heat, cooling, or any active combination of them.
+
+The governing pattern is the same for each active commodity:
+
+```text
+XLC_market(c)        = [PV(BaselineCost_c) - PV(MarketBenefits_c)] / PV(Output_c)
+XLC_market_social(c) = [PV(BaselineCost_c) - PV(MarketBenefits_c) - PV(SocialBenefits_c)] / PV(Output_c)
+```
+
+where:
+
+- `c` is one commodity in `{electricity, heat, cooling}`
+- market benefits are discounted at the standard market rate `r`
+- social benefits are discounted at the social rate `rS`
+- the denominator uses the same discounted-output basis as the corresponding baseline levelized-cost calculation
+
+This is an extension of the existing `XLCOE` structure, not a replacement of the baseline `LCOE`, `LCOH`, or `LCOC`
+calculations.
+
+## Internal Architecture Extension
+
+The implementation should not add separate one-off code paths for `XLCOE`, `XLCOH`, and `XLCOC`. Instead, it should
+introduce a generalized commodity-aware internal model.
+
+Recommended internal concepts:
+
+- `Commodity`
+  - `ELECTRICITY`
+  - `HEAT`
+  - `COOLING`
+- `LevelizedCostBasis`
+  - commodity id
+  - baseline public value
+  - baseline preferred/current units
+  - discounted output denominator
+  - reconstructed baseline discounted cost numerator
+  - active/inactive flag
+- `ExtendedCostResult`
+  - `market`
+  - `market_social`
+
+Recommended main internal entrypoint:
+
+- `calculate_extended_levelized_cost_outputs(econ, model) -> dict[Commodity, ExtendedCostResult]`
+
+Compatibility wrappers may still exist:
+
+- `calculate_xlcoe_outputs(...)`
+- `calculate_xlcoh_outputs(...)`
+- `calculate_xlcoc_outputs(...)`
+
+## Baseline Cost Basis Refactor
+
+The current electricity-only implementation reconstructs the baseline discounted numerator from the already-computed
+`LCOE` and the discounted electricity denominator. That approach is acceptable for the current `XLCOE` slice, but it
+is too narrow for a clean `XLCOH` / `XLCOC` extension because:
+
+- `LCOH` and `LCOC` use different denominators
+- `LCOH` and `LCOC` are publicly reported in `$ / MMBTU`, not `cents / kWh`
+- multiple end-use branches in `CalculateLCOELCOHLCOC(...)` already perform commodity-specific cost allocation
+
+Before generalized `XLC*` calculations are implemented, GEOPHIRES should extract a shared helper from
+`CalculateLCOELCOHLCOC(...)` that returns commodity-specific baseline levelized-cost bases.
+
+Recommended helper:
+
+- `build_levelized_cost_bases(econ, model) -> dict[Commodity, LevelizedCostBasis]`
+
+This helper should mirror the existing baseline logic for:
+
+- electricity-only projects
+- direct-use heat projects
+- absorption-chiller cooling projects
+- heat-pump heat projects
+- district-heating heat projects
+- cogeneration splits
+- supported economic-model branches
+
+That keeps the baseline and extended calculations aligned and avoids a second drifting implementation of cost
+allocation logic.
+
+## Unit Handling
+
+The generalized implementation should use a single internal computational basis:
+
+- internal basis: `cents / kWh-equivalent`
+
+The public outputs should still be reported in the same units as the corresponding baseline commodity:
+
+- electricity: `cents / kWh`
+- heat: the same public units as `LCOH`
+- cooling: the same public units as `LCOC`
+
+This means:
+
+- internal discounted numerators and denominators should be computed on a commodity-specific energy basis
+- public unit conversion should happen only at the output boundary
+- `XLCOH` and `XLCOC` should match the baseline `LCOH` / `LCOC` units exactly when all ESG modifiers are zero
+
+## Benefit Mapping By Commodity
+
+The five ESG categories remain the same, but they split into commodity-direct benefits and shared project-level
+benefits.
+
+### Commodity-Direct Market Benefits
+
+- avoided-emissions benefit
+- commodity credit benefit
+  - electricity: REC-like credit
+  - heat: renewable-thermal or heat-credit analogue
+  - cooling: clean-cooling or cooling-credit analogue
+
+### Commodity-Direct Social Benefits
+
+- displaced-water benefit
+- operations-jobs benefit tied to the active output scale of that commodity
+
+### Shared Project-Level Benefits
+
+- idle-rig discount
+- construction-jobs benefit
+
+The first generalized implementation should treat idle-rig discount and construction jobs as project-level benefits,
+not duplicate them independently for electricity, heat, and cooling.
+
+## Shared-Benefit Allocation Rule
+
+Projects with more than one active commodity need a deterministic allocation rule for project-level benefits.
+
+The recommended default is:
+
+- allocate shared project-level market and social benefits by baseline discounted-cost share
+
+For active commodity `c`:
+
+```text
+share_c = BaselineDiscountedCost_c / sum(BaselineDiscountedCost_active_commodities)
+```
+
+Then:
+
+- `SharedMarketBenefit_c = share_c * SharedProjectMarketBenefit`
+- `SharedSocialBenefit_c = share_c * SharedProjectSocialBenefit`
+
+Rationale:
+
+- the baseline levelized-cost logic already performs commodity-specific capital and O&M allocation
+- discounted-cost share aligns better with investor-style levelized-cost framing than raw energy share
+- energy-share allocation would mix commodities with different unit conventions and economic meaning
+
+Future versions could expose the allocation basis as a user option, but v1 of `XLCOH` / `XLCOC` should keep the
+allocation rule fixed.
+
+## Input Parameter Extension
+
+Backward compatibility requirements:
+
+- retain all existing electricity `XLCOE_*` parameters unchanged
+- preserve the current meaning of `Do XLCOE Calculations`
+- allow a future alias such as `Do Extended Levelized Cost Calculations`, but do not require it initially
+
+Recommended parameter structure:
+
+### Shared Inputs
+
+- `Social Discount Rate`
+- `Idle Rig Discount Rate`
+- `XLCO Construction Jobs Per Rig`
+- `XLCO Indirect Jobs Multiplier`
+- `XLCO Average Monthly Wage`
+
+### Electricity Inputs
+
+- retain existing:
+  - `Avoided Emissions Intensity`
+  - `XLCOE Carbon Price`
+  - `XLCOE REC Price`
+  - `XLCOE Displaced Water Use Intensity`
+  - `XLCOE Water Shadow Price`
+  - `XLCOE Operations Jobs Per MW`
+
+### Heat Inputs
+
+- `XLCOH Avoided Emissions Intensity`
+- `XLCOH Carbon Price`
+- `XLCOH Thermal Credit Price`
+- `XLCOH Displaced Water Use Intensity`
+- `XLCOH Water Shadow Price`
+- `XLCOH Operations Jobs Per MW`
+
+### Cooling Inputs
+
+- `XLCOC Avoided Emissions Intensity`
+- `XLCOC Carbon Price`
+- `XLCOC Cooling Credit Price`
+- `XLCOC Displaced Water Use Intensity`
+- `XLCOC Water Shadow Price`
+- `XLCOC Operations Jobs Per MW`
+
+Construction jobs and idle-rig discount should remain shared project-level inputs unless a later design revision
+proves a commodity-specific split is needed.
+
+## Output Surface Extension
+
+The economics layer should expose the following additional scalar outputs:
+
+- `XLCOH_Market`
+- `XLCOH_MarketSocial`
+- `XLCOC_Market`
+- `XLCOC_MarketSocial`
+
+Output behavior rules:
+
+- electricity-only projects compute only `XLCOE_*`
+- heat-only projects compute only `XLCOH_*`
+- cooling-only projects compute only `XLCOC_*`
+- cogeneration projects compute both `XLCOE_*` and `XLCOH_*`
+- projects with inactive commodities should leave the corresponding extended outputs unset or zero, consistent with
+  current `XLCOE` disabled behavior
+
+The output surfaces that already carry `XLCOE` should be extended in parallel:
+
+- `Outputs.py`
+- `OutputsRich.py`
+- `AGSOutputs.py` if applicable
+- client result parsing
+- schema generation
+
+## Testing Requirements For XLCOH And XLCOC
+
+Minimum required automated coverage:
+
+- zero-modifier heat project: `XLCOH_Market == LCOH` and `XLCOH_MarketSocial == LCOH`
+- zero-modifier cooling project: `XLCOC_Market == LCOC` and `XLCOC_MarketSocial == LCOC`
+- positive heat market modifiers reduce `XLCOH_Market`
+- positive cooling social modifiers reduce `XLCOC_MarketSocial`
+- social discount rate changes only the `*_MarketSocial` variant
+- mixed-output project computes extended outputs for each active commodity
+- shared project-level benefits are allocated across active commodities by the documented cost-share rule
+- schema and client surfaces include the new outputs and inputs
 
 ## ESG Category Mapping
 
@@ -602,6 +870,207 @@ Tasks:
 Deliverable:
 
 - validated reference scenario with exact-number regression coverage
+
+## XLCOH And XLCOC Extension Rollout Plan
+
+The following phased plan extends the completed `XLCOE` work into generalized `XLC*` support for heat and cooling
+without rewriting the original electricity-only rollout history.
+
+### Phase 7: Baseline Cost Basis Refactor
+
+Goal:
+
+- extract a commodity-aware baseline levelized-cost basis from the existing `LCOE` / `LCOH` / `LCOC` path
+
+Tasks:
+
+- refactor `CalculateLCOELCOHLCOC(...)` so the commodity-specific discounted numerator and denominator logic can be
+  reused by extended-cost calculations
+- introduce a helper such as `build_levelized_cost_bases(econ, model)`
+- cover electricity, direct-use heat, cooling, district-heating, heat-pump, and cogeneration branches
+- preserve existing public `LCOE`, `LCOH`, and `LCOC` values exactly
+
+Tests:
+
+- existing `LCOE`, `LCOH`, and `LCOC` regression suites remain unchanged
+- zero-modifier electricity path still reproduces current `XLCOE`
+- no output-unit regressions for heat and cooling branches
+
+Deliverable:
+
+- reusable commodity-level baseline-cost basis for all extended-cost variants
+
+### Phase 8: Generalized Internal XLC Star Engine
+
+Goal:
+
+- replace the electricity-only internal helper with a commodity-aware `XLC*` engine
+
+Tasks:
+
+- generalize `xlcoe.py` internals around active commodities
+- introduce internal concepts for:
+  - commodity id
+  - baseline cost basis
+  - market benefit stream
+  - social benefit stream
+- keep compatibility wrappers for:
+  - `calculate_xlcoe_outputs(...)`
+  - future `calculate_xlcoh_outputs(...)`
+  - future `calculate_xlcoc_outputs(...)`
+- keep current electricity behavior byte-for-byte compatible at the public output layer
+
+Tests:
+
+- electricity-only tests continue to pass unchanged
+- generalized helper rejects mismatched stream lengths cleanly
+- inactive commodities return zero or unset outputs consistently
+
+Deliverable:
+
+- one internal engine capable of computing extended levelized cost for any supported commodity
+
+### Phase 9: Heat And Cooling Input Model
+
+Goal:
+
+- add commodity-specific `XLCOH` and `XLCOC` monetization inputs while preserving existing electricity parameters
+
+Tasks:
+
+- keep all current `XLCOE_*` and legacy electricity input names unchanged
+- add heat-specific inputs:
+  - `XLCOH Avoided Emissions Intensity`
+  - `XLCOH Carbon Price`
+  - `XLCOH Thermal Credit Price`
+  - `XLCOH Displaced Water Use Intensity`
+  - `XLCOH Water Shadow Price`
+  - `XLCOH Operations Jobs Per MW`
+- add cooling-specific inputs:
+  - `XLCOC Avoided Emissions Intensity`
+  - `XLCOC Carbon Price`
+  - `XLCOC Cooling Credit Price`
+  - `XLCOC Displaced Water Use Intensity`
+  - `XLCOC Water Shadow Price`
+  - `XLCOC Operations Jobs Per MW`
+- keep idle-rig discount and construction-jobs inputs shared at the project level
+
+Tests:
+
+- new parameters exist with correct defaults and units
+- old electricity input names remain accepted
+- schemas include the new heat and cooling inputs
+
+Deliverable:
+
+- complete input surface for electricity, heat, and cooling extended-cost monetization
+
+### Phase 10: Heat And Cooling Output Computation
+
+Goal:
+
+- compute `XLCOH` and `XLCOC` outputs from the generalized engine
+
+Tasks:
+
+- add outputs:
+  - `XLCOH_Market`
+  - `XLCOH_MarketSocial`
+  - `XLCOC_Market`
+  - `XLCOC_MarketSocial`
+- map direct market benefits by commodity
+- map direct social benefits by commodity
+- allocate shared project-level benefits using baseline discounted-cost share
+- support active combinations of:
+  - electricity only
+  - heat only
+  - cooling only
+  - electricity plus heat
+  - any other supported mixed-output combination
+
+Tests:
+
+- zero-modifier heat project yields `XLCOH == LCOH`
+- zero-modifier cooling project yields `XLCOC == LCOC`
+- positive heat market inputs reduce `XLCOH_Market`
+- positive cooling social inputs reduce `XLCOC_MarketSocial`
+- social discount rate changes only the `*_MarketSocial` outputs
+
+Deliverable:
+
+- first working `XLCOH` and `XLCOC` calculations
+
+### Phase 11: Mixed-Commodity Allocation Validation
+
+Goal:
+
+- validate and lock down the shared-benefit allocation behavior for projects with more than one active output
+
+Tasks:
+
+- implement shared project-level benefit allocation using baseline discounted-cost share
+- validate allocation in cogeneration cases
+- validate allocation in heat-plus-cooling style branches if present
+- document the fixed default allocation rule and why it was chosen over raw energy share
+
+Tests:
+
+- cogeneration computes both `XLCOE_*` and `XLCOH_*`
+- shared idle-rig benefit affects each active commodity according to the documented allocation rule
+- shared construction-jobs benefit affects each active commodity according to the documented allocation rule
+- direct commodity benefits do not leak into unrelated commodity outputs
+
+Deliverable:
+
+- locked and tested mixed-output allocation behavior
+
+### Phase 12: Output Surfaces, Client, And Schema For XLCOH And XLCOC
+
+Goal:
+
+- expose the new heat and cooling extended-cost outputs everywhere users already see breakeven economics
+
+Tasks:
+
+- add summary lines to `Outputs.py`
+- add rich-output table entries to `OutputsRich.py`
+- update AGS/SUTRA output handling if relevant
+- update client/result parsing
+- regenerate request/result schemas
+- ensure unit presentation matches baseline `LCOH` / `LCOC` formatting
+
+Tests:
+
+- text outputs contain `XLCOH` and `XLCOC` when relevant
+- client parsing includes new heat and cooling extended outputs
+- schemas remain valid and up to date
+
+Deliverable:
+
+- fully surfaced `XLCOH` and `XLCOC` outputs
+
+### Phase 13: Documentation, Examples, And Validation
+
+Goal:
+
+- document and validate the generalized `XLC*` feature family
+
+Tasks:
+
+- extend user-facing documentation from `XLCOE` to `XLC*`
+- add at least one heat-oriented example and one cooling-oriented example
+- add a mixed-output example if a realistic existing branch supports it
+- document the shared-benefit allocation rule
+- add regression tests for:
+  - heat-only
+  - cooling-only
+  - mixed-output
+- explicitly document that the original paper validates electricity directly, while `XLCOH` and `XLCOC` are
+  GEOPHIRES-native generalizations of the same methodology
+
+Deliverable:
+
+- documented and regression-tested `XLCOE` / `XLCOH` / `XLCOC` family support
 
 ## Key Technical Risks
 
