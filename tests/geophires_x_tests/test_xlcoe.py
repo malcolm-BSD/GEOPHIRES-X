@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from geophires_x.Model import Model
-from geophires_x.Units import EnergyCostUnit
+from geophires_x.Units import CO2ProductionUnit, CostPerMassUnit, CurrencyUnit, EnergyCostUnit
 from geophires_x.xlcoe import (
     CommodityBenefitStreams,
     calculate_extended_cost_from_explicit_streams,
@@ -78,6 +78,18 @@ class XLCOETestCase(BaseTestCase):
         self.assertIn('XLCOE Operations Jobs Per MW', model.economics.ParameterDict)
         self.assertIn('XLCOE Indirect Jobs Multiplier', model.economics.ParameterDict)
         self.assertIn('XLCOE Average Monthly Wage', model.economics.ParameterDict)
+        self.assertIn('XLCOH Avoided Emissions Intensity', model.economics.ParameterDict)
+        self.assertIn('XLCOH Carbon Price', model.economics.ParameterDict)
+        self.assertIn('XLCOH Thermal Credit Price', model.economics.ParameterDict)
+        self.assertIn('XLCOH Displaced Water Use Intensity', model.economics.ParameterDict)
+        self.assertIn('XLCOH Water Shadow Price', model.economics.ParameterDict)
+        self.assertIn('XLCOH Operations Jobs Per MW', model.economics.ParameterDict)
+        self.assertIn('XLCOC Avoided Emissions Intensity', model.economics.ParameterDict)
+        self.assertIn('XLCOC Carbon Price', model.economics.ParameterDict)
+        self.assertIn('XLCOC Cooling Credit Price', model.economics.ParameterDict)
+        self.assertIn('XLCOC Displaced Water Use Intensity', model.economics.ParameterDict)
+        self.assertIn('XLCOC Water Shadow Price', model.economics.ParameterDict)
+        self.assertIn('XLCOC Operations Jobs Per MW', model.economics.ParameterDict)
         self.assertIn('XLCOE_Market', model.economics.OutputParameterDict)
         self.assertIn('XLCOE_MarketSocial', model.economics.OutputParameterDict)
 
@@ -93,8 +105,28 @@ class XLCOETestCase(BaseTestCase):
         self.assertEqual(0.0, model.economics.XLCOEOperationsJobsPerMW.value)
         self.assertEqual(1.0, model.economics.XLCOEIndirectJobsMultiplier.value)
         self.assertEqual(0.0, model.economics.XLCOEAverageMonthlyWage.value)
+        self.assertEqual(0.0, model.economics.XLCOHAvoidedEmissionsIntensity.value)
+        self.assertEqual(0.0, model.economics.XLCOHCarbonPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOHThermalCreditPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOHDisplacedWaterUseIntensity.value)
+        self.assertEqual(0.0, model.economics.XLCOHWaterShadowPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOHOperationsJobsPerMW.value)
+        self.assertEqual(0.0, model.economics.XLCOCAvoidedEmissionsIntensity.value)
+        self.assertEqual(0.0, model.economics.XLCOCCarbonPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOCCoolingCreditPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOCDisplacedWaterUseIntensity.value)
+        self.assertEqual(0.0, model.economics.XLCOCWaterShadowPrice.value)
+        self.assertEqual(0.0, model.economics.XLCOCOperationsJobsPerMW.value)
         self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.XLCOE_Market.CurrentUnits)
         self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.XLCOE_MarketSocial.CurrentUnits)
+        self.assertEqual(CO2ProductionUnit.TONNEPERMWH, model.economics.XLCOHAvoidedEmissionsIntensity.CurrentUnits)
+        self.assertEqual(CostPerMassUnit.DOLLARSPERTONNE, model.economics.XLCOHCarbonPrice.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMWH, model.economics.XLCOHThermalCreditPrice.CurrentUnits)
+        self.assertEqual(CurrencyUnit.DOLLARS, model.economics.XLCOHWaterShadowPrice.CurrentUnits)
+        self.assertEqual(CO2ProductionUnit.TONNEPERMWH, model.economics.XLCOCAvoidedEmissionsIntensity.CurrentUnits)
+        self.assertEqual(CostPerMassUnit.DOLLARSPERTONNE, model.economics.XLCOCCarbonPrice.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMWH, model.economics.XLCOCCoolingCreditPrice.CurrentUnits)
+        self.assertEqual(CurrencyUnit.DOLLARS, model.economics.XLCOCWaterShadowPrice.CurrentUnits)
 
     def test_xlcoe_disabled_leaves_lcoe_unchanged_and_outputs_zero(self):
         baseline_model = self._new_model(

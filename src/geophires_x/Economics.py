@@ -905,6 +905,130 @@ class Economics:
             ErrMessage="assume default average monthly wage (0.0 USD)",
             ToolTipText="Average monthly wage used for XLCOE social jobs benefits."
         )
+        self.XLCOHAvoidedEmissionsIntensity = self.ParameterDict["XLCOH Avoided Emissions Intensity"] = floatParameter(
+            "XLCOH Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default heat avoided emissions intensity (0.0 tCO2/MWh)",
+            ToolTipText="Avoided emissions intensity used for future XLCOH carbon-offset benefits."
+        )
+        self.XLCOHCarbonPrice = self.ParameterDict["XLCOH Carbon Price"] = floatParameter(
+            "XLCOH Carbon Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            Required=False,
+            ErrMessage="assume default XLCOH carbon price (0.0 USD/tonne)",
+            ToolTipText="Carbon price used for future XLCOH market carbon-offset benefits."
+        )
+        self.XLCOHThermalCreditPrice = self.ParameterDict["XLCOH Thermal Credit Price"] = floatParameter(
+            "XLCOH Thermal Credit Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default XLCOH thermal credit price (0.0 USD/MWh)",
+            ToolTipText="Thermal credit price used for future XLCOH market benefits."
+        )
+        self.XLCOHDisplacedWaterUseIntensity = self.ParameterDict["XLCOH Displaced Water Use Intensity"] = floatParameter(
+            "XLCOH Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOH displaced water use intensity (0.0 m3/MWh)",
+            ToolTipText="Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh."
+        )
+        self.XLCOHWaterShadowPrice = self.ParameterDict["XLCOH Water Shadow Price"] = floatParameter(
+            "XLCOH Water Shadow Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default XLCOH water shadow price (0.0 USD per m3)",
+            ToolTipText="Water shadow price used for future XLCOH social water-offset benefits, interpreted as USD per m3."
+        )
+        self.XLCOHOperationsJobsPerMW = self.ParameterDict["XLCOH Operations Jobs Per MW"] = floatParameter(
+            "XLCOH Operations Jobs Per MW",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOH operations jobs per MW (0.0)",
+            ToolTipText="Operations jobs per average MW used for future XLCOH social jobs benefits."
+        )
+        self.XLCOCAvoidedEmissionsIntensity = self.ParameterDict["XLCOC Avoided Emissions Intensity"] = floatParameter(
+            "XLCOC Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default cooling avoided emissions intensity (0.0 tCO2/MWh)",
+            ToolTipText="Avoided emissions intensity used for future XLCOC carbon-offset benefits."
+        )
+        self.XLCOCCarbonPrice = self.ParameterDict["XLCOC Carbon Price"] = floatParameter(
+            "XLCOC Carbon Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            Required=False,
+            ErrMessage="assume default XLCOC carbon price (0.0 USD/tonne)",
+            ToolTipText="Carbon price used for future XLCOC market carbon-offset benefits."
+        )
+        self.XLCOCCoolingCreditPrice = self.ParameterDict["XLCOC Cooling Credit Price"] = floatParameter(
+            "XLCOC Cooling Credit Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default XLCOC cooling credit price (0.0 USD/MWh)",
+            ToolTipText="Cooling credit price used for future XLCOC market benefits."
+        )
+        self.XLCOCDisplacedWaterUseIntensity = self.ParameterDict["XLCOC Displaced Water Use Intensity"] = floatParameter(
+            "XLCOC Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOC displaced water use intensity (0.0 m3/MWh)",
+            ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh."
+        )
+        self.XLCOCWaterShadowPrice = self.ParameterDict["XLCOC Water Shadow Price"] = floatParameter(
+            "XLCOC Water Shadow Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default XLCOC water shadow price (0.0 USD per m3)",
+            ToolTipText="Water shadow price used for future XLCOC social water-offset benefits, interpreted as USD per m3."
+        )
+        self.XLCOCOperationsJobsPerMW = self.ParameterDict["XLCOC Operations Jobs Per MW"] = floatParameter(
+            "XLCOC Operations Jobs Per MW",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOC operations jobs per MW (0.0)",
+            ToolTipText="Operations jobs per average MW used for future XLCOC social jobs benefits."
+        )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
                                                              "Schedule is invalid and will result in an error.")

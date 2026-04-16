@@ -62,6 +62,14 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
 
         self.assertIn('Do XLCOE Calculations', req_schema['properties'])
         self.assertIn('XLCOE Carbon Price', req_schema['properties'])
+        self.assertIn('XLCOH Avoided Emissions Intensity', req_schema['properties'])
+        self.assertIn('XLCOH Carbon Price', req_schema['properties'])
+        self.assertIn('XLCOH Thermal Credit Price', req_schema['properties'])
+        self.assertIn('XLCOH Water Shadow Price', req_schema['properties'])
+        self.assertIn('XLCOC Avoided Emissions Intensity', req_schema['properties'])
+        self.assertIn('XLCOC Carbon Price', req_schema['properties'])
+        self.assertIn('XLCOC Cooling Credit Price', req_schema['properties'])
+        self.assertIn('XLCOC Water Shadow Price', req_schema['properties'])
         self.assertIn('Idle Rig Discount Rate', req_schema['properties'])
         self.assertIn(
             'Extended Electricity Breakeven Price (XLCOE Market)',
