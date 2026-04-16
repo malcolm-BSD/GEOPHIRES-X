@@ -60,6 +60,42 @@ class OutputsTestCase(BaseTestCase):
         self.assertIn('Extended Electricity Breakeven Price (XLCOE Market)', output_content)
         self.assertIn('Extended Electricity Breakeven Price (XLCOE Market + Social)', output_content)
 
+    def test_text_output_file_contains_xlcoh_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example2.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOH Carbon Price': 25.0,
+                    'XLCOH Thermal Credit Price': 15.0,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding='utf-8') as f:
+            output_content = f.read()
+
+        self.assertIn('Extended Heat Breakeven Price (XLCOH Market)', output_content)
+        self.assertIn('Extended Heat Breakeven Price (XLCOH Market + Social)', output_content)
+
+    def test_text_output_file_contains_xlcoc_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example11_AC.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOC Cooling Credit Price': 15.0,
+                    'XLCOC Water Shadow Price': 0.5,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding='utf-8') as f:
+            output_content = f.read()
+
+        self.assertIn('Extended Cooling Breakeven Price (XLCOC Market)', output_content)
+        self.assertIn('Extended Cooling Breakeven Price (XLCOC Market + Social)', output_content)
+
     def test_relative_output_file_path(self):
         input_file = GeophiresInputParameters({'HTML Output File': 'foo.html'}).as_file_path()
         m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108

@@ -79,6 +79,22 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             'Extended Electricity Breakeven Price (XLCOE Market + Social)',
             result_schema['properties']['SUMMARY OF RESULTS']['properties'],
         )
+        self.assertIn(
+            'Extended Heat Breakeven Price (XLCOH Market)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
+        self.assertIn(
+            'Extended Heat Breakeven Price (XLCOH Market + Social)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
+        self.assertIn(
+            'Extended Cooling Breakeven Price (XLCOC Market)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
+        self.assertIn(
+            'Extended Cooling Breakeven Price (XLCOC Market + Social)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
 
 
 if __name__ == '__main__':

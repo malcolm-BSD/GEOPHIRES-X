@@ -113,11 +113,29 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
+        if model.economics.DoXLCOECalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_Market.value),
+                                model.economics.XLCOH_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_MarketSocial.value),
+                                model.economics.XLCOH_MarketSocial.CurrentUnits.value))
     elif (model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and
           model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER):
         summary.append(OutputTableItem('Direct-Use Cooling Breakeven Price (LCOC)',
                                        '{0:10.2f}'.format(model.economics.LCOC.value),
                                        model.economics.LCOC.CurrentUnits.value))
+        if model.economics.DoXLCOECalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOC_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOC_Market.value),
+                                model.economics.XLCOC_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOC_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOC_MarketSocial.value),
+                                model.economics.XLCOC_MarketSocial.CurrentUnits.value))
     elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
                                                     EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
                                                     EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
@@ -139,6 +157,15 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
+        if model.economics.DoXLCOECalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_Market.value),
+                                model.economics.XLCOH_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_MarketSocial.value),
+                                model.economics.XLCOH_MarketSocial.CurrentUnits.value))
 
     summary.append(OutputTableItem('Number of production wells', '{0:10.0f}'.format(model.wellbores.nprod.value)))
     summary.append(OutputTableItem('Number of injection wells', '{0:10.0f}'.format(model.wellbores.ninj.value)))

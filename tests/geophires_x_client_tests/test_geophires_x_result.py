@@ -75,6 +75,66 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertLess(summary[market_field]['value'], baseline_lcoe)
         self.assertLess(summary[social_field]['value'], summary[market_field]['value'])
 
+    def test_xlcoh_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example2.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOH Carbon Price': 25.0,
+                    'XLCOH Thermal Credit Price': 15.0,
+                    'XLCOH Displaced Water Use Intensity': 1.0,
+                    'XLCOH Water Shadow Price': 0.5,
+                    'XLCOH Operations Jobs Per MW': 0.2,
+                    'XLCOE Indirect Jobs Multiplier': 1.5,
+                    'XLCOE Average Monthly Wage': 4000.0,
+                },
+            )
+        )
+        summary = r.result['SUMMARY OF RESULTS']
+
+        market_field = 'Extended Heat Breakeven Price (XLCOH Market)'
+        social_field = 'Extended Heat Breakeven Price (XLCOH Market + Social)'
+        baseline_lcoh_field = 'Direct-Use heat breakeven price (LCOH)'
+        baseline_lcoh = summary[baseline_lcoh_field]['value']
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual(summary[baseline_lcoh_field]['unit'], summary[market_field]['unit'])
+        self.assertEqual(summary[baseline_lcoh_field]['unit'], summary[social_field]['unit'])
+        self.assertLess(summary[market_field]['value'], baseline_lcoh)
+        self.assertLess(summary[social_field]['value'], summary[market_field]['value'])
+
+    def test_xlcoc_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example11_AC.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOC Carbon Price': 25.0,
+                    'XLCOC Cooling Credit Price': 15.0,
+                    'XLCOC Displaced Water Use Intensity': 1.0,
+                    'XLCOC Water Shadow Price': 0.5,
+                    'XLCOC Operations Jobs Per MW': 0.2,
+                    'XLCOE Indirect Jobs Multiplier': 1.5,
+                    'XLCOE Average Monthly Wage': 4000.0,
+                },
+            )
+        )
+        summary = r.result['SUMMARY OF RESULTS']
+
+        market_field = 'Extended Cooling Breakeven Price (XLCOC Market)'
+        social_field = 'Extended Cooling Breakeven Price (XLCOC Market + Social)'
+        baseline_lcoc_field = 'Direct-Use Cooling Breakeven Price (LCOC)'
+        baseline_lcoc = summary[baseline_lcoc_field]['value']
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual(summary[baseline_lcoc_field]['unit'], summary[market_field]['unit'])
+        self.assertEqual(summary[baseline_lcoc_field]['unit'], summary[social_field]['unit'])
+        self.assertLess(summary[market_field]['value'], baseline_lcoc)
+        self.assertLess(summary[social_field]['value'], summary[market_field]['value'])
+
     def test_sam_economic_model_result_csv(self) -> None:
         r: GeophiresXResult = GeophiresXResult(self._get_test_file_path('sam-em-csv-test.out'))
         as_csv = r.as_csv()
