@@ -14,3 +14,22 @@ A minimal example input file is available at
 ## Case Study: 500 MW EGS Project Modeled on Fervo Cape Station
 
 See documentation: [Case Study: 500 MWe EGS Project Modeled on Fervo Cape Station](Fervo_Project_Cape-5.html).
+
+## Extended Levelized Cost Examples
+
+`XLC*` examples are available in `tests/examples/`:
+
+- heat-focused example:
+  [`tests/examples/example_XLCOH.txt`](../tests/examples/example_XLCOH.txt)
+- cooling-focused example:
+  [`tests/examples/example_XLCOC.txt`](../tests/examples/example_XLCOC.txt)
+- electricity paper-validation fixtures:
+  [`tests/examples/example_XLCOE_paper_low.txt`](../tests/examples/example_XLCOE_paper_low.txt)
+  and
+  [`tests/examples/example_XLCOE_paper_high.txt`](../tests/examples/example_XLCOE_paper_high.txt)
+
+Important validation boundary:
+
+- `XLCOE` is directly regression-locked to the published paper table through explicit validation fixtures
+- `XLCOH` and `XLCOC` are GEOPHIRES-native extensions of the same market/social methodology, validated through
+  direct-use, cooling, and mixed-output regression tests rather than a published external paper target

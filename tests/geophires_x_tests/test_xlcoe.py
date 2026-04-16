@@ -332,6 +332,28 @@ class XLCOETestCase(BaseTestCase):
         self.assertAlmostEqual(model.economics.LCOE.value, model.economics.XLCOE_Market.value, places=7)
         self.assertAlmostEqual(model.economics.LCOH.value, model.economics.XLCOH_Market.value, places=7)
 
+    def test_documented_xlcoh_example_file_produces_extended_heat_outputs(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example_XLCOH.txt')),
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.XLCOH_Market.value, 0.0)
+        self.assertGreater(model.economics.XLCOH_MarketSocial.value, 0.0)
+        self.assertLess(model.economics.XLCOH_Market.value, model.economics.LCOH.value)
+        self.assertLess(model.economics.XLCOH_MarketSocial.value, model.economics.XLCOH_Market.value)
+
+    def test_documented_xlcoc_example_file_produces_extended_cooling_outputs(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example_XLCOC.txt')),
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.XLCOC_Market.value, 0.0)
+        self.assertGreater(model.economics.XLCOC_MarketSocial.value, 0.0)
+        self.assertLess(model.economics.XLCOC_Market.value, model.economics.LCOC.value)
+        self.assertLess(model.economics.XLCOC_MarketSocial.value, model.economics.XLCOC_Market.value)
+
     def test_cogeneration_idle_rig_benefit_is_allocated_by_baseline_cost_share(self):
         baseline_model = self._new_model(
             input_file=Path(self._get_test_file_path('../examples/example13.txt')),

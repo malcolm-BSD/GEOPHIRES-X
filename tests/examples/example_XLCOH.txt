@@ -1,0 +1,75 @@
+# Example XLCOH: Direct-use heat with extended market and social modifiers
+
+# Based on example2.txt, with XLCOH monetization inputs enabled.
+
+# ***Subsurface Technical Parameters***
+# *************************************
+Reservoir Model,2
+Reservoir Depth,3
+Number of Segments,1
+Gradient 1,55
+Number of Production Wells,2
+Number of Injection Wells,2
+Production Well Diameter,8
+Injection Well Diameter,8
+Ramey Production Wellbore Model,1
+Injection Wellbore Temperature Gain,0
+Production Flow Rate per Well,30
+Fracture Shape,2
+Fracture Height,300
+Reservoir Volume Option,2
+Fracture Separation,60
+Reservoir Impedance,0.2
+Injection Temperature,70
+Maximum Drawdown,.3
+Reservoir Heat Capacity,975
+Reservoir Density,3000
+Reservoir Thermal Conductivity,3.2
+Reservoir Porosity,.1
+
+# ***Surface Technical Parameters***
+# **********************************
+End-Use Option,2
+Circulation Pump Efficiency,.8
+Utilization Factor,.9
+End-Use Efficiency Factor,.9
+Surface Temperature,15
+
+# ***Financial Parameters***
+# **************************
+Plant Lifetime,25
+Economic Model,2
+Discount Rate,.05
+Inflation Rate During Construction,0
+
+# ***Capital and O&M Cost Parameters***
+# *************************************
+Well Drilling and Completion Capital Cost Adjustment Factor,1
+Well Drilling Cost Correlation,1
+Reservoir Stimulation Capital Cost Adjustment Factor,1
+Surface Plant Capital Cost Adjustment Factor,1
+Field Gathering System Capital Cost Adjustment Factor,1
+Exploration Capital Cost Adjustment Factor,1
+Wellfield O&M Cost Adjustment Factor,1
+Surface Plant O&M Cost Adjustment Factor,1
+Water Cost Adjustment Factor,1
+Electricity Rate,.05
+
+# ***Extended Levelized Cost Parameters***
+# ****************************************
+Do XLCOE Calculations,1
+XLCOH Avoided Emissions Intensity,0.25
+XLCOH Carbon Price,30
+XLCOH Thermal Credit Price,4
+XLCOH Displaced Water Use Intensity,1.0
+XLCOH Water Shadow Price,0.25
+XLCOH Operations Jobs Per MW,1.0
+XLCOE Construction Jobs Per Rig,37
+XLCOE Indirect Jobs Multiplier,1.0
+XLCOE Average Monthly Wage,4000
+Social Discount Rate,0.05
+
+# ***Simulation Parameters***
+# ***************************
+Print Output to Console,1
+Time steps per year,3

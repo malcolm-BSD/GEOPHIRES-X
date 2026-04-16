@@ -1072,6 +1072,47 @@ Deliverable:
 
 - documented and regression-tested `XLCOE` / `XLCOH` / `XLCOC` family support
 
+### Phase 13 Completion Notes
+
+Phase 13 is now implemented in the repository.
+
+Completed artifacts:
+
+- user-facing example references in [GEOPHIRES-Examples.md](D:/Work/malcolm-BSD/GEOPHIRES-X-parser-formulas/docs/GEOPHIRES-Examples.md)
+- heat-oriented example input:
+  [example_XLCOH.txt](D:/Work/malcolm-BSD/GEOPHIRES-X-parser-formulas/tests/examples/example_XLCOH.txt)
+- cooling-oriented example input:
+  [example_XLCOC.txt](D:/Work/malcolm-BSD/GEOPHIRES-X-parser-formulas/tests/examples/example_XLCOC.txt)
+- regression coverage for the documented heat and cooling example files
+- output/client/schema coverage for surfaced `XLCOH` and `XLCOC` summary fields
+
+Validation boundary:
+
+- `XLCOE` is directly locked to the paper's published electricity table via explicit low/high fixtures
+- `XLCOH` and `XLCOC` are GEOPHIRES-native generalizations of the same method
+- there is no external published paper table for `XLCOH` or `XLCOC` in this design basis, so validation for those
+  commodities is based on:
+  - zero-modifier equivalence to baseline `LCOH` / `LCOC`
+  - sign and isolation checks for commodity-specific market/social inputs
+  - mixed-output allocation tests for shared project-level benefits
+  - surfaced-output parsing and schema regression tests
+
+## Implementation Status
+
+The implementation represented by this document is now complete through Phase 13.
+
+Completed sequence:
+
+1. Phase 0: design freeze for electricity-only `XLCOE`
+2. Phases 1-6: electricity implementation, surfacing, and paper validation
+3. Phase 7: baseline cost-basis refactor
+4. Phase 8: generalized internal `XLC*` engine
+5. Phase 9: heat and cooling monetization inputs
+6. Phase 10: `XLCOH` and `XLCOC` calculations
+7. Phase 11: mixed-output allocation validation
+8. Phase 12: text output, rich output, client, and schema surfacing
+9. Phase 13: documentation, example inputs, and final validation pass
+
 ## Key Technical Risks
 
 ### Unit Consistency
@@ -1124,24 +1165,47 @@ If standard GEOPHIRES inputs alone cannot reproduce the exact published table, t
 
 ## Recommended Implementation Order
 
-The safest order is:
+The recommended order for this feature family is now:
+
+1. freeze the electricity-only scope and paper-validation target
+2. implement baseline `XLCOE` outputs before heat/cooling generalization
+3. validate the electricity paper target independently of any heat/cooling work
+4. extract the commodity-aware baseline cost basis before extending `XLCOE` internals
+5. generalize the internal engine before adding new public heat/cooling calculations
+6. add heat/cooling inputs before heat/cooling outputs
+7. validate mixed-output allocation before surfacing new summary fields broadly
+8. surface outputs only after the internal allocation rules are locked
+9. finish with user-facing examples and explicit documentation of the electricity-versus-heat/cooling validation boundary
+
+Actual completed order in this repository:
 
 1. Phase 0
 2. Phase 1
-3. Phase 2 with carbon and REC first
+3. Phase 2
 4. Phase 3
-5. complete idle rig discount before Phase 4
+5. idle-rig completion before Phase 4 surfacing
 6. Phase 4
 7. Phase 5
 8. Phase 6
+9. Phase 7
+10. Phase 8
+11. Phase 9
+12. Phase 10
+13. Phase 11
+14. Phase 12
+15. Phase 13
 
-This sequencing avoids having the most ambiguous category block the rest of the feature.
+This sequencing kept the paper-locked electricity implementation stable while the generalized `XLC*` support was
+added in layers.
 
-## Immediate Next Step
+## Next Step
 
-Before implementation starts, the following should now be done from the locked decisions:
+Implementation work described by this document is complete.
 
-1. map the paper's low-value and high-value scenario assumptions into explicit GEOPHIRES-compatible inputs
-2. determine whether standard GEOPHIRES closed-loop modeling alone can reproduce the paper's baseline `LCOE = $80/MWh`
-3. define the exact expected output values and rounding rules for regression tests
-4. decide whether the paper-validation example should live only in `tests/examples/` or also in user-facing docs/examples
+Reasonable follow-on work, if needed later:
+
+1. add more user-facing narrative documentation outside the design plan if `XLC*` becomes a headline feature
+2. consider exposing the shared-benefit allocation basis as a configurable option if users need alternatives to
+   discounted-cost share
+3. add additional example variants for district-heating and heat-pump `XLCOH` scenarios if those branches become
+   common support questions
