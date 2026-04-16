@@ -7,12 +7,61 @@ from typing import Any
 
 from geophires_x.Model import Model
 from geophires_x.Units import EnergyCostUnit
-from geophires_x.xlcoe import calculate_xlcoe_from_explicit_streams
+from geophires_x.xlcoe import (
+    CommodityBenefitStreams,
+    calculate_extended_cost_from_explicit_streams,
+    calculate_extended_costs_from_explicit_streams,
+    calculate_extended_levelized_costs,
+    calculate_xlcoe_from_explicit_streams,
+)
 from geophires_x_client import GeophiresInputParameters
 from tests.base_test_case import BaseTestCase
 
 
 class XLCOETestCase(BaseTestCase):
+
+    def test_generalized_extended_cost_helper_rejects_mismatched_stream_lengths(self):
+        with self.assertRaises(ValueError):
+            calculate_extended_cost_from_explicit_streams(
+                CommodityBenefitStreams(
+                    annual_output=[1.0, 1.0],
+                    annual_baseline_costs_musd=[1.0],
+                    annual_market_benefits_musd=[0.0, 0.0],
+                    annual_social_benefits_musd=[0.0, 0.0],
+                    market_discount_rate=0.07,
+                    social_discount_rate=0.07,
+                    public_price_factor=1.0e8,
+                )
+            )
+
+    def test_generalized_extended_cost_helper_supports_multiple_commodities(self):
+        results = calculate_extended_costs_from_explicit_streams(
+            {
+                'electricity': CommodityBenefitStreams(
+                    annual_output=[100.0, 100.0],
+                    annual_baseline_costs_musd=[1.0, 1.0],
+                    annual_market_benefits_musd=[0.1, 0.1],
+                    annual_social_benefits_musd=[0.05, 0.05],
+                    market_discount_rate=0.0,
+                    social_discount_rate=0.0,
+                    public_price_factor=100.0,
+                ),
+                'heat': CommodityBenefitStreams(
+                    annual_output=[50.0, 50.0],
+                    annual_baseline_costs_musd=[0.5, 0.5],
+                    annual_market_benefits_musd=[0.0, 0.0],
+                    annual_social_benefits_musd=[0.1, 0.1],
+                    market_discount_rate=0.0,
+                    social_discount_rate=0.0,
+                    public_price_factor=100.0,
+                ),
+            }
+        )
+
+        self.assertAlmostEqual(0.9, results['electricity'].market)
+        self.assertAlmostEqual(0.85, results['electricity'].market_social)
+        self.assertAlmostEqual(1.0, results['heat'].market)
+        self.assertAlmostEqual(0.8, results['heat'].market_social)
 
     def test_xlcoe_parameters_and_outputs_are_defined(self):
         model = self._new_model()
@@ -194,6 +243,15 @@ class XLCOETestCase(BaseTestCase):
             low_discount_model.economics.XLCOE_MarketSocial.value,
             high_discount_model.economics.XLCOE_MarketSocial.value,
         )
+
+    def test_generalized_engine_returns_no_active_results_when_xlcoe_disabled(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example1.txt')),
+            additional_params={'Do XLCOE Calculations': False},
+            read_and_calculate=True,
+        )
+
+        self.assertEqual({}, calculate_extended_levelized_costs(model.economics, model))
 
     def test_xlcoe_paper_low_fixture_matches_published_values(self):
         fixture = self._load_paper_fixture('../examples/example_XLCOE_paper_low.txt')
