@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from geophires_x.Model import Model
+from geophires_x.levelized_costs import ELECTRICITY_COMMODITY, HEAT_COMMODITY, build_levelized_cost_bases
 from geophires_x.Units import CO2ProductionUnit, CostPerMassUnit, CurrencyUnit, EnergyCostUnit
 from geophires_x.xlcoe import (
     CommodityBenefitStreams,
@@ -331,6 +332,155 @@ class XLCOETestCase(BaseTestCase):
         self.assertAlmostEqual(model.economics.LCOE.value, model.economics.XLCOE_Market.value, places=7)
         self.assertAlmostEqual(model.economics.LCOH.value, model.economics.XLCOH_Market.value, places=7)
 
+    def test_cogeneration_idle_rig_benefit_is_allocated_by_baseline_cost_share(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'Idle Rig Discount Rate': 0.05,
+            },
+            read_and_calculate=True,
+        )
+
+        bases = build_levelized_cost_bases(benefit_model.economics, benefit_model)
+        total_discounted_cost = sum(basis.baseline_discounted_cost_musd for basis in bases.values())
+        total_shared_benefit = benefit_model.economics.Cwell.value * benefit_model.economics.IdleRigDiscountRate.value
+
+        electricity_observed = self._observed_discounted_benefit_musd(
+            bases[ELECTRICITY_COMMODITY],
+            baseline_model.economics.XLCOE_Market.value,
+            benefit_model.economics.XLCOE_Market.value,
+        )
+        heat_observed = self._observed_discounted_benefit_musd(
+            bases[HEAT_COMMODITY],
+            baseline_model.economics.XLCOH_Market.value,
+            benefit_model.economics.XLCOH_Market.value,
+        )
+
+        self.assertAlmostEqual(total_shared_benefit, electricity_observed + heat_observed, places=7)
+        self.assertAlmostEqual(
+            total_shared_benefit * bases[ELECTRICITY_COMMODITY].baseline_discounted_cost_musd / total_discounted_cost,
+            electricity_observed,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            total_shared_benefit * bases[HEAT_COMMODITY].baseline_discounted_cost_musd / total_discounted_cost,
+            heat_observed,
+            places=7,
+        )
+
+    def test_cogeneration_construction_jobs_benefit_is_allocated_by_baseline_cost_share(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'XLCOE Construction Jobs Per Rig': 37.0,
+                'XLCOE Indirect Jobs Multiplier': 1.0,
+                'XLCOE Average Monthly Wage': 4000.0,
+            },
+            read_and_calculate=True,
+        )
+
+        bases = build_levelized_cost_bases(benefit_model.economics, benefit_model)
+        total_discounted_cost = sum(basis.baseline_discounted_cost_musd for basis in bases.values())
+        construction_years = benefit_model.surfaceplant.construction_years.value
+        total_wells = benefit_model.wellbores.nprod.value + benefit_model.wellbores.ninj.value
+        construction_jobs_total = (
+            total_wells
+            * benefit_model.economics.XLCOEConstructionJobsPerRig.value
+            * benefit_model.economics.XLCOEIndirectJobsMultiplier.value
+        )
+        annual_construction_jobs_musd = (
+            construction_jobs_total
+            * benefit_model.economics.XLCOEAverageMonthlyWage.value
+            * 12.0
+            / construction_years
+            / 1_000_000.0
+        )
+        total_shared_social_benefit = sum(
+            annual_construction_jobs_musd / (1.0 + benefit_model.economics.social_discountrate.value) ** year
+            for year in range(construction_years)
+        )
+
+        electricity_observed = self._observed_discounted_benefit_musd(
+            bases[ELECTRICITY_COMMODITY],
+            baseline_model.economics.XLCOE_MarketSocial.value,
+            benefit_model.economics.XLCOE_MarketSocial.value,
+        )
+        heat_observed = self._observed_discounted_benefit_musd(
+            bases[HEAT_COMMODITY],
+            baseline_model.economics.XLCOH_MarketSocial.value,
+            benefit_model.economics.XLCOH_MarketSocial.value,
+        )
+
+        self.assertAlmostEqual(total_shared_social_benefit, electricity_observed + heat_observed, places=7)
+        self.assertAlmostEqual(
+            total_shared_social_benefit * bases[ELECTRICITY_COMMODITY].baseline_discounted_cost_musd / total_discounted_cost,
+            electricity_observed,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            total_shared_social_benefit * bases[HEAT_COMMODITY].baseline_discounted_cost_musd / total_discounted_cost,
+            heat_observed,
+            places=7,
+        )
+
+    def test_cogeneration_direct_benefits_do_not_leak_between_commodities(self):
+        baseline_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={'Do XLCOE Calculations': True},
+            read_and_calculate=True,
+        )
+        electricity_benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'Avoided Emissions Intensity': 0.44,
+                'XLCOE Carbon Price': 35.0,
+                'XLCOE REC Price': 7.0,
+            },
+            read_and_calculate=True,
+        )
+        heat_benefit_model = self._new_model(
+            input_file=Path(self._get_test_file_path('../examples/example13.txt')),
+            additional_params={
+                'Do XLCOE Calculations': True,
+                'XLCOH Avoided Emissions Intensity': 0.25,
+                'XLCOH Carbon Price': 30.0,
+                'XLCOH Thermal Credit Price': 4.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertLess(
+            electricity_benefit_model.economics.XLCOE_Market.value,
+            baseline_model.economics.XLCOE_Market.value,
+        )
+        self.assertAlmostEqual(
+            electricity_benefit_model.economics.XLCOH_Market.value,
+            baseline_model.economics.XLCOH_Market.value,
+            places=7,
+        )
+        self.assertLess(
+            heat_benefit_model.economics.XLCOH_Market.value,
+            baseline_model.economics.XLCOH_Market.value,
+        )
+        self.assertAlmostEqual(
+            heat_benefit_model.economics.XLCOE_Market.value,
+            baseline_model.economics.XLCOE_Market.value,
+            places=7,
+        )
+
     def test_xlcoe_social_discount_rate_only_changes_social_output(self):
         low_discount_model = self._new_model(
             input_file=Path(self._get_test_file_path('../examples/example1.txt')),
@@ -514,3 +664,11 @@ class XLCOETestCase(BaseTestCase):
             fixture['Annual Water Benefit MUSD'] + fixture['Annual Operations Jobs Benefit MUSD']
         ] * operating_years
         return fixture
+
+    @staticmethod
+    def _observed_discounted_benefit_musd(basis, baseline_public_value: float, benefit_public_value: float) -> float:
+        return (
+            (baseline_public_value - benefit_public_value)
+            * basis.discounted_output
+            / basis.public_price_factor
+        )
