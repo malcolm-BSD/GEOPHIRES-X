@@ -43,6 +43,8 @@ class GeophiresXResult:
                 _EqualSignDelimitedField('Reservoir Model'),  # SUTRA only
                 'Average Net Electricity Production',
                 'Electricity breakeven price',
+                'Extended Electricity Breakeven Price (XLCOE Market)',
+                'Extended Electricity Breakeven Price (XLCOE Market + Social)',
                 'Total CAPEX',
                 'Total CAPEX ($/kW)',
                 'Average Direct-Use Heat Production',

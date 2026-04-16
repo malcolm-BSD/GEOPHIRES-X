@@ -60,6 +60,18 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             'Wellfield cost. ', get_result_prop('CAPITAL COSTS (M$)', 'Drilling and completion costs')['description']
         )
 
+        self.assertIn('Do XLCOE Calculations', req_schema['properties'])
+        self.assertIn('XLCOE Carbon Price', req_schema['properties'])
+        self.assertIn('Idle Rig Discount Rate', req_schema['properties'])
+        self.assertIn(
+            'Extended Electricity Breakeven Price (XLCOE Market)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
+        self.assertIn(
+            'Extended Electricity Breakeven Price (XLCOE Market + Social)',
+            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

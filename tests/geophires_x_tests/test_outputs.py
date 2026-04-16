@@ -42,6 +42,24 @@ class OutputsTestCase(BaseTestCase):
             else:
                 raise e
 
+    def test_text_output_file_contains_xlcoe_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example1.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOE Carbon Price': 25.0,
+                    'XLCOE REC Price': 15.0,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding='utf-8') as f:
+            output_content = f.read()
+
+        self.assertIn('Extended Electricity Breakeven Price (XLCOE Market)', output_content)
+        self.assertIn('Extended Electricity Breakeven Price (XLCOE Market + Social)', output_content)
+
     def test_relative_output_file_path(self):
         input_file = GeophiresInputParameters({'HTML Output File': 'foo.html'}).as_file_path()
         m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108

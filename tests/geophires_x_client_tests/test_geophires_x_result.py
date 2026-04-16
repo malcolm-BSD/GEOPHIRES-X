@@ -46,6 +46,35 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertGreater(r.result['SUMMARY OF RESULTS'][field_name]['value'], 1)
         self.assertEqual(r.result['SUMMARY OF RESULTS'][field_name]['unit'], 'MUSD')
 
+    def test_xlcoe_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path('../examples/example1.txt'),
+                params={
+                    'Do XLCOE Calculations': True,
+                    'XLCOE Carbon Price': 25.0,
+                    'XLCOE REC Price': 15.0,
+                    'XLCOE Displaced Water Use Intensity': 1.0,
+                    'XLCOE Water Shadow Price': 0.5,
+                    'XLCOE Operations Jobs Per MW': 0.2,
+                    'XLCOE Indirect Jobs Multiplier': 1.5,
+                    'XLCOE Average Monthly Wage': 4000.0,
+                },
+            )
+        )
+        summary = r.result['SUMMARY OF RESULTS']
+
+        market_field = 'Extended Electricity Breakeven Price (XLCOE Market)'
+        social_field = 'Extended Electricity Breakeven Price (XLCOE Market + Social)'
+        baseline_lcoe = summary['Electricity breakeven price']['value']
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual('cents/kWh', summary[market_field]['unit'])
+        self.assertEqual('cents/kWh', summary[social_field]['unit'])
+        self.assertLess(summary[market_field]['value'], baseline_lcoe)
+        self.assertLess(summary[social_field]['value'], summary[market_field]['value'])
+
     def test_sam_economic_model_result_csv(self) -> None:
         r: GeophiresXResult = GeophiresXResult(self._get_test_file_path('sam-em-csv-test.out'))
         as_csv = r.as_csv()
