@@ -3,18 +3,12 @@ from __future__ import annotations
 import numpy as np
 from typing import TYPE_CHECKING
 
+from geophires_x.levelized_costs import ELECTRICITY_COMMODITY, build_levelized_cost_bases
 from geophires_x.OptionList import EndUseOptions, EconomicModel
 
 if TYPE_CHECKING:
     from geophires_x.Economics import Economics
     from geophires_x.Model import Model
-
-
-def _discounted_energy_kwh(econ: Economics, model: Model) -> float:
-    plant_lifetime = model.surfaceplant.plant_lifetime.value
-    discount_vector = 1.0 / np.power(1.0 + econ.discountrate.value, np.arange(plant_lifetime))
-    return float(np.sum(np.asarray(model.surfaceplant.NetkWhProduced.value) * discount_vector))
-
 
 def _discount_vector(rate: float, count: int, start: int = 0) -> np.ndarray:
     return 1.0 / np.power(1.0 + rate, np.arange(start, start + count))
@@ -140,11 +134,12 @@ def calculate_xlcoe_outputs(econ: Economics, model: Model) -> tuple[float, float
     if econ.econmodel.value == EconomicModel.CLGS:
         return 0.0, 0.0
 
-    discounted_energy_kwh = _discounted_energy_kwh(econ, model)
-    if discounted_energy_kwh <= 0.0:
+    electricity_basis = build_levelized_cost_bases(econ, model).get(ELECTRICITY_COMMODITY)
+    if electricity_basis is None or electricity_basis.discounted_output <= 0.0:
         return 0.0, 0.0
 
-    baseline_discounted_cost_musd = econ.LCOE.value * discounted_energy_kwh / 1.0e8
+    discounted_energy_kwh = electricity_basis.discounted_output
+    baseline_discounted_cost_musd = electricity_basis.baseline_discounted_cost_musd
     discounted_market_benefits_musd = _discounted_market_benefits_musd(econ, model)
     discounted_social_benefits_musd = _discounted_social_benefits_musd(econ, model)
 
