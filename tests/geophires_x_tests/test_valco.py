@@ -288,6 +288,43 @@ class VALCOTestCase(BaseTestCase):
         self.assertAlmostEqual(model.economics.XLCOE_Market.value + 0.5, model.economics.VALCOE.value, places=7)
         self.assertAlmostEqual(model.economics.XLCOH_Market.value + 0.5, model.economics.VALCOH.value, places=7)
 
+    def test_valcoe_example_file_composes_on_xlcoe_market(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example_VALCOE.txt"),
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(-1.5, model.economics.VALCOE_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.3, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.05, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
+        self.assertAlmostEqual(
+            model.economics.XLCOE_Market.value - 1.15,
+            model.economics.VALCOE.value,
+            places=7,
+        )
+
+    def test_valcoh_example_file_adjusts_lcoh(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example_VALCOH.txt"),
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(0.75, model.economics.VALCOH_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.75, model.economics.VALCOH_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.1, model.economics.VALCOH_FlexibilityAdjustment.value, places=7)
+        self.assertAlmostEqual(model.economics.LCOH.value + 1.6, model.economics.VALCOH.value, places=7)
+
+    def test_valcoc_example_file_adjusts_lcoc(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example_VALCOC.txt"),
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(0.5, model.economics.VALCOC_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.1, model.economics.VALCOC_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.6, model.economics.VALCOC_FlexibilityAdjustment.value, places=7)
+        self.assertAlmostEqual(model.economics.LCOC.value + 1.2, model.economics.VALCOC.value, places=7)
+
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False
     ) -> Model:

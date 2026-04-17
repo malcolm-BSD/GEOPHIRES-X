@@ -44,7 +44,8 @@ Current status:
 - Phase 5 complete
 - Phase 6 complete
 - Phase 7 complete
-- Phase 8 not started
+- Phase 8 complete
+- Phase 9 not started
 
 Phase 1 completion date:
 
@@ -71,6 +72,10 @@ Phase 6 completion date:
 - 2026-04-17
 
 Phase 7 completion date:
+
+- 2026-04-17
+
+Phase 8 completion date:
 
 - 2026-04-17
 
@@ -634,8 +639,8 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 8 should add user-facing examples and documentation:
+Phase 9 should add the first derived-mode implementation for electricity:
 
-- example input files for `VALCOE`, `VALCOH`, and `VALCOC`
-- output reference files where useful
-- documentation for interpretation, composition with `XLCO`, and current direct-mode limitations
+- derived-mode input parameters for `VALCOE`
+- capacity and flexibility derivation helpers
+- tests that keep direct mode and derived mode behavior clearly separated

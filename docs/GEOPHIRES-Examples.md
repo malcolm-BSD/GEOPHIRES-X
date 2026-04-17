@@ -33,3 +33,21 @@ Important validation boundary:
 - `XLCOE` is directly regression-locked to the published paper table through explicit validation fixtures
 - `XLCOH` and `XLCOC` are GEOPHIRES-native extensions of the same market/social methodology, validated through
   direct-use, cooling, and mixed-output regression tests rather than a published external paper target
+
+## Value-Adjusted Levelized Cost Examples
+
+`VALCO*` examples are available in `tests/examples/`:
+
+- electricity example with `XLCOE -> VALCOE` composition:
+  [`tests/examples/example_VALCOE.txt`](../tests/examples/example_VALCOE.txt)
+- heat-focused example:
+  [`tests/examples/example_VALCOH.txt`](../tests/examples/example_VALCOH.txt)
+- cooling-focused example:
+  [`tests/examples/example_VALCOC.txt`](../tests/examples/example_VALCOC.txt)
+
+Important interpretation boundary:
+
+- `VALCOE` follows the IEA value-adjusted electricity formulation structure using direct user-supplied value terms
+- `VALCOH` and `VALCOC` are GEOPHIRES-native extensions by analogy, not direct paper reproductions
+- current examples use `VALCO Calculation Mode = Direct`
+- when both `XLCO` and `VALCO` are active for a commodity, `VALCO` adjusts `XLCO*_Market`, not `XLCO*_MarketSocial`
