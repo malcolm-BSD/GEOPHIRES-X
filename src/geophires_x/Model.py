@@ -77,7 +77,7 @@ class Model(object):
             input_file = sys.argv[1]
 
         # Key step - read the entire provided input file
-        read_input_file(self.InputParameters, logger=self.logger, input_file_name=input_file)
+        self.InputParameters = read_input_file(logger=self.logger, input_file_name=input_file)
 
         # initiate the outputs object
         output_file = 'HDR.out'

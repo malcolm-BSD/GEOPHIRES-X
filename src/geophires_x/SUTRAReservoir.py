@@ -1,7 +1,7 @@
 import sys
 
 from .MatplotlibUtils import plt_show, plt_figure
-from .Parameter import strParameter, OutputParameter
+from .Parameter import strParameter, OutputParameter, filenameParameter
 from .Units import *
 import geophires_x.Model as Model
 from .Reservoir import Reservoir
@@ -43,7 +43,7 @@ class SUTRAReservoir(Reservoir):
         self.MyClass = sclass.replace("\'>","")
 
         # specific to this class:
-        self.sutraannualheatfilename = self.ParameterDict[self.sutraannualheatfilename.Name] = strParameter(
+        self.sutraannualheatfilename = self.ParameterDict[self.sutraannualheatfilename.Name] = filenameParameter(
             "SUTRA Annual Heat File Name",
             value='annual_heat.csv',
             UnitType=Units.NONE,
@@ -51,7 +51,7 @@ class SUTRAReservoir(Reservoir):
             ToolTipText="SUTRA file with heat stored, heat supplied and efficiency for each year"
         )
 
-        self.sutraheatbudgetfilename = self.ParameterDict[self.sutraheatbudgetfilename.Name] = strParameter(
+        self.sutraheatbudgetfilename = self.ParameterDict[self.sutraheatbudgetfilename.Name] = filenameParameter(
             "SUTRA Heat Budget File Name",
             value='heat_budget.csv',
             UnitType=Units.NONE,
@@ -59,7 +59,7 @@ class SUTRAReservoir(Reservoir):
             ToolTipText="SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime"
         )
 
-        self.sutrabalanceandstoragewelloutputfilename = self.ParameterDict[self.sutrabalanceandstoragewelloutputfilename.Name] = strParameter(
+        self.sutrabalanceandstoragewelloutputfilename = self.ParameterDict[self.sutrabalanceandstoragewelloutputfilename.Name] = filenameParameter(
             "SUTRA Balance and Storage Well Output File Name",
             value='annual_heat.csv',
             UnitType=Units.NONE,

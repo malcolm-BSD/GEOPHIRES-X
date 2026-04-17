@@ -327,12 +327,17 @@ class EconomicsAddOns(Economics.Economics):
         ProjectCapCostPerYear = self.AdjustedProjectCAPEX.value / model.surfaceplant.construction_years.value
 
         # (re)Calculate the revenues
-        self.AddOnElecRevenue.value = [0.0] * model.surfaceplant.plant_lifetime.value
-        self.AddOnHeatRevenue.value = [0.0] * model.surfaceplant.plant_lifetime.value
-        self.AddOnRevenue.value = [0.0] * model.surfaceplant.plant_lifetime.value
-        self.AddOnCashFlow.value = [0.0] * model.surfaceplant.plant_lifetime.value
-        self.ProjectCashFlow.value = [0.0] * model.surfaceplant.plant_lifetime.value
-        for i in range(0, model.surfaceplant.plant_lifetime.value, 1):
+        construction_years = model.surfaceplant.construction_years.value
+        plant_lifetime = model.surfaceplant.plant_lifetime.value
+        project_years = construction_years + plant_lifetime
+
+        self.AddOnElecRevenue.value = [0.0] * project_years
+        self.AddOnHeatRevenue.value = [0.0] * project_years
+        self.AddOnRevenue.value = [0.0] * project_years
+        self.AddOnCashFlow.value = [0.0] * project_years
+        self.ProjectCashFlow.value = [0.0] * project_years
+        for i in range(0, plant_lifetime, 1):
+            project_year_index = construction_years + i
             ProjectElectricalEnergy = 0.0
             ProjectHeatEnergy = 0.0
             AddOnElectricalEnergy = 0.0
@@ -349,22 +354,22 @@ class EconomicsAddOns(Economics.Economics):
                 AddOnElectricalEnergy = self.AddOnElecGainedTotalPerYear.value
                 AddOnHeatEnergy = self.AddOnHeatGainedTotalPerYear.value
 
-            self.AddOnElecRevenue.value[i] = (AddOnElectricalEnergy * model.economics.ElecPrice.value[
+            self.AddOnElecRevenue.value[project_year_index] = (AddOnElectricalEnergy * model.economics.ElecPrice.value[
                 i]) / 1_000_000.0  # Electricity revenue in MUSD
-            self.AddOnHeatRevenue.value[i] = (AddOnHeatEnergy * model.economics.HeatPrice.value[
+            self.AddOnHeatRevenue.value[project_year_index] = (AddOnHeatEnergy * model.economics.HeatPrice.value[
                 i]) / 1_000_000.0  # Heat revenue in MUSD
-            self.AddOnRevenue.value[i] = self.AddOnElecRevenue.value[i] + self.AddOnHeatRevenue.value[
-                i] + self.AddOnProfitGainedTotalPerYear.value - self.AddOnOPEXTotalPerYear.value
-            self.AddOnCashFlow.value[i] = self.AddOnRevenue.value[i]
-            self.ProjectCashFlow.value[i] = self.AddOnRevenue.value[i] + (((ProjectElectricalEnergy *
+            self.AddOnRevenue.value[project_year_index] = self.AddOnElecRevenue.value[project_year_index] + self.AddOnHeatRevenue.value[
+                project_year_index] + self.AddOnProfitGainedTotalPerYear.value - self.AddOnOPEXTotalPerYear.value
+            self.AddOnCashFlow.value[project_year_index] = self.AddOnRevenue.value[project_year_index]
+            self.ProjectCashFlow.value[project_year_index] = self.AddOnRevenue.value[project_year_index] + (((ProjectElectricalEnergy *
                                             model.economics.ElecPrice.value[i]) + (ProjectHeatEnergy *
                                             model.economics.HeatPrice.value[i])) / 1_000_000.0) - model.economics.Coam.value  # MUSD
 
         # now insert the cost of construction into the front of the array that will be used to calculate
         # NPV = the convention is that the upfront CAPEX is negative
-        for i in range(0, model.surfaceplant.construction_years.value, 1):
-            self.AddOnCashFlow.value.insert(0, -1.0 * AddOnCapCostPerYear)
-            self.ProjectCashFlow.value.insert(0, -1.0 * ProjectCapCostPerYear)
+        for i in range(0, construction_years, 1):
+            self.AddOnCashFlow.value[i] = -1.0 * AddOnCapCostPerYear
+            self.ProjectCashFlow.value[i] = -1.0 * ProjectCapCostPerYear
 
         # Now calculate a new "NPV", "IRR", "VIR", "Payback Period", and "MOIC"
         # Calculate more financial values using numpy financials

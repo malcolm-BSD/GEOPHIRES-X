@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 import pandas as pd
 from geophires_x.Outputs import Outputs
 from geophires_x.OutputsUtils import OutputTableItem
@@ -12,6 +13,14 @@ class OutputsAddOns(Outputs):
     """
     Class to handle output of the AddOns values
     """
+    @staticmethod
+    def _build_price_profile(price_value, construction_years: int, plant_lifetime: int) -> list[float]:
+        if isinstance(price_value, Sequence) and not isinstance(price_value, (str, bytes)):
+            operating_profile = list(price_value)
+        else:
+            operating_profile = [price_value] * plant_lifetime
+        return ([0.0] * construction_years) + operating_profile
+
     def PrintOutputs(self, model) -> tuple[pd.DataFrame, list]:
 
         """
@@ -64,22 +73,27 @@ class OutputsAddOns(Outputs):
                     addon_results.append(OutputTableItem('AddOns Payback Period', '{0:10.2f}'.format(model.addeconomics.AddOnPaybackPeriod.value), model.addeconomics.AddOnPaybackPeriod.PreferredUnits.value))
 
                     ae = model.addeconomics
+                    construction_years = model.surfaceplant.construction_years.value
+                    plant_lifetime = model.surfaceplant.plant_lifetime.value
+                    project_years = construction_years + plant_lifetime
+                    elec_price_profile = self._build_price_profile(ae.ElecPrice.value, construction_years, plant_lifetime)
+                    heat_price_profile = self._build_price_profile(ae.HeatPrice.value, construction_years, plant_lifetime)
 
                     # Build the data frame to hold the SDAC result profile
                     addon_df = pd.DataFrame()
                     # add the columns as needed based on the output.
                     # Note that the correct format for that column is stashed in the title of that column
                     # so that it can be used in the write statement.
-                    addon_df[f'Year|:2.0f'] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
-                    addon_df[f'Electricity:Price ({ae.ElecPrice.PreferredUnits.value})|:10.2f'] = ae.ElecPrice.value
+                    addon_df[f'Year|:2.0f'] = [i for i in range(1, (project_years + 1))]
+                    addon_df[f'Electricity:Price ({ae.ElecPrice.PreferredUnits.value})|:10.2f'] = elec_price_profile
                     addon_df[f'Electricity:Revenue ({ae.AddOnElecRevenue.PreferredUnits.value})|:10.2f'] = ae.AddOnElecRevenue.value
-                    addon_df[f'Heat:Price ({ae.HeatPrice.PreferredUnits.value})|:10.2f'] = ae.HeatPrice.value
+                    addon_df[f'Heat:Price ({ae.HeatPrice.PreferredUnits.value})|:10.2f'] = heat_price_profile
                     addon_df[f'Heat:Revenue ({ae.AddOnHeatRevenue.PreferredUnits.value})|:10.2f'] = ae.AddOnHeatRevenue.value
                     addon_df[f'Add-on:Revenue ({ae.AddOnRevenue.PreferredUnits.value})|:10.2f'] = ae.AddOnRevenue.value
-                    addon_df[f'Add-on:Cash Flow ({ae.AddOnCashFlow.PreferredUnits.value})|:10.2f'] = ae.AddOnCashFlow.value[0:len(ae.AddOnCashFlow.value) - 1]
-                    addon_df[f'Add-on:Cumulative Cash Flow ({ae.AddOnCummCashFlow.PreferredUnits.value})|:10.2f'] = ae.AddOnCummCashFlow.value[0:len(ae.AddOnCummCashFlow.value) - 1]
-                    addon_df[f'Project:Cash Flow ({ae.ProjectCashFlow.PreferredUnits.value})|:10.2f'] = ae.ProjectCashFlow.value[0:len(ae.ProjectCashFlow.value) - 1]
-                    addon_df[f'Project:Cumulative Cash Flow ({ae.ProjectCummCashFlow.PreferredUnits.value})|:10.2f'] = ae.ProjectCummCashFlow.value[0:len(ae.ProjectCummCashFlow.value) - 1]
+                    addon_df[f'Add-on:Cash Flow ({ae.AddOnCashFlow.PreferredUnits.value})|:10.2f'] = ae.AddOnCashFlow.value
+                    addon_df[f'Add-on:Cumulative Cash Flow ({ae.AddOnCummCashFlow.PreferredUnits.value})|:10.2f'] = ae.AddOnCummCashFlow.value
+                    addon_df[f'Project:Cash Flow ({ae.ProjectCashFlow.PreferredUnits.value})|:10.2f'] = ae.ProjectCashFlow.value
+                    addon_df[f'Project:Cumulative Cash Flow ({ae.ProjectCummCashFlow.PreferredUnits.value})|:10.2f'] = ae.ProjectCummCashFlow.value
 
                     f.write(NL)
                     f.write(NL)
@@ -102,10 +116,9 @@ class OutputsAddOns(Outputs):
                             ")       (" + ae.ProjectCashFlow.PreferredUnits.value +
                             ")        (" + ae.ProjectCummCashFlow.PreferredUnits.value + ")\n")
                     # running years...
-                    for ii in range(0, (
-                        model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value - 1), 1):
+                    for ii in range(0, project_years, 1):
                         f.write(
-                            f"   {ii + 1:3.0f}    {model.economics.ElecPrice.value[ii]:5.3f}   {model.addeconomics.AddOnElecRevenue.value[ii]:5.4f}        {model.economics.HeatPrice.value[ii]:5.3f}   {model.addeconomics.AddOnHeatRevenue.value[ii]:5.4f}        {model.addeconomics.AddOnRevenue.value[ii]:5.2f}        {model.addeconomics.AddOnCashFlow.value[ii]:5.2f}     {model.addeconomics.AddOnCummCashFlow.value[ii]:5.2f}        {model.addeconomics.ProjectCashFlow.value[ii]:5.2f}           {model.addeconomics.ProjectCummCashFlow.value[ii]:5.2f}\n")
+                            f"   {ii + 1:3.0f}    {elec_price_profile[ii]:5.3f}   {model.addeconomics.AddOnElecRevenue.value[ii]:5.4f}        {heat_price_profile[ii]:5.3f}   {model.addeconomics.AddOnHeatRevenue.value[ii]:5.4f}        {model.addeconomics.AddOnRevenue.value[ii]:5.2f}        {model.addeconomics.AddOnCashFlow.value[ii]:5.2f}     {model.addeconomics.AddOnCummCashFlow.value[ii]:5.2f}        {model.addeconomics.ProjectCashFlow.value[ii]:5.2f}           {model.addeconomics.ProjectCummCashFlow.value[ii]:5.2f}\n")
 
         except BaseException as ex:
             tb = sys.exc_info()[2]

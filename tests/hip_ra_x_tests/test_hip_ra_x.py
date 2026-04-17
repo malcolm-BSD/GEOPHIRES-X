@@ -164,17 +164,16 @@ class HipRaXTestCase(BaseTestCase):
         hip_ra = self._new_hip_ra_test_instance()
         hip_ra.PrintOutputs()
 
+        out_file = Path('HIP.out')
+
         # Assert that the output file is created
-        # ruff: noqa: PTH110
-        assert os.path.exists('HIP.out')
+        assert out_file.exists()
 
         # Assert that the output file is not empty
-        # ruff: noqa: PTH202
-        assert os.path.getsize('HIP.out') > 0
+        assert out_file.stat().st_size > 0
 
         # Clean up the output file
-        # ruff: noqa: PTH107
-        os.remove('HIP.out')
+        out_file.unlink()
 
     def test_converts_units_back(self):
         """Converts Units back to PreferredUnits, if required"""

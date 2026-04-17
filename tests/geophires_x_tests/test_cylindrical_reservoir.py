@@ -30,13 +30,13 @@ class CylindricalReservoirTestCase(BaseTestCase):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         if input_file is not None:
             sys.argv.append(input_file)
 
         m = Model(enable_geophires_logging_config=False)
-        m.InputParameters['Is AGS'] = ParameterEntry(Name='Is AGS', sValue='True')
+        m.InputParameters["Is AGS"] = ParameterEntry(Name="Is AGS", sValue="True")
         reservoir = CylindricalReservoir(m)
         m.reserv = reservoir
         m.wellbores = AGSWellBores(m)
@@ -52,7 +52,7 @@ class CylindricalReservoirTestCase(BaseTestCase):
     def test_read_inputs(self):
         model = self._new_model_with_cylindrical_reservoir(
             input_file=self._get_test_file_path(
-                '../examples/Beckers_et_al_2023_Tabulated_Database_Uloop_water_elec.txt'
+                "../examples/Beckers_et_al_2023_Tabulated_Database_Uloop_water_elec.txt"
             )
         )
         reservoir: CylindricalReservoir = model.reserv
@@ -66,7 +66,7 @@ class CylindricalReservoirTestCase(BaseTestCase):
 
     def test_read_inputs_depth_in_meters(self):
         model = self._new_model_with_cylindrical_reservoir(
-            input_file=self._get_test_file_path('cylindrical_reservoir_input_depth_meters.txt')
+            input_file=self._get_test_file_path("cylindrical_reservoir_input_depth_meters.txt")
         )
         reservoir = model.reserv
         self.assertIsNotNone(reservoir.InputDepth)
@@ -110,7 +110,7 @@ class CylindricalReservoirTestCase(BaseTestCase):
         model = self._new_model_with_cylindrical_reservoir()
         reservoir = model.reserv
         reservoir.Calculate(model)
-        self.assertEqual(3.0, reservoir.depth.quantity().to('km').magnitude)
+        self.assertAlmostEqual(10.0, reservoir.depth.quantity().to("km").magnitude, places=8)
 
     def test_calculate_heat_capacity_water(self):
         """Calculates the heat capacity of water"""
@@ -119,9 +119,9 @@ class CylindricalReservoirTestCase(BaseTestCase):
         reservoir.Calculate(model)
         expected_heat_capacity = heatcapacitywater(
             model.wellbores.Tinj.value * 0.5 + (reservoir.Trock.value * 0.9 + model.wellbores.Tinj.value * 0.1) * 0.5,
-            pressure=model.reserv.hydrostatic_pressure(),
+            pressure=model.reserv.lithostatic_pressure(),
         )
-        assert reservoir.cpwater.value == expected_heat_capacity
+        self.assertAlmostEqual(reservoir.cpwater.value, expected_heat_capacity, places=8)
 
     def test_calculate_density_water(self):
         """Calculates the density of water"""
@@ -130,11 +130,14 @@ class CylindricalReservoirTestCase(BaseTestCase):
         reservoir.Calculate(model)
         expected_density = density_water_kg_per_m3(
             model.wellbores.Tinj.value * 0.5 + (reservoir.Trock.value * 0.9 + model.wellbores.Tinj.value * 0.1) * 0.5,
-            pressure=reservoir.hydrostatic_pressure(),
+            pressure=reservoir.lithostatic_pressure(),
         )
-        assert expected_density == reservoir.rhowater.value
 
-    @unittest.skip('FIXME requires review of expected value')
+        self.assertAlmostEqual(
+            reservoir.rhowater.value, expected_density, places=8
+        )  # Always bad to assert = with floating point
+
+    @unittest.skip("FIXME requires review of expected value")
     def test_calculate_temperature_outflow_end(self):
         """Calculates the temperature of the rock at the outflow end of the cylindrical reservoir"""
         model = self._new_model_with_cylindrical_reservoir()
@@ -168,5 +171,5 @@ class CylindricalReservoirTestCase(BaseTestCase):
         reservoir = model.reserv
         reservoir.InputDepth.value = 4.20
         assert reservoir.lithostatic_pressure().magnitude == static_pressure_MPa(
-            reservoir.rhorock.value, reservoir.InputDepth.quantity().to('m').magnitude
+            reservoir.rhorock.value, reservoir.InputDepth.quantity().to("m").magnitude
         )

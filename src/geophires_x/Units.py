@@ -1,9 +1,13 @@
-# copyright, 2023, Malcolm I Ross
+from __future__ import annotations
+import os
+import inspect
+import re
+import sys
 from enum import IntEnum, Enum, auto
 from typing import Any
-
+from typing import Dict, Iterable, List, Union
 import pint
-import os
+
 
 _UREG = None
 
@@ -100,6 +104,9 @@ class TemperatureGradientUnit(str, Enum):
     DEGREESCPERKM = "degC/km"
     DEGREESFPERMILE = "degF/mi"
     DEGREESCPERM = "degC/m"
+    DEGREESFPER100FT = "degF/100ft"
+    DEGREESFPER1000FT = "degF/kft"
+    DEGREESFPERFT = "degF/ft"
 
 
 class PercentUnit(str, Enum):
@@ -154,6 +161,7 @@ class EnergyUnit(str, Enum):
     KWH = "kWh"
     MWH = "MWh"
     GWH = "GWh"
+    MMBTU = "MMBTU"
 
 
 class PowerUnit(str, Enum):
@@ -387,3 +395,192 @@ class Inflation_RateUnit(str, Enum):
 class Dynamic_ViscosityUnit(str, Enum):
     """Dynamic Viscosity Units"""
     PASCALSEC = "PaSec"
+
+
+# ----------------------------
+# Normalization helpers
+# ----------------------------
+_SUPERSCRIPTS = str.maketrans({"²": "2", "³": "3"})
+
+def _norm(s: str) -> str:
+    """Normalize a string for matching against unit names.
+    Steps:
+        - Lowercase and strip whitespace
+        - Replace common words/symbols with normalized forms (e.g. "per" -> "/", "sq." -> "sq")
+        - Remove all remaining whitespace
+        - Replace unicode superscripts with regular digits
+    :param s: The input string to normalize.
+    :return: A normalized string suitable for matching against unit names.
+    """
+
+    if s is None:
+        return ""
+    s = str(s).strip().lower().translate(_SUPERSCRIPTS)
+    s = s.replace(" per ", "/").replace("\\", "/").replace("−", "-").replace("·", "*")
+    s = re.sub(r"\s+", "", s)
+    s = re.sub(r"\*\*(\d+)", r"\1", s)
+    s = re.sub(r"\^(\d+)", r"\1", s)
+    s = s.replace("sq.", "sq").replace("square", "sq").replace("cubic", "cu")
+    return s
+
+
+def _heuristic_candidates(s: str) -> List[str]:
+    s0 = _norm(s)
+    cands = [s0]
+
+    if s0.endswith("s") and len(s0) > 2:
+        cands.append(s0[:-1])
+
+    if s0.startswith("sq") and len(s0) > 2:
+        cands.append(s0[2:] + "2")
+
+    if s0.startswith("cu") and len(s0) > 2:
+        cands.append(s0[2:] + "3")
+
+    # de-dupe preserving order
+    return list(dict.fromkeys(cands))
+
+
+def _add_alias(map_: Dict[str, Enum], key: str, target: Enum) -> None:
+    k = _norm(key)
+    if k:
+        map_[k] = target
+
+
+# ----------------------------
+# Auto-discovery of unit enums
+# ----------------------------
+def discover_unit_enums(module=None) -> List[type[Enum]]:
+    """
+    Discover unit Enum classes in a module.
+
+    Criteria:
+      - subclass of Enum
+      - NOT an IntEnum (excludes Units)
+      - has at least one member
+      - members have string values (typical for your unit enums)
+
+    :param module: The module to inspect. If None, uses the current module.
+    """
+    if module is None:
+        module = sys.modules[__name__]
+
+    enums: List[type[Enum]] = []
+    for _, obj in inspect.getmembers(module, inspect.isclass):
+        if not issubclass(obj, Enum):
+            continue
+        if issubclass(obj, IntEnum):   # excludes Units(IntEnum)
+            continue
+
+        # Ensure it "looks like" a unit enum: string-valued members
+        try:
+            members = list(obj)  # Enum iteration gives members
+        except TypeError:
+            continue
+
+        if not members:
+            continue
+
+        # Require that all (or nearly all) values are strings
+        if all(isinstance(m.value, str) for m in members):
+            enums.append(obj)
+
+    # Sort for deterministic behavior (nice for reproducibility)
+    enums.sort(key=lambda c: c.__name__)
+    return enums
+
+
+def build_unit_lookup(unit_enums: Iterable[type[Enum]]) -> Dict[str, Enum]:
+    """
+    Build a lookup dictionary mapping various string representations to Enum members.
+    :param unit_enums: An iterable of Enum classes to include in the lookup.
+    :return: A dictionary mapping normalized strings to Enum members.
+    """
+    lookup: Dict[str, Enum] = {}
+
+    for enum_cls in unit_enums:
+        for member in enum_cls:
+            _add_alias(lookup, member.value, member)                    # "mile"
+            _add_alias(lookup, member.name, member)                     # "MILES"
+            _add_alias(lookup, f"{enum_cls.__name__}.{member.name}", member)  # "LengthUnit.MILES"
+
+    return lookup
+
+
+def add_common_aliases(lookup: Dict[str, Enum]) -> None:
+    """
+    Add cross-cutting aliases that don't exist in the enums themselves.
+    Keep this small and obvious; it's easy to extend later.
+    :param lookup: The unit lookup dictionary to add aliases to.
+    :return: None
+    """
+    # Length shorthand
+    _add_alias(lookup, "m", LengthUnit.METERS)
+    _add_alias(lookup, "cm", LengthUnit.CENTIMETERS)
+    _add_alias(lookup, "km", LengthUnit.KILOMETERS)
+    _add_alias(lookup, "ft", LengthUnit.FEET)
+    _add_alias(lookup, "in", LengthUnit.INCHES)
+    _add_alias(lookup, "mi", LengthUnit.MILES)
+
+    # Area shorthand
+    _add_alias(lookup, "m2", AreaUnit.METERS2)
+    _add_alias(lookup, "cm2", AreaUnit.CENTIMETERS2)
+    _add_alias(lookup, "km2", AreaUnit.KILOMETERS2)
+    _add_alias(lookup, "ft2", AreaUnit.FEET2)
+    _add_alias(lookup, "in2", AreaUnit.INCHES2)
+    _add_alias(lookup, "mi2", AreaUnit.MILES2)
+    _add_alias(lookup, "sqm", AreaUnit.METERS2)
+    _add_alias(lookup, "sqkm", AreaUnit.KILOMETERS2)
+    _add_alias(lookup, "sqft", AreaUnit.FEET2)
+    _add_alias(lookup, "sqin", AreaUnit.INCHES2)
+    _add_alias(lookup, "sqmi", AreaUnit.MILES2)
+
+    # Volume shorthand
+    _add_alias(lookup, "m3", VolumeUnit.METERS3)
+    _add_alias(lookup, "cm3", VolumeUnit.CENTIMETERS3)
+    _add_alias(lookup, "km3", VolumeUnit.KILOMETERS3)
+    _add_alias(lookup, "ft3", VolumeUnit.FEET3)
+    _add_alias(lookup, "in3", VolumeUnit.INCHES3)
+    _add_alias(lookup, "mi3", VolumeUnit.MILES3)
+    _add_alias(lookup, "cc", VolumeUnit.CENTIMETERS3)
+    _add_alias(lookup, "cuft", VolumeUnit.FEET3)
+
+    # Temp
+    _add_alias(lookup, "°c", TemperatureUnit.CELSIUS)
+    _add_alias(lookup, "c", TemperatureUnit.CELSIUS)
+    _add_alias(lookup, "°f", TemperatureUnit.FAHRENHEIT)
+    _add_alias(lookup, "f", TemperatureUnit.FAHRENHEIT)
+    _add_alias(lookup, "k", TemperatureUnit.KELVIN)
+
+    # Time
+    _add_alias(lookup, "s", TimeUnit.SECOND)
+    _add_alias(lookup, "h", TimeUnit.HOUR)
+    _add_alias(lookup, "d", TimeUnit.DAY)
+
+    # Percent
+    _add_alias(lookup, "pct", PercentUnit.PERCENT)
+    _add_alias(lookup, "percent", PercentUnit.PERCENT)
+
+
+# Build once at import time (fast runtime lookup)
+UNIT_ENUMS = discover_unit_enums()
+UNIT_LOOKUP = build_unit_lookup(UNIT_ENUMS)
+add_common_aliases(UNIT_LOOKUP)
+
+
+def get_unit_from_string(unit_str: str) -> Union[Enum, Units]:
+    """
+    Convert a string to a unit Enum member, if possible.
+
+    :param unit_str: The input string to interpret as a unit.
+    :return: The corresponding Enum member if a match is found; otherwise, Units.NONE.
+    """
+    if not unit_str or not str(unit_str).strip():
+        return Units.NONE
+
+    for cand in _heuristic_candidates(unit_str):
+        hit = UNIT_LOOKUP.get(cand)
+        if hit is not None:
+            return hit
+
+    return Units.NONE

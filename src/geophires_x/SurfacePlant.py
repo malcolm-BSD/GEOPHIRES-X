@@ -4,7 +4,7 @@ from .EconomicsUtils import CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME
 from .GeoPHIRESUtils import quantity
 from .NumpyUtils import np_trapz
 from .OptionList import EndUseOptions, PlantType
-from .Parameter import floatParameter, intParameter, OutputParameter, ReadParameter, \
+from .Parameter import floatParameter, intParameter, listParameter, OutputParameter, ReadParameter, \
     coerce_int_params_to_enum_values
 from .SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from .Units import *
@@ -153,11 +153,26 @@ class SurfacePlant:
         # calculate electricity/heat - first, calculate the total amount of heat extracted from geofluid [MWth] (same for all)
         HeatExtracted = nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
 
+        def _clamp_electricity(electricity: np.ndarray) -> np.ndarray:
+            if np.any(electricity < 0):
+                # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
+                if hasattr(self, 'logger'):
+                    self.logger.warning('Electricity production calculated as negative. Clamping to zero.')
+                electricity = np.maximum(electricity, 0)
+
+            return electricity
+
         # next do the electricity produced - the same for all, except enduse=5, where it is recalculated
         ElectricityProduced = availability * etau * nprod * prodwellflowrate
-        if ElectricityProduced.max() < 0:
+        if np.any(ElectricityProduced < 0):
+            # We can't produce negative electricity in any case, so it is likely just an artifact of our calculation method
+            # if the sum of its element are very small, then it is definitely just an artifact, so set it all to 0
+            if abs(np.sum(ElectricityProduced)) < 0.1:
+                ElectricityProduced = np.zeros_like(ElectricityProduced)
+            else:
+                # if it is negative and large, then we have a problem
             # TODO: make message more informative (possibly by hinting that maximum temperature may be too high)
-            raise RuntimeError('Electricity production calculated as negative.')
+                raise RuntimeError('Electricity production calculated as negative and large. Is Max temperature too high?')
 
         if enduse_option == EndUseOptions.ELECTRICITY:
             # pure electricity
@@ -178,7 +193,9 @@ class SurfacePlant:
         elif enduse_option in [EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT]:
             # enduse_option = 5: cogen split of mass flow rate
             # electricity part [MWe]
-            ElectricityProduced = availability * etau * nprod * prodwellflowrate * (1. - chp_fraction)
+            ElectricityProduced = _clamp_electricity(
+                availability * etau * nprod * prodwellflowrate * (1. - chp_fraction)
+            )
             # useful heat part for direct-use application [MWth]
             HeatProduced = enduse_efficiency_factor * chp_fraction * nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
             HeatExtractedTowardsElectricity = (1. - chp_fraction) * nprod * prodwellflowrate * cpwater * (ProducedTemperature - Tinj) / 1E6
@@ -354,7 +371,8 @@ class SurfacePlant:
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default ambient temperature (15 deg.C)",
-            ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency"
+            ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
+            AllowExtendedInput = True,
         )
         self.plant_lifetime = self.ParameterDict[self.plant_lifetime.Name] = intParameter(
             "Plant Lifetime",
@@ -398,7 +416,7 @@ class SurfacePlant:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default electricity rate ($0.07/kWh)",
             ToolTipText="Price of electricity to calculate pumping costs in direct-use heat only mode or revenue" +
-            " from electricity sales in CHP mode."
+            " from electricity sales in CHP mode.",
         )
         self.heat_price = self.ParameterDict[self.heat_price.Name] = floatParameter(
             "Heat Rate",
@@ -409,8 +427,37 @@ class SurfacePlant:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default heat rate ($0.02/kWh)",
-            ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode."
+            ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
         )
+        self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = listParameter(
+            "Annual Heat Demand",
+            DefaultValue=[],
+            Min=-1.8e30,
+            Max=1.8e30,
+            UnitType=Units.NONE,
+            ErrMessage="assume default annual heat demand profile (none)",
+            ToolTipText="Historical annual heating demand profile"
+        )
+        self.HeatDemand = self.HeatingDemand
+        self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = listParameter(
+            "Annual Cooling Demand",
+            DefaultValue=[],
+            Min=-1.8e30,
+            Max=1.8e30,
+            UnitType=Units.NONE,
+            ErrMessage="assume default annual cooling demand profile (none)",
+            ToolTipText="Historical annual cooling demand profile",
+        )
+        self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = listParameter(
+            "Annual Electricity Demand",
+            DefaultValue=[],
+            Min=-1.8e30,
+            Max=1.8e30,
+            UnitType=Units.NONE,
+            ErrMessage="assume default annual electricity demand profile (none)",
+            ToolTipText="Historical annual electricity demand profile",
+        )
+        self.electricitydemand = self.ElectricityDemand
 
         default_construction_years = 1
         self.construction_years = self.ParameterDict[self.construction_years.Name] = intParameter(

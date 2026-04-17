@@ -2982,7 +2982,12 @@ class Economics:
             self.Cwell.value = ((self.cost_one_production_well.value * model.wellbores.nprod.value) +
                                 (self.cost_one_injection_well.value * model.wellbores.ninj.value))
         else:
-            if hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided:
+            # Treat Provided+value==0 as "non-vertical costs included in vertical well costs" ---
+            has_nvs_param = hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided
+            nvs_value = model.wellbores.numnonverticalsections.value if has_nvs_param else 0
+            cost_nonverticals_explicitly = has_nvs_param and (nvs_value is not None) and (nvs_value > 0)
+
+            if cost_nonverticals_explicitly:
                 self.cost_lateral_section.value = 0.0
                 if not model.wellbores.IsAGS.value:
                     input_vert_depth_km = model.reserv.depth.quantity().to('km').magnitude
@@ -2994,7 +2999,7 @@ class Economics:
 
                 tot_m, tot_vert_m, tot_horiz_m, _ = calculate_total_drilling_lengths_m(
                     model.wellbores.Configuration.value,
-                    model.wellbores.numnonverticalsections.value,
+                    nvs_value,
                     model.wellbores.Nonvertical_length.value / 1000.0,
                     input_vert_depth_km,
                     output_vert_depth_km,
@@ -3010,30 +3015,33 @@ class Economics:
                     model.wellbores.injection_reservoir_depth.value = model.wellbores.injection_reservoir_depth.quantity().to(
                         'km').magnitude
 
-            self.cost_one_production_well.value = calculate_cost_of_one_vertical_well(model,
-                                                                                      model.reserv.depth.quantity().to(
-                                                                                          'm').magnitude,
-                                                                                      self.wellcorrelation.value,
-                                                                                      self.Vertical_drilling_cost_per_m.value,
-                                                                                      self.per_production_well_cost.Name,
-                                                                                      self.production_well_cost_adjustment_factor.value)
+            self.cost_one_production_well.value = calculate_cost_of_one_vertical_well(
+                model,
+                model.reserv.depth.quantity().to('m').magnitude,
+                self.wellcorrelation.value,
+                self.Vertical_drilling_cost_per_m.value,
+                self.per_production_well_cost.Name,
+                self.production_well_cost_adjustment_factor.value
+            )
             if model.wellbores.ninj.value == 0:
                 self.cost_one_injection_well.value = -1.0
             else:
-                self.cost_one_injection_well.value = calculate_cost_of_one_vertical_well(model,
-                                                                                         model.wellbores.injection_reservoir_depth.value * 1000.0,
-                                                                                         self.wellcorrelation.value,
-                                                                                         self.Vertical_drilling_cost_per_m.value,
-                                                                                         self.per_injection_well_cost.Name,
-                                                                                         self.injection_well_cost_adjustment_factor.value)
+                self.cost_one_injection_well.value = calculate_cost_of_one_vertical_well(
+                    model,
+                    model.wellbores.injection_reservoir_depth.value * 1000.0,
+                    self.wellcorrelation.value,
+                    self.Vertical_drilling_cost_per_m.value,
+                    self.per_injection_well_cost.Name,
+                    self.injection_well_cost_adjustment_factor.value
+                )
 
-            if hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided:
+            if cost_nonverticals_explicitly:
                 self.cost_lateral_section.value = calculate_cost_of_non_vertical_section(
                     model,
                     tot_horiz_m,
                     self.wellcorrelation.value,
                     self.Nonvertical_drilling_cost_per_m.value,
-                    model.wellbores.numnonverticalsections.value,
+                    nvs_value,
                     self.Nonvertical_drilling_cost_per_m.Name,
                     model.wellbores.NonverticalsCased.value,
                     self.production_well_cost_adjustment_factor.value
@@ -3047,7 +3055,6 @@ class Economics:
                 self.cost_one_injection_well.value * model.wellbores.ninj.value +
                 self.cost_lateral_section.value
             )
-
     def calculate_stimulation_costs(self, model: Model) -> PlainQuantity:
         if self.ccstimfixed.Valid:
             stimulation_costs = self.ccstimfixed.quantity().to(self.Cstim.CurrentUnits).magnitude

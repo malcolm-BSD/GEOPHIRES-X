@@ -6,20 +6,26 @@ from pathlib import Path
 
 from geophires_x.formula_evaluator import evaluate_formula_expression
 from geophires_x.formula_evaluator import resolve_parameter_formulas
+import numpy as np
 from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
 from geophires_x.Parameter import ParameterEntry
 from geophires_x.Parameter import ReadParameter
+from geophires_x.Parameter import TemperatureGradientUnit
+from geophires_x.Parameter import boolParameter
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import intParameter
 from geophires_x.Parameter import listParameter
+from geophires_x.Parameter import strParameter
+from geophires_x.Reservoir import derive_numseg_from_gradient_thickness
 from geophires_x.Units import CostPerMassUnit
 from geophires_x.Units import CurrencyUnit
 from geophires_x.Units import EnergyCostUnit
 from geophires_x.Units import LengthUnit
 from geophires_x.Units import PressureUnit
+from geophires_x.Units import TemperatureUnit
 from geophires_x.Units import Units
 from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
@@ -137,7 +143,7 @@ class ParameterTestCase(BaseTestCase):
 
     def test_number_of_doublets_formula_sets_production_and_injection_wells(self):
         with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as tmp:
-            tmp.write('Number of Segments, 3\n')
+            tmp.write('Number of Segments, 1\n')
             tmp.write('Number of Doublets, = number_of_segments + 1\n')
             input_file = tmp.name
 
@@ -145,9 +151,9 @@ class ParameterTestCase(BaseTestCase):
             model = Model(enable_geophires_logging_config=False, input_file=input_file)
             model.read_parameters()
 
-            self.assertEqual(4, model.wellbores.doublets_count.value)
-            self.assertEqual(4, model.wellbores.nprod.value)
-            self.assertEqual(4, model.wellbores.ninj.value)
+            self.assertEqual(2, model.wellbores.doublets_count.value)
+            self.assertEqual(2, model.wellbores.nprod.value)
+            self.assertEqual(2, model.wellbores.ninj.value)
             self.assertTrue(model.wellbores.doublets_count.EvaluatedFromFormula)
         finally:
             Path(input_file).unlink()
@@ -236,17 +242,68 @@ class ParameterTestCase(BaseTestCase):
         self.assertIn('Number of Production Wells', str(exc.exception))
         self.assertIn('outside of valid range', str(exc.exception))
 
+    def test_read_parameter_allows_pair_vector_inline_for_float_parameter(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name="Reservoir Temperature",
+            DefaultValue=150.0,
+            Min=0.0,
+            Max=500.0,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            AllowExtendedInput=True,
+        )
+        param.AllowPairVectorInput = True
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Reservoir Temperature", sValue="[1000, 200]", raw_entry="Reservoir Temperature, [1000, 200]"
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, list)
+        self.assertEqual(param.value, [1000.0, 200.0])
+        self.assertTrue(param.Provided)
+        self.assertTrue(param.Valid)
+
+    def test_read_parameter_pair_vector_applies_convert_units_in_loop(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name="Reservoir Temperature",
+            DefaultValue=150.0,
+            Min=0.0,
+            Max=500.0,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            AllowExtendedInput=True,
+        )
+        param.AllowPairVectorInput = True
+
+        ReadParameter(
+            ParameterEntry(Name="Reservoir Temperature", sValue="[212, 220]"),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, list)
+        self.assertAlmostEqual(param.value[0], 212.0, places=6)
+        self.assertAlmostEqual(param.value[1], 220.0, places=6)
+
     def test_convert_units_back(self):
         model = self._new_model()  # TODO mock instead
 
         param_to_modify: Parameter = floatParameter(
-            Name='Production Well Diameter',
+            Name="Production Well Diameter",
             Required=True,
             Provided=True,
             Valid=True,
-            ErrMessage='assume default production well diameter (8 inch)',
-            InputComment='',
-            ToolTipText='Inner diameter of production wellbore (assumed constant along the wellbore) to calculate             frictional pressure drop and wellbore heat transmission with Rameys model',
+            ErrMessage="assume default production well diameter (8 inch)",
+            InputComment="",
+            ToolTipText="Inner diameter of production wellbore (assumed constant along the wellbore) to calculate frictional pressure drop and wellbore heat transmission with Rameys model",
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.INCHES,
             CurrentUnits=LengthUnit.METERS,
@@ -264,21 +321,21 @@ class ParameterTestCase(BaseTestCase):
 
     def test_set_default_value(self):
         without_val = floatParameter(
-            'Average Reservoir Pressure',
+            "Average Reservoir Pressure",
             DefaultValue=29430,  # Calculated from example1
             Min=1e2,
             Max=1e5,
             UnitType=Units.PRESSURE,
             PreferredUnits=PressureUnit.KPASCAL,
             CurrentUnits=PressureUnit.KPASCAL,
-            ErrMessage='calculate reservoir pressure using built-in correlation',
-            ToolTipText='Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified \
-                    Xie-Bloomfield-Shook equation (DOE, 2016).',
+            ErrMessage="calculate reservoir pressure using built-in correlation",
+            ToolTipText="Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified \
+                    Xie-Bloomfield-Shook equation (DOE, 2016).",
         )
         self.assertEqual(29430, without_val.value)
 
         with_val = floatParameter(
-            'Average Reservoir Pressure',
+            "Average Reservoir Pressure",
             value=1e2,
             DefaultValue=29430,
             Min=1e2,
@@ -286,29 +343,29 @@ class ParameterTestCase(BaseTestCase):
             UnitType=Units.PRESSURE,
             PreferredUnits=PressureUnit.KPASCAL,
             CurrentUnits=PressureUnit.KPASCAL,
-            ErrMessage='calculate reservoir pressure using built-in correlation',
-            ToolTipText='Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified \
-                    Xie-Bloomfield-Shook equation (DOE, 2016).',
+            ErrMessage="calculate reservoir pressure using built-in correlation",
+            ToolTipText="Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified \
+                    Xie-Bloomfield-Shook equation (DOE, 2016).",
         )
         self.assertEqual(1e2, with_val.value)
 
     def test_set_default_value_list(self):
         without_val = listParameter(
-            'Thicknesses',
+            "Thicknesses",
             DefaultValue=[100_000.0, 0.01, 0.01, 0.01, 0.01],
             Min=0.01,
             Max=100.0,
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
-            ErrMessage='assume default layer thicknesses (100,000, 0, 0, 0 km)',
-            ToolTipText='Thicknesses of rock segments',
+            ErrMessage="assume default layer thicknesses (100,000, 0, 0, 0 km)",
+            ToolTipText="Thicknesses of rock segments",
         )
 
         self.assertEqual([100_000.0, 0.01, 0.01, 0.01, 0.01], without_val.value)
 
         with_val = listParameter(
-            'Thicknesses',
+            "Thicknesses",
             value=[1, 2, 3],
             DefaultValue=[100_000.0, 0.01, 0.01, 0.01, 0.01],
             Min=0.01,
@@ -316,15 +373,15 @@ class ParameterTestCase(BaseTestCase):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
-            ErrMessage='assume default layer thicknesses (100,000, 0, 0, 0 km)',
-            ToolTipText='Thicknesses of rock segments',
+            ErrMessage="assume default layer thicknesses (100,000, 0, 0, 0 km)",
+            ToolTipText="Thicknesses of rock segments",
         )
 
         self.assertEqual([1, 2, 3], with_val.value)
 
     def test_output_parameter_with_preferred_units(self):
         op: OutputParameter = OutputParameter(
-            Name='Electricity Sale Price Model',
+            Name="Electricity Sale Price Model",
             value=[
                 0.055,
                 0.055,
@@ -357,7 +414,7 @@ class ParameterTestCase(BaseTestCase):
                 0.055,
                 0.055,
             ],
-            ToolTipText='This is ToolTip Text',
+            ToolTipText="This is ToolTip Text",
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
@@ -370,14 +427,14 @@ class ParameterTestCase(BaseTestCase):
 
     def test_output_parameter_json_types(self):
         cases = [
-            ('foo', 'string'),
-            (1, 'number'),
-            (44.4, 'number'),
-            (True, 'boolean'),
-            ([1, 2, 3], 'array'),
-            ({4, 5, 6}, 'array'),
-            (None, 'object'),
-            ({'foo': 'bar'}, 'object'),
+            ("foo", "string"),
+            (1, "number"),
+            (44.4, "number"),
+            (True, "boolean"),
+            ([1, 2, 3], "array"),
+            ({4, 5, 6}, "array"),
+            (None, "object"),
+            ({"foo": "bar"}, "object"),
         ]
 
         for case in cases:
@@ -389,7 +446,7 @@ class ParameterTestCase(BaseTestCase):
         model = self._new_model()
 
         param = floatParameter(
-            'CAPEX',
+            "CAPEX",
             DefaultValue=1379.0,
             UnitType=Units.COSTPERMASS,
             PreferredUnits=CostPerMassUnit.DOLLARSPERMT,
@@ -404,7 +461,7 @@ class ParameterTestCase(BaseTestCase):
             # TODO update once https://github.com/NREL/GEOPHIRES-X/issues/236?title=Currency+conversions+disabled is
             #   addressed
             param2 = floatParameter(
-                'OPEX',
+                "OPEX",
                 DefaultValue=240,
                 UnitType=Units.CURRENCY,
                 PreferredUnits=CurrencyUnit.DOLLARS,
@@ -412,17 +469,252 @@ class ParameterTestCase(BaseTestCase):
             )
             ConvertUnitsBack(param2, model)
 
-            self.assertIn('GEOPHIRES failed to convert your units for OPEX', str(re))
+            self.assertIn("GEOPHIRES failed to convert your units for OPEX", str(re))
+
+    def test_read_bool_from_file(self):
+        model = self._new_model()
+        param = boolParameter("Count", DefaultValue=True, AllowExtendedInput=True)
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/bool.txt"
+        ReadParameter(
+            ParameterEntry(Name="Geophires Enabled", sValue=csv_file, raw_entry=f"Geophires Enabled, {csv_file}"),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, bool)
+        self.assertEqual(param.value, False)
+
+    def test_read_int_from_file(self):
+        model = self._new_model()
+        param = intParameter("Count", DefaultValue=0, AllowableRange=[0, 113, 1000000], AllowExtendedInput=True)
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/int.txt"
+
+        ReadParameter(
+            ParameterEntry(Name="Count", sValue=csv_file, raw_entry=f"Count, {csv_file}"),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, int)
+        self.assertEqual(param.value, 113)
+
+    def test_read_float_from_file(self):
+        model = self._new_model()
+        param = floatParameter(
+            "CAPEX",
+            DefaultValue=1379.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERMT,
+            CurrentUnits=CostPerMassUnit.CENTSSPERMT,
+            AllowExtendedInput=True,
+        )
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/float.txt"
+
+        ReadParameter(
+            ParameterEntry(Name="CAPEX", sValue=csv_file, raw_entry=f"Ambient Temperature, {csv_file}"),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, float)
+        self.assertEqual(param.value, 3.14156)
+
+    def test_read_str_from_file(self):
+        model = self._new_model()
+        param = strParameter("Gettysburg", DefaultValue="", AllowExtendedInput=True)
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/string.txt"
+        ReadParameter(
+            ParameterEntry(Name="Gettysburg", sValue=csv_file, raw_entry=f"Geophires Enabled, {csv_file}"), param, model
+        )
+
+        self.assertIsInstance(param.value, str)
+        self.assertIn("Four score and seven years ago", param.value)
+
+    def test_read_list_from_file(self):
+        model = self._new_model()
+        param = listParameter("Random", DefaultValue=[], AllowExtendedInput=True)
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/list.txt"
+
+        ReadParameter(ParameterEntry(Name="Random", sValue=csv_file, raw_entry=f"Random, {csv_file}"), param, model)
+
+        self.assertIsInstance(param.value, list)
+        self.assertEqual(345, param.value[0])
+
+    def test_read_bool_from_URL(self):
+        model = self._new_model()
+        param = boolParameter("Count", DefaultValue=True, AllowExtendedInput=True)
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Geophires Enabled",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/bool.txt",
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, bool)
+        self.assertEqual(param.value, False)
+
+    def test_read_int_from_URL(self):
+        model = self._new_model()
+        param = intParameter("Count", DefaultValue=0, AllowableRange=[0, 113, 1000000], AllowExtendedInput=True)
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Count",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/int.txt",
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, int)
+        self.assertEqual(param.value, 113)
+
+    def test_read_float_from_URL(self):
+        model = self._new_model()
+        param = floatParameter(
+            "CAPEX",
+            DefaultValue=1379.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERMT,
+            CurrentUnits=CostPerMassUnit.CENTSSPERMT,
+            AllowExtendedInput=True,
+        )
+
+        ReadParameter(
+            ParameterEntry(
+                Name="CAPEX",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/float.txt",
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, float)
+        self.assertEqual(param.value, 3.14156)
+
+    def test_read_str_from_URL(self):
+        model = self._new_model()
+        param = strParameter("Gettysburg", DefaultValue="", AllowExtendedInput=True)
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Gettysburg",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/string.txt",
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, str)
+        self.assertIn("Four score and seven years ago", param.value)
+
+    def test_read_list_from_URL(self):
+        model = self._new_model()
+        param = listParameter("Random", DefaultValue=[], AllowExtendedInput=True)
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Random",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/list.txt",
+            ),
+            param,
+            model,
+        )
+
+        self.assertIsInstance(param.value, list)
+        self.assertEqual(345, param.value[0])
+
+    def test_read_gradient_from_file(self):
+        model = self._new_model()
+        param = listParameter(
+            Name="Gradients",
+            DefaultValue=[1000.0],
+            Min=0.0,
+            Max=100000.0,
+            UnitType=Units.TEMP_GRADIENT,
+            PreferredUnits=TemperatureGradientUnit.DEGREESCPERM,
+            CurrentUnits=TemperatureGradientUnit.DEGREESFPERFT,
+            AllowExtendedInput=True,
+        )
+        root = str(Path(__file__).resolve().parents[0])  # adjust depth as needed
+        csv_file = root + "/assets/params/gradients.csv"
+
+        ReadParameter(
+            ParameterEntry(Name="Gradients", sValue=csv_file, raw_entry=f"Gradients, {csv_file}"),
+            param,
+            model,
+        )
+
+        self.assertEqual([0.2916302128900554, 0.32808398950131235, 0.27340332458442695], param.value[0:3])
+
+    def test_read_test_read_thicknesses_from_URL(self):
+        model = self._new_model()
+        param = listParameter(
+            Name="Thicknesses",
+            DefaultValue=[1000.0],
+            Min=0.0,
+            Max=100000.0,
+            UnitType=Units.LENGTH,
+            PreferredUnits=LengthUnit.METERS,
+            CurrentUnits=LengthUnit.METERS,
+            AllowExtendedInput=True,
+        )
+        ReadParameter(
+            ParameterEntry(
+                Name="Thicknesses",
+                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.3/tests/assets/params/thicknesses.csv",
+                raw_entry="Thicknesses, https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.3/tests/assets/params/thicknesses.csv",
+            ),
+            param,
+            model,
+        )
+
+        self.assertEqual([431.5967999999999, 193.85279999999997, 293.82719999999995], param.value[0:3])
+
+    def test_read_parameter_gradient_keeps_array_length(self):
+        model = self._new_model()
+        param = listParameter(
+            Name="Gradients",
+            DefaultValue=[],
+            PreferredUnits=TemperatureUnit.CELSIUS,
+        )
+        param.AllowHistoricalArrayInput = True
+        param.HistoricalXDimension = "distance"
+        param.HistoricalYDimension = "temperature"
+        param.HistoricalDefaultXUnits = "meter"
+        param.HistoricalDefaultYUnits = "celsius"
+        param.HistoricalResampleToHourlyYear = False
+
+        entry = ParameterEntry(
+            Name="Gradients",
+            sValue="Distance (feet),Temperature (Fahrenheit)\n0,32\n10,50\n",
+            raw_entry="Gradients, Distance (feet),Temperature (Fahrenheit)\n0,32\n10,50\n",
+        )
+        ReadParameter(entry, param, model)
+
+        self.assertEqual(2, len(param.value))
+        self.assertTrue(np.allclose(param.value[0], 0.0))
+
+    def test_derive_numseg_from_gradient_thickness(self):
+        self.assertEqual(3, derive_numseg_from_gradient_thickness([1.0, 2.0, 3.0, 4.0, 5.0], [10.0, 20.0, 30.0]))
 
     def test_convert_cost_per_mass(self):
         result: GeophiresXResult = GeophiresXClient().get_geophires_result(
             ImmutableGeophiresInputParameters(
-                from_file_path=self._get_test_file_path('examples/example_SAM-single-owner-PPA-6_carbon-revenue.txt'),
+                from_file_path=self._get_test_file_path("examples/example_SAM-single-owner-PPA-6_carbon-revenue.txt"),
                 params={
-                    'Starting Carbon Credit Value': '1 USD/kilogram',
-                    'Ending Carbon Credit Value': 100,  # arbitrary high number
-                    'Carbon Escalation Rate Per Year': 0,
-                    'Units:Total Saved Carbon Production': 'kilogram',
+                    "Starting Carbon Credit Value": "1 USD/kilogram",
+                    "Ending Carbon Credit Value": 100,  # arbitrary high number
+                    "Carbon Escalation Rate Per Year": 0,
+                    "Units:Total Saved Carbon Production": "kilogram",
                 },
             )
         )
@@ -431,23 +723,23 @@ class ParameterTestCase(BaseTestCase):
             from geophires_x.EconomicsSam import _cash_flow_profile_row
             from geophires_x.GeoPHIRESUtils import is_float
 
-            return [it for it in _cash_flow_profile_row(r.result['SAM CASH FLOW PROFILE'], row_name) if is_float(it)]
+            return [it for it in _cash_flow_profile_row(r.result["SAM CASH FLOW PROFILE"], row_name) if is_float(it)]
 
-        capacity_payment_revenue_usd_row = _cash_flow_row(result, 'Capacity payment revenue ($)')
+        capacity_payment_revenue_usd_row = _cash_flow_row(result, "Capacity payment revenue ($)")
         total_capacity_payment_revenue_usd = sum(capacity_payment_revenue_usd_row)
 
-        total_avoided_carbon_emissions_vu: dict[str, float] = result.result['SUMMARY OF RESULTS'][
-            'Total Avoided Carbon Emissions'
+        total_avoided_carbon_emissions_vu: dict[str, float] = result.result["SUMMARY OF RESULTS"][
+            "Total Avoided Carbon Emissions"
         ]
-        self.assertEqual('kilogram', total_avoided_carbon_emissions_vu['unit'])
-        self.assertEqual(int(total_avoided_carbon_emissions_vu['value']), total_capacity_payment_revenue_usd)
+        self.assertEqual("kilogram", total_avoided_carbon_emissions_vu["unit"])
+        self.assertEqual(int(total_avoided_carbon_emissions_vu["value"]), total_capacity_payment_revenue_usd)
 
     # noinspection PyMethodMayBeStatic
     def _new_model(self) -> Model:
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         m = Model(enable_geophires_logging_config=False)
 
@@ -457,5 +749,5 @@ class ParameterTestCase(BaseTestCase):
         return m
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

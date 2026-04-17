@@ -20,7 +20,7 @@ class GeophiresXClientTestCase(BaseTestCase):
     """
 
     def test_geophires_x_result_1(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-1.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-1.out")
 
         result = GeophiresXResult(test_result_path)
 
@@ -29,117 +29,117 @@ class GeophiresXClientTestCase(BaseTestCase):
         expected_price = 7.06
 
         assert result.direct_use_heat_breakeven_price_USD_per_MMBTU == expected_price
-        assert result.result['SUMMARY OF RESULTS']['Direct-Use heat breakeven price']['value'] == expected_price
-        assert result.result['SUMMARY OF RESULTS']['Direct-Use heat breakeven price']['unit'] == 'USD/MMBTU'
-        assert result.result['SUMMARY OF RESULTS']['End-Use Option']['value'] == 'Direct-Use Heat'
+        assert result.result["SUMMARY OF RESULTS"]["Direct-Use heat breakeven price"]["value"] == expected_price
+        assert result.result["SUMMARY OF RESULTS"]["Direct-Use heat breakeven price"]["unit"] == "USD/MMBTU"
+        assert result.result["SUMMARY OF RESULTS"]["End-Use Option"]["value"] == "Direct-Use Heat"
 
-        assert 'GEOPHIRES Version' in result.result['Simulation Metadata']
-        assert '3.' in result.result['Simulation Metadata']['GEOPHIRES Version']['value']
+        assert "GEOPHIRES Version" in result.result["Simulation Metadata"]
+        assert "3." in result.result["Simulation Metadata"]["GEOPHIRES Version"]["value"]
 
     def test_geophires_x_result_2(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-2.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-2.out")
         result = GeophiresXResult(test_result_path)
 
         assert result is not None
         assert result.direct_use_heat_breakeven_price_USD_per_MMBTU is None
-        assert result.result['SUMMARY OF RESULTS']['Average Net Electricity Production']['value'] == 5.39
-        assert result.result['ENGINEERING PARAMETERS']['Power plant type']['value'] == 'Supercritical ORC'
-        assert result.result['SUMMARY OF RESULTS']['End-Use Option']['value'] == 'Electricity'
+        assert result.result["SUMMARY OF RESULTS"]["Average Net Electricity Production"]["value"] == 5.39
+        assert result.result["ENGINEERING PARAMETERS"]["Power plant type"]["value"] == "Supercritical ORC"
+        assert result.result["SUMMARY OF RESULTS"]["End-Use Option"]["value"] == "Electricity"
         assert (
-            'Ramey Model'
-            == result.result['RESERVOIR SIMULATION RESULTS']['Production Wellbore Heat Transmission Model']
+            "Ramey Model"
+            == result.result["RESERVOIR SIMULATION RESULTS"]["Production Wellbore Heat Transmission Model"]
         )
-        assert result.result['RESERVOIR SIMULATION RESULTS']['Wellbore Heat Transmission Model'] is None
+        assert result.result["RESERVOIR SIMULATION RESULTS"]["Wellbore Heat Transmission Model"] is None
 
     def test_geophires_x_result_3(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-3.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-3.out")
         result = GeophiresXResult(test_result_path)
         assert (
-            result.result['SUMMARY OF RESULTS']['End-Use Option']['value']
-            == 'Cogeneration Topping Cycle, Heat sales considered as extra income'
+            result.result["SUMMARY OF RESULTS"]["End-Use Option"]["value"]
+            == "Cogeneration Topping Cycle, Heat sales considered as extra income"
         )
 
     def test_geophires_x_result_4(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-4.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-4.out")
         result = GeophiresXResult(test_result_path)
 
         assert result is not None
-        assert result.result['SUMMARY OF RESULTS']['Annual District Heating Demand']['value'] == 242.90
-        assert result.result['SUMMARY OF RESULTS']['Annual District Heating Demand']['unit'] == 'GWh/year'
+        assert result.result["SUMMARY OF RESULTS"]["Annual District Heating Demand"]["value"] == 242.90
+        assert result.result["SUMMARY OF RESULTS"]["Annual District Heating Demand"]["unit"] == "GWh/year"
 
         assert (
-            result.result['OPERATING AND MAINTENANCE COSTS (M$/yr)']['Annual District Heating O&M Cost']['value']
+            result.result["OPERATING AND MAINTENANCE COSTS (M$/yr)"]["Annual District Heating O&M Cost"]["value"]
             == 0.39
         )
         assert (
-            result.result['OPERATING AND MAINTENANCE COSTS (M$/yr)']['Annual District Heating O&M Cost']['unit']
-            == 'MUSD/yr'
+            result.result["OPERATING AND MAINTENANCE COSTS (M$/yr)"]["Annual District Heating O&M Cost"]["unit"]
+            == "MUSD/yr"
         )
 
         assert (
-            result.result['OPERATING AND MAINTENANCE COSTS (M$/yr)']['Average Annual Peaking Fuel Cost']['value']
+            result.result["OPERATING AND MAINTENANCE COSTS (M$/yr)"]["Average Annual Peaking Fuel Cost"]["value"]
             == 3.01
         )
         assert (
-            result.result['OPERATING AND MAINTENANCE COSTS (M$/yr)']['Average Annual Peaking Fuel Cost']['unit']
-            == 'MUSD/yr'
+            result.result["OPERATING AND MAINTENANCE COSTS (M$/yr)"]["Average Annual Peaking Fuel Cost"]["unit"]
+            == "MUSD/yr"
         )
 
     def test_direct_use_heat_property(self):
-        test_result_path = self._get_test_file_path('examples/example12_DH.out')
+        test_result_path = self._get_test_file_path("examples/example12_DH.out")
         result = GeophiresXResult(test_result_path)
 
         with open(test_result_path) as f:
-            self.assertIn('Direct-Use heat breakeven price (LCOH)', f.read())
+            self.assertIn("Direct-Use heat breakeven price (LCOH)", f.read())
 
         # Don't care about the value in this test - just that it's being read with the (LCOH)-suffixed name
         self.assertIsNotNone(result.direct_use_heat_breakeven_price_USD_per_MMBTU)
 
     def test_surface_application_field(self):
         for example_file, surface_application in [
-            ('examples/example10_HP.out', 'Heat Pump'),
-            ('examples/example11_AC.out', 'Absorption Chiller'),
-            ('examples/example12_DH.out', 'District Heating'),
+            ("examples/example10_HP.out", "Heat Pump"),
+            ("examples/example11_AC.out", "Absorption Chiller"),
+            ("examples/example12_DH.out", "District Heating"),
         ]:
             with self.subTest(msg=example_file):
                 test_result_path = self._get_test_file_path(example_file)
                 result = GeophiresXResult(test_result_path)
 
-                assert result.result['SUMMARY OF RESULTS']['Surface Application']['value'] == surface_application
+                assert result.result["SUMMARY OF RESULTS"]["Surface Application"]["value"] == surface_application
 
     def test_example_multiple_gradients_result(self):
-        test_result_path = self._get_test_file_path('examples/example_multiple_gradients.out')
+        test_result_path = self._get_test_file_path("examples/example_multiple_gradients.out")
         result = GeophiresXResult(test_result_path)
 
-        categories = ['SUMMARY OF RESULTS', 'RESOURCE CHARACTERISTICS']
+        categories = ["SUMMARY OF RESULTS", "RESOURCE CHARACTERISTICS"]
         for category in categories:
-            assert result.result[category]['Segment 1   Geothermal gradient']['value'] == 50
-            assert result.result[category]['Segment 1   Geothermal gradient']['unit'] == 'degC/km'
-            assert result.result[category]['Segment 1   Thickness']['value'] == 1
-            assert result.result[category]['Segment 1   Thickness']['unit'] == 'kilometer'
+            assert result.result[category]["Segment 1   Geothermal gradient"]["value"] == 50
+            assert result.result[category]["Segment 1   Geothermal gradient"]["unit"] == "degC/km"
+            assert result.result[category]["Segment 1   Thickness"]["value"] == 1
+            assert result.result[category]["Segment 1   Thickness"]["unit"] == "kilometer"
 
-            assert result.result[category]['Segment 2   Geothermal gradient']['value'] == 40
-            assert result.result[category]['Segment 2   Geothermal gradient']['unit'] == 'degC/km'
-            assert result.result[category]['Segment 2   Thickness']['value'] == 1
-            assert result.result[category]['Segment 2   Thickness']['unit'] == 'kilometer'
+            assert result.result[category]["Segment 2   Geothermal gradient"]["value"] == 40
+            assert result.result[category]["Segment 2   Geothermal gradient"]["unit"] == "degC/km"
+            assert result.result[category]["Segment 2   Thickness"]["value"] == 1
+            assert result.result[category]["Segment 2   Thickness"]["unit"] == "kilometer"
 
-            assert result.result[category]['Segment 3   Geothermal gradient']['value'] == 30
-            assert result.result[category]['Segment 3   Geothermal gradient']['unit'] == 'degC/km'
-            assert result.result[category]['Segment 3   Thickness']['value'] == 1
-            assert result.result[category]['Segment 3   Thickness']['unit'] == 'kilometer'
+            assert result.result[category]["Segment 3   Geothermal gradient"]["value"] == 30
+            assert result.result[category]["Segment 3   Geothermal gradient"]["unit"] == "degC/km"
+            assert result.result[category]["Segment 3   Thickness"]["value"] == 1
+            assert result.result[category]["Segment 3   Thickness"]["unit"] == "kilometer"
 
-            assert result.result[category]['Segment 4   Geothermal gradient']['value'] == 50
-            assert result.result[category]['Segment 4   Geothermal gradient']['unit'] == 'degC/km'
+            assert result.result[category]["Segment 4   Geothermal gradient"]["value"] == 50
+            assert result.result[category]["Segment 4   Geothermal gradient"]["unit"] == "degC/km"
 
     def test_example_absorption_chiller_result(self):
-        test_result_path = self._get_test_file_path('examples/example11_AC.out')
+        test_result_path = self._get_test_file_path("examples/example11_AC.out")
         result = GeophiresXResult(test_result_path).result
 
-        assert result['CAPITAL COSTS (M$)']['of which Absorption Chiller Cost']['value'] == 3.74
-        assert result['CAPITAL COSTS (M$)']['of which Absorption Chiller Cost']['unit'] == 'MUSD'
+        assert result["CAPITAL COSTS (M$)"]["of which Absorption Chiller Cost"]["value"] == 3.74
+        assert result["CAPITAL COSTS (M$)"]["of which Absorption Chiller Cost"]["unit"] == "MUSD"
 
     def test_geophires_x_result_generation_profiles(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-3.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-3.out")
         result = GeophiresXResult(test_result_path)
 
         assert result.power_generation_profile is not None
@@ -147,13 +147,13 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertListEqual(
             result.power_generation_profile[0],
             [
-                'YEAR',
-                'THERMAL DRAWDOWN',
-                'GEOFLUID TEMPERATURE (deg C)',
-                'PUMP POWER (MW)',
-                'NET POWER (MW)',
-                'NET HEAT (MW)',
-                'FIRST LAW EFFICIENCY (%)',
+                "YEAR",
+                "THERMAL DRAWDOWN",
+                "GEOFLUID TEMPERATURE (deg C)",
+                "PUMP POWER (MW)",
+                "NET POWER (MW)",
+                "NET HEAT (MW)",
+                "FIRST LAW EFFICIENCY (%)",
             ],
         )
         self.assertListEqual(result.power_generation_profile[1], [0, 1.0, 225.24, 0.1791, 20.597, 11.6711, 16.5771])
@@ -169,12 +169,12 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertListEqual(
             result.heat_electricity_extraction_generation_profile[0],
             [
-                'YEAR',
-                'HEAT PROVIDED (GWh/year)',
-                'ELECTRICITY PROVIDED (GWh/year)',
-                'HEAT EXTRACTED (GWh/year)',
-                'RESERVOIR HEAT CONTENT (10^15 J)',
-                'PERCENTAGE OF TOTAL HEAT MINED (%)',
+                "YEAR",
+                "HEAT PROVIDED (GWh/year)",
+                "ELECTRICITY PROVIDED (GWh/year)",
+                "HEAT EXTRACTED (GWh/year)",
+                "RESERVOIR HEAT CONTENT (10^15 J)",
+                "PERCENTAGE OF TOTAL HEAT MINED (%)",
             ],
         )
         self.assertListEqual(
@@ -185,7 +185,7 @@ class GeophiresXClientTestCase(BaseTestCase):
         )
 
     def test_ags_clgs_result_generation_profiles(self):
-        test_result_path = self._get_test_file_path('geophires-result_example-5.out')
+        test_result_path = self._get_test_file_path("geophires-result_example-5.out")
         result = GeophiresXResult(test_result_path)
 
         assert result.power_generation_profile is not None
@@ -193,12 +193,12 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertListEqual(
             result.power_generation_profile[0],
             [
-                'YEAR',
-                'THERMAL DRAWDOWN',
-                'GEOFLUID TEMPERATURE (degC)',
-                'PUMP POWER (MW)',
-                'NET POWER (MW)',
-                'FIRST LAW EFFICIENCY (%)',
+                "YEAR",
+                "THERMAL DRAWDOWN",
+                "GEOFLUID TEMPERATURE (degC)",
+                "PUMP POWER (MW)",
+                "NET POWER (MW)",
+                "FIRST LAW EFFICIENCY (%)",
             ],
         )
         self.assertListEqual(result.power_generation_profile[1], [1, 1.0000, 108.39, 0.0000, 0.2930, 9.5729])
@@ -209,11 +209,11 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertListEqual(
             result.heat_electricity_extraction_generation_profile[0],
             [
-                'YEAR',
-                'ELECTRICITY PROVIDED (GWh/year)',
-                'HEAT EXTRACTED (GWh/year)',
-                'RESERVOIR HEAT CONTENT (10^15 J)',
-                'PERCENTAGE OF TOTAL HEAT MINED (%)',
+                "YEAR",
+                "ELECTRICITY PROVIDED (GWh/year)",
+                "HEAT EXTRACTED (GWh/year)",
+                "RESERVOIR HEAT CONTENT (10^15 J)",
+                "PERCENTAGE OF TOTAL HEAT MINED (%)",
             ],
         )
         self.assertListEqual(result.heat_electricity_extraction_generation_profile[1], [1, 2.6, 30.1, 3.68, 2.86])
@@ -225,88 +225,59 @@ class GeophiresXClientTestCase(BaseTestCase):
             (https://github.com/NREL/GEOPHIRES-X/issues/107)
         """
 
-        test_result_path = self._get_test_file_path('examples/example1_addons.out')
+        test_result_path = self._get_test_file_path("examples/example1_addons.out")
         result = GeophiresXResult(test_result_path)
-        eep = result.result['EXTENDED ECONOMIC PROFILE']
+        eep = result.result["EXTENDED ECONOMIC PROFILE"]
 
-        self.assertListEqual(
-            [
-                [
-                    'Year Since Start',
-                    'Electricity Price (cents/kWh)',
-                    'Electricity Revenue (MUSD/yr)',
-                    'Heat Price (cents/kWh)',
-                    'Heat Revenue (MUSD/yr)',
-                    'Add-on Revenue (MUSD/yr)',
-                    'Annual AddOn Cash Flow (MUSD/yr)',
-                    'Cumm. AddOn Cash Flow (MUSD)',
-                    'Annual Project Cash Flow (MUSD/yr)',
-                    'Cumm. Project Cash Flow (MUSD)',
-                ],
-                [1, 0.0, 0.0023, 0.0, 0.0, 1.14, -70.0, -70.0, -95.67, -95.67],
-                [2, 0.09, 0.0023, 0.012, 0.0, 1.14, 1.14, -68.86, 5.75, -89.92],
-                [3, 0.09, 0.0023, 0.012, 0.0, 1.14, 1.14, -67.72, 5.79, -84.14],
-                [4, 0.09, 0.0023, 0.012, 0.0, 1.14, 1.14, -66.59, 5.8, -78.34],
-                [5, 0.09, 0.0023, 0.012, 0.0, 1.14, 1.14, -65.45, 5.81, -72.53],
-                [6, 0.09, 0.0023, 0.012, 0.0, 1.14, 1.14, -64.31, 5.81, -66.72],
-                [7, 0.09, 0.0026, 0.012, 0.0, 1.14, 1.14, -63.17, 5.82, -60.9],
-                [8, 0.102, 0.003, 0.012, 0.0, 1.14, 1.14, -62.03, 6.33, -54.57],
-                [9, 0.114, 0.0033, 0.012, 0.0, 1.14, 1.14, -60.89, 6.84, -47.73],
-                [10, 0.126, 0.0036, 0.022, 0.0, 1.14, 1.14, -59.75, 7.36, -40.37],
-                [11, 0.138, 0.0039, 0.032, 0.0, 1.14, 1.14, -58.61, 7.87, -32.5],
-                [12, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -57.47, 8.38, -24.12],
-                [13, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -56.33, 8.39, -15.73],
-                [14, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -55.19, 8.39, -7.34],
-                [15, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -54.05, 8.39, 1.05],
-                [16, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -52.91, 8.39, 9.44],
-                [17, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -51.77, 8.4, 17.84],
-                [18, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -50.63, 8.4, 26.24],
-                [19, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -49.49, 8.4, 34.63],
-                [20, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -48.35, 8.4, 43.03],
-                [21, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -47.21, 8.4, 51.44],
-                [22, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -46.07, 8.4, 59.84],
-                [23, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -44.93, 8.4, 68.25],
-                [24, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -43.8, 8.41, 76.65],
-                [25, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -42.66, 8.41, 85.06],
-                [26, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -41.52, 8.41, 93.47],
-                [27, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -40.38, 8.41, 101.88],
-                [28, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -39.24, 8.41, 110.29],
-                [29, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -38.1, 8.41, 118.7],
-                [30, 0.15, 0.0039, 0.036, 0.0, 1.14, 1.14, -36.96, 8.41, 127.11],
-            ],
-            eep,
-        )
+        expected_header = [
+            "Year Since Start",
+            "Electricity Price (cents/kWh)",
+            "Electricity Revenue (MUSD/yr)",
+            "Heat Price (cents/kWh)",
+            "Heat Revenue (MUSD/yr)",
+            "Add-on Revenue (MUSD/yr)",
+            "Annual AddOn Cash Flow (MUSD/yr)",
+            "Cumm. AddOn Cash Flow (MUSD)",
+            "Annual Project Cash Flow (MUSD/yr)",
+            "Cumm. Project Cash Flow (MUSD)",
+        ]
+        self.assertListEqual(expected_header, eep[0])
+        self.assertEqual(32, len(eep))
+        self.assertListEqual([1, 0.0, 0.0, 0.0, 0.0, 0.0, -70.0, -70.0, -95.67, -95.67], eep[1])
+        self.assertListEqual([2, 0.0, 0.0023, 0.0, 0.0, 1.14, 1.14, -68.86, 5.75, -89.92], eep[2])
+        self.assertListEqual([12, 0.0, 0.0039, 0.0, 0.0, 1.14, 1.14, -57.47, 8.38, -24.12], eep[12])
+        self.assertListEqual([31, 0.0, 0.0039, 0.0, 0.0, 1.14, 1.14, -35.82, 8.41, 135.52], eep[-1])
 
     def test_revenue_and_cashflow_profile(self):
-        example_result_path = self._get_test_file_path('examples/example1_addons.out')
+        example_result_path = self._get_test_file_path("examples/example1_addons.out")
         example_result = GeophiresXResult(example_result_path)
-        example_profile = example_result.result['REVENUE & CASHFLOW PROFILE']
+        example_profile = example_result.result["REVENUE & CASHFLOW PROFILE"]
         self.assertIsNotNone(example_profile)
 
         profile_headers = [
-            'Year Since Start',
-            'Electricity Price (cents/kWh)',
-            'Electricity Ann. Rev. (MUSD/yr)',
-            'Electricity Cumm. Rev. (MUSD)',
-            'Heat Price (cents/kWh)',
-            'Heat Ann. Rev. (MUSD/yr)',
-            'Heat Cumm. Rev. (MUSD)',
-            'Cooling Price (cents/kWh)',
-            'Cooling Ann. Rev. (MUSD/yr)',
-            'Cooling Cumm. Rev. (MUSD)',
-            'Carbon Price (USD/lb)',
-            'Carbon Ann. Rev. (MUSD/yr)',
-            'Carbon Cumm. Rev. (MUSD)',
-            'Project OPEX (MUSD/yr)',
-            'Project Net Rev. (MUSD/yr)',
-            'Project Net Cashflow (MUSD)',
+            "Year Since Start",
+            "Electricity Price (cents/kWh)",
+            "Electricity Ann. Rev. (MUSD/yr)",
+            "Electricity Cumm. Rev. (MUSD)",
+            "Heat Price (cents/kWh)",
+            "Heat Ann. Rev. (MUSD/yr)",
+            "Heat Cumm. Rev. (MUSD)",
+            "Cooling Price (cents/kWh)",
+            "Cooling Ann. Rev. (MUSD/yr)",
+            "Cooling Cumm. Rev. (MUSD)",
+            "Carbon Price (USD/lb)",
+            "Carbon Ann. Rev. (MUSD/yr)",
+            "Carbon Cumm. Rev. (MUSD)",
+            "Project OPEX (MUSD/yr)",
+            "Project Net Rev. (MUSD/yr)",
+            "Project Net Cashflow (MUSD)",
         ]
 
         self.assertListEqual(profile_headers, example_profile[0])
 
-        rcf_path = self._get_test_file_path('result_with_revenue_and_cashflow_profile.out')
+        rcf_path = self._get_test_file_path("result_with_revenue_and_cashflow_profile.out")
         rcf_result = GeophiresXResult(rcf_path)
-        rcf_profile = rcf_result.result['REVENUE & CASHFLOW PROFILE']
+        rcf_profile = rcf_result.result["REVENUE & CASHFLOW PROFILE"]
         self.assertIsNotNone(rcf_profile)
 
         self.assertListEqual(
@@ -347,15 +318,15 @@ class GeophiresXClientTestCase(BaseTestCase):
         )
 
     def test_carbon_revenue_profile(self):
-        result_example1 = GeophiresXResult(self._get_test_file_path('examples/example1.out'))
+        result_example1 = GeophiresXResult(self._get_test_file_path("examples/example1.out"))
         self.assertTrue(GeophiresXResult.CARBON_REVENUE_PROFILE_NAME not in result_example1.result)
 
-        result_addons = GeophiresXResult(self._get_test_file_path('examples/example1_addons.out'))
-        carbon_revenue_profile = result_addons.result['CARBON REVENUE PROFILE']
+        result_addons = GeophiresXResult(self._get_test_file_path("examples/example1_addons.out"))
+        carbon_revenue_profile = result_addons.result["CARBON REVENUE PROFILE"]
         self.assertIsNotNone(carbon_revenue_profile)
         self.assertListEqual(
             carbon_revenue_profile[0],
-            ['Year Since Start', 'Carbon Price (USD/lb)', 'Carbon Ann. Rev. (MUSD/yr)', 'Carbon Cumm. Rev. (MUSD)'],
+            ["Year Since Start", "Carbon Price (USD/lb)", "Carbon Ann. Rev. (MUSD/yr)", "Carbon Cumm. Rev. (MUSD)"],
         )
 
         self.assertListEqual([0, 0.0, 0.0, 0.0], carbon_revenue_profile[1])
@@ -364,21 +335,21 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertListEqual([30, 0.1, 3.5, 75.86], carbon_revenue_profile[31])
 
     def test_ccus_profile_legacy(self):
-        test_result_path = self._get_test_file_path('result_with_ccus_profile_legacy.out')
+        test_result_path = self._get_test_file_path("result_with_ccus_profile_legacy.out")
         result = GeophiresXResult(test_result_path)
-        ccus_profile_legacy = result.result['CCUS PROFILE']
+        ccus_profile_legacy = result.result["CCUS PROFILE"]
 
         self.assertListEqual(
             [
                 [
-                    'Year Since Start',
-                    'Carbon Avoided (pound)',
-                    'CCUS Price (USD/lb)',
-                    'CCUS Revenue (MUSD/yr)',
-                    'CCUS Annual Cash Flow (MUSD/yr)',
-                    'CCUS Cumm. Cash Flow (MUSD)',
-                    'Project Annual Cash Flow (MUSD/yr)',
-                    'Project Cumm. Cash Flow (MUSD)',
+                    "Year Since Start",
+                    "Carbon Avoided (pound)",
+                    "CCUS Price (USD/lb)",
+                    "CCUS Revenue (MUSD/yr)",
+                    "CCUS Annual Cash Flow (MUSD/yr)",
+                    "CCUS Cumm. Cash Flow (MUSD)",
+                    "Project Annual Cash Flow (MUSD/yr)",
+                    "Project Cumm. Cash Flow (MUSD)",
                 ],
                 [1, None, None, None, None, None, -32.63, -32.63],
                 [2, 7101870.358, 0.015, 0.11, 0.11, 0.11, 1.69, -30.95],
@@ -416,33 +387,33 @@ class GeophiresXClientTestCase(BaseTestCase):
         )
 
     def test_non_vertical_section_cost(self):
-        result_path = self._get_test_file_path('examples/Fervo_Norbeck_Latimer_2023.out')
+        result_path = self._get_test_file_path("examples/Fervo_Norbeck_Latimer_2023.out")
         result = GeophiresXResult(result_path)
-        entry = result.result['CAPITAL COSTS (M$)']['Drilling and completion costs per non-vertical section']
-        self.assertIsNotNone(entry['value'])
-        self.assertEqual(entry['unit'], 'MUSD')
+        entry = result.result["CAPITAL COSTS (M$)"]["Drilling and completion costs per non-vertical section"]
+        self.assertIsNotNone(entry["value"])
+        self.assertEqual(entry["unit"], "MUSD")
 
     def test_input_hashing(self):
         input1 = ImmutableGeophiresInputParameters(
-            {'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value, 'Gradient 1': 50, 'Maximum Temperature': 250}
+            {"End-Use Option": EndUseOption.DIRECT_USE_HEAT.value, "Gradient 1": 50, "Maximum Temperature": 250}
         )
 
         input2 = ImmutableGeophiresInputParameters(
-            {'Maximum Temperature': 250, 'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value, 'Gradient 1': 50}
+            {"Maximum Temperature": 250, "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value, "Gradient 1": 50}
         )
 
         self.assertEqual(hash(input1), hash(input2))
 
         input3 = ImmutableGeophiresInputParameters(
-            {'Maximum Temperature': 420, 'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value, 'Gradient 1': 69}
+            {"Maximum Temperature": 420, "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value, "Gradient 1": 69}
         )
 
         self.assertNotEqual(hash(input1), hash(input3))
 
     def test_input_with_non_default_units(self):
         def delete_metadata(r: GeophiresXResult) -> GeophiresXResult:
-            del r.result['metadata']
-            del r.result['Simulation Metadata']['Calculation Time']
+            del r.result["metadata"]
+            del r.result["Simulation Metadata"]["Calculation Time"]
 
             return r
 
@@ -451,13 +422,13 @@ class GeophiresXClientTestCase(BaseTestCase):
             client.get_geophires_result(
                 GeophiresInputParameters(
                     {
-                        'Print Output to Console': 0,
-                        'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
-                        'Reservoir Model': 1,
-                        'Time steps per year': 1,
-                        'Reservoir Depth': 3,
-                        'Gradient 1': 50,
-                        'Maximum Temperature': 250,
+                        "Print Output to Console": 0,
+                        "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value,
+                        "Reservoir Model": 1,
+                        "Time steps per year": 1,
+                        "Reservoir Depth": 3,
+                        "Gradient 1": 50,
+                        "Maximum Temperature": 250,
                     }
                 )
             )
@@ -467,13 +438,13 @@ class GeophiresXClientTestCase(BaseTestCase):
             client.get_geophires_result(
                 GeophiresInputParameters(
                     {
-                        'Print Output to Console': 0,
-                        'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
-                        'Reservoir Model': 1,
-                        'Time steps per year': 1,
-                        'Reservoir Depth': '3000 meter',
-                        'Gradient 1': 50,
-                        'Maximum Temperature': 250,
+                        "Print Output to Console": 0,
+                        "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value,
+                        "Reservoir Model": 1,
+                        "Time steps per year": 1,
+                        "Reservoir Depth": "3000 meter",
+                        "Gradient 1": 50,
+                        "Maximum Temperature": 250,
                     }
                 )
             )
@@ -498,50 +469,50 @@ class GeophiresXClientTestCase(BaseTestCase):
             as_csv = result.as_csv()
             self.assertIsNotNone(as_csv)
 
-            result_file = Path(tempfile.gettempdir(), f'test_csv-result_{uuid.uuid1()!s}.csv')
-            with open(result_file, 'w', newline='', encoding='utf-8') as rf:
+            result_file = Path(tempfile.gettempdir(), f"test_csv-result_{uuid.uuid1()!s}.csv")
+            with open(result_file, "w", newline="", encoding="utf-8") as rf:
                 rf.write(as_csv)
             self.assertCsvFileContentsEqual(self._get_test_file_path(expected_csv_file_path), result_file)
 
         for case in [
-            ('examples/example1_addons.out', 'example1_addons.csv'),
-            ('geophires-result_example-3.out', 'geophires-result_example-3.csv'),
+            ("examples/example1_addons.out", "example1_addons.csv"),
+            ("geophires-result_example-3.out", "geophires-result_example-3.csv"),
         ]:
             with self.subTest(msg=case[0]):
                 assert_csv_equal(case[0], case[1])
 
-        op_example_file = 'examples/example_overpressure.out'
+        op_example_file = "examples/example_overpressure.out"
         with self.subTest(msg=op_example_file):
             # Ensure overpressure-specific RESERVOIR POWER REQUIRED PROFILES doesn't cause issues
             op_result = GeophiresXResult(self._get_test_file_path(op_example_file))
             op_csv = op_result.as_csv()
             self.assertIsNotNone(op_csv)
 
-        sam_example_file = 'examples/example_SAM-single-owner-PPA.out'
+        sam_example_file = "examples/example_SAM-single-owner-PPA.out"
         with self.subTest(msg=sam_example_file):
             sam_result = GeophiresXResult(self._get_test_file_path(sam_example_file))
             sam_csv = sam_result.as_csv()
             self.assertIsNotNone(sam_csv)
-            sam_cf_lines = [line.split(',') for line in sam_csv.split('\n') if line.startswith('SAM CASH FLOW PROFILE')]
+            sam_cf_lines = [line.split(",") for line in sam_csv.split("\n") if line.startswith("SAM CASH FLOW PROFILE")]
             self.assertGreater(len(sam_cf_lines), 250)
             # TODO test more of the content (but not full result given how big/complex it is, which would add undue
             #  maintenance overhead)
 
     def assertCsvFileContentsEqual(self, expected_file_path, actual_file_path, tol=0.01):
-        with open(expected_file_path, encoding='utf-8') as ef:
-            expected_lines = ef.readlines()
-        with open(actual_file_path, encoding='utf-8') as af:
-            actual_lines = af.readlines()
+        with open(expected_file_path, encoding="utf-8") as ef:
+            expected_lines = [line for line in ef.read().splitlines() if line.strip() != ""]
+        with open(actual_file_path, encoding="utf-8") as af:
+            actual_lines = [line for line in af.read().splitlines() if line.strip() != ""]
 
-        self.assertEqual(len(expected_lines), len(actual_lines), 'The number of lines in the files do not match.')
+        self.assertEqual(len(expected_lines), len(actual_lines), "The number of lines in the files do not match.")
 
         for line_index, (expected_line, actual_line) in enumerate(zip(expected_lines, actual_lines), start=1):
-            expected_parts = expected_line.strip().split(',')
-            actual_parts = actual_line.strip().split(',')
+            expected_parts = expected_line.strip().split(",")
+            actual_parts = actual_line.strip().split(",")
             self.assertEqual(
                 len(expected_parts),
                 len(actual_parts),
-                f'The number of columns in line {line_index} does not match.',
+                f"The number of columns in line {line_index} does not match.",
             )
             for col_index, (expected, actual) in enumerate(zip(expected_parts, actual_parts), start=1):
                 try:
@@ -549,47 +520,47 @@ class GeophiresXClientTestCase(BaseTestCase):
                     actual_float = float(actual)
                     self.assertTrue(
                         abs(expected_float - actual_float) < tol,
-                        f'Float values differ at line {line_index}, column {col_index}: {expected} != {actual}',
+                        f"Float values differ at line {line_index}, column {col_index}: {expected} != {actual}",
                     )
                 except ValueError:
                     self.assertEqual(
                         expected,
                         actual,
-                        f'String values differ at line {line_index}, column {col_index}: {expected} != {actual}',
+                        f"String values differ at line {line_index}, column {col_index}: {expected} != {actual}",
                     )
 
     def test_parse_chp_percent_cost_allocation(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/example3.out'))
+        result = GeophiresXResult(self._get_test_file_path("examples/example3.out"))
         self.assertEqual(
-            result.result['ECONOMIC PARAMETERS']['CHP: Percent cost allocation for electrical plant']['value'], 93.48
+            result.result["ECONOMIC PARAMETERS"]["CHP: Percent cost allocation for electrical plant"]["value"], 93.48
         )
 
     def test_parse_annualized_capital_costs(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/example1_addons.out'))
-        self.assertIsNotNone(result.result['CAPITAL COSTS (M$)']['Annualized capital costs']['value'])
+        result = GeophiresXResult(self._get_test_file_path("examples/example1_addons.out"))
+        self.assertIsNotNone(result.result["CAPITAL COSTS (M$)"]["Annualized capital costs"]["value"])
 
     def test_parse_number_with_commas(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/S-DAC-GT.out'))
-        sdac_e = result.result['S-DAC-GT ECONOMICS']
-        self.assertAlmostEqualWithinPercentage(499_311_405.59, sdac_e['Total Cost of Capture']['value'])
+        result = GeophiresXResult(self._get_test_file_path("examples/S-DAC-GT.out"))
+        sdac_e = result.result["S-DAC-GT ECONOMICS"]
+        self.assertAlmostEqualWithinPercentage(499_311_405.59, sdac_e["Total Cost of Capture"]["value"])
 
-        self.assertAlmostEqualWithinPercentage(0.0017, sdac_e['Geothermal LCOH']['value'])
+        self.assertAlmostEqualWithinPercentage(0.0017, sdac_e["Geothermal LCOH"]["value"])
 
-        self.assertAlmostEqualWithinPercentage(20.7259, sdac_e['Geothermal Ratio (electricity vs heat)']['value'])
+        self.assertAlmostEqualWithinPercentage(20.7259, sdac_e["Geothermal Ratio (electricity vs heat)"]["value"])
 
     def test_parse_sdacgt_profile(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/S-DAC-GT.out'))
-        sdacgt_profile = result.result['S-DAC-GT PROFILE']
+        result = GeophiresXResult(self._get_test_file_path("examples/S-DAC-GT.out"))
+        sdacgt_profile = result.result["S-DAC-GT PROFILE"]
         self.assertIsNotNone(sdacgt_profile)
         self.assertEqual(
             sdacgt_profile[0],
             [
-                'Year Since Start',
-                'Carbon Captured (tonne/yr)',
-                'Cumm. Carbon Captured (tonne)',
-                'S-DAC-GT Annual Cost (USD/yr)',
-                'S-DAC-GT Cumm. Cash Flow (USD)',
-                'Cumm. Cost Per Tonne (USD/tonne)',
+                "Year Since Start",
+                "Carbon Captured (tonne/yr)",
+                "Cumm. Carbon Captured (tonne)",
+                "S-DAC-GT Annual Cost (USD/yr)",
+                "S-DAC-GT Cumm. Cash Flow (USD)",
+                "Cumm. Cost Per Tonne (USD/tonne)",
             ],
         )
 
@@ -604,37 +575,37 @@ class GeophiresXClientTestCase(BaseTestCase):
         self.assertEqual([30, 68860.68, 2253170.17, 15306577.89, 500842063.38, 222.28], sdacgt_profile[30])
 
     def test_parse_economic_model(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/example3.out'))
-        em = result.result['ECONOMIC PARAMETERS']['Economic Model']
-        self.assertEqual(em, 'BICYCLE')
+        result = GeophiresXResult(self._get_test_file_path("examples/example3.out"))
+        em = result.result["ECONOMIC PARAMETERS"]["Economic Model"]
+        self.assertEqual(em, "BICYCLE")
 
         # Test backwards compatibility with previous versions of GEOPHIRES that included an extra space before the
         # equal sign.
-        result_legacy_em = GeophiresXResult(self._get_test_file_path('examples/example3.out'))
-        result_legacy_em._lines = ['   Economic Model  = BICYCLE']
-        em_legacy = result_legacy_em._get_equal_sign_delimited_field('Economic Model')
-        self.assertEqual(em_legacy, 'BICYCLE')
+        result_legacy_em = GeophiresXResult(self._get_test_file_path("examples/example3.out"))
+        result_legacy_em._lines = ["   Economic Model  = BICYCLE"]
+        em_legacy = result_legacy_em._get_equal_sign_delimited_field("Economic Model")
+        self.assertEqual(em_legacy, "BICYCLE")
 
     def test_parse_sam_cash_flow_profile(self):
-        result = GeophiresXResult(self._get_test_file_path('examples/example_SAM-single-owner-PPA.out'))
-        em = result.result['ECONOMIC PARAMETERS']['Economic Model']
-        self.assertEqual(em, 'SAM Single Owner PPA')
-        self.assertIn('SAM CASH FLOW PROFILE', result.result)
+        result = GeophiresXResult(self._get_test_file_path("examples/example_SAM-single-owner-PPA.out"))
+        em = result.result["ECONOMIC PARAMETERS"]["Economic Model"]
+        self.assertEqual(em, "SAM Single Owner PPA")
+        self.assertIn("SAM CASH FLOW PROFILE", result.result)
 
-        cash_flow = result.result['SAM CASH FLOW PROFILE']
+        cash_flow = result.result["SAM CASH FLOW PROFILE"]
         self.assertIsNotNone(cash_flow)
-        self.assertListEqual([''] + [f'Year {y}' for y in range(21)], cash_flow[0])
+        self.assertListEqual([""] + [f"Year {y}" for y in range(21)], cash_flow[0])
 
     def test_stash_cwd(self):
         start_cwd = Path.cwd()
         GeophiresXClient().get_geophires_result(
             GeophiresInputParameters(
                 {
-                    'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
-                    'Reservoir Model': 1,
-                    'Time steps per year': 1,
-                    'Reservoir Depth': 3,
-                    'Gradient 1': 50,
+                    "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value,
+                    "Reservoir Model": 1,
+                    "Time steps per year": 1,
+                    "Reservoir Depth": 3,
+                    "Gradient 1": 50,
                 }
             )
         )
@@ -644,26 +615,26 @@ class GeophiresXClientTestCase(BaseTestCase):
     def test_csv_with_input_parameters(self):
         with self.assertRaises(NotImplementedError):
             # This should fail because CSV from file path is not implemented.
-            ImmutableGeophiresInputParameters(from_file_path=self._get_test_file_path('input_comments.txt')).as_csv()
+            ImmutableGeophiresInputParameters(from_file_path=self._get_test_file_path("input_comments.txt")).as_csv()
 
         # Simulate the main use case of adding input parameters to the CSV download from the web interface.
-        csv_input = ImmutableGeophiresInputParameters(params={'Reservoir Depth': 3, 'Gradient 1': 50}).as_csv()
-        csv_output = GeophiresXResult(self._get_test_file_path('geophires-result_example-1.out')).as_csv()
+        csv_input = ImmutableGeophiresInputParameters(params={"Reservoir Depth": 3, "Gradient 1": 50}).as_csv()
+        csv_output = GeophiresXResult(self._get_test_file_path("geophires-result_example-1.out")).as_csv()
         csv_parts = csv_output.split(csv.excel.lineterminator, 1)
         csv_result = csv_parts[0] + csv.excel.lineterminator + csv_input + csv_parts[1]
 
         # Ensure the returned CSV are as expected.
         csv_lines = csv_result.splitlines()
-        self.assertEqual(csv_lines[0], 'Category,Field,Year,Value,Units')
-        self.assertEqual(csv_lines[1], 'INPUT PARAMETERS,Reservoir Depth,,3,')
-        self.assertEqual(csv_lines[2], 'INPUT PARAMETERS,Gradient 1,,50,')
-        self.assertEqual(csv_lines[3], 'SUMMARY OF RESULTS,End-Use Option,,Direct-Use Heat,')
+        self.assertEqual(csv_lines[0], "Category,Field,Year,Value,Units")
+        self.assertEqual(csv_lines[1], "INPUT PARAMETERS,Reservoir Depth,,3,")
+        self.assertEqual(csv_lines[2], "INPUT PARAMETERS,Gradient 1,,50,")
+        self.assertEqual(csv_lines[3], "SUMMARY OF RESULTS,End-Use Option,,Direct-Use Heat,")
         self.assertEqual(
             csv_lines[len(csv_lines) - 1],
-            'HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE,PERCENTAGE OF TOTAL HEAT MINED,25,42.7,%',
+            "HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE,PERCENTAGE OF TOTAL HEAT MINED,25,42.7,%",
         )
 
         # Export the CSV for testing in Excel (or other spreadsheet software).
-        result_file = Path(tempfile.gettempdir(), f'geophires-result_{uuid.uuid1()!s}.csv')
-        with open(result_file, 'w', newline='', encoding='utf-8') as rf:
+        result_file = Path(tempfile.gettempdir(), f"geophires-result_{uuid.uuid1()!s}.csv")
+        with open(result_file, "w", newline="", encoding="utf-8") as rf:
             rf.write(csv_result)

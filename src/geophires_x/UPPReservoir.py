@@ -5,11 +5,11 @@ import sys
 import numpy as np
 from scipy.interpolate import interp1d
 
-from .Parameter import strParameter, listParameter, floatParameter
+from .Parameter import filenameParameter, listParameter, floatParameter
 from .Units import Units, TimeUnit, TemperatureUnit
 import geophires_x.Model as Model
 from .Reservoir import Reservoir
-
+from geophires_x.GeoPHIRESUtils import get_data_from_file_or_url_as_string
 
 class UPPReservoir(Reservoir):
     """
@@ -30,7 +30,7 @@ class UPPReservoir(Reservoir):
         sclass = str(__class__).replace("<class \'", "")
         self.MyClass = sclass.replace("\'>", "")
 
-        self.filenamereservoiroutput = self.ParameterDict[self.filenamereservoiroutput.Name] = strParameter(
+        self.filenamereservoiroutput = self.ParameterDict[self.filenamereservoiroutput.Name] = filenameParameter(
             "Reservoir Output File Name",
             value='ReservoirOutput.txt',
             UnitType=Units.NONE,

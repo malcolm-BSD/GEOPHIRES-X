@@ -68,7 +68,7 @@ def UpgradeSymbologyOfUnits(unit: str) -> str:
     :return: a string that represents a unit with the appropriate unicode characters for superscript 2 and 3, and
     replaces "deg" with the unicode character for degrees.
     """
-    unit = unit.replace('**2', '\u00b2').replace('**3', '\u00b3').replace('deg', '\u00b0')
+    unit = unit.replace("**2", "\u00b2").replace("**3", "\u00b3").replace("deg", "\u00b0")
     return unit
 
 
@@ -81,13 +81,13 @@ class HIP_RA_X:
 
     def __init__(self, enable_hip_ra_logging_config=True):
         # get logging started
-        self.logger = logging.getLogger('root')
+        self.logger = logging.getLogger("root")
 
         if enable_hip_ra_logging_config:
-            logging.config.fileConfig(Path(os.path.dirname(os.path.abspath(__file__)), 'logging.conf'))
+            logging.config.fileConfig(Path(os.path.dirname(os.path.abspath(__file__)), "logging.conf"))
             self.logger.setLevel(logging.INFO)
 
-        self.logger.info(f'Init {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
         # Initiate the elements of the Model
         # Set up all the Parameters that will be predefined by this class using the different types of parameter
@@ -112,7 +112,7 @@ class HIP_RA_X:
         # inputs
         self.reservoir_temperature: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Temperature',
+                "Reservoir Temperature",
                 DefaultValue=150.0,
                 Min=50,
                 Max=1000,
@@ -120,13 +120,13 @@ class HIP_RA_X:
                 PreferredUnits=TemperatureUnit.CELSIUS,
                 CurrentUnits=TemperatureUnit.CELSIUS,
                 Required=True,
-                ErrMessage='assume default reservoir temperature (150 degC)',
-                ToolTipText='Reservoir Temperature',
+                ErrMessage="assume default reservoir temperature (150 degC)",
+                ToolTipText="Reservoir Temperature",
             )
         )
         self.rejection_temperature: Parameter = parameter_dict_entry(
             floatParameter(
-                'Rejection Temperature',
+                "Rejection Temperature",
                 DefaultValue=25.0,
                 Min=0.1,
                 Max=200,
@@ -134,13 +134,13 @@ class HIP_RA_X:
                 PreferredUnits=TemperatureUnit.CELSIUS,
                 CurrentUnits=TemperatureUnit.CELSIUS,
                 Required=True,
-                ErrMessage='assume default rejection temperature (25 degC)',
-                ToolTipText='Rejection Temperature',
+                ErrMessage="assume default rejection temperature (25 degC)",
+                ToolTipText="Rejection Temperature",
             )
         )
         self.reservoir_porosity: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Porosity',
+                "Reservoir Porosity",
                 DefaultValue=18.0,
                 Min=0.0,
                 Max=100.0,
@@ -148,13 +148,13 @@ class HIP_RA_X:
                 PreferredUnits=PercentUnit.PERCENT,
                 CurrentUnits=PercentUnit.PERCENT,
                 Required=True,
-                ErrMessage='assume default reservoir porosity (18%)',
-                ToolTipText='Reservoir Porosity',
+                ErrMessage="assume default reservoir porosity (18%)",
+                ToolTipText="Reservoir Porosity",
             )
         )
         self.reservoir_area: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Area',
+                "Reservoir Area",
                 DefaultValue=81.0,
                 Min=0.0,
                 Max=10000.0,
@@ -162,13 +162,13 @@ class HIP_RA_X:
                 PreferredUnits=AreaUnit.KILOMETERS2,
                 CurrentUnits=AreaUnit.KILOMETERS2,
                 Required=True,
-                ErrMessage='assume default reservoir area (81 km2)',
-                ToolTipText='Reservoir Area',
+                ErrMessage="assume default reservoir area (81 km2)",
+                ToolTipText="Reservoir Area",
             )
         )
         self.reservoir_thickness: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Thickness',
+                "Reservoir Thickness",
                 DefaultValue=0.286,
                 Min=0.0,
                 Max=10000.0,
@@ -176,28 +176,28 @@ class HIP_RA_X:
                 PreferredUnits=LengthUnit.KILOMETERS,
                 CurrentUnits=LengthUnit.KILOMETERS,
                 Required=True,
-                ErrMessage='assume default reservoir thickness (0.286 km2)',
-                ToolTipText='Reservoir Thickness',
+                ErrMessage="assume default reservoir thickness (0.286 km2)",
+                ToolTipText="Reservoir Thickness",
             )
         )
         self.reservoir_life_cycle: Parameter = parameter_dict_entry(
             intParameter(
-                'Reservoir Life Cycle',
+                "Reservoir Life Cycle",
                 DefaultValue=30,
                 UnitType=Units.TIME,
                 PreferredUnits=TimeUnit.YEAR,
                 CurrentUnits=TimeUnit.YEAR,
                 AllowableRange=list(range(1, 101, 1)),
                 Required=True,
-                ErrMessage='assume default Reservoir Life Cycle (25 years)',
-                ToolTipText='Reservoir Life Cycle',
+                ErrMessage="assume default Reservoir Life Cycle (25 years)",
+                ToolTipText="Reservoir Life Cycle",
             )
         )
 
         # user-changeable semi-constants
         self.rock_heat_capacity: Parameter = parameter_dict_entry(
             floatParameter(
-                'Rock Heat Capacity',
+                "Rock Heat Capacity",
                 DefaultValue=2.84e12,
                 Min=0.0,
                 Max=1e14,
@@ -205,13 +205,13 @@ class HIP_RA_X:
                 PreferredUnits=HeatCapacityUnit.KJPERKM3C,
                 CurrentUnits=HeatCapacityUnit.KJPERKM3C,
                 Required=True,
-                ErrMessage='assume default Rock Heat Capacity (2.84E+12 kJ/km3C)',
-                ToolTipText='Rock Heat Capacity',
+                ErrMessage="assume default Rock Heat Capacity (2.84E+12 kJ/km3C)",
+                ToolTipText="Rock Heat Capacity",
             )
         )
         self.fluid_heat_capacity: Parameter = parameter_dict_entry(
             floatParameter(
-                'Fluid Specific Heat Capacity',
+                "Fluid Specific Heat Capacity",
                 DefaultValue=-1.0,
                 Min=3.0,
                 Max=10.0,
@@ -219,13 +219,13 @@ class HIP_RA_X:
                 PreferredUnits=HeatCapacityUnit.kJPERKGC,
                 CurrentUnits=HeatCapacityUnit.kJPERKGC,
                 Required=True,
-                ErrMessage='calculate a value based on the water temperature',
-                ToolTipText='Specific Heat Capacity Of Water',
+                ErrMessage="calculate a value based on the water temperature",
+                ToolTipText="Specific Heat Capacity Of Water",
             )
         )
         self.fluid_density: Parameter = parameter_dict_entry(
             floatParameter(
-                'Density Of Reservoir Fluid',
+                "Density Of Reservoir Fluid",
                 DefaultValue=-1.0,
                 Min=1.000e11,
                 Max=1.000e13,
@@ -233,13 +233,13 @@ class HIP_RA_X:
                 PreferredUnits=DensityUnit.KGPERKILOMETERS3,
                 CurrentUnits=DensityUnit.KGPERKILOMETERS3,
                 Required=True,
-                ErrMessage='calculate a value based on the water temperature',
-                ToolTipText='Density Of Water',
+                ErrMessage="calculate a value based on the water temperature",
+                ToolTipText="Density Of Water",
             )
         )
         self.rock_density: Parameter = parameter_dict_entry(
             floatParameter(
-                'Density Of Reservoir Rock',
+                "Density Of Reservoir Rock",
                 DefaultValue=2.55e12,
                 Min=1.000e11,
                 Max=1.000e13,
@@ -247,13 +247,13 @@ class HIP_RA_X:
                 PreferredUnits=DensityUnit.KGPERKILOMETERS3,
                 CurrentUnits=DensityUnit.KGPERKILOMETERS3,
                 Required=True,
-                ErrMessage='assume default Density Of Rock (2.55E+12 kg/km3)',
-                ToolTipText='Density Of Rock',
+                ErrMessage="assume default Density Of Rock (2.55E+12 kg/km3)",
+                ToolTipText="Density Of Rock",
             )
         )
         self.rock_recoverable_heat: Parameter = parameter_dict_entry(
             floatParameter(
-                'Rock Recoverable Heat',
+                "Rock Recoverable Heat",
                 DefaultValue=-1.0,
                 Min=0.0,
                 Max=1.000,
@@ -261,15 +261,15 @@ class HIP_RA_X:
                 PreferredUnits=PercentUnit.TENTH,
                 CurrentUnits=PercentUnit.TENTH,
                 Required=False,
-                ErrMessage='assume 0.66 for high-T reservoirs (>150C), 0.43 for low-T reservoirs '
-                '(>90, Garg and Combs (2011)',
-                ToolTipText='percent of heat that is recoverable from the rock in the reservoir 0.66 for high-T reservoirs, '
-                '0.43 for low-T reservoirs (Garg and Combs (2011)',
+                ErrMessage="assume 0.66 for high-T reservoirs (>150C), 0.43 for low-T reservoirs "
+                "(>90, Garg and Combs (2011)",
+                ToolTipText="percent of heat that is recoverable from the rock in the reservoir 0.66 for high-T reservoirs, "
+                "0.43 for low-T reservoirs (Garg and Combs (2011)",
             )
         )
         self.fluid_recoverable_heat: Parameter = parameter_dict_entry(
             floatParameter(
-                'Fluid Recoverable Heat',
+                "Fluid Recoverable Heat",
                 DefaultValue=-1.0,
                 Min=0.00,
                 Max=1.000,
@@ -277,15 +277,15 @@ class HIP_RA_X:
                 PreferredUnits=PercentUnit.TENTH,
                 CurrentUnits=PercentUnit.TENTH,
                 Required=False,
-                ErrMessage='assume 0.66 for high-T reservoirs (>150C), 0.43 for low-T reservoirs '
-                '(>90, Garg and Combs (2011)',
-                ToolTipText='percent of heat that is recoverable from the fluid in the reservoir 0.66 for high-T reservoirs, '
-                '0.43 for low-T reservoirs (Garg and Combs (2011)',
+                ErrMessage="assume 0.66 for high-T reservoirs (>150C), 0.43 for low-T reservoirs "
+                "(>90, Garg and Combs (2011)",
+                ToolTipText="percent of heat that is recoverable from the fluid in the reservoir 0.66 for high-T reservoirs, "
+                "0.43 for low-T reservoirs (Garg and Combs (2011)",
             )
         )
         self.recoverable_fluid_factor: Parameter = parameter_dict_entry(
             floatParameter(
-                'Recoverable Fluid Factor',
+                "Recoverable Fluid Factor",
                 DefaultValue=0.5,
                 Min=0.00,
                 Max=1.000,
@@ -293,13 +293,13 @@ class HIP_RA_X:
                 PreferredUnits=PercentUnit.TENTH,
                 CurrentUnits=PercentUnit.TENTH,
                 Required=False,
-                ErrMessage='assume 0.5 (50%) of fluid from the reservoir is recoverable',
-                ToolTipText='percent of fluid that is recoverable from the reservoir (0.5 = 50%)',
+                ErrMessage="assume 0.5 (50%) of fluid from the reservoir is recoverable",
+                ToolTipText="percent of fluid that is recoverable from the reservoir (0.5 = 50%)",
             )
         )
         self.reservoir_depth: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Depth',
+                "Reservoir Depth",
                 DefaultValue=-1.0,
                 Min=0.001,
                 Max=15.0,
@@ -308,14 +308,14 @@ class HIP_RA_X:
                 CurrentUnits=LengthUnit.KILOMETERS,
                 Required=False,
                 Provided=False,
-                ErrMessage='calculate based on an assumed gradient of 30 C/km and the reservoir temperature',
-                ToolTipText='depth to top of reservoir (km). Calculated based on an assumed gradient '
-                'and the reservoir temperature if no value given',
+                ErrMessage="calculate based on an assumed gradient of 30 C/km and the reservoir temperature",
+                ToolTipText="depth to top of reservoir (km). Calculated based on an assumed gradient "
+                "and the reservoir temperature if no value given",
             )
         )
         self.reservoir_pressure: Parameter = parameter_dict_entry(
             floatParameter(
-                'Reservoir Pressure',
+                "Reservoir Pressure",
                 DefaultValue=-1.0,
                 Min=0.00,
                 Max=10000.000,
@@ -324,14 +324,14 @@ class HIP_RA_X:
                 CurrentUnits=PressureUnit.MPASCAL,
                 Required=False,
                 Provided=False,
-                ErrMessage='calculate assuming hydrostatic pressure and the reservoir depth & water density',
-                ToolTipText='pressure of the of reservoir (in MPa). Calculated assuming hydrostatic pressure and '
-                'reservoir depth & water density if no value given',
+                ErrMessage="calculate assuming hydrostatic pressure and the reservoir depth & water density",
+                ToolTipText="pressure of the of reservoir (in MPa). Calculated assuming hydrostatic pressure and "
+                "reservoir depth & water density if no value given",
             )
         )
         self.recoverable_rock_heat: Parameter = parameter_dict_entry(
             floatParameter(
-                'Recoverable Heat from Rock',
+                "Recoverable Heat from Rock",
                 DefaultValue=0.75,
                 Min=0.00,
                 Max=1.000,
@@ -339,112 +339,112 @@ class HIP_RA_X:
                 PreferredUnits=PercentUnit.TENTH,
                 CurrentUnits=PercentUnit.TENTH,
                 Required=False,
-                ErrMessage='assume 0.75 (75%) of fluid from the reservoir is recoverable',
-                ToolTipText='percent of heat that is recoverable from the rock (0.75 = 75%)',
+                ErrMessage="assume 0.75 (75%) of fluid from the reservoir is recoverable",
+                ToolTipText="percent of heat that is recoverable from the rock (0.75 = 75%)",
             )
         )
         self.html_output_file: Parameter = parameter_dict_entry(
             strParameter(
-                'HTML Output File',
-                DefaultValue='HIP.html',
+                "HTML Output File",
+                DefaultValue="HIP.html",
                 Required=False,
                 Provided=False,
-                ErrMessage='assume no HTML output',
-                ToolTipText='Provide a HTML output name if you want to have HTML output (no output if not provided)',
+                ErrMessage="assume no HTML output",
+                ToolTipText="Provide a HTML output name if you want to have HTML output (no output if not provided)",
             )
         )
 
         self.print_output_to_console = parameter_dict_entry(
             boolParameter(
-                'Print Output to Console',
+                "Print Output to Console",
                 DefaultValue=True,
                 UnitType=Units.NONE,
-                ToolTipText='Provide False if you do not want to print output to the console',
+                ToolTipText="Provide False if you do not want to print output to the console",
             )
         )
 
         # Output parameters
         self.reservoir_volume = self.OutputParameterDict[self.reservoir_volume.Name] = OutputParameter(
-            Name='Reservoir Volume (reservoir)',
+            Name="Reservoir Volume (reservoir)",
             UnitType=Units.VOLUME,
             PreferredUnits=VolumeUnit.KILOMETERS3,
             CurrentUnits=VolumeUnit.KILOMETERS3,
         )
         self.volume_rock = self.OutputParameterDict[self.volume_rock.Name] = OutputParameter(
-            Name='Reservoir Volume (rock)',
+            Name="Reservoir Volume (rock)",
             UnitType=Units.VOLUME,
             PreferredUnits=VolumeUnit.KILOMETERS3,
             CurrentUnits=VolumeUnit.KILOMETERS3,
         )
         self.volume_recoverable_fluid = self.OutputParameterDict[self.volume_recoverable_fluid.Name] = OutputParameter(
-            Name='Recoverable Volume (recoverable fluid)',
+            Name="Recoverable Volume (recoverable fluid)",
             UnitType=Units.VOLUME,
             PreferredUnits=VolumeUnit.KILOMETERS3,
             CurrentUnits=VolumeUnit.KILOMETERS3,
         )
         self.reservoir_stored_heat = self.OutputParameterDict[self.reservoir_stored_heat.Name] = OutputParameter(
-            Name='Stored Heat (reservoir)',
+            Name="Stored Heat (reservoir)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.stored_heat_rock = self.OutputParameterDict[self.stored_heat_rock.Name] = OutputParameter(
-            Name='Stored Heat (rock)',
+            Name="Stored Heat (rock)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.stored_heat_fluid = self.OutputParameterDict[self.stored_heat_fluid.Name] = OutputParameter(
-            Name='Stored Heat (fluid)',
+            Name="Stored Heat (fluid)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.reservoir_mass = self.OutputParameterDict[self.reservoir_mass.Name] = OutputParameter(
-            Name='Mass of Reservoir (total)',
+            Name="Mass of Reservoir (total)",
             UnitType=Units.MASS,
             PreferredUnits=MassUnit.KILOGRAM,
             CurrentUnits=MassUnit.KILOGRAM,
         )
         self.mass_rock = self.OutputParameterDict[self.mass_rock.Name] = OutputParameter(
-            Name='Mass of Reservoir (rock)',
+            Name="Mass of Reservoir (rock)",
             UnitType=Units.MASS,
             PreferredUnits=MassUnit.KILOGRAM,
             CurrentUnits=MassUnit.KILOGRAM,
         )
         self.mass_recoverable_fluid = self.OutputParameterDict[self.mass_recoverable_fluid.Name] = OutputParameter(
-            Name='Mass of Reservoir (fluid)',
+            Name="Mass of Reservoir (fluid)",
             UnitType=Units.MASS,
             PreferredUnits=MassUnit.KILOGRAM,
             CurrentUnits=MassUnit.KILOGRAM,
         )
         self.reservoir_enthalpy = self.OutputParameterDict[self.reservoir_enthalpy.Name] = OutputParameter(
-            Name='Specific Enthalpy (reservoir)',
+            Name="Specific Enthalpy (reservoir)",
             UnitType=Units.ENTHALPY,
             PreferredUnits=EnthalpyUnit.KJPERKG,
             CurrentUnits=EnthalpyUnit.KJPERKG,
         )
         self.enthalpy_rock = self.OutputParameterDict[self.enthalpy_rock.Name] = OutputParameter(
-            Name='Specific Enthalpy (rock)',
+            Name="Specific Enthalpy (rock)",
             UnitType=Units.ENTHALPY,
             PreferredUnits=EnthalpyUnit.KJPERKG,
             CurrentUnits=EnthalpyUnit.KJPERKG,
         )
         self.enthalpy_fluid = self.OutputParameterDict[self.enthalpy_fluid.Name] = OutputParameter(
-            Name='Specific Enthalpy (fluid)',
+            Name="Specific Enthalpy (fluid)",
             UnitType=Units.ENTHALPY,
             PreferredUnits=EnthalpyUnit.KJPERKG,
             CurrentUnits=EnthalpyUnit.KJPERKG,
         )
         self.wellhead_heat = self.OutputParameterDict[self.wellhead_heat.Name] = OutputParameter(
-            Name='Wellhead Heat (reservoir)',
+            Name="Wellhead Heat (reservoir)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.wellhead_heat_recovery_rock = self.OutputParameterDict[self.wellhead_heat_recovery_rock.Name] = (
             OutputParameter(
-                Name='Wellhead Heat (rock)',
+                Name="Wellhead Heat (rock)",
                 UnitType=Units.HEAT,
                 PreferredUnits=HeatUnit.KJ,
                 CurrentUnits=HeatUnit.KJ,
@@ -452,7 +452,7 @@ class HIP_RA_X:
         )
         self.wellhead_heat_recovery_fluid = self.OutputParameterDict[self.wellhead_heat_recovery_fluid.Name] = (
             OutputParameter(
-                Name='Wellhead Heat (fluid)',
+                Name="Wellhead Heat (fluid)",
                 UnitType=Units.HEAT,
                 PreferredUnits=HeatUnit.KJ,
                 CurrentUnits=HeatUnit.KJ,
@@ -460,65 +460,65 @@ class HIP_RA_X:
         )
         self.reservoir_recovery_factor = self.OutputParameterDict[self.reservoir_recovery_factor.Name] = (
             OutputParameter(
-                Name='Recovery Factor (reservoir)',
+                Name="Recovery Factor (reservoir)",
                 UnitType=Units.PERCENT,
                 PreferredUnits=PercentUnit.PERCENT,
                 CurrentUnits=PercentUnit.PERCENT,
             )
         )
         self.recovery_factor_rock = self.OutputParameterDict[self.recovery_factor_rock.Name] = OutputParameter(
-            Name='Recovery Factor (rock)',
+            Name="Recovery Factor (rock)",
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
         )
         self.recovery_factor_fluid = self.OutputParameterDict[self.recovery_factor_fluid.Name] = OutputParameter(
-            Name='Recovery Factor (fluid)',
+            Name="Recovery Factor (fluid)",
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
         )
         self.reservoir_available_heat = self.OutputParameterDict[self.reservoir_available_heat.Name] = OutputParameter(
-            Name='Available Heat (reservoir)',
+            Name="Available Heat (reservoir)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.available_heat_rock = self.OutputParameterDict[self.available_heat_rock.Name] = OutputParameter(
-            Name='Available Heat (rock)',
+            Name="Available Heat (rock)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.available_heat_fluid = self.OutputParameterDict[self.available_heat_fluid.Name] = OutputParameter(
-            Name='Available Heat (fluid)',
+            Name="Available Heat (fluid)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.reservoir_producible_heat = self.OutputParameterDict[self.reservoir_producible_heat.Name] = (
             OutputParameter(
-                Name='Producible Heat (reservoir)',
+                Name="Producible Heat (reservoir)",
                 UnitType=Units.HEAT,
                 PreferredUnits=HeatUnit.KJ,
                 CurrentUnits=HeatUnit.KJ,
             )
         )
         self.producible_heat_rock = self.OutputParameterDict[self.producible_heat_rock.Name] = OutputParameter(
-            Name='Producible Heat (rock)',
+            Name="Producible Heat (rock)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.producible_heat_fluid = self.OutputParameterDict[self.producible_heat_fluid.Name] = OutputParameter(
-            Name='Producible Heat (fluid)',
+            Name="Producible Heat (fluid)",
             UnitType=Units.HEAT,
             PreferredUnits=HeatUnit.KJ,
             CurrentUnits=HeatUnit.KJ,
         )
         self.reservoir_producible_electricity = self.OutputParameterDict[self.reservoir_producible_electricity.Name] = (
             OutputParameter(
-                Name='Producible Electricity (reservoir)',
+                Name="Producible Electricity (reservoir)",
                 UnitType=Units.POWER,
                 PreferredUnits=PowerUnit.MW,
                 CurrentUnits=PowerUnit.MW,
@@ -526,7 +526,7 @@ class HIP_RA_X:
         )
         self.producible_electricity_rock = self.OutputParameterDict[self.producible_electricity_rock.Name] = (
             OutputParameter(
-                Name='Producible Electricity (rock)',
+                Name="Producible Electricity (rock)",
                 UnitType=Units.POWER,
                 PreferredUnits=PowerUnit.MW,
                 CurrentUnits=PowerUnit.MW,
@@ -534,7 +534,7 @@ class HIP_RA_X:
         )
         self.producible_electricity_fluid = self.OutputParameterDict[self.producible_electricity_fluid.Name] = (
             OutputParameter(
-                Name='Producible Electricity (fluid)',
+                Name="Producible Electricity (fluid)",
                 UnitType=Units.POWER,
                 PreferredUnits=PowerUnit.MW,
                 CurrentUnits=PowerUnit.MW,
@@ -542,27 +542,27 @@ class HIP_RA_X:
         )
         self.producible_heat_per_unit_area = self.OutputParameterDict[self.producible_heat_per_unit_area.Name] = (
             OutputParameter(
-                Name='Producible Heat/Unit Area (reservoir)',
+                Name="Producible Heat/Unit Area (reservoir)",
                 UnitType=Units.HEATPERUNITAREA,
                 PreferredUnits=HeatPerUnitAreaUnit.KJPERSQKM,
                 CurrentUnits=HeatPerUnitAreaUnit.KJPERSQKM,
             )
         )
         self.heat_per_unit_area_rock = self.OutputParameterDict[self.heat_per_unit_area_rock.Name] = OutputParameter(
-            Name='Producible Heat/Unit Area (rock)',
+            Name="Producible Heat/Unit Area (rock)",
             UnitType=Units.HEATPERUNITAREA,
             PreferredUnits=HeatPerUnitAreaUnit.KJPERSQKM,
             CurrentUnits=HeatPerUnitAreaUnit.KJPERSQKM,
         )
         self.heat_per_unit_area_fluid = self.OutputParameterDict[self.heat_per_unit_area_fluid.Name] = OutputParameter(
-            Name='Producible Heat/Unit Area (fluid)',
+            Name="Producible Heat/Unit Area (fluid)",
             UnitType=Units.HEATPERUNITAREA,
             PreferredUnits=HeatPerUnitAreaUnit.KJPERSQKM,
             CurrentUnits=HeatPerUnitAreaUnit.KJPERSQKM,
         )
         self.heat_per_unit_volume_reservoir = self.OutputParameterDict[self.heat_per_unit_volume_reservoir.Name] = (
             OutputParameter(
-                Name='Producible Heat/Unit Volume (reservoir)',
+                Name="Producible Heat/Unit Volume (reservoir)",
                 UnitType=Units.HEATPERUNITVOLUME,
                 PreferredUnits=HeatPerUnitVolumeUnit.KJPERCUBICKM,
                 CurrentUnits=HeatPerUnitVolumeUnit.KJPERCUBICKM,
@@ -571,14 +571,14 @@ class HIP_RA_X:
         self.producible_electricity_per_unit_area = self.OutputParameterDict[
             self.producible_electricity_per_unit_area.Name
         ] = OutputParameter(
-            Name='Producible Electricity/Unit Area (reservoir)',
+            Name="Producible Electricity/Unit Area (reservoir)",
             UnitType=Units.POWERPERUNITAREA,
             PreferredUnits=PowerPerUnitAreaUnit.MWPERSQKM,
             CurrentUnits=PowerPerUnitAreaUnit.MWPERSQKM,
         )
         self.electricity_per_unit_area_rock = self.OutputParameterDict[self.electricity_per_unit_area_rock.Name] = (
             OutputParameter(
-                Name='Producible Electricity/Unit Area (rock)',
+                Name="Producible Electricity/Unit Area (rock)",
                 UnitType=Units.POWERPERUNITAREA,
                 PreferredUnits=PowerPerUnitAreaUnit.MWPERSQKM,
                 CurrentUnits=PowerPerUnitAreaUnit.MWPERSQKM,
@@ -586,7 +586,7 @@ class HIP_RA_X:
         )
         self.electricity_per_unit_area_fluid = self.OutputParameterDict[self.electricity_per_unit_area_fluid.Name] = (
             OutputParameter(
-                Name='Producible Electricity/Unit Area (fluid)',
+                Name="Producible Electricity/Unit Area (fluid)",
                 UnitType=Units.POWERPERUNITAREA,
                 PreferredUnits=PowerPerUnitAreaUnit.MWPERSQKM,
                 CurrentUnits=PowerPerUnitAreaUnit.MWPERSQKM,
@@ -595,13 +595,13 @@ class HIP_RA_X:
         self.electricity_per_unit_volume_reservoir = self.OutputParameterDict[
             self.electricity_per_unit_volume_reservoir.Name
         ] = OutputParameter(
-            Name='Producible Electricity/Unit Volume (reservoir)',
+            Name="Producible Electricity/Unit Volume (reservoir)",
             UnitType=Units.POWERPERUNITVOLUME,
             PreferredUnits=PowerPerUnitVolumeUnit.MWPERCUBICKM,
             CurrentUnits=PowerPerUnitVolumeUnit.MWPERCUBICKM,
         )
 
-        self.logger.info(f'Complete {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Complete {__class__.__name__!s}: {__name__}")
 
     def read_parameters(self) -> None:
         """
@@ -612,9 +612,9 @@ class HIP_RA_X:
         from other objects. It then updates any of these parameter values that have been changed by the user.
         It also handles any special cases.
         """
-        self.logger.info(f'Init {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
-        read_input_file(self.InputParameters, logger=self.logger)
+        self.InputParameters = self.InputParameters | read_input_file(logger=self.logger)
 
         if len(self.InputParameters) > 0:
             for item in self.ParameterDict.items():
@@ -626,21 +626,21 @@ class HIP_RA_X:
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, self)
         else:
-            self.logger.info('No parameters read because no content provided')
+            self.logger.info("No parameters read because no content provided")
 
         # loop through all the parameters that the user wishes to set, looking for parameters that contain
         # the prefix "Units:" - that means we want to set a special case for converting this output parameter
         # to new units
         for key in self.InputParameters.keys():
-            if key.startswith('Units:'):
-                self.OutputParameterDict[key.replace('Units:', '')].CurrentUnits = LookupUnits(
+            if key.startswith("Units:"):
+                self.OutputParameterDict[key.replace("Units:", "")].CurrentUnits = LookupUnits(
                     self.InputParameters[key].sValue
                 )[0]
 
-        self.logger.info(f'complete {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"complete {__class__.__name__!s}: {__name__}")
 
     def Calculate(self):
-        self.logger.info(f'Init {__class__!s}: {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Init {__class__!s}: {__class__.__name__!s}: {__name__}")
 
         try:
             # Calculate the volume of rock and fluid in the reservoir.
@@ -656,29 +656,29 @@ class HIP_RA_X:
 
             if not self.reservoir_depth.Provided:
                 self.logger.info(
-                    f'Deriving value of {self.reservoir_depth.Name} because provided value '
-                    f'({self.reservoir_depth.value}) was not provided)'
+                    f"Deriving value of {self.reservoir_depth.Name} because provided value "
+                    f"({self.reservoir_depth.value}) was not provided)"
                 )
                 # assume ambient Temperature of 15 C and 30C/km
                 self.reservoir_depth.value = (self.reservoir_temperature.value - 15.0) / 30.0
 
             if not self.reservoir_pressure.Provided:
                 self.logger.info(
-                    f'Deriving value of {self.reservoir_pressure.Name} because provided value '
-                    f'({self.reservoir_pressure.value}) was not provided)'
+                    f"Deriving value of {self.reservoir_pressure.Name} because provided value "
+                    f"({self.reservoir_pressure.value}) was not provided)"
                 )
                 # Assumes a water density of 1.0 g/cm3, which is high, since the water density decreases with depth
                 self.reservoir_pressure.value = static_pressure_MPa(1000.0, self.reservoir_depth.value * 1000.0)
 
             if self.fluid_density.value < self.fluid_density.Min:
                 self.logger.info(
-                    f'Deriving value of {self.fluid_density.Name} because provided value '
-                    f'({self.fluid_density.value}) was less than min ({self.fluid_density.Min})'
+                    f"Deriving value of {self.fluid_density.Name} because provided value "
+                    f"({self.fluid_density.value}) was less than min ({self.fluid_density.Min})"
                 )
 
                 density_h20_kg_per_m3 = density_water_kg_per_m3(
                     self.reservoir_temperature.value,
-                    pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa'),
+                    pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa"),
                 )
                 self.fluid_density.value = density_h20_kg_per_m3 * 1_000_000_000.0  # converted to kg/km3
 
@@ -688,15 +688,15 @@ class HIP_RA_X:
 
             if self.fluid_heat_capacity.value < self.fluid_heat_capacity.Min:
                 self.logger.info(
-                    f'Deriving value of {self.fluid_heat_capacity.Name} because provided value '
-                    f'({self.fluid_heat_capacity.value}) was less than min ({self.fluid_heat_capacity.Min})'
+                    f"Deriving value of {self.fluid_heat_capacity.Name} because provided value "
+                    f"({self.fluid_heat_capacity.value}) was less than min ({self.fluid_heat_capacity.Min})"
                 )
 
                 # converted to kJ/(kg·K)
                 self.fluid_heat_capacity.value = (
                     heat_capacity_water_J_per_kg_per_K(
                         self.reservoir_temperature.value,
-                        pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa'),
+                        pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa"),
                     )
                     / 1000.0
                 )
@@ -705,14 +705,14 @@ class HIP_RA_X:
             reservoir_temperature_k = celsius_to_kelvin(self.reservoir_temperature.value)
             delta_temperature_k = reservoir_temperature_k - rejection_temperature_k
             fluid_net_enthalpy = enthalpy_water_kJ_per_kg(
-                self.reservoir_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa')
+                self.reservoir_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa")
             ) - enthalpy_water_kJ_per_kg(
-                self.rejection_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa')
+                self.rejection_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa")
             )
             fluid_net_entropy = entropy_water_kJ_per_kg_per_K(
-                self.reservoir_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa')
+                self.reservoir_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa")
             ) - entropy_water_kJ_per_kg_per_K(
-                self.rejection_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, 'MPa')
+                self.rejection_temperature.value, pressure=HIP_RA_X._ureg.Quantity(self.reservoir_pressure.value, "MPa")
             )
 
             # fmt: off
@@ -761,7 +761,7 @@ class HIP_RA_X:
             electricity_with_actual_power_plant_kW = UtilEff_func(self.reservoir_temperature.value) * maximum_power_kW
             producible_power_kW = electricity_with_actual_power_plant_kW
             self.reservoir_producible_electricity.value = (
-                HIP_RA_X._ureg.Quantity(producible_power_kW, 'kW').to('MW').magnitude
+                HIP_RA_X._ureg.Quantity(producible_power_kW, "kW").to("MW").magnitude
             )
 
             self.electricity_per_unit_area_fluid.value = (
@@ -779,9 +779,9 @@ class HIP_RA_X:
                 self.reservoir_producible_heat.value / self.reservoir_volume.value
             )
 
-            self.logger.info(f'Complete {__class__!s}: {__class__.__name__!s}: {__name__}')
+            self.logger.info(f"Complete {__class__!s}: {__class__.__name__!s}: {__name__}")
         except Exception as e:
-            msg = f'Error occurred during calculations: {e!s}'
+            msg = f"Error occurred during calculations: {e!s}"
             self.logger.error(msg)
             traceback.print_exc()
 
@@ -791,7 +791,7 @@ class HIP_RA_X:
         """
         PrintOutputs writes the standard outputs to the output file.
         """
-        self.logger.info(f'Init {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
         # Deal with converting Units back to PreferredUnits, if required.
         # before we write the outputs, we go through all the parameters for all the objects and set the values back
@@ -816,13 +816,13 @@ class HIP_RA_X:
         # write results to output file and screen
         # ---------------------------------------
         try:
-            outputfile = 'HIP.out' if len(sys.argv) <= 2 else sys.argv[2]
+            outputfile = "HIP.out" if len(sys.argv) <= 2 else sys.argv[2]
 
             def render_default(p: Parameter) -> str:
-                return f'{p.value:10.2f} {p.CurrentUnits.value}'
+                return f"{p.value:10.2f} {p.CurrentUnits.value}"
 
             def render_scientific(p: Parameter) -> str:
-                return f'{p.value:10.2e} {p.CurrentUnits.value}'
+                return f"{p.value:10.2e} {p.CurrentUnits.value}"
 
             summary_of_inputs = {}
             summary_of_results = {}
@@ -851,7 +851,7 @@ class HIP_RA_X:
             for param, render in inputs:
                 summary_of_inputs[param.Name] = render(param)
 
-            case_data_inputs = {'SUMMARY OF INPUTS': summary_of_inputs}
+            case_data_inputs = {"SUMMARY OF INPUTS": summary_of_inputs}
 
             outputs = [
                 (self.reservoir_volume, render_default),
@@ -867,7 +867,7 @@ class HIP_RA_X:
                 (self.enthalpy_fluid, render_default),
                 (
                     self.reservoir_recovery_factor,
-                    lambda rg: f'{(100 * rg.value):10.2f} {self.reservoir_recovery_factor.CurrentUnits.value}',
+                    lambda rg: f"{(100 * rg.value):10.2f} {self.reservoir_recovery_factor.CurrentUnits.value}",
                 ),
                 (self.reservoir_available_heat, render_scientific),
                 (self.reservoir_producible_heat, render_scientific),
@@ -886,48 +886,48 @@ class HIP_RA_X:
             for param, render in outputs:
                 summary_of_results[param.Name] = render(param)
 
-            case_data_results = {'SUMMARY OF RESULTS': summary_of_results}
+            case_data_results = {"SUMMARY OF RESULTS": summary_of_results}
 
-            with open(outputfile, 'w', encoding='UTF-8') as f:
-                nl = '\n'
+            with open(outputfile, "w", encoding="UTF-8") as f:
+                nl = "\n"
 
-                f.write(f'                               *********************{nl}')
-                f.write(f'                               ***HIP CASE REPORT***{nl}')
-                f.write(f'                               *********************{nl}')
+                f.write(f"                               *********************{nl}")
+                f.write(f"                               ***HIP CASE REPORT***{nl}")
+                f.write(f"                               *********************{nl}")
                 f.write(nl)
-                f.write(f'      ***SUMMARY OF INPUTS***{nl}')
+                f.write(f"      ***SUMMARY OF INPUTS***{nl}")
 
-                for k, v in case_data_inputs['SUMMARY OF INPUTS'].items():
+                for k, v in case_data_inputs["SUMMARY OF INPUTS"].items():
                     # align space between value and units to same column
-                    kv_spaces = max(1, (24 - (len(v.split(' ')[0]) + len(k)))) * ' '
+                    kv_spaces = max(1, (24 - (len(v.split(" ")[0]) + len(k)))) * " "
 
-                    f.write(f'      {k}:{kv_spaces}{v}{nl}')
+                    f.write(f"      {k}:{kv_spaces}{v}{nl}")
 
                 f.write(nl)
-                f.write(f'      ***SUMMARY OF RESULTS***{nl}')
-                for k, v in case_data_results['SUMMARY OF RESULTS'].items():
+                f.write(f"      ***SUMMARY OF RESULTS***{nl}")
+                for k, v in case_data_results["SUMMARY OF RESULTS"].items():
                     # align space between value and units to same column
-                    kv_spaces = max(1, (24 - (len(v.split(' ')[0]) + len(k)))) * ' '
+                    kv_spaces = max(1, (24 - (len(v.split(" ")[0]) + len(k)))) * " "
 
-                    f.write(f'      {k}:{kv_spaces}{v}{nl}')
+                    f.write(f"      {k}:{kv_spaces}{v}{nl}")
 
         except FileNotFoundError as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
 
         except PermissionError as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
 
         except Exception as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
@@ -937,14 +937,14 @@ class HIP_RA_X:
             self.PrintOutputsHTML(case_data_inputs, case_data_results, self.html_output_file.value)
         elif self.print_output_to_console.value:
             # copy the output file to the screen
-            with open(outputfile, encoding='UTF-8') as f:
+            with open(outputfile, encoding="UTF-8") as f:
                 content = f.readlines()  # store all output in one long list
 
                 # Now write each line to the screen
                 for line in content:
                     sys.stdout.write(line)
 
-    def PrintOutputsHTML(self, inputs, outputs, output_filename: str = 'HIP.html'):
+    def PrintOutputsHTML(self, inputs, outputs, output_filename: str = "HIP.html"):
         """
         PrintOutputs writes the standard outputs to the output file as HTML. The inputs and outputs are already prepared
         by the calling function so we just pass them in and use them in writing the HTML. They are dictionaries that
@@ -954,70 +954,70 @@ class HIP_RA_X:
             outputs: dict of outputs
             output_filename: name of the output file
         """
-        self.logger.info(f'Init {__class__.__name__!s}: {__name__}')
+        self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
         try:
-            inputs_table = Table(title='***SUMMARY OF INPUTS***')
-            inputs_table.add_column('Parameter Name', no_wrap=True)
-            inputs_table.add_column('Value', no_wrap=True, justify='center')
-            inputs_table.add_column('Units', no_wrap=True)
-            outputs_table = Table(title='***SUMMARY OF RESULTS***')
-            outputs_table.add_column('Result Name', no_wrap=True)
-            outputs_table.add_column('Value', no_wrap=True, justify='center')
-            outputs_table.add_column('Units', no_wrap=True)
+            inputs_table = Table(title="***SUMMARY OF INPUTS***")
+            inputs_table.add_column("Parameter Name", no_wrap=True)
+            inputs_table.add_column("Value", no_wrap=True, justify="center")
+            inputs_table.add_column("Units", no_wrap=True)
+            outputs_table = Table(title="***SUMMARY OF RESULTS***")
+            outputs_table.add_column("Result Name", no_wrap=True)
+            outputs_table.add_column("Value", no_wrap=True, justify="center")
+            outputs_table.add_column("Units", no_wrap=True)
 
-            for key, value in inputs['SUMMARY OF INPUTS'].items():
+            for key, value in inputs["SUMMARY OF INPUTS"].items():
                 name: str = key
-                val1 = value.strip().split(' ')
+                val1 = value.strip().split(" ")
                 val = val1[0]
-                unit = ''
+                unit = ""
                 if len(val1) > 1:
                     unit: str = UpgradeSymbologyOfUnits(str(val1[1]))
                 inputs_table.add_row(name, val, unit)
 
-            for key, value in outputs['SUMMARY OF RESULTS'].items():
+            for key, value in outputs["SUMMARY OF RESULTS"].items():
                 name: str = key
-                val1 = value.strip().split(' ')
+                val1 = value.strip().split(" ")
                 val = val1[0]
-                unit = ''
+                unit = ""
                 if len(val1) > 1:
                     unit: str = UpgradeSymbologyOfUnits(str(val1[1]))
 
                 outputs_table.add_row(name, val, unit)
 
-            console = Console(style='bold white on blue', force_terminal=True, record=True)
-            console.print('                  *********************')
-            console.print('                  ***HIP CASE REPORT***')
-            console.print('                  *********************')
-            console.print(' ')
+            console = Console(style="bold white on blue", force_terminal=True, record=True)
+            console.print("                  *********************")
+            console.print("                  ***HIP CASE REPORT***")
+            console.print("                  *********************")
+            console.print(" ")
             console.print(inputs_table)
-            console.print(' ')
+            console.print(" ")
             console.print(outputs_table)
-            console.save_html('d:\\temp\\test_table.html')
+            console.save_html("d:\\temp\\test_table.html")
 
         except FileNotFoundError as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
 
         except PermissionError as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
 
         except Exception as ex:
             traceback_str = traceback.format_exc()
-            msg = f'Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}'
+            msg = f"Error: HIP_RA_X Failed to write the output file. Exiting....\n{traceback_str}"
             self.logger.critical(str(ex))
             self.logger.critical(msg)
             raise
 
     def __str__(self):
-        return 'HIP_RA_X'
+        return "HIP_RA_X"
 
 
 def main(enable_hip_ra_logging_config=True):
@@ -1026,10 +1026,10 @@ def main(enable_hip_ra_logging_config=True):
 
     # set up logging.
     if enable_hip_ra_logging_config:
-        logging.config.fileConfig('logging.conf')
-    logger = logging.getLogger('root')
+        logging.config.fileConfig("logging.conf")
+    logger = logging.getLogger("root")
 
-    logger.info('Initializing the HIP-RA-X application')
+    logger.info("Initializing the HIP-RA-X application")
 
     # initiate the HIP-RA parameters, setting them to their default values
     model = HIP_RA_X(enable_hip_ra_logging_config=enable_hip_ra_logging_config)
@@ -1041,16 +1041,16 @@ def main(enable_hip_ra_logging_config=True):
         # Calculate the entire model
         model.Calculate()
     except Exception as e:
-        logger.error(f'Error occurred during model calculation: {e!s}')
+        logger.error(f"Error occurred during model calculation: {e!s}")
 
     try:
         # write the outputs
         model.PrintOutputs()
     except Exception as e:
-        logger.error(f'Error occurred during output printing: {e!s}')
+        logger.error(f"Error occurred during output printing: {e!s}")
 
-    logger.info('HIP-RA-X application execution completed')
+    logger.info("HIP-RA-X application execution completed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
