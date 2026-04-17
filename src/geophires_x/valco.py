@@ -58,6 +58,46 @@ def calculate_value_adjusted_costs_from_inputs(
     }
 
 
+def _direct_value_adjustment_inputs_from_parameters(econ: Economics, model: Model) -> dict[str, ValueAdjustmentInputs]:
+    active_base_costs = select_active_valco_base_costs(econ, model)
+    commodity_inputs: dict[str, ValueAdjustmentInputs] = {}
+
+    if ELECTRICITY_COMMODITY in active_base_costs:
+        commodity_inputs[ELECTRICITY_COMMODITY] = ValueAdjustmentInputs(
+            active_base_cost=active_base_costs[ELECTRICITY_COMMODITY],
+            system_energy_value=float(econ.VALCOESystemAverageEnergyValue.value),
+            technology_energy_value=float(econ.VALCOETechnologyEnergyValue.value),
+            system_capacity_value=float(econ.VALCOESystemAverageCapacityValue.value),
+            technology_capacity_value=float(econ.VALCOETechnologyCapacityValue.value),
+            system_flexibility_value=float(econ.VALCOESystemAverageFlexibilityValue.value),
+            technology_flexibility_value=float(econ.VALCOETechnologyFlexibilityValue.value),
+        )
+
+    if HEAT_COMMODITY in active_base_costs:
+        commodity_inputs[HEAT_COMMODITY] = ValueAdjustmentInputs(
+            active_base_cost=active_base_costs[HEAT_COMMODITY],
+            system_energy_value=float(econ.VALCOHSystemAverageEnergyValue.value),
+            technology_energy_value=float(econ.VALCOHTechnologyEnergyValue.value),
+            system_capacity_value=float(econ.VALCOHSystemAverageCapacityValue.value),
+            technology_capacity_value=float(econ.VALCOHTechnologyCapacityValue.value),
+            system_flexibility_value=float(econ.VALCOHSystemAverageFlexibilityValue.value),
+            technology_flexibility_value=float(econ.VALCOHTechnologyFlexibilityValue.value),
+        )
+
+    if COOLING_COMMODITY in active_base_costs:
+        commodity_inputs[COOLING_COMMODITY] = ValueAdjustmentInputs(
+            active_base_cost=active_base_costs[COOLING_COMMODITY],
+            system_energy_value=float(econ.VALCOCSystemAverageEnergyValue.value),
+            technology_energy_value=float(econ.VALCOCTechnologyEnergyValue.value),
+            system_capacity_value=float(econ.VALCOCSystemAverageCapacityValue.value),
+            technology_capacity_value=float(econ.VALCOCTechnologyCapacityValue.value),
+            system_flexibility_value=float(econ.VALCOCSystemAverageFlexibilityValue.value),
+            technology_flexibility_value=float(econ.VALCOCTechnologyFlexibilityValue.value),
+        )
+
+    return commodity_inputs
+
+
 def _xlco_market_output_for_commodity(econ: Economics, commodity: str):
     if commodity == ELECTRICITY_COMMODITY:
         return getattr(econ, "XLCOE_Market", None)
@@ -90,6 +130,17 @@ def _empty_value_adjustment_result(base_cost: float = 0.0) -> ValueAdjustmentRes
     return ValueAdjustmentResult(active_base_cost=base_cost, valco=base_cost)
 
 
+def calculate_value_adjusted_levelized_costs(econ: Economics, model: Model) -> dict[str, ValueAdjustmentResult]:
+    if not bool(getattr(getattr(econ, "DoVALCOCalculations", None), "value", False)):
+        return {}
+
+    calculation_mode = str(getattr(getattr(econ, "VALCOCalculationMode", None), "value", "Direct")).strip().lower()
+    if calculation_mode != "direct":
+        raise NotImplementedError("VALCO Calculation Mode currently supports only Direct.")
+
+    return calculate_value_adjusted_costs_from_inputs(_direct_value_adjustment_inputs_from_parameters(econ, model))
+
+
 def assign_value_adjusted_levelized_cost_outputs(
     econ: Economics,
     commodity_results: dict[str, ValueAdjustmentResult],
@@ -97,32 +148,59 @@ def assign_value_adjusted_levelized_cost_outputs(
     electricity_result = commodity_results.get(ELECTRICITY_COMMODITY, _empty_value_adjustment_result())
     heat_result = commodity_results.get(HEAT_COMMODITY, _empty_value_adjustment_result())
     cooling_result = commodity_results.get(COOLING_COMMODITY, _empty_value_adjustment_result())
+    electricity_units = getattr(getattr(econ, "LCOE", None), "CurrentUnits", getattr(getattr(econ, "VALCOE", None), "CurrentUnits", None))
+    heat_units = getattr(getattr(econ, "LCOH", None), "CurrentUnits", getattr(getattr(econ, "VALCOH", None), "CurrentUnits", None))
+    cooling_units = getattr(getattr(econ, "LCOC", None), "CurrentUnits", getattr(getattr(econ, "VALCOC", None), "CurrentUnits", None))
 
     if hasattr(econ, "VALCOE"):
+        if electricity_units is not None:
+            econ.VALCOE.CurrentUnits = electricity_units
         econ.VALCOE.value = electricity_result.valco
     if hasattr(econ, "VALCOE_EnergyAdjustment"):
+        if electricity_units is not None:
+            econ.VALCOE_EnergyAdjustment.CurrentUnits = electricity_units
         econ.VALCOE_EnergyAdjustment.value = electricity_result.energy_adjustment
     if hasattr(econ, "VALCOE_CapacityAdjustment"):
+        if electricity_units is not None:
+            econ.VALCOE_CapacityAdjustment.CurrentUnits = electricity_units
         econ.VALCOE_CapacityAdjustment.value = electricity_result.capacity_adjustment
     if hasattr(econ, "VALCOE_FlexibilityAdjustment"):
+        if electricity_units is not None:
+            econ.VALCOE_FlexibilityAdjustment.CurrentUnits = electricity_units
         econ.VALCOE_FlexibilityAdjustment.value = electricity_result.flexibility_adjustment
 
     if hasattr(econ, "VALCOH"):
+        if heat_units is not None:
+            econ.VALCOH.CurrentUnits = heat_units
         econ.VALCOH.value = heat_result.valco
     if hasattr(econ, "VALCOH_EnergyAdjustment"):
+        if heat_units is not None:
+            econ.VALCOH_EnergyAdjustment.CurrentUnits = heat_units
         econ.VALCOH_EnergyAdjustment.value = heat_result.energy_adjustment
     if hasattr(econ, "VALCOH_CapacityAdjustment"):
+        if heat_units is not None:
+            econ.VALCOH_CapacityAdjustment.CurrentUnits = heat_units
         econ.VALCOH_CapacityAdjustment.value = heat_result.capacity_adjustment
     if hasattr(econ, "VALCOH_FlexibilityAdjustment"):
+        if heat_units is not None:
+            econ.VALCOH_FlexibilityAdjustment.CurrentUnits = heat_units
         econ.VALCOH_FlexibilityAdjustment.value = heat_result.flexibility_adjustment
 
     if hasattr(econ, "VALCOC"):
+        if cooling_units is not None:
+            econ.VALCOC.CurrentUnits = cooling_units
         econ.VALCOC.value = cooling_result.valco
     if hasattr(econ, "VALCOC_EnergyAdjustment"):
+        if cooling_units is not None:
+            econ.VALCOC_EnergyAdjustment.CurrentUnits = cooling_units
         econ.VALCOC_EnergyAdjustment.value = cooling_result.energy_adjustment
     if hasattr(econ, "VALCOC_CapacityAdjustment"):
+        if cooling_units is not None:
+            econ.VALCOC_CapacityAdjustment.CurrentUnits = cooling_units
         econ.VALCOC_CapacityAdjustment.value = cooling_result.capacity_adjustment
     if hasattr(econ, "VALCOC_FlexibilityAdjustment"):
+        if cooling_units is not None:
+            econ.VALCOC_FlexibilityAdjustment.CurrentUnits = cooling_units
         econ.VALCOC_FlexibilityAdjustment.value = cooling_result.flexibility_adjustment
 
     return commodity_results
@@ -134,3 +212,9 @@ def build_default_value_adjustment_inputs(econ: Economics, model: Model) -> dict
         for commodity, base_cost in select_active_valco_base_costs(econ, model).items()
     }
 
+
+def calculate_and_assign_value_adjusted_levelized_cost_outputs(
+    econ: Economics,
+    model: Model,
+) -> dict[str, ValueAdjustmentResult]:
+    return assign_value_adjusted_levelized_cost_outputs(econ, calculate_value_adjusted_levelized_costs(econ, model))

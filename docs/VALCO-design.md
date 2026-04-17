@@ -41,7 +41,8 @@ Current status:
 - Phase 2 complete
 - Phase 3 complete
 - Phase 4 complete
-- Phase 5 not started
+- Phase 5 complete
+- Phase 6 not started
 
 Phase 1 completion date:
 
@@ -56,6 +57,10 @@ Phase 3 completion date:
 - 2026-04-17
 
 Phase 4 completion date:
+
+- 2026-04-17
+
+Phase 5 completion date:
 
 - 2026-04-17
 
@@ -619,12 +624,13 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 5 should wire `VALCO(E|H|C)` calculation into the economics model flow:
+Phase 6 should expand model-backed VALCO validation:
 
-- build direct-input `ValueAdjustmentInputs` from the new public parameters
-- compute `VALCO` results from the selected active base cost
-- assign `VALCOE`, `VALCOH`, `VALCOC`, and component adjustments in:
-  - `Economics`
-  - `SBTEconomics`
-  - `AGSEconomics`
-  - `EconomicsAddOns`
+- add broader electricity, heat, cooling, and cogeneration model-backed tests
+- add explicit composition tests where `VALCO` builds on `XLCO_Market`
+- add coverage across:
+  - `FCR`
+  - `STANDARDIZED_LEVELIZED_COST`
+  - `BICYCLE`
+  - `CLGS`
+  - `SAM_SINGLE_OWNER_PPA`

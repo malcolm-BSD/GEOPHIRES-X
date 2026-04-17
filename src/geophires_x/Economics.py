@@ -24,6 +24,7 @@ from geophires_x.Parameter import intParameter, floatParameter, OutputParameter,
 from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from geophires_x.Units import *
 from geophires_x.levelized_costs import calculate_levelized_cost_outputs
+from geophires_x.valco import calculate_and_assign_value_adjusted_levelized_cost_outputs
 from geophires_x.WellBores import calculate_total_drilling_lengths_m
 from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
@@ -3173,6 +3174,7 @@ class Economics:
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
         assign_extended_levelized_cost_outputs(self, model)
+        calculate_and_assign_value_adjusted_levelized_cost_outputs(self, model)
 
         # https://github.com/NREL/GEOPHIRES-X/issues/232
         self.jobs_created.value = round(

@@ -161,6 +161,82 @@ class VALCOTestCase(BaseTestCase):
         self.assertAlmostEqual(12.0, econ.VALCOH.value)
         self.assertAlmostEqual(9.5, econ.VALCOC.value)
 
+    def test_valcoe_enabled_with_zero_inputs_matches_lcoe(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example1.txt"),
+            additional_params={"Do VALCO(E|H|C) Calculations": True},
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(model.economics.LCOE.value, model.economics.VALCOE.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
+
+    def test_valcoe_enabled_with_xlco_active_uses_xlco_market_as_base(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example1.txt"),
+            additional_params={
+                "Do XLCO(E|H|C) Calculations": True,
+                "XLCOE Avoided Emissions Intensity": 0.44,
+                "XLCO(E|H|C) Carbon Price": 35.0,
+                "XLCOE REC Price": 7.0,
+                "Do VALCO(E|H|C) Calculations": True,
+                "VALCOE System Average Energy Value": 1.0,
+                "VALCOE Technology Energy Value": 2.5,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(-1.5, model.economics.VALCOE_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(
+            model.economics.XLCOE_Market.value - 1.5,
+            model.economics.VALCOE.value,
+            places=7,
+        )
+        self.assertNotAlmostEqual(model.economics.LCOE.value - 1.5, model.economics.VALCOE.value, places=5)
+
+    def test_valcoh_enabled_with_zero_inputs_matches_lcoh(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example2.txt"),
+            additional_params={"Do VALCO(E|H|C) Calculations": True},
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(model.economics.LCOH.value, model.economics.VALCOH.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOH_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOH_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOH_FlexibilityAdjustment.value, places=7)
+
+    def test_valcoc_enabled_with_zero_inputs_matches_lcoc(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example11_AC.txt"),
+            additional_params={"Do VALCO(E|H|C) Calculations": True},
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(model.economics.LCOC.value, model.economics.VALCOC.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOC_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOC_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOC_FlexibilityAdjustment.value, places=7)
+
+    def test_valcoe_clgs_path_uses_lcoe_units_and_direct_adjustments(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path(
+                "../examples/Beckers_et_al_2023_Tabulated_Database_Uloop_water_elec.txt"
+            ),
+            additional_params={
+                "Do VALCO(E|H|C) Calculations": True,
+                "VALCOE System Average Capacity Value": 30.0,
+                "VALCOE Technology Capacity Value": 10.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertEqual(model.economics.LCOE.CurrentUnits, model.economics.VALCOE.CurrentUnits)
+        self.assertAlmostEqual(20.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(model.economics.LCOE.value + 20.0, model.economics.VALCOE.value, places=7)
+
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False
     ) -> Model:
