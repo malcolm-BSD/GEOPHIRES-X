@@ -2139,6 +2139,34 @@ class Economics:
             PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH
         )
+        self.VALCOE = self.OutputParameterDict[self.VALCOE.Name] = OutputParameter(
+            Name="VALCOE",
+            display_name='Value-Adjusted Electricity Breakeven Price (VALCOE)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_EnergyAdjustment = self.OutputParameterDict[self.VALCOE_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOE_EnergyAdjustment",
+            display_name='VALCOE Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_CapacityAdjustment = self.OutputParameterDict[self.VALCOE_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOE_CapacityAdjustment",
+            display_name='VALCOE Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOE_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOE_FlexibilityAdjustment",
+            display_name='VALCOE Flexibility Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
         self.XLCOH_Market = self.OutputParameterDict[self.XLCOH_Market.Name] = OutputParameter(
             Name="XLCOH_Market",
             display_name='Extended Heat Breakeven Price (XLCOH Market)',
@@ -2149,6 +2177,34 @@ class Economics:
         self.XLCOH_MarketSocial = self.OutputParameterDict[self.XLCOH_MarketSocial.Name] = OutputParameter(
             Name="XLCOH_MarketSocial",
             display_name='Extended Heat Breakeven Price (XLCOH Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH = self.OutputParameterDict[self.VALCOH.Name] = OutputParameter(
+            Name="VALCOH",
+            display_name='Value-Adjusted Heat Breakeven Price (VALCOH)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_EnergyAdjustment = self.OutputParameterDict[self.VALCOH_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOH_EnergyAdjustment",
+            display_name='VALCOH Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_CapacityAdjustment = self.OutputParameterDict[self.VALCOH_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOH_CapacityAdjustment",
+            display_name='VALCOH Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOH_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOH_FlexibilityAdjustment",
+            display_name='VALCOH Flexibility Adjustment',
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
@@ -2170,6 +2226,34 @@ class Economics:
         self.XLCOC_MarketSocial = self.OutputParameterDict[self.XLCOC_MarketSocial.Name] = OutputParameter(
             Name="XLCOC_MarketSocial",
             display_name='Extended Cooling Breakeven Price (XLCOC Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC = self.OutputParameterDict[self.VALCOC.Name] = OutputParameter(
+            Name="VALCOC",
+            display_name='Value-Adjusted Cooling Breakeven Price (VALCOC)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_EnergyAdjustment = self.OutputParameterDict[self.VALCOC_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOC_EnergyAdjustment",
+            display_name='VALCOC Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_CapacityAdjustment = self.OutputParameterDict[self.VALCOC_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOC_CapacityAdjustment",
+            display_name='VALCOC Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOC_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOC_FlexibilityAdjustment",
+            display_name='VALCOC Flexibility Adjustment',
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU

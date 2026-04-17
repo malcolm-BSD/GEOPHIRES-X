@@ -40,7 +40,8 @@ Current status:
 - Phase 1 complete
 - Phase 2 complete
 - Phase 3 complete
-- Phase 4 not started
+- Phase 4 complete
+- Phase 5 not started
 
 Phase 1 completion date:
 
@@ -51,6 +52,10 @@ Phase 2 completion date:
 - 2026-04-17
 
 Phase 3 completion date:
+
+- 2026-04-17
+
+Phase 4 completion date:
 
 - 2026-04-17
 
@@ -614,9 +619,12 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 4 should add the public output surface for `VALCO(E|H|C)`:
+Phase 5 should wire `VALCO(E|H|C)` calculation into the economics model flow:
 
-- `VALCOE`, `VALCOH`, `VALCOC`
-- component adjustment outputs for electricity, heat, and cooling
-- output definitions in `Economics.py`
-- text and rich output surfacing
+- build direct-input `ValueAdjustmentInputs` from the new public parameters
+- compute `VALCO` results from the selected active base cost
+- assign `VALCOE`, `VALCOH`, `VALCOC`, and component adjustments in:
+  - `Economics`
+  - `SBTEconomics`
+  - `AGSEconomics`
+  - `EconomicsAddOns`

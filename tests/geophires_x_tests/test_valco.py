@@ -49,6 +49,12 @@ class VALCOTestCase(BaseTestCase):
         self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOHTechnologyFlexibilityValue.CurrentUnits)
         self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOCSystemAverageCapacityValue.CurrentUnits)
         self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOCTechnologyFlexibilityValue.CurrentUnits)
+        self.assertIn("VALCOE", model.economics.OutputParameterDict)
+        self.assertIn("VALCOE_EnergyAdjustment", model.economics.OutputParameterDict)
+        self.assertIn("VALCOH", model.economics.OutputParameterDict)
+        self.assertIn("VALCOH_CapacityAdjustment", model.economics.OutputParameterDict)
+        self.assertIn("VALCOC", model.economics.OutputParameterDict)
+        self.assertIn("VALCOC_FlexibilityAdjustment", model.economics.OutputParameterDict)
 
     def test_value_adjusted_cost_applies_component_deltas_to_active_base_cost(self):
         result = calculate_value_adjusted_cost(
