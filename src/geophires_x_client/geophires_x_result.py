@@ -18,25 +18,41 @@ from .geophires_input_parameters import EndUseOption
 
 
 class _EqualSignDelimitedField:
+    """Marker for fields rendered as ``name = value`` in GEOPHIRES text output."""
+
     def __init__(self, field_name: str):
         self.field_name: str = field_name
 
 
 class _StringValueField:
+    """Marker for fields whose payload is a raw string value instead of a number/unit pair."""
+
     def __init__(self, field_name: str):
         self.field_name: str = field_name
 
 
 class _UnlabeledStringField:
+    """Marker for string fields identified by one of several prefix snippets."""
+
     def __init__(self, field_name: str, marker_prefixes: list[str]):
         self.field_name: str = field_name
         self.marker_prefixes = marker_prefixes
 
 
 class GeophiresXResult:
+    """Parsed representation of a GEOPHIRES text output file.
+
+    The class uses a curated field map rather than attempting to parse every line generically.
+    That keeps the parser stable as the report evolves and lets newer summary fields such as
+    ``XLCO*`` and ``VALCO*`` be added explicitly without changing the parsing model for the
+    rest of the report.
+    """
+
     _RESULT_FIELDS_BY_CATEGORY = MappingProxyType(
         {
             "SUMMARY OF RESULTS": [
+                # Keep the summary field list authoritative and append new parser-formula outputs
+                # here so clients can read them without depending on report-order heuristics.
                 _StringValueField("End-Use Option"),
                 _StringValueField("End-Use"),
                 _StringValueField("Surface Application"),

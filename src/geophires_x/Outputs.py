@@ -206,6 +206,8 @@ class Outputs:
                 if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
                     f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
                     if model.economics.DoXLCOCalculations.value:
+                        # XLCO and VALCO live in the same summary block as the baseline LCO output so
+                        # downstream parsers can treat them as parallel commodity summary metrics.
                         f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
                     if model.economics.DoVALCOCalculations.value:
@@ -240,6 +242,8 @@ class Outputs:
                                                               EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
                                                               EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
                                                               EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+                    # Cogeneration writes both electricity and heat competitiveness outputs because
+                    # XLCO/VALCO are tracked independently per active commodity.
                     f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
                     if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')

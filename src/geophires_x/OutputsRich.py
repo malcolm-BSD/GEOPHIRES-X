@@ -44,6 +44,10 @@ def print_outputs_rich(
       code complexity, maintenance overhead, inconsistency, and potential for bugs. Rich output should instead be
       generated in a module that uses GeophiresXClient or an equivalent pattern which maintains Outputs.PrintOutputs
       as the ultimate source of truth/authority for output logic.
+
+    The XLCO and VALCO summary entries below intentionally mirror Outputs.PrintOutputs so the
+    text report, rich report, client parser, and generated schema all expose the same
+    competitiveness metrics for each active commodity.
     """
 
     # data structures and assignments for HTML and Improved Text Output formats
@@ -193,6 +197,8 @@ def print_outputs_rich(
                                                     EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
                                                     EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
                                                     EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+        # Keep the cogen rich-output shape aligned with the text report: one electricity block and
+        # one heat block, each optionally augmented by XLCO and VALCO rows.
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
