@@ -46,56 +46,56 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIsNotNone(req_schema)  # TODO sanity checks on content
         self.assertIsNotNone(result_schema)  # TODO sanity checks on content
 
-        print(f'Generated result schema: {json.dumps(result_schema, indent=2)}')
+        print(f"Generated result schema: {json.dumps(result_schema, indent=2)}")
 
         def get_result_prop(cat: str, name: str) -> dict:
-            return result_schema['properties'][cat]['properties'][name]
+            return result_schema["properties"][cat]["properties"][name]
 
         self.assertIn(
-            'multiple of invested capital',
-            get_result_prop('ECONOMIC PARAMETERS', 'Project MOIC')['description'].lower(),
+            "multiple of invested capital",
+            get_result_prop("ECONOMIC PARAMETERS", "Project MOIC")["description"].lower(),
         )
 
         self.assertIn(
-            'Wellfield cost. ', get_result_prop('CAPITAL COSTS (M$)', 'Drilling and completion costs')['description']
+            "Wellfield cost. ", get_result_prop("CAPITAL COSTS (M$)", "Drilling and completion costs")["description"]
         )
 
-        self.assertIn('Do XLCOE Calculations', req_schema['properties'])
-        self.assertIn('XLCOE Carbon Price', req_schema['properties'])
-        self.assertIn('XLCOH Avoided Emissions Intensity', req_schema['properties'])
-        self.assertIn('XLCOH Carbon Price', req_schema['properties'])
-        self.assertIn('XLCOH Thermal Credit Price', req_schema['properties'])
-        self.assertIn('XLCOH Water Shadow Price', req_schema['properties'])
-        self.assertIn('XLCOC Avoided Emissions Intensity', req_schema['properties'])
-        self.assertIn('XLCOC Carbon Price', req_schema['properties'])
-        self.assertIn('XLCOC Cooling Credit Price', req_schema['properties'])
-        self.assertIn('XLCOC Water Shadow Price', req_schema['properties'])
-        self.assertIn('Idle Rig Discount Rate', req_schema['properties'])
+        self.assertIn("Do XLCO(E|H|C) Calculations", req_schema["properties"])
+        self.assertIn("XLCO(E|H|C) Carbon Price", req_schema["properties"])
+        self.assertIn("XLCOH Avoided Emissions Intensity", req_schema["properties"])
+        self.assertIn("XLCO(E|H|C) Carbon Price", req_schema["properties"])
+        self.assertIn("XLCOH Thermal REC", req_schema["properties"])
+        self.assertIn("XLCO(E|H|C) Water Shadow Price", req_schema["properties"])
+        self.assertIn("XLCOC Avoided Emissions Intensity", req_schema["properties"])
+        self.assertIn("XLCO(E|H|C) Carbon Price", req_schema["properties"])
+        self.assertIn("XLCOC Thermal REC", req_schema["properties"])
+        self.assertIn("XLCO(E|H|C) Water Shadow Price", req_schema["properties"])
+        self.assertIn("Idle Rig Discount Rate", req_schema["properties"])
         self.assertIn(
-            'Extended Electricity Breakeven Price (XLCOE Market)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Electricity Breakeven Price (XLCOE Market)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
         self.assertIn(
-            'Extended Electricity Breakeven Price (XLCOE Market + Social)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Electricity Breakeven Price (XLCOE Market + Social)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
         self.assertIn(
-            'Extended Heat Breakeven Price (XLCOH Market)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Heat Breakeven Price (XLCOH Market)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
         self.assertIn(
-            'Extended Heat Breakeven Price (XLCOH Market + Social)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Heat Breakeven Price (XLCOH Market + Social)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
         self.assertIn(
-            'Extended Cooling Breakeven Price (XLCOC Market)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Cooling Breakeven Price (XLCOC Market)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
         self.assertIn(
-            'Extended Cooling Breakeven Price (XLCOC Market + Social)',
-            result_schema['properties']['SUMMARY OF RESULTS']['properties'],
+            "Extended Cooling Breakeven Price (XLCOC Market + Social)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

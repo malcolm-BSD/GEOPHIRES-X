@@ -100,7 +100,7 @@ def print_outputs_rich(
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
-        if model.economics.DoXLCOECalculations.value:
+        if model.economics.DoXLCOCalculations.value:
             summary.append(
                 OutputTableItem(model.economics.XLCOE_Market.display_name,
                                 '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
@@ -113,7 +113,7 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
-        if model.economics.DoXLCOECalculations.value:
+        if model.economics.DoXLCOCalculations.value:
             summary.append(
                 OutputTableItem(model.economics.XLCOH_Market.display_name,
                                 '{0:10.2f}'.format(model.economics.XLCOH_Market.value),
@@ -127,7 +127,7 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Direct-Use Cooling Breakeven Price (LCOC)',
                                        '{0:10.2f}'.format(model.economics.LCOC.value),
                                        model.economics.LCOC.CurrentUnits.value))
-        if model.economics.DoXLCOECalculations.value:
+        if model.economics.DoXLCOCalculations.value:
             summary.append(
                 OutputTableItem(model.economics.XLCOC_Market.display_name,
                                 '{0:10.2f}'.format(model.economics.XLCOC_Market.value),
@@ -145,7 +145,7 @@ def print_outputs_rich(
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
-        if model.economics.DoXLCOECalculations.value:
+        if model.economics.DoXLCOCalculations.value:
             summary.append(
                 OutputTableItem(model.economics.XLCOE_Market.display_name,
                                 '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
@@ -157,7 +157,7 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
-        if model.economics.DoXLCOECalculations.value:
+        if model.economics.DoXLCOCalculations.value:
             summary.append(
                 OutputTableItem(model.economics.XLCOH_Market.display_name,
                                 '{0:10.2f}'.format(model.economics.XLCOH_Market.value),

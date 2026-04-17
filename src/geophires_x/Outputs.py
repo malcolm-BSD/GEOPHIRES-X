@@ -205,18 +205,18 @@ class Outputs:
 
                 if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
                     f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOECalculations.value:
+                    if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
                 elif model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and \
                         model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
                     f.write(f'      {model.economics.LCOH.display_name}:            {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOECalculations.value:
+                    if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
                 elif model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
                     f.write(f'      {model.economics.LCOC.display_name}:         {model.economics.LCOC.value:10.2f} {model.economics.LCOC.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOECalculations.value:
+                    if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOC_Market.display_name}: {model.economics.XLCOC_Market.value:10.2f} {model.economics.XLCOC_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOC_MarketSocial.display_name}: {model.economics.XLCOC_MarketSocial.value:10.2f} {model.economics.XLCOC_MarketSocial.CurrentUnits.value}\n')
                 elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
@@ -226,11 +226,11 @@ class Outputs:
                                                               EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
                                                               EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
                     f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOECalculations.value:
+                    if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
                     f.write(f'      {model.economics.LCOH.display_name}:           {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOECalculations.value:
+                    if model.economics.DoXLCOCalculations.value:
                         f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
                         f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
 

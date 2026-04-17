@@ -1752,7 +1752,7 @@
       "minimum": 0.0,
       "maximum": 1.0
     },
-    "Do XLCOE Calculations": {
+    "Do XLCO(E|H|C) Calculations": {
       "description": "Enable Extended Levelized Cost of Electricity (XLCOE) calculations. Phase 2 implements market-priced carbon and REC modifiers for electricity projects.",
       "type": "boolean",
       "units": null,
@@ -1761,7 +1761,7 @@
       "minimum": null,
       "maximum": null
     },
-    "Avoided Emissions Intensity": {
+    "XLCOE Avoided Emissions Intensity": {
       "description": "Avoided emissions intensity used for XLCOE carbon-offset benefits.",
       "type": "number",
       "units": "t/MWh",
@@ -1770,7 +1770,7 @@
       "minimum": 0.0,
       "maximum": 1.8e+30
     },
-    "XLCOE Carbon Price": {
+    "XLCO(E|H|C) Carbon Price": {
       "description": "Carbon price used for XLCOE market carbon-offset benefits.",
       "type": "number",
       "units": "USD/tonne",
@@ -1797,7 +1797,7 @@
       "minimum": 0.0,
       "maximum": 1.8e+30
     },
-    "XLCOE Water Shadow Price": {
+    "XLCO(E|H|C) Water Shadow Price": {
       "description": "Water shadow price used for XLCOE social water-offset benefits, interpreted as USD per m3.",
       "type": "number",
       "units": "USD",
@@ -1815,7 +1815,7 @@
       "minimum": 0.0,
       "maximum": 1.0
     },
-    "XLCOE Construction Jobs Per Rig": {
+    "XLCO(E|H|C) Construction Jobs Per Rig": {
       "description": "Construction jobs per rig-equivalent used for XLCOE social jobs benefits.",
       "type": "number",
       "units": null,
@@ -1824,7 +1824,7 @@
       "minimum": 0.0,
       "maximum": 1.8e+30
     },
-    "XLCOE Operations Jobs Per MW": {
+    "XLCO(E|H|C) Operations Jobs Per MW": {
       "description": "Operations jobs per average MW used for XLCOE social jobs benefits.",
       "type": "number",
       "units": null,
@@ -1833,7 +1833,7 @@
       "minimum": 0.0,
       "maximum": 1.8e+30
     },
-    "XLCOE Indirect Jobs Multiplier": {
+    "XLCO(E|H|C) Indirect Jobs Multiplier": {
       "description": "Multiplier applied to XLCOE direct construction and operations jobs benefits.",
       "type": "number",
       "units": null,
@@ -1842,7 +1842,7 @@
       "minimum": 0.0,
       "maximum": 1.8e+30
     },
-    "XLCOE Average Monthly Wage": {
+    "XLCO(E|H|C) Average Monthly Wage": {
       "description": "Average monthly wage used for XLCOE social jobs benefits.",
       "type": "number",
       "units": "USD",

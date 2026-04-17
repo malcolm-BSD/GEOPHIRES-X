@@ -157,7 +157,7 @@ def calculate_xlcoe_from_explicit_streams(
 
 
 def _active_xlco_commodities(econ: Economics, model: Model) -> dict[str, LevelizedCostBasis]:
-    if not econ.DoXLCOECalculations.value:
+    if not econ.DoXLCOCalculations.value:
         return {}
 
     if econ.econmodel.value == EconomicModel.CLGS:
@@ -205,11 +205,11 @@ def _shared_social_benefit_musd(econ: Economics, model: Model) -> float:
 
     construction_jobs_total = (
         total_wells
-        * float(econ.XLCOEConstructionJobsPerRig.value)
-        * float(econ.XLCOEIndirectJobsMultiplier.value)
+        * float(econ.XLCOConstructionJobsPerRig.value)
+        * float(econ.XLCOIndirectJobsMultiplier.value)
     )
     construction_jobs_annual_usd = (
-        construction_jobs_total * float(econ.XLCOEAverageMonthlyWage.value) * 12.0 / construction_years
+        construction_jobs_total * float(econ.XLCOAverageMonthlyWage.value) * 12.0 / construction_years
     )
     return _discounted_constant_annual_benefit_musd(
         construction_jobs_annual_usd / 1_000_000.0,
@@ -227,8 +227,8 @@ def _discounted_social_jobs_benefit_musd(
     annual_jobs_usd = (
         average_output_mw
         * jobs_per_mw
-        * float(econ.XLCOEIndirectJobsMultiplier.value)
-        * float(econ.XLCOEAverageMonthlyWage.value)
+        * float(econ.XLCOIndirectJobsMultiplier.value)
+        * float(econ.XLCOAverageMonthlyWage.value)
         * 12.0
     )
     return _discounted_constant_annual_benefit_musd(
@@ -241,7 +241,7 @@ def _discounted_social_jobs_benefit_musd(
 
 def _electricity_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
     annual_benefit_usd_per_mwh = (
-        float(econ.AvoidedEmissionsIntensity.value) * float(econ.XLCOECarbonPrice.value)
+        float(econ.XLCOEAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
         + float(econ.XLCOERECPrice.value)
     )
     return _discounted_operational_benefit_musd(
@@ -253,8 +253,8 @@ def _electricity_direct_market_benefit_musd(econ: Economics, model: Model) -> fl
 
 def _heat_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
     annual_benefit_usd_per_mwh = (
-        float(econ.XLCOHAvoidedEmissionsIntensity.value) * float(econ.XLCOHCarbonPrice.value)
-        + float(econ.XLCOHThermalCreditPrice.value)
+        float(econ.XLCOHAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
+        + float(econ.XLCOHREC.value)
     )
     return _discounted_operational_benefit_musd(
         model.surfaceplant.HeatkWhProduced.value,
@@ -265,8 +265,8 @@ def _heat_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
 
 def _cooling_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
     annual_benefit_usd_per_mwh = (
-        float(econ.XLCOCAvoidedEmissionsIntensity.value) * float(econ.XLCOCCarbonPrice.value)
-        + float(econ.XLCOCCoolingCreditPrice.value)
+        float(econ.XLCOCAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
+        + float(econ.XLCOCREC.value)
     )
     return _discounted_operational_benefit_musd(
         model.surfaceplant.cooling_kWh_Produced.value,
@@ -279,14 +279,14 @@ def _electricity_direct_social_benefit_musd(econ: Economics, model: Model) -> fl
     plant_lifetime = model.surfaceplant.plant_lifetime.value
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.NetkWhProduced.value,
-        float(econ.XLCOEDisplacedWaterUseIntensity.value) * float(econ.XLCOEWaterShadowPrice.value),
+        float(econ.XLCOEDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
         econ.social_discountrate.value,
         start=model.surfaceplant.construction_years.value,
     )
     average_generation_mw = float(np.average(_to_float_array(model.surfaceplant.ElectricityProduced.value)))
     jobs_benefit = _discounted_social_jobs_benefit_musd(
         average_generation_mw,
-        float(econ.XLCOEOperationsJobsPerMW.value),
+        float(econ.XLCOOperationsJobsPerMW.value),
         econ,
         model,
     )
@@ -296,14 +296,14 @@ def _electricity_direct_social_benefit_musd(econ: Economics, model: Model) -> fl
 def _heat_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.HeatkWhProduced.value,
-        float(econ.XLCOHDisplacedWaterUseIntensity.value) * float(econ.XLCOHWaterShadowPrice.value),
+        float(econ.XLCOHDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
         econ.social_discountrate.value,
         start=model.surfaceplant.construction_years.value,
     )
     average_heat_mw = float(np.average(_to_float_array(model.surfaceplant.HeatProduced.value)))
     jobs_benefit = _discounted_social_jobs_benefit_musd(
         average_heat_mw,
-        float(econ.XLCOHOperationsJobsPerMW.value),
+        float(econ.XLCOOperationsJobsPerMW.value),
         econ,
         model,
     )
@@ -313,14 +313,14 @@ def _heat_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
 def _cooling_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.cooling_kWh_Produced.value,
-        float(econ.XLCOCDisplacedWaterUseIntensity.value) * float(econ.XLCOCWaterShadowPrice.value),
+        float(econ.XLCOCDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
         econ.social_discountrate.value,
         start=model.surfaceplant.construction_years.value,
     )
     average_cooling_mw = float(np.average(_to_float_array(model.surfaceplant.cooling_produced.value)))
     jobs_benefit = _discounted_social_jobs_benefit_musd(
         average_cooling_mw,
-        float(econ.XLCOCOperationsJobsPerMW.value),
+        float(econ.XLCOOperationsJobsPerMW.value),
         econ,
         model,
     )

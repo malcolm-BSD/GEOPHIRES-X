@@ -285,7 +285,7 @@ allocation rule fixed.
 Backward compatibility requirements:
 
 - retain all existing electricity `XLCOE_*` parameters unchanged
-- preserve the current meaning of `Do XLCOE Calculations`
+- preserve the current meaning of `Do XLCO(E|H|C) Calculations`
 - allow a future alias such as `Do Extended Levelized Cost Calculations`, but do not require it initially
 
 Recommended parameter structure:
@@ -301,30 +301,30 @@ Recommended parameter structure:
 ### Electricity Inputs
 
 - retain existing:
-  - `Avoided Emissions Intensity`
-  - `XLCOE Carbon Price`
+  - `XLCOE Avoided Emissions Intensity`
+  - `XLCO(E|H|C) Carbon Price`
   - `XLCOE REC Price`
   - `XLCOE Displaced Water Use Intensity`
-  - `XLCOE Water Shadow Price`
-  - `XLCOE Operations Jobs Per MW`
+  - `XLCO(E|H|C) Water Shadow Price`
+  - `XLCO(E|H|C) Operations Jobs Per MW`
 
 ### Heat Inputs
 
 - `XLCOH Avoided Emissions Intensity`
-- `XLCOH Carbon Price`
-- `XLCOH Thermal Credit Price`
+- `XLCO(E|H|C) Carbon Price`
+- `XLCOH Thermal REC`
 - `XLCOH Displaced Water Use Intensity`
-- `XLCOH Water Shadow Price`
-- `XLCOH Operations Jobs Per MW`
+- `XLCO(E|H|C) Water Shadow Price`
+- `XLCO(E|H|C) Operations Jobs Per MW`
 
 ### Cooling Inputs
 
 - `XLCOC Avoided Emissions Intensity`
-- `XLCOC Carbon Price`
-- `XLCOC Cooling Credit Price`
+- `XLCO(E|H|C) Carbon Price`
+- `XLCOC Thermal REC`
 - `XLCOC Displaced Water Use Intensity`
-- `XLCOC Water Shadow Price`
-- `XLCOC Operations Jobs Per MW`
+- `XLCO(E|H|C) Water Shadow Price`
+- `XLCO(E|H|C) Operations Jobs Per MW`
 
 Construction jobs and idle-rig discount should remain shared project-level inputs unless a later design revision
 proves a commodity-specific split is needed.
@@ -519,9 +519,9 @@ V1 should add all of the following:
 
 Recommended initial validation assets:
 
-- `tests/examples/example_XLCOE_paper_low.txt`
-- `tests/examples/example_XLCOE_paper_high.txt`
-- `tests/test_xlcoe.py`
+- `tests/examples/example_XLCOE_paper_low.tst`
+- `tests/examples/example_XLCOE_paper_high.tst`
+- `tests/test_xlco.py`
 - `docs/XLCOE.md` or equivalent user-facing document later in Phase 5
 
 ### Exact Assertion Rules
@@ -638,14 +638,14 @@ Recommended first-pass parameters:
 
 #### Enablement and Discounting
 
-- `Do XLCOE Calculations`
+- `Do XLCO(E|H|C) Calculations`
   - boolean
 - `Social Discount Rate`
   - percent
 
 #### Carbon Offset Inputs
 
-- `Avoided Emissions Intensity`
+- `XLCOE Avoided Emissions Intensity`
   - units: `tCO2/MWh`
 - `Carbon Price`
   - units: currency per `tCO2`
@@ -698,7 +698,7 @@ Recommended output families:
 
 Implementation should likely introduce one new helper module, for example:
 
-- `src/geophires_x/xlcoe.py`
+- `src/geophires_x/xlco.py`
 
 Responsibilities:
 
@@ -735,7 +735,7 @@ Goal:
 
 Tasks:
 
-- create `xlcoe.py` helper module
+- create `xlco.py` helper module
 - add new input parameters for enablement and social discount rate
 - add output parameters for `XLCOE_Market` and `XLCOE_MarketSocial`
 - wire calculation invocation into `Economics.Calculate(...)`
@@ -908,7 +908,7 @@ Goal:
 
 Tasks:
 
-- generalize `xlcoe.py` internals around active commodities
+- generalize `xlco.py` internals around active commodities
 - introduce internal concepts for:
   - commodity id
   - baseline cost basis
@@ -941,18 +941,18 @@ Tasks:
 - keep all current `XLCOE_*` and legacy electricity input names unchanged
 - add heat-specific inputs:
   - `XLCOH Avoided Emissions Intensity`
-  - `XLCOH Carbon Price`
-  - `XLCOH Thermal Credit Price`
+  - `XLCO(E|H|C) Carbon Price`
+  - `XLCOH Thermal REC`
   - `XLCOH Displaced Water Use Intensity`
-  - `XLCOH Water Shadow Price`
-  - `XLCOH Operations Jobs Per MW`
+  - `XLCO(E|H|C) Water Shadow Price`
+  - `XLCO(E|H|C) Operations Jobs Per MW`
 - add cooling-specific inputs:
   - `XLCOC Avoided Emissions Intensity`
-  - `XLCOC Carbon Price`
-  - `XLCOC Cooling Credit Price`
+  - `XLCO(E|H|C) Carbon Price`
+  - `XLCOC Thermal REC`
   - `XLCOC Displaced Water Use Intensity`
-  - `XLCOC Water Shadow Price`
-  - `XLCOC Operations Jobs Per MW`
+  - `XLCO(E|H|C) Water Shadow Price`
+  - `XLCO(E|H|C) Operations Jobs Per MW`
 - keep idle-rig discount and construction-jobs inputs shared at the project level
 
 Tests:

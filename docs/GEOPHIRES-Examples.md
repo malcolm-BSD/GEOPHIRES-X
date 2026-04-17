@@ -24,9 +24,9 @@ See documentation: [Case Study: 500 MWe EGS Project Modeled on Fervo Cape Statio
 - cooling-focused example:
   [`tests/examples/example_XLCOC.txt`](../tests/examples/example_XLCOC.txt)
 - electricity paper-validation fixtures:
-  [`tests/examples/example_XLCOE_paper_low.txt`](../tests/examples/example_XLCOE_paper_low.txt)
+  [`tests/examples/example_XLCOE_paper_low.tst`](../tests/examples/example_XLCOE_paper_low.tst)
   and
-  [`tests/examples/example_XLCOE_paper_high.txt`](../tests/examples/example_XLCOE_paper_high.txt)
+  [`tests/examples/example_XLCOE_paper_high.tst`](../tests/examples/example_XLCOE_paper_high.tst)
 
 Important validation boundary:
 

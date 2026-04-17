@@ -57,16 +57,16 @@ Electricity Rate,.05
 
 # ***Extended Levelized Cost Parameters***
 # ****************************************
-Do XLCOE Calculations,1
+Do XLCO(E|H|C) Calculations,1
 XLCOH Avoided Emissions Intensity,0.25
-XLCOH Carbon Price,30
-XLCOH Thermal Credit Price,4
+XLCO(E|H|C) Carbon Price,30
+XLCOH Thermal REC,4
 XLCOH Displaced Water Use Intensity,1.0
-XLCOH Water Shadow Price,0.25
-XLCOH Operations Jobs Per MW,1.0
-XLCOE Construction Jobs Per Rig,37
-XLCOE Indirect Jobs Multiplier,1.0
-XLCOE Average Monthly Wage,4000
+XLCO(E|H|C) Water Shadow Price,0.25
+XLCO(E|H|C) Operations Jobs Per MW,1.0
+XLCO(E|H|C) Construction Jobs Per Rig,37
+XLCO(E|H|C) Indirect Jobs Multiplier,1.0
+XLCO(E|H|C) Average Monthly Wage,4000
 Social Discount Rate,0.05
 
 # ***Simulation Parameters***

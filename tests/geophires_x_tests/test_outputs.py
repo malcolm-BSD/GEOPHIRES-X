@@ -13,31 +13,30 @@ _log = logging.getLogger(__name__)
 
 
 class OutputsTestCase(BaseTestCase):
-
     def test_html_output_file(self):
-        html_path = Path(tempfile.gettempdir(), 'example12_DH.html').absolute()
+        html_path = Path(tempfile.gettempdir(), "example12_DH.html").absolute()
         try:
             GeophiresXClient().get_geophires_result(
                 GeophiresInputParameters(
-                    from_file_path=self._get_test_file_path('../examples/example12_DH.txt'),
-                    params={'HTML Output File': str(html_path)},
+                    from_file_path=self._get_test_file_path("../examples/example12_DH.txt"),
+                    params={"HTML Output File": str(html_path)},
                 )
             )
 
             self.assertTrue(html_path.exists())
-            with open(html_path, encoding='UTF-8') as f:
+            with open(html_path, encoding="UTF-8") as f:
                 html_content = f.read()
-                self.assertIn('***CASE REPORT***', html_content)
+                self.assertIn("***CASE REPORT***", html_content)
                 # TODO expand test to assert more about output HTML
         except RuntimeError as e:
             # https://github.com/NREL/GEOPHIRES-X/issues/365
-            has_expected_error_msg = 'cannot unpack non-iterable NoneType object' in str(
+            has_expected_error_msg = "cannot unpack non-iterable NoneType object" in str(
                 e
             ) or "Can't find a usable tk.tcl" in str(e)
-            if has_expected_error_msg and os.name == 'nt' and 'TOXPYTHON' in os.environ:
+            if has_expected_error_msg and os.name == "nt" and "TOXPYTHON" in os.environ:
                 _log.warning(
-                    f'Ignoring error while testing HTML output file '
-                    f'since we appear to be running on Windows in GitHub Actions ({e!s})'
+                    f"Ignoring error while testing HTML output file "
+                    f"since we appear to be running on Windows in GitHub Actions ({e!s})"
                 )
             else:
                 raise e
@@ -45,94 +44,94 @@ class OutputsTestCase(BaseTestCase):
     def test_text_output_file_contains_xlcoe_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
             GeophiresInputParameters(
-                from_file_path=self._get_test_file_path('../examples/example1.txt'),
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
                 params={
-                    'Do XLCOE Calculations': True,
-                    'XLCOE Carbon Price': 25.0,
-                    'XLCOE REC Price': 15.0,
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOE REC Price": 15.0,
                 },
             )
         )
 
-        with open(result.output_file_path, encoding='utf-8') as f:
+        with open(result.output_file_path, encoding="utf-8") as f:
             output_content = f.read()
 
-        self.assertIn('Extended Electricity Breakeven Price (XLCOE Market)', output_content)
-        self.assertIn('Extended Electricity Breakeven Price (XLCOE Market + Social)', output_content)
+        self.assertIn("Extended Electricity Breakeven Price (XLCOE Market)", output_content)
+        self.assertIn("Extended Electricity Breakeven Price (XLCOE Market + Social)", output_content)
 
     def test_text_output_file_contains_xlcoh_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
             GeophiresInputParameters(
-                from_file_path=self._get_test_file_path('../examples/example2.txt'),
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
                 params={
-                    'Do XLCOE Calculations': True,
-                    'XLCOH Carbon Price': 25.0,
-                    'XLCOH Thermal Credit Price': 15.0,
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOH Thermal REC": 15.0,
                 },
             )
         )
 
-        with open(result.output_file_path, encoding='utf-8') as f:
+        with open(result.output_file_path, encoding="utf-8") as f:
             output_content = f.read()
 
-        self.assertIn('Extended Heat Breakeven Price (XLCOH Market)', output_content)
-        self.assertIn('Extended Heat Breakeven Price (XLCOH Market + Social)', output_content)
+        self.assertIn("Extended Heat Breakeven Price (XLCOH Market)", output_content)
+        self.assertIn("Extended Heat Breakeven Price (XLCOH Market + Social)", output_content)
 
     def test_text_output_file_contains_xlcoc_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
             GeophiresInputParameters(
-                from_file_path=self._get_test_file_path('../examples/example11_AC.txt'),
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
                 params={
-                    'Do XLCOE Calculations': True,
-                    'XLCOC Cooling Credit Price': 15.0,
-                    'XLCOC Water Shadow Price': 0.5,
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCOC Thermal REC": 15.0,
+                    "XLCO(E|H|C) Water Shadow Price": 0.5,
                 },
             )
         )
 
-        with open(result.output_file_path, encoding='utf-8') as f:
+        with open(result.output_file_path, encoding="utf-8") as f:
             output_content = f.read()
 
-        self.assertIn('Extended Cooling Breakeven Price (XLCOC Market)', output_content)
-        self.assertIn('Extended Cooling Breakeven Price (XLCOC Market + Social)', output_content)
+        self.assertIn("Extended Cooling Breakeven Price (XLCOC Market)", output_content)
+        self.assertIn("Extended Cooling Breakeven Price (XLCOC Market + Social)", output_content)
 
     def test_relative_output_file_path(self):
-        input_file = GeophiresInputParameters({'HTML Output File': 'foo.html'}).as_file_path()
-        m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108
+        input_file = GeophiresInputParameters({"HTML Output File": "foo.html"}).as_file_path()
+        m = self._new_model(input_file=input_file, original_cwd=Path("/tmp/"))  # noqa: S108
         html_filepath = Path(m.outputs.html_output_file.value)
         self.assertTrue(html_filepath.is_absolute())
 
-        expected_path = str(Path('/tmp/foo.html'))  # noqa: S108
+        expected_path = str(Path("/tmp/foo.html"))  # noqa: S108
         self._assert_file_paths_equal(self._strip_drive(str(html_filepath)), expected_path)
 
     def test_absolute_output_file_path(self):
         input_file = GeophiresInputParameters(
-            {'HTML Output File': '/home/user/my-geophires-project/foo.html'}
+            {"HTML Output File": "/home/user/my-geophires-project/foo.html"}
         ).as_file_path()
-        m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108
+        m = self._new_model(input_file=input_file, original_cwd=Path("/tmp/"))  # noqa: S108
         html_filepath = Path(m.outputs.html_output_file.value)
         self.assertTrue(html_filepath.is_absolute())
         self._assert_file_paths_equal(
-            self._strip_drive(str(html_filepath)), str(Path('/home/user/my-geophires-project/foo.html'))
+            self._strip_drive(str(html_filepath)), str(Path("/home/user/my-geophires-project/foo.html"))
         )
 
     # noinspection PyMethodMayBeStatic
     def _strip_drive(self, p: str) -> str:
-        return p.replace('D:', '').replace('C:', '')
+        return p.replace("D:", "").replace("C:", "")
 
     def _assert_file_paths_equal(self, file_path_1, file_path_2):
         try:
             self.assertEqual(file_path_1, file_path_2)
         except AssertionError as e:
-            if os.name == 'nt' and 'TOXPYTHON' in os.environ:
+            if os.name == "nt" and "TOXPYTHON" in os.environ:
                 # FIXME - Python 3.9/10 on Windows seem to have had a backwards-incompatible change introduced on or
                 #  around 2025-06-06 which cause failures; examples:
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15499833486/job/43649021692
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15499833486/job/43649021692
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15501867732/job/43650830019?pr=389
                 _log.warning(
-                    f'Ignoring file path equality assertion error since we appear to be running on Windows '
-                    f'in GitHub Actions ({e!s})'
+                    f"Ignoring file path equality assertion error since we appear to be running on Windows "
+                    f"in GitHub Actions ({e!s})"
                 )
             else:
                 raise e
@@ -142,7 +141,7 @@ class OutputsTestCase(BaseTestCase):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         if input_file is not None:
             sys.argv.append(input_file)

@@ -66,16 +66,16 @@ Absorption Chiller O&M Cost,0.065
 
 # ***Extended Levelized Cost Parameters***
 # ****************************************
-Do XLCOE Calculations,1
+Do XLCO(E|H|C) Calculations,1
 XLCOC Avoided Emissions Intensity,0.20
-XLCOC Carbon Price,25
-XLCOC Cooling Credit Price,15
+XLCO(E|H|C) Carbon Price,25
+XLCOC Thermal REC,15
 XLCOC Displaced Water Use Intensity,1.0
-XLCOC Water Shadow Price,0.50
-XLCOC Operations Jobs Per MW,0.2
-XLCOE Construction Jobs Per Rig,37
-XLCOE Indirect Jobs Multiplier,1.5
-XLCOE Average Monthly Wage,4000
+XLCO(E|H|C) Water Shadow Price,0.50
+XLCO(E|H|C) Operations Jobs Per MW,0.2
+XLCO(E|H|C) Construction Jobs Per Rig,37
+XLCO(E|H|C) Indirect Jobs Multiplier,1.5
+XLCO(E|H|C) Average Monthly Wage,4000
 Social Discount Rate,0.05
 
 # ***Simulation Parameters***
