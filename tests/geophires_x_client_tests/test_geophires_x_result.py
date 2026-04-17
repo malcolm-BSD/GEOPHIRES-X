@@ -134,6 +134,92 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertLess(summary[market_field]["value"], baseline_lcoc)
         self.assertLess(summary[social_field]["value"], summary[market_field]["value"])
 
+    def test_valcoe_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOE System Average Energy Value": 1.0,
+                    "VALCOE Technology Energy Value": 2.5,
+                    "VALCOE System Average Capacity Value": 0.2,
+                    "VALCOE Technology Capacity Value": 0.1,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Electricity Breakeven Price (VALCOE)"
+        energy_field = "VALCOE Energy Adjustment"
+        capacity_field = "VALCOE Capacity Adjustment"
+        flexibility_field = "VALCOE Flexibility Adjustment"
+        baseline_lcoe = summary["Electricity breakeven price"]["value"]
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(energy_field, summary)
+        self.assertIn(capacity_field, summary)
+        self.assertIn(flexibility_field, summary)
+        self.assertEqual("cents/kWh", summary[valco_field]["unit"])
+        self.assertEqual("cents/kWh", summary[energy_field]["unit"])
+        self.assertEqual(-1.5, summary[energy_field]["value"])
+        self.assertEqual(0.1, summary[capacity_field]["value"])
+        self.assertEqual(0.0, summary[flexibility_field]["value"])
+        self.assertAlmostEqual(baseline_lcoe - 1.4, summary[valco_field]["value"], places=7)
+
+    def test_valcoh_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOH System Average Capacity Value": 1.0,
+                    "VALCOH Technology Capacity Value": 0.25,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Heat Breakeven Price (VALCOH)"
+        adjustment_field = "VALCOH Capacity Adjustment"
+        baseline_lcoh_field = "Direct-Use heat breakeven price (LCOH)"
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(adjustment_field, summary)
+        self.assertEqual(summary[baseline_lcoh_field]["unit"], summary[valco_field]["unit"])
+        self.assertEqual(0.75, summary[adjustment_field]["value"])
+        self.assertAlmostEqual(
+            summary[baseline_lcoh_field]["value"] + 0.75,
+            summary[valco_field]["value"],
+            places=7,
+        )
+
+    def test_valcoc_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOC System Average Flexibility Value": 0.5,
+                    "VALCOC Technology Flexibility Value": 0.2,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Cooling Breakeven Price (VALCOC)"
+        adjustment_field = "VALCOC Flexibility Adjustment"
+        baseline_lcoc_field = "Direct-Use Cooling Breakeven Price (LCOC)"
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(adjustment_field, summary)
+        self.assertEqual(summary[baseline_lcoc_field]["unit"], summary[valco_field]["unit"])
+        self.assertEqual(0.3, summary[adjustment_field]["value"])
+        self.assertAlmostEqual(
+            summary[baseline_lcoc_field]["value"] + 0.3,
+            summary[valco_field]["value"],
+            places=7,
+        )
+
     def test_sam_economic_model_result_csv(self) -> None:
         r: GeophiresXResult = GeophiresXResult(self._get_test_file_path("sam-em-csv-test.out"))
         as_csv = r.as_csv()

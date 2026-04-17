@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import patch
 
 from geophires_x.levelized_costs import COOLING_COMMODITY
 from geophires_x.levelized_costs import ELECTRICITY_COMMODITY
@@ -311,6 +312,8 @@ class VALCOTestCase(BaseTestCase):
 
         if read_and_calculate:
             model.read_parameters()
-            model.Calculate()
+            # SBT/BICYCLE cases can hit non-interactive plot warnings during tests.
+            with patch("geophires_x.SBTReservoir.plt_show", lambda *args, **kwargs: None):
+                model.Calculate()
 
         return model

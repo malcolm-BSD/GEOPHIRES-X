@@ -103,6 +103,30 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "Extended Cooling Breakeven Price (XLCOC Market + Social)",
             result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
+        self.assertIn(
+            "Value-Adjusted Electricity Breakeven Price (VALCOE)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
+        self.assertIn(
+            "VALCOE Energy Adjustment",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
+        self.assertIn(
+            "Value-Adjusted Heat Breakeven Price (VALCOH)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
+        self.assertIn(
+            "VALCOH Capacity Adjustment",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
+        self.assertIn(
+            "Value-Adjusted Cooling Breakeven Price (VALCOC)",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
+        self.assertIn(
+            "VALCOC Flexibility Adjustment",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
 
 
 if __name__ == "__main__":

@@ -43,7 +43,8 @@ Current status:
 - Phase 4 complete
 - Phase 5 complete
 - Phase 6 complete
-- Phase 7 not started
+- Phase 7 complete
+- Phase 8 not started
 
 Phase 1 completion date:
 
@@ -66,6 +67,10 @@ Phase 5 completion date:
 - 2026-04-17
 
 Phase 6 completion date:
+
+- 2026-04-17
+
+Phase 7 completion date:
 
 - 2026-04-17
 
@@ -629,8 +634,8 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 7 should expose VALCO through the remaining external surfaces:
+Phase 8 should add user-facing examples and documentation:
 
-- client parsing for `VALCOE`, `VALCOH`, and `VALCOC`
-- request/result schema updates for VALCO outputs
-- surface tests for client and schema layers
+- example input files for `VALCOE`, `VALCOH`, and `VALCOC`
+- output reference files where useful
+- documentation for interpretation, composition with `XLCO`, and current direct-mode limitations
