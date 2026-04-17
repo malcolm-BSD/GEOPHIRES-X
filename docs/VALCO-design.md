@@ -38,9 +38,14 @@ Per the IEA formulation, that value has three components:
 Current status:
 
 - Phase 1 complete
-- Phase 2 not started
+- Phase 2 complete
+- Phase 3 not started
 
 Phase 1 completion date:
+
+- 2026-04-17
+
+Phase 2 completion date:
 
 - 2026-04-17
 
@@ -604,10 +609,9 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 2 should start with the core `valco.py` module and the minimum commodity-aware dataclasses and helper functions:
+Phase 3 should add the public economics parameter surface for direct-input `VALCO(E|H|C)`:
 
-- `ValueAdjustmentInputs`
-- `ValueAdjustmentResult`
-- active-base-cost selection from `LCO*` vs `XLCO*_Market`
-- direct-input `VALCOE/H/C` calculation helpers
-- shared output-assignment helper for all economics subclasses
+- `Do VALCO(E|H|C) Calculations`
+- `VALCO Calculation Mode`
+- direct-value input parameters for electricity, heat, and cooling
+- initial parameter-definition tests and schema exposure
