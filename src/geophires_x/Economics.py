@@ -25,7 +25,7 @@ from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from geophires_x.Units import *
 from geophires_x.levelized_costs import calculate_levelized_cost_outputs
 from geophires_x.WellBores import calculate_total_drilling_lengths_m
-from geophires_x.xlco import calculate_extended_levelized_costs
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 def calculate_cost_of_one_vertical_well(model: Model, depth_m: float, well_correlation: int,
@@ -2874,16 +2874,7 @@ class Economics:
 
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
-        extended_costs = calculate_extended_levelized_costs(self, model)
-        electricity_costs = extended_costs.get('electricity')
-        heat_costs = extended_costs.get('heat')
-        cooling_costs = extended_costs.get('cooling')
-        self.XLCOE_Market.value = electricity_costs.market if electricity_costs is not None else 0.0
-        self.XLCOE_MarketSocial.value = electricity_costs.market_social if electricity_costs is not None else 0.0
-        self.XLCOH_Market.value = heat_costs.market if heat_costs is not None else 0.0
-        self.XLCOH_MarketSocial.value = heat_costs.market_social if heat_costs is not None else 0.0
-        self.XLCOC_Market.value = cooling_costs.market if cooling_costs is not None else 0.0
-        self.XLCOC_MarketSocial.value = cooling_costs.market_social if cooling_costs is not None else 0.0
+        assign_extended_levelized_cost_outputs(self, model)
 
         # https://github.com/NREL/GEOPHIRES-X/issues/232
         self.jobs_created.value = round(

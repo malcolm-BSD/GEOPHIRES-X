@@ -354,6 +354,37 @@ class XLCOETestCase(BaseTestCase):
         self.assertLess(model.economics.XLCOC_Market.value, model.economics.LCOC.value)
         self.assertLess(model.economics.XLCOC_MarketSocial.value, model.economics.XLCOC_Market.value)
 
+    def test_bicycle_sbt_example_produces_nonzero_xlcoe_outputs(self):
+        model = self._new_model(
+            input_file=Path(self._get_test_file_path("../examples/Example_XLCOE80.txt")),
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(8.0, model.economics.LCOE.value, places=1)
+        self.assertGreater(model.economics.XLCOE_Market.value, 0.0)
+        self.assertGreater(model.economics.XLCOE_MarketSocial.value, 0.0)
+        self.assertLess(model.economics.XLCOE_Market.value, model.economics.LCOE.value)
+        self.assertLess(model.economics.XLCOE_MarketSocial.value, model.economics.XLCOE_Market.value)
+
+    def test_clgs_electricity_example_produces_nonzero_xlcoe_outputs(self):
+        model = self._new_model(
+            input_file=Path(
+                self._get_test_file_path("../examples/Beckers_et_al_2023_Tabulated_Database_Uloop_water_elec.txt")
+            ),
+            additional_params={
+                "Do XLCO(E|H|C) Calculations": True,
+                "XLCOE Avoided Emissions Intensity": 0.44,
+                "XLCO(E|H|C) Carbon Price": 35.0,
+                "XLCOE REC Price": 7.0,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertGreater(model.economics.LCOE.value, 0.0)
+        self.assertGreater(model.economics.XLCOE_Market.value, 0.0)
+        self.assertLess(model.economics.XLCOE_Market.value, model.economics.LCOE.value)
+        self.assertAlmostEqual(EnergyCostUnit.DOLLARSPERMWH, model.economics.XLCOE_Market.CurrentUnits)
+
     def test_cogeneration_idle_rig_benefit_is_allocated_by_baseline_cost_share(self):
         baseline_model = self._new_model(
             input_file=Path(self._get_test_file_path("../examples/example13.txt")),

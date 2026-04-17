@@ -7,6 +7,7 @@ from .OptionList import Configuration, WellDrillingCostCorrelation, PlantType
 from geophires_x.Parameter import floatParameter
 from geophires_x.Units import *
 from geophires_x.OptionList import WorkingFluid, EndUseOptions, EconomicModel
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 def calculate_cost_of_lateral_section(model: Model, length_m: float, well_correlation: int,
@@ -530,6 +531,7 @@ class SBTEconomics(Economics):
 
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
+        assign_extended_levelized_cost_outputs(self, model)
 
         self._calculate_derived_outputs(model)
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')

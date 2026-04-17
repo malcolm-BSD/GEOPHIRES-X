@@ -7,6 +7,7 @@ import numpy as np
 
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import EconomicModel, EndUseOptions, PlantType
+from geophires_x.Units import EnergyCostUnit
 from geophires_x.Units import convertible_unit
 
 if TYPE_CHECKING:
@@ -21,6 +22,7 @@ COOLING_COMMODITY = 'cooling'
 _ELECTRICITY_PRICE_FACTOR = 1.0e8
 _HEAT_AND_COOLING_PRICE_FACTOR = 1.0e8 * 2.931
 _DISTRICT_HEATING_PRICE_FACTOR = 1.0e2 * 2.931
+_DOLLARS_PER_MWH_PRICE_FACTOR = 1.0e9
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,12 @@ def _build_basis(
         discounted_output=float(discounted_output),
         public_price_factor=float(public_price_factor),
     )
+
+
+def _output_price_factor(unit, default_factor: float) -> float:
+    if unit == EnergyCostUnit.DOLLARSPERMWH:
+        return _DOLLARS_PER_MWH_PRICE_FACTOR
+    return default_factor
 
 
 def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, LevelizedCostBasis]:
@@ -271,6 +279,44 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             discounted_output=float(discounted_output),
             public_price_factor=_ELECTRICITY_PRICE_FACTOR,
         )
+
+    elif econ.econmodel.value == EconomicModel.CLGS:
+        discount_rate = getattr(econ, 'Discount_rate', econ.discountrate.value)
+        plant_lifetime = getattr(model.surfaceplant, 'Lifetime', model.surfaceplant.plant_lifetime.value)
+        discount_vector = 1.0 / np.power(1.0 + discount_rate, np.linspace(0, plant_lifetime - 1, plant_lifetime))
+
+        total_capex = float(getattr(econ, 'TotalCAPEX', econ.CCap.value))
+        annual_opex = np.asarray(getattr(econ, 'OPEX_Plant', econ.Coam.value / 1_000.0), dtype=float)
+        if annual_opex.ndim == 0:
+            annual_opex = np.full(plant_lifetime, float(annual_opex))
+
+        baseline_discounted_cost_musd = total_capex + float(np.sum(annual_opex * discount_vector))
+        if enduse_option == EndUseOptions.ELECTRICITY:
+            discounted_output = float(
+                np.sum(
+                    (
+                        np.asarray(model.surfaceplant.Annual_electricity_production, dtype=float)
+                        - np.asarray(model.surfaceplant.Annual_pumping_power, dtype=float)
+                    )
+                    * discount_vector
+                )
+            )
+            bases[ELECTRICITY_COMMODITY] = _build_basis(
+                ELECTRICITY_COMMODITY,
+                baseline_discounted_cost_musd,
+                discounted_output,
+                _output_price_factor(econ.LCOE.CurrentUnits, _ELECTRICITY_PRICE_FACTOR),
+            )
+        elif enduse_option == EndUseOptions.HEAT:
+            discounted_output = float(
+                np.sum(np.asarray(model.surfaceplant.Annual_heat_production, dtype=float) * discount_vector)
+            )
+            bases[HEAT_COMMODITY] = _build_basis(
+                HEAT_COMMODITY,
+                baseline_discounted_cost_musd,
+                discounted_output,
+                _output_price_factor(econ.LCOH.CurrentUnits, _HEAT_AND_COOLING_PRICE_FACTOR),
+            )
 
     else:
         i_ave = econ.FIB.value * econ.BIR.value * (1 - econ.CTR.value) + (1 - econ.FIB.value) * econ.EIR.value

@@ -8,6 +8,7 @@ import geophires_x.Model as Model
 from geophires_x.OptionList import EndUseOptions, EconomicModel
 from geophires_x.Parameter import listParameter, OutputParameter
 from geophires_x.Units import *
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 class EconomicsAddOns(Economics.Economics):
@@ -414,7 +415,9 @@ class EconomicsAddOns(Economics.Economics):
 
         if not is_sam_em:
             # recalculate LCOE/LCOH
-            self.LCOE.value, self.LCOH.value, LCOC = Economics.CalculateLCOELCOHLCOC(self, model)
+            self.LCOE.value, self.LCOH.value, self.LCOC.value = Economics.CalculateLCOELCOHLCOC(self, model)
+
+        assign_extended_levelized_cost_outputs(self, model)
 
         self._calculate_derived_outputs(model)
         model.logger.info(f'complete {str(__class__)}: {sys._getframe().f_code.co_name}')

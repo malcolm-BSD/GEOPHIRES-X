@@ -160,9 +160,6 @@ def _active_xlco_commodities(econ: Economics, model: Model) -> dict[str, Leveliz
     if not econ.DoXLCOCalculations.value:
         return {}
 
-    if econ.econmodel.value == EconomicModel.CLGS:
-        return {}
-
     bases = build_levelized_cost_bases(econ, model)
     return {
         commodity: basis
@@ -374,6 +371,21 @@ def calculate_extended_levelized_costs(econ: Economics, model: Model) -> dict[st
         commodity: calculate_extended_cost_from_basis(inputs)
         for commodity, inputs in _build_commodity_benefit_inputs(econ, model).items()
     }
+
+
+def assign_extended_levelized_cost_outputs(econ: Economics, model: Model) -> dict[str, ExtendedCostResult]:
+    extended_costs = calculate_extended_levelized_costs(econ, model)
+    electricity_costs = extended_costs.get(ELECTRICITY_COMMODITY)
+    heat_costs = extended_costs.get(HEAT_COMMODITY)
+    cooling_costs = extended_costs.get(COOLING_COMMODITY)
+
+    econ.XLCOE_Market.value = electricity_costs.market if electricity_costs is not None else 0.0
+    econ.XLCOE_MarketSocial.value = electricity_costs.market_social if electricity_costs is not None else 0.0
+    econ.XLCOH_Market.value = heat_costs.market if heat_costs is not None else 0.0
+    econ.XLCOH_MarketSocial.value = heat_costs.market_social if heat_costs is not None else 0.0
+    econ.XLCOC_Market.value = cooling_costs.market if cooling_costs is not None else 0.0
+    econ.XLCOC_MarketSocial.value = cooling_costs.market_social if cooling_costs is not None else 0.0
+    return extended_costs
 
 
 def calculate_xlcoe_outputs(econ: Economics, model: Model) -> tuple[float, float]:
