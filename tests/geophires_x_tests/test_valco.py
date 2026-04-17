@@ -173,6 +173,21 @@ class VALCOTestCase(BaseTestCase):
         self.assertAlmostEqual(0.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
         self.assertAlmostEqual(0.0, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
 
+    def test_valcoe_bicycle_enabled_with_zero_inputs_matches_lcoe(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/Example_XLCOE80.txt"),
+            additional_params={
+                "Do XLCO(E|H|C) Calculations": False,
+                "Do VALCO(E|H|C) Calculations": True,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(model.economics.LCOE.value, model.economics.VALCOE.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
+
     def test_valcoe_enabled_with_xlco_active_uses_xlco_market_as_base(self):
         model = self._new_model(
             input_file=self._get_test_file_path("../examples/example1.txt"),
@@ -220,6 +235,18 @@ class VALCOTestCase(BaseTestCase):
         self.assertAlmostEqual(0.0, model.economics.VALCOC_CapacityAdjustment.value, places=7)
         self.assertAlmostEqual(0.0, model.economics.VALCOC_FlexibilityAdjustment.value, places=7)
 
+    def test_valcoe_sam_path_matches_lcoe_with_zero_inputs(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/Fervo_Project_Cape-5.txt"),
+            additional_params={"Do VALCO(E|H|C) Calculations": True},
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(model.economics.LCOE.value, model.economics.VALCOE.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.0, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
+
     def test_valcoe_clgs_path_uses_lcoe_units_and_direct_adjustments(self):
         model = self._new_model(
             input_file=self._get_test_file_path(
@@ -236,6 +263,29 @@ class VALCOTestCase(BaseTestCase):
         self.assertEqual(model.economics.LCOE.CurrentUnits, model.economics.VALCOE.CurrentUnits)
         self.assertAlmostEqual(20.0, model.economics.VALCOE_CapacityAdjustment.value, places=7)
         self.assertAlmostEqual(model.economics.LCOE.value + 20.0, model.economics.VALCOE.value, places=7)
+
+    def test_valco_cogeneration_composes_on_xlco_market_for_both_commodities(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example13.txt"),
+            additional_params={
+                "Do XLCO(E|H|C) Calculations": True,
+                "XLCOE Avoided Emissions Intensity": 0.44,
+                "XLCO(E|H|C) Carbon Price": 35.0,
+                "XLCOE REC Price": 7.0,
+                "XLCOH Thermal REC": 4.0,
+                "Do VALCO(E|H|C) Calculations": True,
+                "VALCOE System Average Capacity Value": 0.75,
+                "VALCOE Technology Capacity Value": 0.25,
+                "VALCOH System Average Capacity Value": 0.60,
+                "VALCOH Technology Capacity Value": 0.10,
+            },
+            read_and_calculate=True,
+        )
+
+        self.assertAlmostEqual(0.5, model.economics.VALCOE_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(0.5, model.economics.VALCOH_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(model.economics.XLCOE_Market.value + 0.5, model.economics.VALCOE.value, places=7)
+        self.assertAlmostEqual(model.economics.XLCOH_Market.value + 0.5, model.economics.VALCOH.value, places=7)
 
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False

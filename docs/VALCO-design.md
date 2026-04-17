@@ -42,7 +42,8 @@ Current status:
 - Phase 3 complete
 - Phase 4 complete
 - Phase 5 complete
-- Phase 6 not started
+- Phase 6 complete
+- Phase 7 not started
 
 Phase 1 completion date:
 
@@ -61,6 +62,10 @@ Phase 4 completion date:
 - 2026-04-17
 
 Phase 5 completion date:
+
+- 2026-04-17
+
+Phase 6 completion date:
 
 - 2026-04-17
 
@@ -624,13 +629,8 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 6 should expand model-backed VALCO validation:
+Phase 7 should expose VALCO through the remaining external surfaces:
 
-- add broader electricity, heat, cooling, and cogeneration model-backed tests
-- add explicit composition tests where `VALCO` builds on `XLCO_Market`
-- add coverage across:
-  - `FCR`
-  - `STANDARDIZED_LEVELIZED_COST`
-  - `BICYCLE`
-  - `CLGS`
-  - `SAM_SINGLE_OWNER_PPA`
+- client parsing for `VALCOE`, `VALCOH`, and `VALCOC`
+- request/result schema updates for VALCO outputs
+- surface tests for client and schema layers
