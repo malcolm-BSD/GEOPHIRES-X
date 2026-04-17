@@ -46,7 +46,7 @@ Reservoir Stimulation Capital Cost, 0
 Exploration Capital Cost, 0
 Starting Electricity Sale Price, 0.15
 Ending Electricity Sale Price, 0.15
-Well Drilling and Completion Capital Cost, 8, Force this number to get to the right LCOE range for testing purposes
+Well Drilling and Completion Capital Cost, 2.25, Force this number to get to the right LCOE range for testing purposes
 
 
 # ***Extended Levelized Cost Parameters***
@@ -58,8 +58,8 @@ XLCO(E|H|C) Water Shadow Price,0.25, US$/m3
 XLCO(E|H|C) Operations Jobs Per MW,1.7
 XLCO(E|H|C) Construction Jobs Per Rig,37
 XLCO(E|H|C) Average Monthly Wage,4000, US$/work/month
-Idle Rig Discount Rate,0.05, %
-Social Discount Rate,0.05, %
+Idle Rig Discount Rate,0.05
+Social Discount Rate,0.05
 #specific parameters for XLCOE
 XLCOE REC Price, 7, US$/MWh
 XLCOE Avoided Emissions Intensity,0.44, TONNEPERMWH
