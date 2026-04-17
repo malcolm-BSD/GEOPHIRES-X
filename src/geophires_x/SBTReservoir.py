@@ -117,8 +117,9 @@ def generate_wireframe_model_ULOOP(lateral_endpoint_depth: float, number_of_late
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
-        ax.plot(xinj, yinj, zinj, 'b-o', linewidth=2)
-        ax.plot(xprod, yprod, zprod, 'r-o', linewidth=2)
+        # Matplotlib 3D plotting expects 1D coordinate vectors here.
+        ax.plot(np.ravel(xinj), np.ravel(yinj), np.ravel(zinj), 'b-o', linewidth=2)
+        ax.plot(np.ravel(xprod), np.ravel(yprod), np.ravel(zprod), 'r-o', linewidth=2)
         for i in range(number_of_laterals):
             ax.plot(xlat[:, i], ylat[:, i], zlat[:, i], 'k-o', linewidth=2)
         #ax.axis('equal') # Uncomment this line to set the plotted geometry to correct scale with equal axis unit spacing

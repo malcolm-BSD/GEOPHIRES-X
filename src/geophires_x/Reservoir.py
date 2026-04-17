@@ -71,6 +71,7 @@ class Reservoir:
             DefaultValue=3.0,
             Min=0.1,
             Max=15,
+            auto_raise_exception_on_invalid_read=True,
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,

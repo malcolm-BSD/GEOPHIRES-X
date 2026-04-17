@@ -1247,6 +1247,7 @@ class Economics:
                 min_bond_financing_start_year,
                 latest_allowed_bond_financing_start_year_index + 1,
                 1)),
+            auto_raise_exception_on_invalid_read=True,
             UnitType=Units.TIME,
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,

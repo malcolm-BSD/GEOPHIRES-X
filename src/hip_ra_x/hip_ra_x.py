@@ -817,6 +817,14 @@ class HIP_RA_X:
         # ---------------------------------------
         try:
             outputfile = "HIP.out" if len(sys.argv) <= 2 else sys.argv[2]
+            outputfile = str(outputfile)
+            if not outputfile or "::" in outputfile:
+                outputfile = "HIP.out"
+            try:
+                if Path(outputfile).is_dir():
+                    outputfile = "HIP.out"
+            except OSError:
+                outputfile = "HIP.out"
 
             def render_default(p: Parameter) -> str:
                 return f"{p.value:10.2f} {p.CurrentUnits.value}"
