@@ -39,13 +39,18 @@ Current status:
 
 - Phase 1 complete
 - Phase 2 complete
-- Phase 3 not started
+- Phase 3 complete
+- Phase 4 not started
 
 Phase 1 completion date:
 
 - 2026-04-17
 
 Phase 2 completion date:
+
+- 2026-04-17
+
+Phase 3 completion date:
 
 - 2026-04-17
 
@@ -609,9 +614,9 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 3 should add the public economics parameter surface for direct-input `VALCO(E|H|C)`:
+Phase 4 should add the public output surface for `VALCO(E|H|C)`:
 
-- `Do VALCO(E|H|C) Calculations`
-- `VALCO Calculation Mode`
-- direct-value input parameters for electricity, heat, and cooling
-- initial parameter-definition tests and schema exposure
+- `VALCOE`, `VALCOH`, `VALCOC`
+- component adjustment outputs for electricity, heat, and cooling
+- output definitions in `Economics.py`
+- text and rich output surfacing

@@ -10,6 +10,7 @@ from geophires_x.levelized_costs import COOLING_COMMODITY
 from geophires_x.levelized_costs import ELECTRICITY_COMMODITY
 from geophires_x.levelized_costs import HEAT_COMMODITY
 from geophires_x.Model import Model
+from geophires_x.Units import EnergyCostUnit
 from geophires_x.valco import ValueAdjustmentInputs
 from geophires_x.valco import assign_value_adjusted_levelized_cost_outputs
 from geophires_x.valco import build_default_value_adjustment_inputs
@@ -21,6 +22,34 @@ from tests.base_test_case import BaseTestCase
 
 
 class VALCOTestCase(BaseTestCase):
+    def test_valco_parameters_are_defined_with_expected_defaults_and_units(self):
+        model = self._new_model()
+
+        self.assertIn("Do VALCO(E|H|C) Calculations", model.economics.ParameterDict)
+        self.assertIn("VALCO Calculation Mode", model.economics.ParameterDict)
+        self.assertIn("VALCOE System Average Energy Value", model.economics.ParameterDict)
+        self.assertIn("VALCOE Technology Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOH System Average Capacity Value", model.economics.ParameterDict)
+        self.assertIn("VALCOH Technology Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOC System Average Energy Value", model.economics.ParameterDict)
+        self.assertIn("VALCOC Technology Flexibility Value", model.economics.ParameterDict)
+
+        self.assertFalse(model.economics.DoVALCOCalculations.value)
+        self.assertEqual("Direct", model.economics.VALCOCalculationMode.value)
+        self.assertEqual(0.0, model.economics.VALCOESystemAverageEnergyValue.value)
+        self.assertEqual(0.0, model.economics.VALCOETechnologyFlexibilityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOHSystemAverageCapacityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOHTechnologyFlexibilityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOCSystemAverageEnergyValue.value)
+        self.assertEqual(0.0, model.economics.VALCOCTechnologyFlexibilityValue.value)
+
+        self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.VALCOESystemAverageEnergyValue.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.CENTSSPERKWH, model.economics.VALCOETechnologyCapacityValue.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOHSystemAverageEnergyValue.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOHTechnologyFlexibilityValue.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOCSystemAverageCapacityValue.CurrentUnits)
+        self.assertEqual(EnergyCostUnit.DOLLARSPERMMBTU, model.economics.VALCOCTechnologyFlexibilityValue.CurrentUnits)
+
     def test_value_adjusted_cost_applies_component_deltas_to_active_base_cost(self):
         result = calculate_value_adjusted_cost(
             ValueAdjustmentInputs(

@@ -71,6 +71,14 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIn("XLCOC Thermal REC", req_schema["properties"])
         self.assertIn("XLCO(E|H|C) Water Shadow Price", req_schema["properties"])
         self.assertIn("Idle Rig Discount Rate", req_schema["properties"])
+        self.assertIn("Do VALCO(E|H|C) Calculations", req_schema["properties"])
+        self.assertIn("VALCO Calculation Mode", req_schema["properties"])
+        self.assertIn("VALCOE System Average Energy Value", req_schema["properties"])
+        self.assertIn("VALCOE Technology Capacity Value", req_schema["properties"])
+        self.assertIn("VALCOH System Average Flexibility Value", req_schema["properties"])
+        self.assertIn("VALCOH Technology Energy Value", req_schema["properties"])
+        self.assertIn("VALCOC System Average Capacity Value", req_schema["properties"])
+        self.assertIn("VALCOC Technology Flexibility Value", req_schema["properties"])
         self.assertIn(
             "Extended Electricity Breakeven Price (XLCOE Market)",
             result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],

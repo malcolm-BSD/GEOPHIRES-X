@@ -20,7 +20,7 @@ from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, WellDrillingCostCorrelation, EconomicModel, EndUseOptions, PlantType, \
     _WellDrillingCostCorrelationCitation
 from geophires_x.Parameter import intParameter, floatParameter, OutputParameter, ReadParameter, boolParameter, \
-    coerce_int_params_to_enum_values, listParameter, Parameter
+    coerce_int_params_to_enum_values, listParameter, Parameter, strParameter
 from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from geophires_x.Units import *
 from geophires_x.levelized_costs import calculate_levelized_cost_outputs
@@ -965,6 +965,220 @@ class Economics:
             Required=False,
             ErrMessage="assume default XLCOC displaced water use intensity (0.0 m3/MWh)",
             ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh."
+        )
+        self.DoVALCOCalculations = self.ParameterDict[self.DoVALCOCalculations.Name] = boolParameter(
+            "Do VALCO(E|H|C) Calculations",
+            DefaultValue=False,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default: no VALCO(E|H|C) calculations",
+            ToolTipText="Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations."
+        )
+        self.VALCOCalculationMode = self.ParameterDict[self.VALCOCalculationMode.Name] = strParameter(
+            "VALCO Calculation Mode",
+            DefaultValue="Direct",
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCO calculation mode (Direct)",
+            ToolTipText="VALCO calculation mode. Direct is the v1 supported mode."
+        )
+        self.VALCOESystemAverageEnergyValue = self.ParameterDict[self.VALCOESystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOE System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average energy value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average energy value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyEnergyValue = self.ParameterDict[self.VALCOETechnologyEnergyValue.Name] = floatParameter(
+            "VALCOE Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology energy value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology energy value used in VALCOE calculations."
+        )
+        self.VALCOESystemAverageCapacityValue = self.ParameterDict[self.VALCOESystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOE System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average capacity value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average capacity value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyCapacityValue = self.ParameterDict[self.VALCOETechnologyCapacityValue.Name] = floatParameter(
+            "VALCOE Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology capacity value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology capacity value used in VALCOE calculations."
+        )
+        self.VALCOESystemAverageFlexibilityValue = self.ParameterDict[self.VALCOESystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOE System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average flexibility value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyFlexibilityValue = self.ParameterDict[self.VALCOETechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOE Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology flexibility value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOE calculations."
+        )
+        self.VALCOHSystemAverageEnergyValue = self.ParameterDict[self.VALCOHSystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOH System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average energy value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyEnergyValue = self.ParameterDict[self.VALCOHTechnologyEnergyValue.Name] = floatParameter(
+            "VALCOH Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology energy value used in VALCOH calculations."
+        )
+        self.VALCOHSystemAverageCapacityValue = self.ParameterDict[self.VALCOHSystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOH System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average capacity value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyCapacityValue = self.ParameterDict[self.VALCOHTechnologyCapacityValue.Name] = floatParameter(
+            "VALCOH Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology capacity value used in VALCOH calculations."
+        )
+        self.VALCOHSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOHSystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOH System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyFlexibilityValue = self.ParameterDict[self.VALCOHTechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOH Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOH calculations."
+        )
+        self.VALCOCSystemAverageEnergyValue = self.ParameterDict[self.VALCOCSystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOC System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average energy value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyEnergyValue = self.ParameterDict[self.VALCOCTechnologyEnergyValue.Name] = floatParameter(
+            "VALCOC Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology energy value used in VALCOC calculations."
+        )
+        self.VALCOCSystemAverageCapacityValue = self.ParameterDict[self.VALCOCSystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOC System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average capacity value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyCapacityValue = self.ParameterDict[self.VALCOCTechnologyCapacityValue.Name] = floatParameter(
+            "VALCOC Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology capacity value used in VALCOC calculations."
+        )
+        self.VALCOCSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOCSystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOC System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyFlexibilityValue = self.ParameterDict[self.VALCOCTechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOC Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOC calculations."
         )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
