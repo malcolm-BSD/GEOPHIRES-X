@@ -20,12 +20,32 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class ExtendedCostResult:
+    """Public XLCO outputs for a single commodity.
+
+    Attributes:
+        market: Extended levelized cost after applying market-only benefits.
+        market_social: Extended levelized cost after applying both market and social benefits.
+    """
+
     market: float = 0.0
     market_social: float = 0.0
 
 
 @dataclass(frozen=True)
 class CommodityBenefitStreams:
+    """Explicit annual streams used to calculate an extended cost directly.
+
+    Attributes:
+        annual_output: Annual commodity output stream.
+        annual_baseline_costs_musd: Annual baseline cost stream in million USD.
+        annual_market_benefits_musd: Annual market-benefit stream in million USD.
+        annual_social_benefits_musd: Annual social-benefit stream in million USD.
+        market_discount_rate: Discount rate applied to the market numerator and denominator.
+        social_discount_rate: Discount rate applied to social-benefit streams.
+        public_price_factor: Unit scaling factor used to convert the internal discounted ratio to
+            public XLCO output units.
+    """
+
     annual_output: np.ndarray
     annual_baseline_costs_musd: np.ndarray
     annual_market_benefits_musd: np.ndarray
@@ -37,20 +57,57 @@ class CommodityBenefitStreams:
 
 @dataclass(frozen=True)
 class CommodityBenefitInputs:
+    """Discounted XLCO inputs derived from a model-backed levelized-cost basis.
+
+    Attributes:
+        basis: Shared baseline levelized-cost basis for the commodity.
+        discounted_market_benefits_musd: Discounted market benefits in million USD.
+        discounted_social_benefits_musd: Discounted social benefits in million USD.
+    """
+
     basis: LevelizedCostBasis
     discounted_market_benefits_musd: float
     discounted_social_benefits_musd: float
 
 
 def _discount_vector(rate: float, count: int, start: int = 0) -> np.ndarray:
+    """Return a discount vector for ``count`` periods starting at ``start``.
+
+    Args:
+        rate: Discount rate expressed as a decimal fraction.
+        count: Number of periods to generate.
+        start: Index offset applied to the first discounted period.
+
+    Returns:
+        A NumPy array of discount factors.
+    """
     return 1.0 / np.power(1.0 + rate, np.arange(start, start + count))
 
 
 def _to_float_array(values) -> np.ndarray:
+    """Convert an arbitrary sequence-like input to a float NumPy array.
+
+    Args:
+        values: Sequence or array-like values to normalize.
+
+    Returns:
+        A NumPy array with ``dtype=float``.
+    """
     return np.asarray(values, dtype=float)
 
 
 def calculate_extended_cost_from_explicit_streams(streams: CommodityBenefitStreams) -> ExtendedCostResult:
+    """Calculate XLCO results from explicit annual streams.
+
+    Args:
+        streams: Fully specified annual output, baseline-cost, and benefit streams.
+
+    Returns:
+        An :class:`ExtendedCostResult` containing market-only and market-plus-social XLCO values.
+
+    Raises:
+        ValueError: If the provided annual streams do not have matching lengths.
+    """
     annual_output = _to_float_array(streams.annual_output)
     annual_baseline_costs_musd = _to_float_array(streams.annual_baseline_costs_musd)
     annual_market_benefits_musd = _to_float_array(streams.annual_market_benefits_musd)
@@ -95,6 +152,14 @@ def calculate_extended_cost_from_explicit_streams(streams: CommodityBenefitStrea
 def calculate_extended_costs_from_explicit_streams(
     commodity_streams: dict[str, CommodityBenefitStreams]
 ) -> dict[str, ExtendedCostResult]:
+    """Calculate explicit-stream XLCO results for multiple commodities.
+
+    Args:
+        commodity_streams: Mapping of commodity name to explicit benefit streams.
+
+    Returns:
+        A mapping of commodity name to :class:`ExtendedCostResult`.
+    """
     return {
         commodity: calculate_extended_cost_from_explicit_streams(streams)
         for commodity, streams in commodity_streams.items()
@@ -102,6 +167,15 @@ def calculate_extended_costs_from_explicit_streams(
 
 
 def calculate_extended_cost_from_basis(inputs: CommodityBenefitInputs) -> ExtendedCostResult:
+    """Calculate XLCO results from a discounted baseline basis plus discounted benefits.
+
+    Args:
+        inputs: Discounted baseline basis and benefit totals for a single commodity.
+
+    Returns:
+        An :class:`ExtendedCostResult`. If the discounted output denominator is zero or negative,
+        both results are returned as ``0.0``.
+    """
     if inputs.basis.discounted_output <= 0.0:
         return ExtendedCostResult()
 
@@ -130,6 +204,19 @@ def calculate_xlcoe_from_explicit_streams(
     market_discount_rate: float,
     social_discount_rate: float,
 ) -> tuple[float, float, float]:
+    """Calculate ``LCOE``, ``XLCOE_Market``, and ``XLCOE_MarketSocial`` from explicit streams.
+
+    Args:
+        annual_baseline_costs_musd: Annual baseline cost stream in million USD.
+        annual_net_generation_kwh: Annual net electricity generation stream in kWh.
+        annual_market_benefits_musd: Annual market-benefit stream in million USD.
+        annual_social_benefits_musd: Annual social-benefit stream in million USD.
+        market_discount_rate: Market discount rate.
+        social_discount_rate: Social discount rate.
+
+    Returns:
+        A tuple of ``(lcoe, xlcoe_market, xlcoe_market_social)`` in ``cents/kWh``.
+    """
     streams = CommodityBenefitStreams(
         annual_output=_to_float_array(annual_net_generation_kwh),
         annual_baseline_costs_musd=_to_float_array(annual_baseline_costs_musd),
@@ -157,6 +244,15 @@ def calculate_xlcoe_from_explicit_streams(
 
 
 def _active_xlco_commodities(econ: Economics, model: Model) -> dict[str, LevelizedCostBasis]:
+    """Return the active commodity bases eligible for XLCO calculations.
+
+    Args:
+        econ: Economics object containing the current XLCO switch state.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        A dictionary of active commodity bases with positive discounted output denominators.
+    """
     if not econ.DoXLCOCalculations.value:
         return {}
 
@@ -174,6 +270,17 @@ def _discounted_operational_benefit_musd(
     discount_rate: float,
     start: int = 0,
 ) -> float:
+    """Discount an output-linked operational benefit stream to a single present-value total.
+
+    Args:
+        annual_output_kwh: Annual commodity output stream in kWh.
+        annual_benefit_usd_per_mwh: Benefit value per unit of annual output in USD/MWh.
+        discount_rate: Discount rate applied to the stream.
+        start: Period offset for the first discounted year.
+
+    Returns:
+        Discounted benefit total in million USD.
+    """
     annual_output_mwh = _to_float_array(annual_output_kwh) / 1_000.0
     annual_benefits_musd = annual_output_mwh * annual_benefit_usd_per_mwh / 1_000_000.0
     return float(np.sum(annual_benefits_musd * _discount_vector(discount_rate, len(annual_benefits_musd), start=start)))
@@ -185,16 +292,44 @@ def _discounted_constant_annual_benefit_musd(
     discount_rate: float,
     start: int = 0,
 ) -> float:
+    """Discount a constant annual benefit to present value.
+
+    Args:
+        annual_benefit_musd: Constant annual benefit in million USD.
+        periods: Number of years to apply the benefit.
+        discount_rate: Discount rate applied to the stream.
+        start: Period offset for the first discounted year.
+
+    Returns:
+        Discounted benefit total in million USD.
+    """
     if periods <= 0 or annual_benefit_musd == 0.0:
         return 0.0
     return float(np.sum(np.full(periods, annual_benefit_musd) * _discount_vector(discount_rate, periods, start=start)))
 
 
 def _shared_market_benefit_musd(econ: Economics) -> float:
+    """Return the shared idle-rig market benefit in million USD.
+
+    Args:
+        econ: Economics object containing drilling CAPEX and idle-rig discount settings.
+
+    Returns:
+        Shared market benefit in million USD before commodity allocation.
+    """
     return float(econ.Cwell.value) * float(econ.IdleRigDiscountRate.value)
 
 
 def _shared_social_benefit_musd(econ: Economics, model: Model) -> float:
+    """Return the shared construction-jobs social benefit in million USD.
+
+    Args:
+        econ: Economics object containing jobs and wage assumptions.
+        model: Full GEOPHIRES model providing well count and construction duration.
+
+    Returns:
+        Discounted shared construction-jobs benefit in million USD.
+    """
     construction_years = model.surfaceplant.construction_years.value
     total_wells = model.wellbores.nprod.value + model.wellbores.ninj.value
     if construction_years <= 0:
@@ -221,6 +356,17 @@ def _discounted_social_jobs_benefit_musd(
     econ: Economics,
     model: Model,
 ) -> float:
+    """Discount operations-jobs benefits tied to average commodity output.
+
+    Args:
+        average_output_mw: Average commodity output in MW-equivalent.
+        jobs_per_mw: Jobs-per-MW coefficient for the active commodity.
+        econ: Economics object containing multiplier and wage assumptions.
+        model: Full GEOPHIRES model containing plant lifetime and construction period.
+
+    Returns:
+        Discounted operations-jobs benefit in million USD.
+    """
     annual_jobs_usd = (
         average_output_mw
         * jobs_per_mw
@@ -237,6 +383,7 @@ def _discounted_social_jobs_benefit_musd(
 
 
 def _electricity_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
+    """Calculate discounted electricity-market benefits in million USD."""
     annual_benefit_usd_per_mwh = (
         float(econ.XLCOEAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
         + float(econ.XLCOERECPrice.value)
@@ -249,6 +396,7 @@ def _electricity_direct_market_benefit_musd(econ: Economics, model: Model) -> fl
 
 
 def _heat_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
+    """Calculate discounted heat-market benefits in million USD."""
     annual_benefit_usd_per_mwh = (
         float(econ.XLCOHAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
         + float(econ.XLCOHREC.value)
@@ -261,6 +409,7 @@ def _heat_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
 
 
 def _cooling_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
+    """Calculate discounted cooling-market benefits in million USD."""
     annual_benefit_usd_per_mwh = (
         float(econ.XLCOCAvoidedEmissionsIntensity.value) * float(econ.XLCOCarbonPrice.value)
         + float(econ.XLCOCREC.value)
@@ -273,7 +422,7 @@ def _cooling_direct_market_benefit_musd(econ: Economics, model: Model) -> float:
 
 
 def _electricity_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
-    plant_lifetime = model.surfaceplant.plant_lifetime.value
+    """Calculate discounted electricity-social benefits in million USD."""
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.NetkWhProduced.value,
         float(econ.XLCOEDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
@@ -291,6 +440,7 @@ def _electricity_direct_social_benefit_musd(econ: Economics, model: Model) -> fl
 
 
 def _heat_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
+    """Calculate discounted heat-social benefits in million USD."""
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.HeatkWhProduced.value,
         float(econ.XLCOHDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
@@ -308,6 +458,7 @@ def _heat_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
 
 
 def _cooling_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
+    """Calculate discounted cooling-social benefits in million USD."""
     water_benefit = _discounted_operational_benefit_musd(
         model.surfaceplant.cooling_kWh_Produced.value,
         float(econ.XLCOCDisplacedWaterUseIntensity.value) * float(econ.XLCOWaterShadowPrice.value),
@@ -325,6 +476,15 @@ def _cooling_direct_social_benefit_musd(econ: Economics, model: Model) -> float:
 
 
 def _build_commodity_benefit_inputs(econ: Economics, model: Model) -> dict[str, CommodityBenefitInputs]:
+    """Build discounted XLCO inputs for every active commodity.
+
+    Args:
+        econ: Economics object containing XLCO settings and project costs.
+        model: Full GEOPHIRES model with active commodity outputs.
+
+    Returns:
+        Per-commodity discounted inputs ready for XLCO calculation.
+    """
     active_bases = _active_xlco_commodities(econ, model)
     total_baseline_discounted_cost = float(
         sum(basis.baseline_discounted_cost_musd for basis in active_bases.values())
@@ -334,6 +494,8 @@ def _build_commodity_benefit_inputs(econ: Economics, model: Model) -> dict[str, 
     commodity_inputs: dict[str, CommodityBenefitInputs] = {}
 
     for commodity, basis in active_bases.items():
+        # Shared market and social benefits are allocated by baseline discounted-cost share so that
+        # mixed-output projects receive a stable, economically consistent split across commodities.
         cost_share = 0.0
         if total_baseline_discounted_cost > 0.0:
             cost_share = basis.baseline_discounted_cost_musd / total_baseline_discounted_cost
@@ -367,6 +529,15 @@ def _build_commodity_benefit_inputs(econ: Economics, model: Model) -> dict[str, 
 
 
 def calculate_extended_levelized_costs(econ: Economics, model: Model) -> dict[str, ExtendedCostResult]:
+    """Calculate XLCO results for all active commodities.
+
+    Args:
+        econ: Economics object containing XLCO settings and baseline economics.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of commodity name to :class:`ExtendedCostResult`.
+    """
     return {
         commodity: calculate_extended_cost_from_basis(inputs)
         for commodity, inputs in _build_commodity_benefit_inputs(econ, model).items()
@@ -374,6 +545,15 @@ def calculate_extended_levelized_costs(econ: Economics, model: Model) -> dict[st
 
 
 def assign_extended_levelized_cost_outputs(econ: Economics, model: Model) -> dict[str, ExtendedCostResult]:
+    """Calculate XLCO values and write them back to the economics output parameters.
+
+    Args:
+        econ: Economics object whose ``XLCO*`` output parameters will be updated.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        The same per-commodity XLCO mapping that was written back to ``econ``.
+    """
     extended_costs = calculate_extended_levelized_costs(econ, model)
     electricity_costs = extended_costs.get(ELECTRICITY_COMMODITY)
     heat_costs = extended_costs.get(HEAT_COMMODITY)
@@ -389,8 +569,15 @@ def assign_extended_levelized_cost_outputs(econ: Economics, model: Model) -> dic
 
 
 def calculate_xlcoe_outputs(econ: Economics, model: Model) -> tuple[float, float]:
-    """
-    Calculate current public XLCOE outputs via the generalized commodity-aware engine.
+    """Calculate electricity-only XLCO outputs from the generalized engine.
+
+    Args:
+        econ: Economics object containing XLCO settings.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Tuple of ``(xlcoe_market, xlcoe_market_social)``. If electricity is inactive, both values
+        are returned as ``0.0``.
     """
     electricity_result = calculate_extended_levelized_costs(econ, model).get(ELECTRICITY_COMMODITY)
     if electricity_result is None:
@@ -399,6 +586,16 @@ def calculate_xlcoe_outputs(econ: Economics, model: Model) -> tuple[float, float
 
 
 def calculate_xlcoh_outputs(econ: Economics, model: Model) -> tuple[float, float]:
+    """Calculate heat-only XLCO outputs from the generalized engine.
+
+    Args:
+        econ: Economics object containing XLCO settings.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Tuple of ``(xlcoh_market, xlcoh_market_social)``. If heat is inactive, both values are
+        returned as ``0.0``.
+    """
     heat_result = calculate_extended_levelized_costs(econ, model).get(HEAT_COMMODITY)
     if heat_result is None:
         return 0.0, 0.0
@@ -406,6 +603,16 @@ def calculate_xlcoh_outputs(econ: Economics, model: Model) -> tuple[float, float
 
 
 def calculate_xlcoc_outputs(econ: Economics, model: Model) -> tuple[float, float]:
+    """Calculate cooling-only XLCO outputs from the generalized engine.
+
+    Args:
+        econ: Economics object containing XLCO settings.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Tuple of ``(xlcoc_market, xlcoc_market_social)``. If cooling is inactive, both values are
+        returned as ``0.0``.
+    """
     cooling_result = calculate_extended_levelized_costs(econ, model).get(COOLING_COMMODITY)
     if cooling_result is None:
         return 0.0, 0.0

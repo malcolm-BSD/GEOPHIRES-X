@@ -27,6 +27,18 @@ _DOLLARS_PER_MWH_PRICE_FACTOR = 1.0e9
 
 @dataclass(frozen=True)
 class LevelizedCostBasis:
+    """Discounted cost/output basis for a single commodity.
+
+    Attributes:
+        commodity: Commodity identifier such as ``electricity``, ``heat``, or ``cooling``.
+        public_value: Baseline levelized cost in the commodity's current public output units.
+        baseline_discounted_cost_musd: Discounted lifecycle cost numerator in million USD.
+        discounted_output: Discounted lifecycle output denominator in the commodity's native
+            discounted-energy units.
+        public_price_factor: Scaling factor used to convert the internal discounted ratio into
+            the public levelized-cost units exposed by GEOPHIRES.
+    """
+
     commodity: str
     public_value: float
     baseline_discounted_cost_musd: float
@@ -40,6 +52,18 @@ def _build_basis(
     discounted_output: float,
     public_price_factor: float,
 ) -> LevelizedCostBasis:
+    """Build a normalized levelized-cost basis object.
+
+    Args:
+        commodity: Commodity identifier for the basis being created.
+        baseline_discounted_cost_musd: Discounted lifecycle cost numerator in million USD.
+        discounted_output: Discounted lifecycle commodity output denominator.
+        public_price_factor: Unit scaling factor that maps the internal discounted ratio to
+            the public output units.
+
+    Returns:
+        A populated :class:`LevelizedCostBasis`.
+    """
     public_value = 0.0
     if discounted_output > 0.0:
         public_value = baseline_discounted_cost_musd / discounted_output * public_price_factor
@@ -54,12 +78,36 @@ def _build_basis(
 
 
 def _output_price_factor(unit, default_factor: float) -> float:
+    """Return the public price scaling factor for the requested output unit.
+
+    Args:
+        unit: The current public output unit for the levelized-cost result.
+        default_factor: The default scaling factor for the commodity family.
+
+    Returns:
+        The scaling factor needed to express the result in the requested output units.
+    """
     if unit == EnergyCostUnit.DOLLARSPERMWH:
         return _DOLLARS_PER_MWH_PRICE_FACTOR
     return default_factor
 
 
 def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, LevelizedCostBasis]:
+    """Build discounted cost/output bases for all active commodities in the current model.
+
+    The resulting dictionary is the shared source of truth for baseline ``LCOE``, ``LCOH``,
+    ``LCOC``, ``XLCO*``, and ``VALCO*`` calculations. It mirrors the economic-model and
+    end-use branching already present in GEOPHIRES and normalizes every path to the same
+    discounted numerator/denominator representation.
+
+    Args:
+        econ: Economics object containing the current financial-model state and cost values.
+        model: Full GEOPHIRES model containing surface-plant outputs and option selections.
+
+    Returns:
+        A dictionary keyed by commodity name with one :class:`LevelizedCostBasis` per active
+        commodity.
+    """
     bases: dict[str, LevelizedCostBasis] = {}
 
     ccap_elec = econ.CCap.value * econ.CAPEX_heat_electricity_plant_ratio.value
@@ -68,6 +116,7 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
     coam_heat = econ.Coam.value * (1.0 - econ.CAPEX_heat_electricity_plant_ratio.value)
 
     def _capex_total_plus_construction_inflation() -> float:
+        """Return total CAPEX including construction-period inflation."""
         econ.inflation_cost_during_construction.value = quantity(
             econ.CCap.value * econ.inflrateconstruction.value,
             econ.CCap.CurrentUnits,
@@ -75,6 +124,7 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
         return econ.CCap.value + econ.inflation_cost_during_construction.value
 
     def _construction_inflation_cost_elec_heat() -> tuple[float, float]:
+        """Split construction inflation across electricity and heat cost allocations."""
         construction_inflation_cost_elec = ccap_elec * econ.inflrateconstruction.value
         construction_inflation_cost_heat = ccap_heat * econ.inflrateconstruction.value
         econ.inflation_cost_during_construction.value = quantity(
@@ -87,6 +137,8 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
     plant_type = model.surfaceplant.plant_type.value
 
     if econ.econmodel.value == EconomicModel.FCR:
+        # The fixed-charge-rate model keeps the numerator annualized, so each branch only needs
+        # the average annual commodity output that corresponds to its levelized denominator.
         capex_total_plus_infl = _capex_total_plus_construction_inflation()
 
         if enduse_option == EndUseOptions.ELECTRICITY:
@@ -157,6 +209,7 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             )
 
     elif econ.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
+        # The standardized levelized-cost model discounts annual cost and output streams explicitly.
         discount_vector = 1.0 / np.power(
             1 + econ.discountrate.value,
             np.linspace(0, model.surfaceplant.plant_lifetime.value - 1, model.surfaceplant.plant_lifetime.value),
@@ -267,6 +320,8 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             )
 
     elif econ.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA:
+        # SAM already returns a public LCOE. Reconstruct the discounted basis so downstream XLCO
+        # and VALCO calculations can operate on the same normalized representation as other models.
         lcoe = econ.sam_economics_calculations.lcoe_nominal.quantity().to(
             convertible_unit(econ.LCOE.CurrentUnits.value)
         ).magnitude
@@ -281,6 +336,8 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
         )
 
     elif econ.econmodel.value == EconomicModel.CLGS:
+        # The CLGS/AGS path stores annual arrays directly instead of using the standard GEOPHIRES
+        # discounted-stream fields, so we rebuild the discounted numerator and denominator here.
         discount_rate = getattr(econ, 'Discount_rate', econ.discountrate.value)
         plant_lifetime = getattr(model.surfaceplant, 'Lifetime', model.surfaceplant.plant_lifetime.value)
         discount_vector = 1.0 / np.power(1.0 + discount_rate, np.linspace(0, plant_lifetime - 1, plant_lifetime))
@@ -319,6 +376,9 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             )
 
     else:
+        # The remaining economic-model branch uses the tax-aware BICYCLE style formulation. The
+        # goal here is not to replicate each public LCO output formula separately, but to capture
+        # the discounted project-cost numerator that those formulas imply for each commodity.
         i_ave = econ.FIB.value * econ.BIR.value * (1 - econ.CTR.value) + (1 - econ.FIB.value) * econ.EIR.value
         crf = i_ave / (1 - np.power(1 + i_ave, -model.surfaceplant.plant_lifetime.value))
         inflation_vector = np.power(
@@ -464,6 +524,16 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
 
 
 def calculate_levelized_cost_outputs(econ: Economics, model: Model) -> tuple[float, float, float]:
+    """Calculate public ``LCOE``, ``LCOH``, and ``LCOC`` values from the shared basis helper.
+
+    Args:
+        econ: Economics object containing the active model state.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        A 3-tuple of ``(lcoe, lcoh, lcoc)`` in the same public units used by the current output
+        parameters. Missing commodities are returned as ``0.0``.
+    """
     bases = build_levelized_cost_bases(econ, model)
     return (
         bases.get(ELECTRICITY_COMMODITY, LevelizedCostBasis(ELECTRICITY_COMMODITY, 0.0, 0.0, 0.0, _ELECTRICITY_PRICE_FACTOR)).public_value,

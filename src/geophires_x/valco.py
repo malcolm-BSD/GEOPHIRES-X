@@ -19,6 +19,18 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class ValueAdjustmentInputs:
+    """Inputs required to calculate a single VALCO adjustment.
+
+    Attributes:
+        active_base_cost: Baseline public cost used as the starting point for VALCO.
+        system_energy_value: System-average energy-value term.
+        technology_energy_value: Technology-specific energy-value term.
+        system_capacity_value: System-average capacity-value term.
+        technology_capacity_value: Technology-specific capacity-value term.
+        system_flexibility_value: System-average flexibility-value term.
+        technology_flexibility_value: Technology-specific flexibility-value term.
+    """
+
     active_base_cost: float
     system_energy_value: float = 0.0
     technology_energy_value: float = 0.0
@@ -30,6 +42,16 @@ class ValueAdjustmentInputs:
 
 @dataclass(frozen=True)
 class ValueAdjustmentResult:
+    """Calculated VALCO result for a single commodity.
+
+    Attributes:
+        active_base_cost: Starting cost basis used for the calculation.
+        valco: Final value-adjusted levelized cost.
+        energy_adjustment: Net energy-value adjustment.
+        capacity_adjustment: Net capacity-value adjustment.
+        flexibility_adjustment: Net flexibility-value adjustment.
+    """
+
     active_base_cost: float = 0.0
     valco: float = 0.0
     energy_adjustment: float = 0.0
@@ -38,10 +60,27 @@ class ValueAdjustmentResult:
 
 
 def calculate_annual_mwh_per_kw_year(utilization_factor: float) -> float:
+    """Convert utilization factor to annual MWh per kW-year.
+
+    Args:
+        utilization_factor: Plant utilization factor expressed as a decimal fraction.
+
+    Returns:
+        Annual MWh produced per installed kW-year.
+    """
     return float(utilization_factor) * 8.76
 
 
 def convert_dollars_per_mwh_to_unit(value: float, target_unit) -> float:
+    """Convert a ``USD/MWh`` value into an active public energy-cost unit.
+
+    Args:
+        value: Value in ``USD/MWh``.
+        target_unit: Target public energy-cost unit enum.
+
+    Returns:
+        Converted value in the requested public units.
+    """
     return float(quantity(value, EnergyCostUnit.DOLLARSPERMWH.value).to(target_unit.value).magnitude)
 
 
@@ -51,6 +90,17 @@ def derive_technology_value_from_annualized_inputs(
     utilization_factor: float,
     target_unit,
 ) -> float:
+    """Derive a technology-specific value term from annualized ``USD/kW-year`` inputs.
+
+    Args:
+        basis_value_per_kw_year: Annualized basis value in ``USD/kW-year``.
+        multiplier: Commodity-specific credit or multiplier applied to the basis value.
+        utilization_factor: Utilization factor used to convert annualized capacity to annual output.
+        target_unit: Public output unit to convert the derived value into.
+
+    Returns:
+        Technology-specific value term in the requested public output units.
+    """
     annual_mwh_per_kw_year = calculate_annual_mwh_per_kw_year(utilization_factor)
     if annual_mwh_per_kw_year <= 0.0:
         return 0.0
@@ -65,6 +115,17 @@ def derive_valcoe_technology_capacity_value(
     utilization_factor: float,
     target_unit,
 ) -> float:
+    """Derive the electricity capacity-value term for VALCOE.
+
+    Args:
+        basis_capacity_value_per_kw_year: Basis capacity value in ``USD/kW-year``.
+        capacity_credit: Capacity-credit multiplier applied to the basis value.
+        utilization_factor: Utilization factor used for annualization.
+        target_unit: Public output unit to convert the derived value into.
+
+    Returns:
+        Technology capacity-value term in the requested public output units.
+    """
     return derive_technology_value_from_annualized_inputs(
         basis_value_per_kw_year=basis_capacity_value_per_kw_year,
         multiplier=capacity_credit,
@@ -79,6 +140,17 @@ def derive_valcoe_technology_flexibility_value(
     utilization_factor: float,
     target_unit,
 ) -> float:
+    """Derive the electricity flexibility-value term for VALCOE.
+
+    Args:
+        base_flexibility_value_per_kw_year: Base flexibility value in ``USD/kW-year``.
+        flexibility_multiplier: Multiplier applied to the base flexibility value.
+        utilization_factor: Utilization factor used for annualization.
+        target_unit: Public output unit to convert the derived value into.
+
+    Returns:
+        Technology flexibility-value term in the requested public output units.
+    """
     return derive_technology_value_from_annualized_inputs(
         basis_value_per_kw_year=base_flexibility_value_per_kw_year,
         multiplier=flexibility_multiplier,
@@ -88,6 +160,14 @@ def derive_valcoe_technology_flexibility_value(
 
 
 def calculate_value_adjusted_cost(inputs: ValueAdjustmentInputs) -> ValueAdjustmentResult:
+    """Calculate a value-adjusted levelized cost from already-normalized component inputs.
+
+    Args:
+        inputs: Active base cost and all system/technology value terms for a single commodity.
+
+    Returns:
+        A :class:`ValueAdjustmentResult` containing the net component adjustments and final VALCO.
+    """
     energy_adjustment = inputs.system_energy_value - inputs.technology_energy_value
     capacity_adjustment = inputs.system_capacity_value - inputs.technology_capacity_value
     flexibility_adjustment = inputs.system_flexibility_value - inputs.technology_flexibility_value
@@ -103,6 +183,14 @@ def calculate_value_adjusted_cost(inputs: ValueAdjustmentInputs) -> ValueAdjustm
 def calculate_value_adjusted_costs_from_inputs(
     commodity_inputs: dict[str, ValueAdjustmentInputs],
 ) -> dict[str, ValueAdjustmentResult]:
+    """Calculate VALCO results for multiple commodities from normalized inputs.
+
+    Args:
+        commodity_inputs: Mapping of commodity name to normalized value-adjustment inputs.
+
+    Returns:
+        Mapping of commodity name to :class:`ValueAdjustmentResult`.
+    """
     return {
         commodity: calculate_value_adjusted_cost(inputs)
         for commodity, inputs in commodity_inputs.items()
@@ -110,6 +198,15 @@ def calculate_value_adjusted_costs_from_inputs(
 
 
 def _direct_value_adjustment_inputs_from_parameters(econ: Economics, model: Model) -> dict[str, ValueAdjustmentInputs]:
+    """Build normalized direct-mode VALCO inputs from public economics parameters.
+
+    Args:
+        econ: Economics object containing public VALCO parameters.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to normalized direct-mode inputs.
+    """
     active_base_costs = select_active_valco_base_costs(econ, model)
     commodity_inputs: dict[str, ValueAdjustmentInputs] = {}
 
@@ -150,11 +247,25 @@ def _direct_value_adjustment_inputs_from_parameters(econ: Economics, model: Mode
 
 
 def _derived_value_adjustment_inputs_from_parameters(econ: Economics, model: Model) -> dict[str, ValueAdjustmentInputs]:
+    """Build normalized derived-mode VALCO inputs from public economics parameters.
+
+    Direct energy terms are still provided explicitly in this mode. Capacity and flexibility
+    technology terms are derived from annualized ``USD/kW-year`` inputs and utilization factor.
+
+    Args:
+        econ: Economics object containing public VALCO parameters.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to normalized derived-mode inputs.
+    """
     commodity_inputs = _direct_value_adjustment_inputs_from_parameters(econ, model)
     active_base_costs = select_active_valco_base_costs(econ, model)
     utilization_factor = float(model.surfaceplant.utilization_factor.value)
 
     if ELECTRICITY_COMMODITY in active_base_costs:
+        # Electricity keeps its source-grounded helper names, but the underlying annualized
+        # derivation is shared with heat and cooling to keep the mode behavior consistent.
         direct_inputs = commodity_inputs.get(ELECTRICITY_COMMODITY)
         if direct_inputs is not None:
             electricity_units = getattr(getattr(econ, "LCOE", None), "CurrentUnits", EnergyCostUnit.CENTSSPERKWH)
@@ -179,6 +290,8 @@ def _derived_value_adjustment_inputs_from_parameters(econ: Economics, model: Mod
             )
 
     if HEAT_COMMODITY in active_base_costs:
+        # Heat derived mode is an explicit GEOPHIRES extension that reuses the same annualized
+        # capacity/flexibility structure without claiming a source-paper thermal market model.
         direct_inputs = commodity_inputs.get(HEAT_COMMODITY)
         if direct_inputs is not None:
             heat_units = getattr(getattr(econ, "LCOH", None), "CurrentUnits", getattr(getattr(econ, "VALCOH", None), "CurrentUnits", None))
@@ -203,6 +316,8 @@ def _derived_value_adjustment_inputs_from_parameters(econ: Economics, model: Mod
             )
 
     if COOLING_COMMODITY in active_base_costs:
+        # Cooling follows the same extension pattern as heat: direct energy terms plus derived
+        # annualized capacity and flexibility terms in the active public output units.
         direct_inputs = commodity_inputs.get(COOLING_COMMODITY)
         if direct_inputs is not None:
             cooling_units = getattr(getattr(econ, "LCOC", None), "CurrentUnits", getattr(getattr(econ, "VALCOC", None), "CurrentUnits", None))
@@ -230,6 +345,15 @@ def _derived_value_adjustment_inputs_from_parameters(econ: Economics, model: Mod
 
 
 def _xlco_market_output_for_commodity(econ: Economics, commodity: str):
+    """Return the XLCO market output parameter for a commodity, if present.
+
+    Args:
+        econ: Economics object containing XLCO outputs.
+        commodity: Commodity identifier.
+
+    Returns:
+        The matching XLCO market output parameter object, or ``None`` if unavailable.
+    """
     if commodity == ELECTRICITY_COMMODITY:
         return getattr(econ, "XLCOE_Market", None)
     if commodity == HEAT_COMMODITY:
@@ -240,6 +364,18 @@ def _xlco_market_output_for_commodity(econ: Economics, commodity: str):
 
 
 def select_active_valco_base_costs(econ: Economics, model: Model) -> dict[str, float]:
+    """Select the active baseline cost used by VALCO for each commodity.
+
+    When XLCO is active for a commodity, the base is ``XLCO*_Market``. Otherwise the base is the
+    standard public ``LCO*`` output reconstructed from the shared levelized-cost basis helper.
+
+    Args:
+        econ: Economics object containing baseline and XLCO outputs.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to public baseline cost.
+    """
     bases = build_levelized_cost_bases(econ, model)
     use_xlco = bool(getattr(getattr(econ, "DoXLCOCalculations", None), "value", False))
     active_base_costs: dict[str, float] = {}
@@ -258,10 +394,30 @@ def select_active_valco_base_costs(econ: Economics, model: Model) -> dict[str, f
 
 
 def _empty_value_adjustment_result(base_cost: float = 0.0) -> ValueAdjustmentResult:
+    """Return a zero-adjustment VALCO result.
+
+    Args:
+        base_cost: Base cost to preserve in the result.
+
+    Returns:
+        A zero-adjustment :class:`ValueAdjustmentResult`.
+    """
     return ValueAdjustmentResult(active_base_cost=base_cost, valco=base_cost)
 
 
 def calculate_value_adjusted_levelized_costs(econ: Economics, model: Model) -> dict[str, ValueAdjustmentResult]:
+    """Calculate VALCO results for all active commodities in the current model.
+
+    Args:
+        econ: Economics object containing VALCO parameters and baseline outputs.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to :class:`ValueAdjustmentResult`.
+
+    Raises:
+        NotImplementedError: If ``VALCO Calculation Mode`` is not one of the supported modes.
+    """
     if not bool(getattr(getattr(econ, "DoVALCOCalculations", None), "value", False)):
         return {}
 
@@ -277,6 +433,15 @@ def assign_value_adjusted_levelized_cost_outputs(
     econ: Economics,
     commodity_results: dict[str, ValueAdjustmentResult],
 ) -> dict[str, ValueAdjustmentResult]:
+    """Write calculated VALCO values back to the economics output parameters.
+
+    Args:
+        econ: Economics object whose ``VALCO*`` output parameters will be updated.
+        commodity_results: Mapping of commodity name to calculated VALCO results.
+
+    Returns:
+        The same ``commodity_results`` mapping after write-back.
+    """
     electricity_result = commodity_results.get(ELECTRICITY_COMMODITY, _empty_value_adjustment_result())
     heat_result = commodity_results.get(HEAT_COMMODITY, _empty_value_adjustment_result())
     cooling_result = commodity_results.get(COOLING_COMMODITY, _empty_value_adjustment_result())
@@ -285,6 +450,8 @@ def assign_value_adjusted_levelized_cost_outputs(
     cooling_units = getattr(getattr(econ, "LCOC", None), "CurrentUnits", getattr(getattr(econ, "VALCOC", None), "CurrentUnits", None))
 
     if hasattr(econ, "VALCOE"):
+        # Each output is written in the same public units as its paired baseline LCO output so the
+        # reported adjustments remain directly comparable in text output, client parsing, and schema use.
         if electricity_units is not None:
             econ.VALCOE.CurrentUnits = electricity_units
         econ.VALCOE.value = electricity_result.valco
@@ -339,6 +506,15 @@ def assign_value_adjusted_levelized_cost_outputs(
 
 
 def build_default_value_adjustment_inputs(econ: Economics, model: Model) -> dict[str, ValueAdjustmentInputs]:
+    """Build zero-adjustment VALCO inputs anchored to the active baseline costs.
+
+    Args:
+        econ: Economics object containing baseline and optional XLCO outputs.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to zero-adjustment :class:`ValueAdjustmentInputs`.
+    """
     return {
         commodity: ValueAdjustmentInputs(active_base_cost=base_cost)
         for commodity, base_cost in select_active_valco_base_costs(econ, model).items()
@@ -349,4 +525,13 @@ def calculate_and_assign_value_adjusted_levelized_cost_outputs(
     econ: Economics,
     model: Model,
 ) -> dict[str, ValueAdjustmentResult]:
+    """Calculate VALCO results and immediately write them back to economics outputs.
+
+    Args:
+        econ: Economics object whose VALCO outputs should be populated.
+        model: Full GEOPHIRES model for the current run.
+
+    Returns:
+        Mapping of active commodity name to :class:`ValueAdjustmentResult`.
+    """
     return assign_value_adjusted_levelized_cost_outputs(econ, calculate_value_adjusted_levelized_costs(econ, model))
