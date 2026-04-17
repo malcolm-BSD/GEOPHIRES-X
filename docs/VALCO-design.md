@@ -46,7 +46,7 @@ Current status:
 - Phase 7 complete
 - Phase 8 complete
 - Phase 9 complete
-- Phase 10 not started
+- Phase 10 complete
 
 Phase 1 completion date:
 
@@ -81,6 +81,10 @@ Phase 8 completion date:
 - 2026-04-17
 
 Phase 9 completion date:
+
+- 2026-04-17
+
+Phase 10 completion date:
 
 - 2026-04-17
 
@@ -569,8 +573,9 @@ Recommended v1 example philosophy:
 
 ### Phase 10: Advanced Extensions
 
-- evaluate whether heat and cooling should also get derived-mode support
-- evaluate future interaction with hourly or segment-based dispatch models
+- add heat and cooling derived-mode support using the same annualized capacity/flexibility structure
+- keep electricity, heat, and cooling energy value derivation on direct inputs for now
+- document explicit-series or dispatch-like value modeling as a later follow-on, not part of the v1/v2 internal implementation
 
 ## Recommended Implementation Order
 
@@ -644,8 +649,10 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 10 should evaluate the next extension boundary:
+The planned implementation phases are complete.
 
-- whether `VALCOH` and `VALCOC` should gain derived-mode analogs
-- whether electricity energy-value derivation should support explicit time-series or segmented inputs
-- how far GEOPHIRES should go toward dispatch-like value modeling without duplicating the external market model
+The next sensible follow-on options are:
+
+- add explicit electricity energy-value derivation from segmented or time-series inputs
+- decide whether heat and cooling need analogous energy-value derivation paths
+- decide whether to expose diagnostic outputs showing which value components were direct versus derived

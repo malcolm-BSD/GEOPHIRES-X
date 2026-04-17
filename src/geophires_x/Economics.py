@@ -1152,6 +1152,43 @@ class Economics:
             ErrMessage="assume default VALCOH technology flexibility value (0.0 $/MMBTU)",
             ToolTipText="Direct-input technology flexibility value used in VALCOH calculations."
         )
+        self.VALCOHBasisCapacityValue = self.ParameterDict[self.VALCOHBasisCapacityValue.Name] = floatParameter(
+            "VALCOH Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr."
+        )
+        self.VALCOHCapacityCredit = self.ParameterDict[self.VALCOHCapacityCredit.Name] = floatParameter(
+            "VALCOH Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH capacity credit (0.0)",
+            ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value."
+        )
+        self.VALCOHBaseFlexibilityValue = self.ParameterDict[self.VALCOHBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOH Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOHFlexibilityMultiplier = self.ParameterDict[self.VALCOHFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOH Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value."
+        )
         self.VALCOCSystemAverageEnergyValue = self.ParameterDict[self.VALCOCSystemAverageEnergyValue.Name] = floatParameter(
             "VALCOC System Average Energy Value",
             DefaultValue=0.0,
@@ -1217,6 +1254,43 @@ class Economics:
             Required=False,
             ErrMessage="assume default VALCOC technology flexibility value (0.0 $/MMBTU)",
             ToolTipText="Direct-input technology flexibility value used in VALCOC calculations."
+        )
+        self.VALCOCBasisCapacityValue = self.ParameterDict[self.VALCOCBasisCapacityValue.Name] = floatParameter(
+            "VALCOC Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr."
+        )
+        self.VALCOCCapacityCredit = self.ParameterDict[self.VALCOCCapacityCredit.Name] = floatParameter(
+            "VALCOC Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC capacity credit (0.0)",
+            ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value."
+        )
+        self.VALCOCBaseFlexibilityValue = self.ParameterDict[self.VALCOCBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOC Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOCFlexibilityMultiplier = self.ParameterDict[self.VALCOCFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOC Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value."
         )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "

@@ -81,8 +81,16 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIn("VALCOE Flexibility Multiplier", req_schema["properties"])
         self.assertIn("VALCOH System Average Flexibility Value", req_schema["properties"])
         self.assertIn("VALCOH Technology Energy Value", req_schema["properties"])
+        self.assertIn("VALCOH Basis Capacity Value", req_schema["properties"])
+        self.assertIn("VALCOH Capacity Credit", req_schema["properties"])
+        self.assertIn("VALCOH Base Flexibility Value", req_schema["properties"])
+        self.assertIn("VALCOH Flexibility Multiplier", req_schema["properties"])
         self.assertIn("VALCOC System Average Capacity Value", req_schema["properties"])
         self.assertIn("VALCOC Technology Flexibility Value", req_schema["properties"])
+        self.assertIn("VALCOC Basis Capacity Value", req_schema["properties"])
+        self.assertIn("VALCOC Capacity Credit", req_schema["properties"])
+        self.assertIn("VALCOC Base Flexibility Value", req_schema["properties"])
+        self.assertIn("VALCOC Flexibility Multiplier", req_schema["properties"])
         self.assertIn(
             "Extended Electricity Breakeven Price (XLCOE Market)",
             result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],

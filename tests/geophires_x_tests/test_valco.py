@@ -18,6 +18,7 @@ from geophires_x.valco import build_default_value_adjustment_inputs
 from geophires_x.valco import calculate_annual_mwh_per_kw_year
 from geophires_x.valco import calculate_value_adjusted_cost
 from geophires_x.valco import calculate_value_adjusted_costs_from_inputs
+from geophires_x.valco import derive_technology_value_from_annualized_inputs
 from geophires_x.valco import derive_valcoe_technology_capacity_value
 from geophires_x.valco import derive_valcoe_technology_flexibility_value
 from geophires_x.valco import select_active_valco_base_costs
@@ -39,8 +40,16 @@ class VALCOTestCase(BaseTestCase):
         self.assertIn("VALCOE Flexibility Multiplier", model.economics.ParameterDict)
         self.assertIn("VALCOH System Average Capacity Value", model.economics.ParameterDict)
         self.assertIn("VALCOH Technology Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOH Basis Capacity Value", model.economics.ParameterDict)
+        self.assertIn("VALCOH Capacity Credit", model.economics.ParameterDict)
+        self.assertIn("VALCOH Base Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOH Flexibility Multiplier", model.economics.ParameterDict)
         self.assertIn("VALCOC System Average Energy Value", model.economics.ParameterDict)
         self.assertIn("VALCOC Technology Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOC Basis Capacity Value", model.economics.ParameterDict)
+        self.assertIn("VALCOC Capacity Credit", model.economics.ParameterDict)
+        self.assertIn("VALCOC Base Flexibility Value", model.economics.ParameterDict)
+        self.assertIn("VALCOC Flexibility Multiplier", model.economics.ParameterDict)
 
         self.assertFalse(model.economics.DoVALCOCalculations.value)
         self.assertEqual("Direct", model.economics.VALCOCalculationMode.value)
@@ -48,6 +57,14 @@ class VALCOTestCase(BaseTestCase):
         self.assertEqual(0.0, model.economics.VALCOECapacityCredit.value)
         self.assertEqual(0.0, model.economics.VALCOEBaseFlexibilityValue.value)
         self.assertEqual(0.0, model.economics.VALCOEFlexibilityMultiplier.value)
+        self.assertEqual(0.0, model.economics.VALCOHBasisCapacityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOHCapacityCredit.value)
+        self.assertEqual(0.0, model.economics.VALCOHBaseFlexibilityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOHFlexibilityMultiplier.value)
+        self.assertEqual(0.0, model.economics.VALCOCBasisCapacityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOCCapacityCredit.value)
+        self.assertEqual(0.0, model.economics.VALCOCBaseFlexibilityValue.value)
+        self.assertEqual(0.0, model.economics.VALCOCFlexibilityMultiplier.value)
         self.assertEqual(0.0, model.economics.VALCOESystemAverageEnergyValue.value)
         self.assertEqual(0.0, model.economics.VALCOETechnologyFlexibilityValue.value)
         self.assertEqual(0.0, model.economics.VALCOHSystemAverageCapacityValue.value)
@@ -105,6 +122,16 @@ class VALCOTestCase(BaseTestCase):
 
     def test_derived_valcoe_helpers_convert_annualized_values_to_active_units(self):
         self.assertAlmostEqual(4.38, calculate_annual_mwh_per_kw_year(0.5), places=7)
+        self.assertAlmostEqual(
+            100.0 / 4.38 / 3.412141633,
+            derive_technology_value_from_annualized_inputs(
+                basis_value_per_kw_year=100.0,
+                multiplier=1.0,
+                utilization_factor=0.5,
+                target_unit=EnergyCostUnit.DOLLARSPERMMBTU,
+            ),
+            places=5,
+        )
         self.assertAlmostEqual(
             (0.5 * 100.0 / 4.38) / 10.0,
             derive_valcoe_technology_capacity_value(
@@ -423,6 +450,94 @@ class VALCOTestCase(BaseTestCase):
 
         self.assertAlmostEqual(0.5, model.economics.VALCOE_CapacityAdjustment.value, places=7)
         self.assertAlmostEqual(0.2, model.economics.VALCOE_FlexibilityAdjustment.value, places=7)
+
+    def test_valcoh_derived_mode_uses_derived_capacity_and_flexibility_inputs(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example2.txt"),
+            additional_params={
+                "Do VALCO(E|H|C) Calculations": True,
+                "VALCO Calculation Mode": "Derived",
+                "VALCOH System Average Energy Value": 6.0,
+                "VALCOH Technology Energy Value": 5.0,
+                "VALCOH System Average Capacity Value": 1.0,
+                "VALCOH System Average Flexibility Value": 0.5,
+                "VALCOH Basis Capacity Value": 90.0,
+                "VALCOH Capacity Credit": 0.5,
+                "VALCOH Base Flexibility Value": 45.0,
+                "VALCOH Flexibility Multiplier": 0.25,
+            },
+            read_and_calculate=True,
+        )
+
+        expected_capacity_value = derive_technology_value_from_annualized_inputs(
+            basis_value_per_kw_year=90.0,
+            multiplier=0.5,
+            utilization_factor=model.surfaceplant.utilization_factor.value,
+            target_unit=model.economics.LCOH.CurrentUnits,
+        )
+        expected_flexibility_value = derive_technology_value_from_annualized_inputs(
+            basis_value_per_kw_year=45.0,
+            multiplier=0.25,
+            utilization_factor=model.surfaceplant.utilization_factor.value,
+            target_unit=model.economics.LCOH.CurrentUnits,
+        )
+
+        self.assertAlmostEqual(1.0, model.economics.VALCOH_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(1.0 - expected_capacity_value, model.economics.VALCOH_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(
+            0.5 - expected_flexibility_value,
+            model.economics.VALCOH_FlexibilityAdjustment.value,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            model.economics.LCOH.value + 1.0 + (1.0 - expected_capacity_value) + (0.5 - expected_flexibility_value),
+            model.economics.VALCOH.value,
+            places=7,
+        )
+
+    def test_valcoc_derived_mode_uses_derived_capacity_and_flexibility_inputs(self):
+        model = self._new_model(
+            input_file=self._get_test_file_path("../examples/example11_AC.txt"),
+            additional_params={
+                "Do VALCO(E|H|C) Calculations": True,
+                "VALCO Calculation Mode": "Derived",
+                "VALCOC System Average Energy Value": 8.0,
+                "VALCOC Technology Energy Value": 7.0,
+                "VALCOC System Average Capacity Value": 0.6,
+                "VALCOC System Average Flexibility Value": 0.4,
+                "VALCOC Basis Capacity Value": 120.0,
+                "VALCOC Capacity Credit": 0.5,
+                "VALCOC Base Flexibility Value": 80.0,
+                "VALCOC Flexibility Multiplier": 0.25,
+            },
+            read_and_calculate=True,
+        )
+
+        expected_capacity_value = derive_technology_value_from_annualized_inputs(
+            basis_value_per_kw_year=120.0,
+            multiplier=0.5,
+            utilization_factor=model.surfaceplant.utilization_factor.value,
+            target_unit=model.economics.LCOC.CurrentUnits,
+        )
+        expected_flexibility_value = derive_technology_value_from_annualized_inputs(
+            basis_value_per_kw_year=80.0,
+            multiplier=0.25,
+            utilization_factor=model.surfaceplant.utilization_factor.value,
+            target_unit=model.economics.LCOC.CurrentUnits,
+        )
+
+        self.assertAlmostEqual(1.0, model.economics.VALCOC_EnergyAdjustment.value, places=7)
+        self.assertAlmostEqual(0.6 - expected_capacity_value, model.economics.VALCOC_CapacityAdjustment.value, places=7)
+        self.assertAlmostEqual(
+            0.4 - expected_flexibility_value,
+            model.economics.VALCOC_FlexibilityAdjustment.value,
+            places=7,
+        )
+        self.assertAlmostEqual(
+            model.economics.LCOC.value + 1.0 + (0.6 - expected_capacity_value) + (0.4 - expected_flexibility_value),
+            model.economics.VALCOC.value,
+            places=7,
+        )
 
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False
