@@ -33,6 +33,17 @@ Per the IEA formulation, that value has three components:
 - capacity value
 - flexibility value
 
+## Status
+
+Current status:
+
+- Phase 1 complete
+- Phase 2 not started
+
+Phase 1 completion date:
+
+- 2026-04-17
+
 ## Relationship To XLCO
 
 `VALCO` should follow the `XLCO` implementation pattern operationally, but not algebraically.
@@ -386,7 +397,7 @@ flexibility interpretations with thermal analogues.
 
 ## Design Decisions
 
-These should be fixed before implementation:
+These decisions are now locked for implementation:
 
 1. `VALCO` uses `XLCO*_Market` as its cost base whenever `XLCO` is active for the same commodity
 2. `VALCO` has one primary output per commodity, not market/social variants
@@ -554,40 +565,49 @@ My recommendation:
 
 ## Phase 1 Checklist
 
-Before implementation starts, Phase 1 should be considered complete only when all of the following are explicitly
-checked off:
+Phase 1 is complete. The following design-lock items are accepted:
 
-- confirm naming:
+- `[x]` naming:
   - `Do VALCO(E|H|C) Calculations`
   - `VALCO Calculation Mode`
   - `VALCOE`, `VALCOH`, `VALCOC`
-- confirm composition rule:
+- `[x]` composition rule:
   - `VALCO` uses `LCO*` when `XLCO` is off
   - `VALCO` uses `XLCO*_Market` when `XLCO` is on
   - `VALCO` never uses `XLCO*_MarketSocial` as its base
-- confirm v1 scope:
+- `[x]` v1 scope:
   - direct-value input mode only
   - no hourly market simulation in v1
   - no network integration costs in v1
-- confirm transparency scope:
+- `[x]` transparency scope:
   - component adjustments are exposed as outputs
   - final `VALCO*` outputs share baseline public units
-- confirm commodity scope:
+- `[x]` commodity scope:
   - `VALCOE` is source-grounded
   - `VALCOH` and `VALCOC` are GEOPHIRES extensions by analogy
-- confirm model scope:
+- `[x]` model scope:
   - `FCR`
   - `STANDARDIZED_LEVELIZED_COST`
   - `BICYCLE`
   - `CLGS`
   - `SAM_SINGLE_OWNER_PPA`
-- confirm testing scope:
+- `[x]` testing scope:
   - algebra tests
   - composition tests with and without `XLCO`
   - commodity tests
   - multi-economic-model tests
-- confirm output-surface scope:
+- `[x]` output-surface scope:
   - text outputs
   - rich outputs
   - client parsing
   - schema generation
+
+## Immediate Next Step
+
+Phase 2 should start with the core `valco.py` module and the minimum commodity-aware dataclasses and helper functions:
+
+- `ValueAdjustmentInputs`
+- `ValueAdjustmentResult`
+- active-base-cost selection from `LCO*` vs `XLCO*_Market`
+- direct-input `VALCOE/H/C` calculation helpers
+- shared output-assignment helper for all economics subclasses
