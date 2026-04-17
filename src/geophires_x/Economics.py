@@ -1049,6 +1049,43 @@ class Economics:
             ErrMessage="assume default VALCOE technology flexibility value (0.0 cents/kWh)",
             ToolTipText="Direct-input technology flexibility value used in VALCOE calculations."
         )
+        self.VALCOEBasisCapacityValue = self.ParameterDict[self.VALCOEBasisCapacityValue.Name] = floatParameter(
+            "VALCOE Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr."
+        )
+        self.VALCOECapacityCredit = self.ParameterDict[self.VALCOECapacityCredit.Name] = floatParameter(
+            "VALCOE Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE capacity credit (0.0)",
+            ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value."
+        )
+        self.VALCOEBaseFlexibilityValue = self.ParameterDict[self.VALCOEBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOE Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOEFlexibilityMultiplier = self.ParameterDict[self.VALCOEFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOE Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value."
+        )
         self.VALCOHSystemAverageEnergyValue = self.ParameterDict[self.VALCOHSystemAverageEnergyValue.Name] = floatParameter(
             "VALCOH System Average Energy Value",
             DefaultValue=0.0,

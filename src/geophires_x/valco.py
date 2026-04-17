@@ -3,13 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.levelized_costs import (
     COOLING_COMMODITY,
     ELECTRICITY_COMMODITY,
     HEAT_COMMODITY,
-    LevelizedCostBasis,
     build_levelized_cost_bases,
 )
+from geophires_x.Units import EnergyCostUnit
 
 if TYPE_CHECKING:
     from geophires_x.Economics import Economics
@@ -34,6 +35,42 @@ class ValueAdjustmentResult:
     energy_adjustment: float = 0.0
     capacity_adjustment: float = 0.0
     flexibility_adjustment: float = 0.0
+
+
+def calculate_annual_mwh_per_kw_year(utilization_factor: float) -> float:
+    return float(utilization_factor) * 8.76
+
+
+def convert_dollars_per_mwh_to_electricity_unit(value: float, target_unit) -> float:
+    return float(quantity(value, EnergyCostUnit.DOLLARSPERMWH.value).to(target_unit.value).magnitude)
+
+
+def derive_valcoe_technology_capacity_value(
+    basis_capacity_value_per_kw_year: float,
+    capacity_credit: float,
+    utilization_factor: float,
+    target_unit,
+) -> float:
+    annual_mwh_per_kw_year = calculate_annual_mwh_per_kw_year(utilization_factor)
+    if annual_mwh_per_kw_year <= 0.0:
+        return 0.0
+
+    dollars_per_mwh = float(capacity_credit) * float(basis_capacity_value_per_kw_year) / annual_mwh_per_kw_year
+    return convert_dollars_per_mwh_to_electricity_unit(dollars_per_mwh, target_unit)
+
+
+def derive_valcoe_technology_flexibility_value(
+    base_flexibility_value_per_kw_year: float,
+    flexibility_multiplier: float,
+    utilization_factor: float,
+    target_unit,
+) -> float:
+    annual_mwh_per_kw_year = calculate_annual_mwh_per_kw_year(utilization_factor)
+    if annual_mwh_per_kw_year <= 0.0:
+        return 0.0
+
+    dollars_per_mwh = float(flexibility_multiplier) * float(base_flexibility_value_per_kw_year) / annual_mwh_per_kw_year
+    return convert_dollars_per_mwh_to_electricity_unit(dollars_per_mwh, target_unit)
 
 
 def calculate_value_adjusted_cost(inputs: ValueAdjustmentInputs) -> ValueAdjustmentResult:
@@ -98,6 +135,41 @@ def _direct_value_adjustment_inputs_from_parameters(econ: Economics, model: Mode
     return commodity_inputs
 
 
+def _derived_value_adjustment_inputs_from_parameters(econ: Economics, model: Model) -> dict[str, ValueAdjustmentInputs]:
+    commodity_inputs = _direct_value_adjustment_inputs_from_parameters(econ, model)
+    active_base_costs = select_active_valco_base_costs(econ, model)
+
+    if ELECTRICITY_COMMODITY not in active_base_costs:
+        return commodity_inputs
+
+    direct_inputs = commodity_inputs.get(ELECTRICITY_COMMODITY)
+    if direct_inputs is None:
+        return commodity_inputs
+
+    electricity_units = getattr(getattr(econ, "LCOE", None), "CurrentUnits", EnergyCostUnit.CENTSSPERKWH)
+    utilization_factor = float(model.surfaceplant.utilization_factor.value)
+    commodity_inputs[ELECTRICITY_COMMODITY] = ValueAdjustmentInputs(
+        active_base_cost=direct_inputs.active_base_cost,
+        system_energy_value=direct_inputs.system_energy_value,
+        technology_energy_value=direct_inputs.technology_energy_value,
+        system_capacity_value=direct_inputs.system_capacity_value,
+        technology_capacity_value=derive_valcoe_technology_capacity_value(
+            basis_capacity_value_per_kw_year=float(econ.VALCOEBasisCapacityValue.value),
+            capacity_credit=float(econ.VALCOECapacityCredit.value),
+            utilization_factor=utilization_factor,
+            target_unit=electricity_units,
+        ),
+        system_flexibility_value=direct_inputs.system_flexibility_value,
+        technology_flexibility_value=derive_valcoe_technology_flexibility_value(
+            base_flexibility_value_per_kw_year=float(econ.VALCOEBaseFlexibilityValue.value),
+            flexibility_multiplier=float(econ.VALCOEFlexibilityMultiplier.value),
+            utilization_factor=utilization_factor,
+            target_unit=electricity_units,
+        ),
+    )
+    return commodity_inputs
+
+
 def _xlco_market_output_for_commodity(econ: Economics, commodity: str):
     if commodity == ELECTRICITY_COMMODITY:
         return getattr(econ, "XLCOE_Market", None)
@@ -135,10 +207,11 @@ def calculate_value_adjusted_levelized_costs(econ: Economics, model: Model) -> d
         return {}
 
     calculation_mode = str(getattr(getattr(econ, "VALCOCalculationMode", None), "value", "Direct")).strip().lower()
-    if calculation_mode != "direct":
-        raise NotImplementedError("VALCO Calculation Mode currently supports only Direct.")
-
-    return calculate_value_adjusted_costs_from_inputs(_direct_value_adjustment_inputs_from_parameters(econ, model))
+    if calculation_mode == "direct":
+        return calculate_value_adjusted_costs_from_inputs(_direct_value_adjustment_inputs_from_parameters(econ, model))
+    if calculation_mode == "derived":
+        return calculate_value_adjusted_costs_from_inputs(_derived_value_adjustment_inputs_from_parameters(econ, model))
+    raise NotImplementedError("VALCO Calculation Mode currently supports only Direct or Derived.")
 
 
 def assign_value_adjusted_levelized_cost_outputs(

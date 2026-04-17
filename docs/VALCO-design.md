@@ -45,7 +45,8 @@ Current status:
 - Phase 6 complete
 - Phase 7 complete
 - Phase 8 complete
-- Phase 9 not started
+- Phase 9 complete
+- Phase 10 not started
 
 Phase 1 completion date:
 
@@ -76,6 +77,10 @@ Phase 7 completion date:
 - 2026-04-17
 
 Phase 8 completion date:
+
+- 2026-04-17
+
+Phase 9 completion date:
 
 - 2026-04-17
 
@@ -639,8 +644,8 @@ Phase 1 is complete. The following design-lock items are accepted:
 
 ## Immediate Next Step
 
-Phase 9 should add the first derived-mode implementation for electricity:
+Phase 10 should evaluate the next extension boundary:
 
-- derived-mode input parameters for `VALCOE`
-- capacity and flexibility derivation helpers
-- tests that keep direct mode and derived mode behavior clearly separated
+- whether `VALCOH` and `VALCOC` should gain derived-mode analogs
+- whether electricity energy-value derivation should support explicit time-series or segmented inputs
+- how far GEOPHIRES should go toward dispatch-like value modeling without duplicating the external market model
