@@ -237,7 +237,7 @@ class VALCOTestCase(BaseTestCase):
 
     def test_valcoe_bicycle_enabled_with_zero_inputs_matches_lcoe(self):
         model = self._new_model(
-            input_file=self._get_test_file_path("../examples/Example_XLCOE80.txt"),
+            input_file=self._get_test_file_path("../examples/Example_XLCOE80_low_case.txt"),
             additional_params={
                 "Do XLCO(E|H|C) Calculations": False,
                 "Do VALCO(E|H|C) Calculations": True,

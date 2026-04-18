@@ -18,7 +18,7 @@ Injection Well Diameter,7,					---[inch]
 Ramey Production Wellbore Model,True,
 Production Wellbore Temperature Drop,.5,			---[deg.C]
 Injection Wellbore Temperature Gain,0,   			---[deg.C]
-Production Flow Rate per Well,148,       			---[kg/s] Calibrated from Example1 for faster XLCOE high-case approximation
+Production Flow Rate per Well,135,       			---[kg/s] Calibrated from Example1 for faster XLCOE high-case approximation
 Fracture Shape,3,                       			---[-] Should be 1 2 3 or 4. See manual for details
 Fracture Height,900, 						---[m]
 Reservoir Volume Option,3,              			---[-] Should be 1 2 3 or 4. See manual for details
@@ -70,7 +70,7 @@ XLCO(E|H|C) Operations Jobs Per MW,1.7
 XLCO(E|H|C) Construction Jobs Per Rig,37
 XLCO(E|H|C) Indirect Jobs Multiplier,1.0
 XLCO(E|H|C) Average Monthly Wage,7000, US$/work/month
-Idle Rig Discount Rate,0.186
+Idle Rig Discount Rate,0.10
 Social Discount Rate,0.04
 # specific parameters for XLCOE
 XLCOE REC Price,38, US$/MWh

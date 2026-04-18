@@ -6,16 +6,16 @@ Simulation Metadata
 ----------------------
  GEOPHIRES Version: 3.12.1
  Simulation Date: 2026-04-17
- Simulation Time:  10:41
- Calculation Time:     93.815 sec
+ Simulation Time:  17:56
+ Calculation Time:     94.865 sec
 
                            ***SUMMARY OF RESULTS***
 
       End-Use Option: Electricity
       Average Net Electricity Production:                     9.73 MW
       Electricity breakeven price:                            8.00 cents/kWh
-      Extended Electricity Breakeven Price (XLCOE Market):       0.00 cents/kWh
-      Extended Electricity Breakeven Price (XLCOE Market + Social):       0.00 cents/kWh
+      Extended Electricity Breakeven Price (XLCOE Market):       5.94 cents/kWh
+      Extended Electricity Breakeven Price (XLCOE Market + Social):       4.87 cents/kWh
       Number of production wells:                             1
       Number of injection wells:                              1
       Flowrate per production well:                          80.0 kg/sec

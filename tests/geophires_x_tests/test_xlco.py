@@ -356,7 +356,7 @@ class XLCOETestCase(BaseTestCase):
 
     def test_bicycle_sbt_example_produces_nonzero_xlcoe_outputs(self):
         model = self._new_model(
-            input_file=Path(self._get_test_file_path("../examples/Example_XLCOE80.txt")),
+            input_file=Path(self._get_test_file_path("../examples/Example_XLCOE80_low_case.txt")),
             read_and_calculate=True,
         )
 
