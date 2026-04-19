@@ -2156,6 +2156,15 @@
       "minimum": 0,
       "maximum": 10000
     },
+    "Pipeline Cost": {
+      "description": "Transmission pipeline cost rate ($/m). Default is equivalent to $750k/km.",
+      "type": "number",
+      "units": "USD/m",
+      "category": "Economics",
+      "default": 750,
+      "minimum": 0,
+      "maximum": 10000
+    },
     "Total District Heating Network Cost": {
       "description": "Total district heating network cost ($M)",
       "type": "number",

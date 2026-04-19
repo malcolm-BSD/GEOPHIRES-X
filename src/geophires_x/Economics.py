@@ -1481,6 +1481,16 @@ class Economics:
             ErrMessage="assume default district heating piping cost rate ($1,200/m)",
             ToolTipText="District heating piping cost rate ($/m)"
         )
+        self.CPipelineCost = self.ParameterDict[self.CPipelineCost.Name] = floatParameter(
+            "Pipeline Cost",
+            DefaultValue=750,
+            Min=0,
+            Max=10000,
+            UnitType=Units.COSTPERDISTANCE,
+            PreferredUnits=CostPerDistanceUnit.DOLLARSPERM,
+            CurrentUnits=CostPerDistanceUnit.DOLLARSPERM,
+            ToolTipText="Transmission pipeline cost rate ($/m). Default is equivalent to $750k/km."
+        )
         self.dhtotaldistrictnetworkcost = self.ParameterDict[self.dhtotaldistrictnetworkcost.Name] = floatParameter(
             "Total District Heating Network Cost",
             DefaultValue=10,
@@ -2105,8 +2115,8 @@ class Economics:
                         f'{self.indirect_capital_cost_percentage.quantity().to(convertible_unit("%")).magnitude}%) '
                         f'are added. '
                         'The built-in cost correlation does not include the cost of pipelines to an off-site heat '
-                        'user or a district-heating system. These costs are estimated at $750 per meter pipeline '
-                        'length and can be manually added by the user to the pipeline distribution costs.'
+                        'user or a district-heating system. Those transmission pipeline costs are calculated from '
+                        f'{self.CPipelineCost.Name} multiplied by the specified pipeline length.'
         )
         self.Cpiping = self.OutputParameterDict[self.Cpiping.Name] = OutputParameter(
             Name="Transmission pipeline costs",
@@ -3279,8 +3289,9 @@ class Economics:
                 self.Cexpl.value = self._contingency_factor * self.ccexpladjfactor.value * self._indirect_cost_factor * (
                     1. + self.cost_one_production_well.value * 0.6)
 
-            # Surface Piping Length Costs (M$) #assumed $750k/km  # TODO parameterize
-            self.Cpiping.value = 750 / 1000 * model.surfaceplant.piping_length.value
+            # Convert the user-adjustable pipeline cost rate ($/m) and piping length (km) into transmission pipeline
+            # capital cost in M$.
+            self.Cpiping.value = self.CPipelineCost.value * model.surfaceplant.piping_length.value / 1000
 
             # district heating network costs
             if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:  # district heat
