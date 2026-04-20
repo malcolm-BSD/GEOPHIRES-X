@@ -2156,6 +2156,15 @@
       "minimum": 0,
       "maximum": 10000
     },
+    "Transmission/pipeline Cost": {
+      "description": "Transmission/pipeline Cost rate per km, in KUSD/km.",
+      "type": "number",
+      "units": "KUSD/km",
+      "category": "Economics",
+      "default": 750,
+      "minimum": 0,
+      "maximum": 10000
+    },
     "Total District Heating Network Cost": {
       "description": "Total district heating network cost ($M)",
       "type": "number",

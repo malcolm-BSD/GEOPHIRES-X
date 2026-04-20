@@ -705,9 +705,52 @@ Print Output to Console, 1"""
             )
         )
 
-        self.assertAlmostEqual(
-            result.result["CAPITAL COSTS (M$)"]["Transmission pipeline cost"]["value"], 3.75, delta=0.5
+        with open(result.result["metadata"]["output_file_path"], encoding="utf-8") as f:
+            output_text = f.read()
+
+        self.assertRegex(output_text, r"Transmission/pipeline Costs?:\s+3\.75 MUSD")
+
+    def doesnpt(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path(Path("examples/Fervo_Norbeck_Latimer_2023.txt")),
+                params={"Surface Piping Length": 5, "Transmission/pipeline Cost": "1000 KUSD/km"},
+            )
         )
+
+        self.assertAlmostEqual(
+            result.result["CAPITAL COSTS (M$)"]["Transmission/pipeline Cost"]["value"], 5.0, delta=0.1
+        )
+
+    def test_clgs_transmission_pipeline_cost(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path(
+                    Path("examples/Beckers_et_al_2023_Tabulated_Database_Coaxial_water_heat.txt")
+                ),
+                params={"Surface Piping Length": 5, "Transmission/pipeline Cost": "1000 KUSD/km"},
+            )
+        )
+
+        with open(result.result["metadata"]["output_file_path"], encoding="utf-8") as f:
+            output_text = f.read()
+
+        self.assertRegex(output_text, r"Transmission/pipeline Costs?:\s+5\.0 MUSD")
+        self.assertRegex(output_text, r"Total CAPEX:\s+17\.5 MUSD")
+
+    def test_sutra_transmission_pipeline_cost(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path(Path("examples/SUTRAExample1.txt")),
+                params={"Surface Piping Length": 5, "Transmission/pipeline Cost": "1000 KUSD/km"},
+            )
+        )
+
+        with open(result.result["metadata"]["output_file_path"], encoding="utf-8") as f:
+            output_text = f.read()
+
+        self.assertRegex(output_text, r"Transmission/pipeline Costs?:\s+5\.00 MUSD")
+        self.assertRegex(output_text, r"Total Capital Costs:\s+7\.48 MUSD")
 
     def test_well_drilling_and_completion_capital_cost_adjustment_factor(self):
         base_file = self._get_test_file_path("geophires_x_tests/generic-egs-case.txt")
