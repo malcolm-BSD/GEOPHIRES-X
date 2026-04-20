@@ -18,6 +18,7 @@ from geophires_x.Parameter import intParameter
 from geophires_x.Parameter import listParameter
 from geophires_x.Parameter import strParameter
 from geophires_x.Reservoir import derive_numseg_from_gradient_thickness
+from geophires_x.Units import CostPerDistanceUnit
 from geophires_x.Units import CostPerMassUnit
 from geophires_x.Units import CurrencyUnit
 from geophires_x.Units import EnergyCostUnit
@@ -260,6 +261,29 @@ class ParameterTestCase(BaseTestCase):
             ConvertUnitsBack(param2, model)
 
             self.assertIn("GEOPHIRES failed to convert your units for OPEX", str(re))
+
+    def test_read_parameter_cost_per_distance_kusd_per_km(self):
+        model = self._new_model()
+        param = floatParameter(
+            Name="Transmission/pipeline Cost",
+            DefaultValue=750,
+            Min=0,
+            Max=10000,
+            UnitType=Units.COSTPERDISTANCE,
+            PreferredUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+            CurrentUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+        )
+
+        ReadParameter(
+            ParameterEntry(
+                Name="Transmission/pipeline Cost", sValue="1 USD/m", raw_entry="Transmission/pipeline Cost, 1 USD/m"
+            ),
+            param,
+            model,
+        )
+
+        self.assertAlmostEqual(param.value, 1.0)
+        self.assertEqual(param.CurrentUnits, CostPerDistanceUnit.KDOLLARSPERKM)
 
     def test_read_bool_from_file(self):
         model = self._new_model()

@@ -227,9 +227,8 @@ class SBTEconomics(Economics):
                 self.Cexpl.value = 1.15 * self.ccexpladjfactor.value * self._indirect_cost_factor * (
                     1. + self.cost_one_production_well.value * 0.6)  # 1.15 for 15% contingency
 
-            # Convert the user-adjustable pipeline cost rate ($/m) and piping length (km) into transmission pipeline
-            # capital cost in M$.
-            self.Cpiping.value = self.CPipelineCost.value * model.surfaceplant.piping_length.value / 1000
+            # Keep transmission/pipeline CAPEX consistent across economic models and unit selections.
+            self.calculate_transmission_pipeline_cost(model)
 
             # district heating network costs
             if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:  # district heat

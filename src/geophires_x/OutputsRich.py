@@ -484,7 +484,7 @@ def print_outputs_rich(
                             model.economics.Cgath.CurrentUnits.value))
         if model.surfaceplant.piping_length.value > 0:
             CAPEX.append(
-                OutputTableItem('Transmission pipeline cost', '{0:10.2f}'.format(model.economics.Cpiping.value),
+                OutputTableItem('Transmission/pipeline Cost', '{0:10.2f}'.format(model.economics.Cpiping.value),
                                 model.economics.Cpiping.CurrentUnits.value))
         if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
             CAPEX.append(OutputTableItem('District Heating System Cost',

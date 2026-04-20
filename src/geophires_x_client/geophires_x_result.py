@@ -264,7 +264,7 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
-                "Transmission pipeline cost",
+                "Transmission/pipeline Cost",
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",

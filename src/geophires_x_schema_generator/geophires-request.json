@@ -2156,10 +2156,10 @@
       "minimum": 0,
       "maximum": 10000
     },
-    "Pipeline Cost": {
-      "description": "Transmission pipeline cost rate ($/m). Default is equivalent to $750k/km.",
+    "Transmission/pipeline Cost": {
+      "description": "Transmission/pipeline Cost rate per km, in KUSD/km.",
       "type": "number",
-      "units": "USD/m",
+      "units": "KUSD/km",
       "category": "Economics",
       "default": 750,
       "minimum": 0,

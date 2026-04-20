@@ -241,6 +241,7 @@ class CostPerMassUnit(str, Enum):
 
 class CostPerDistanceUnit(str, Enum):
     DOLLARSPERM = "USD/m"
+    KDOLLARSPERKM = "KUSD/km"
 
 
 class PressureUnit(str, Enum):
