@@ -16,6 +16,7 @@ import ast
 from forex_python.converter import CurrencyRates, CurrencyCodes, get_rate
 from abc import ABC
 from pint.facets.plain import PlainQuantity
+from pint.errors import UndefinedUnitError
 
 from geophires_x.OptionList import GeophiresInputEnum
 from geophires_x.Units import *
@@ -1294,9 +1295,21 @@ def LookupUnits(sUnitText: str):
                 if item.value == sUnitText:
                     return item, uType
 
+    try:
+        canonical_unit_text = f'{_ureg.Quantity(1, sUnitText).units:~}'.replace(' ', '')
+    except (UndefinedUnitError, ValueError):
+        canonical_unit_text = None
+
+    if canonical_unit_text is not None and canonical_unit_text != sUnitText.replace(' ', ''):
+        return LookupUnits(canonical_unit_text)
+
     # No match was found with the unit text string, so try with the canonical symbol (if different).
-    symbol = _ureg.get_symbol(sUnitText)
-    if symbol != sUnitText: return LookupUnits(symbol)
+    try:
+        symbol = _ureg.get_symbol(sUnitText)
+    except UndefinedUnitError:
+        return None, None
+    if symbol != sUnitText:
+        return LookupUnits(symbol)
     return None, None
 
 

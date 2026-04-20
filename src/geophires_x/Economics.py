@@ -1481,6 +1481,17 @@ class Economics:
             ErrMessage="assume default district heating piping cost rate ($1,200/m)",
             ToolTipText="District heating piping cost rate ($/m)"
         )
+        self.CPipelineCost = self.ParameterDict[self.CPipelineCost.Name] = floatParameter(
+            "Transmission/pipeline Cost",
+            DefaultValue=750,
+            Min=0,
+            Max=10000,
+            UnitType=Units.COSTPERDISTANCE,
+            PreferredUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+            CurrentUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+            ErrMessage="assume default Transmission/pipeline Cost rate (KUSD750/km)",
+            ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km."
+        )
         self.dhtotaldistrictnetworkcost = self.ParameterDict[self.dhtotaldistrictnetworkcost.Name] = floatParameter(
             "Total District Heating Network Cost",
             DefaultValue=10,
@@ -2105,12 +2116,12 @@ class Economics:
                         f'{self.indirect_capital_cost_percentage.quantity().to(convertible_unit("%")).magnitude}%) '
                         f'are added. '
                         'The built-in cost correlation does not include the cost of pipelines to an off-site heat '
-                        'user or a district-heating system. These costs are estimated at $750 per meter pipeline '
-                        'length and can be manually added by the user to the pipeline distribution costs.'
+                        'user or a district-heating system. Those transmission pipeline costs are calculated from '
+                        f'{self.CPipelineCost.Name} multiplied by the specified pipeline length.'
         )
         self.Cpiping = self.OutputParameterDict[self.Cpiping.Name] = OutputParameter(
-            Name="Transmission pipeline costs",
-            display_name='Transmission pipeline cost',
+            Name="Transmission/pipeline Cost",
+            display_name='Transmission/pipeline Cost',
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS
@@ -3266,9 +3277,15 @@ class Economics:
                 self.CAPEX_cost_heat_plant = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
                     model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000.
 
-            self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
+                self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
             if not self.CAPEX_heat_electricity_plant_ratio.Provided:
                 self.CAPEX_heat_electricity_plant_ratio.value = self.CAPEX_cost_electricity_plant/self.Cplant.value
+
+    def calculate_transmission_pipeline_cost(self, model: Model) -> None:
+        # Transmission/pipeline Cost is calculated from the user-provided cost rate and the specified pipeline length.
+        self.Cpiping.value = (
+            self.CPipelineCost.quantity().to('MUSD/km').magnitude * model.surfaceplant.piping_length.value
+        )
 
     def calculate_total_capital_costs(self, model: Model) -> None:
         if not self.totalcapcost.Valid:
@@ -3279,8 +3296,8 @@ class Economics:
                 self.Cexpl.value = self._contingency_factor * self.ccexpladjfactor.value * self._indirect_cost_factor * (
                     1. + self.cost_one_production_well.value * 0.6)
 
-            # Surface Piping Length Costs (M$) #assumed $750k/km  # TODO parameterize
-            self.Cpiping.value = 750 / 1000 * model.surfaceplant.piping_length.value
+            # Keep transmission/pipeline CAPEX consistent across economic models and unit selections.
+            self.calculate_transmission_pipeline_cost(model)
 
             # district heating network costs
             if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:  # district heat
