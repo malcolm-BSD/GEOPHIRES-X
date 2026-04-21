@@ -576,6 +576,21 @@ class Economics:
      Class to support the default economic calculations in GEOPHIRES
     """
 
+    @staticmethod
+    def _dispatch_summary_metric(model: Model, metric_name: str, fallback: float) -> float:
+        if getattr(model, 'dispatch_results', None) is None:
+            return fallback
+
+        return model.dispatch_results.summary_metrics.get(metric_name, fallback)
+
+    @staticmethod
+    def _safe_max(values, default: float = 0.0) -> float:
+        array = np.asarray(values)
+        if array.size == 0:
+            return default
+
+        return float(np.max(array))
+
     def __init__(self, model: Model):
         """
         The __init__ function is called automatically when a class is instantiated.
@@ -2990,13 +3005,33 @@ class Economics:
         return quantity(stimulation_costs, self.Cstim.CurrentUnits)
 
     def calculate_field_gathering_costs(self, model: Model) -> None:
+        design_heat_extracted_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_extracted_mw',
+            np.max(model.surfaceplant.HeatExtracted.value),
+        )
+        design_pumping_power_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_mw',
+            np.max(model.wellbores.PumpingPower.value),
+        )
+        design_pumping_power_prod_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_prod_mw',
+            np.max(model.wellbores.PumpingPowerProd.value),
+        )
+        design_pumping_power_inj_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_inj_mw',
+            np.max(model.wellbores.PumpingPowerInj.value),
+        )
         if self.ccgathfixed.Valid:
             self.Cgath.value = self.ccgathfixed.value
         else:
             self.Cgath.value = self.ccgathadjfactor.value * 50 - 6 * np.max(
                 model.surfaceplant.HeatExtracted.value) * 1000.  # (GEOPHIRES v1 correlation)
             if model.wellbores.impedancemodelused.value:
-                pumphp = np.max(model.wellbores.PumpingPower.value) * 1341
+                pumphp = design_pumping_power_mw * 1341
                 numberofpumps = np.ceil(pumphp / 2000)  # pump can be maximum 2,000 hp
                 if numberofpumps == 0:
                     self.Cpumps = 0.0
@@ -3006,14 +3041,14 @@ class Economics:
                             (1750 * pumphpcorrected ** 0.7) * 3 * pumphpcorrected ** (-0.11))
             else:
                 if model.wellbores.productionwellpumping.value:
-                    prodpumphp = np.max(model.wellbores.PumpingPowerProd.value) / model.wellbores.nprod.value * 1341
+                    prodpumphp = design_pumping_power_prod_mw / model.wellbores.nprod.value * 1341
                     Cpumpsprod = model.wellbores.nprod.value * 1.5 * (1750 * prodpumphp ** 0.7 + 5750 *
                                                                       prodpumphp ** 0.2 + 10000 + np.max(
                             model.wellbores.pumpdepth.value) * 50 * 3.281)  # see page 46 in user's manual assuming rental of rig for 1 day.
                 else:
                     Cpumpsprod = 0
 
-                injpumphp = np.max(model.wellbores.PumpingPowerInj.value) * 1341
+                injpumphp = design_pumping_power_inj_mw * 1341
                 numberofinjpumps = np.ceil(injpumphp / 2000)  # pump can be maximum 2,000 hp
                 if numberofinjpumps == 0:
                     Cpumpsinj = 0
@@ -3028,6 +3063,16 @@ class Economics:
                     (model.wellbores.nprod.value + model.wellbores.ninj.value) * 750 * 500. + self.Cpumps) / 1E6
 
     def calculate_plant_costs(self, model: Model) -> None:
+        design_heat_extracted_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_extracted_mw',
+            Economics._safe_max(model.surfaceplant.HeatExtracted.value),
+        )
+        design_heat_produced_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_produced_mw',
+            Economics._safe_max(model.surfaceplant.HeatProduced.value),
+        )
         # plant costs
         if (model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
             and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]):  # direct-use
@@ -3038,7 +3083,7 @@ class Economics:
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
                                      * 250E-6
-                                     * np.max(model.surfaceplant.HeatExtracted.value)
+                                     * design_heat_extracted_mw
                                      * 1000.)
 
         # absorption chiller
@@ -3051,7 +3096,7 @@ class Economics:
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
                                      * 250E-6
-                                     * np.max(model.surfaceplant.HeatExtracted.value)
+                                     * design_heat_extracted_mw
                                      * 1000.)
                 if self.chillercapex.value == -1:  # no value provided by user, use built-in correlation ($2500/ton)
                     self.chillercapex.value = (
@@ -3071,10 +3116,10 @@ class Economics:
             else:
                 # this is for the direct-use part all the way up to the heat pump
                 self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    model.surfaceplant.HeatExtracted.value) * 1000.
+                    design_heat_extracted_mw) * 1000.
                 if self.heatpumpcapex.value == -1:  # no value provided by user, use built-in correlation ($150/kWth)
                     self.heatpumpcapex.value = self._indirect_cost_factor * self._contingency_factor * np.max(
-                        model.surfaceplant.HeatProduced.value) * 1000 * 150 / 1e6  # $150/kW - TODO parameterize
+                        design_heat_produced_mw) * 1000 * 150 / 1e6  # $150/kW - TODO parameterize
 
                 # now add heat pump cost to surface plant cost
                 self.Cplant.value += self.heatpumpcapex.value
@@ -3085,7 +3130,7 @@ class Economics:
                 self.Cplant.value = self.ccplantfixed.value
             else:
                 self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    model.surfaceplant.HeatExtracted.value) * 1000.
+                    design_heat_extracted_mw) * 1000.
 
                 # add 65$/KW for peaking boiler
                 self.peakingboilercost.value = (self.peaking_boiler_cost_per_kW.quantity()
@@ -3278,7 +3323,7 @@ class Economics:
                     model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000.
 
                 self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
-            if not self.CAPEX_heat_electricity_plant_ratio.Provided:
+            if not self.CAPEX_heat_electricity_plant_ratio.Provided and self.Cplant.value != 0:
                 self.CAPEX_heat_electricity_plant_ratio.value = self.CAPEX_cost_electricity_plant/self.Cplant.value
 
     def calculate_transmission_pipeline_cost(self, model: Model) -> None:
@@ -3363,6 +3408,11 @@ class Economics:
                 model.surfaceplant.PumpingkWh.value) * model.surfaceplant.electricity_cost_to_buy.value / 1E6  # M$/year
 
         if not self.oamtotalfixed.Valid:
+            design_heat_extracted_mw = Economics._dispatch_summary_metric(
+                model,
+                'design_heat_extracted_mw',
+                np.max(model.surfaceplant.HeatExtracted.value),
+            )
             # labor cost
             if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # electricity
                 if np.max(model.surfaceplant.ElectricityProduced.value) < 2.5:
@@ -3371,11 +3421,11 @@ class Economics:
                     self.Claborcorrelation = (589. * math.log(
                         np.max(model.surfaceplant.ElectricityProduced.value)) - 304.) / 1E3  # M$/year
             else:
-                if np.max(model.surfaceplant.HeatExtracted.value) < 2.5 * 5.:
+                if design_heat_extracted_mw < 2.5 * 5.:
                     self.Claborcorrelation = 236. / 1E3  # M$/year
                 else:
                     self.Claborcorrelation = (589. * math.log(
-                        np.max(model.surfaceplant.HeatExtracted.value) / 5.) - 304.) / 1E3  # M$/year
+                        design_heat_extracted_mw / 5.) - 304.) / 1E3  # M$/year
                 # * 1.1 to convert from 2012 to 2016$ with BLS employment cost index (for utilities in March)
             self.Claborcorrelation = self.Claborcorrelation * 1.1
 

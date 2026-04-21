@@ -52,24 +52,29 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(8760, profile.num_timesteps)
         self.assertAlmostEqual(13188.2, profile.series[0], places=1)
 
-    def test_dispatchable_calculate_raises_clear_placeholder_error(self):
+    def test_dispatchable_cylindrical_run_populates_dispatch_results_and_economics(self):
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
         model = self._new_model()
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        model.reserv = type(
-            "CylindricalReservoir",
-            (),
-            {
-                "read_parameters": lambda self, model: None,
-                "Calculate": lambda self, model: None,
-            },
-        )()
+        model.reserv = CylindricalReservoir(model)
         model.InputParameters = {
             "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
             "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
             "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
         }
 
         model.read_parameters()
+        model.Calculate()
 
-        with self.assertRaisesRegex(NotImplementedError, "hourly dispatch simulation loop is not implemented yet"):
-            model.Calculate()
+        self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
+        self.assertEqual(8760, len(model.surfaceplant.HeatProduced.value))
+        self.assertGreater(model.dispatch_results.summary_metrics["design_heat_extracted_mw"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+        self.assertEqual(8760, model.economics.timestepsperyear.value)

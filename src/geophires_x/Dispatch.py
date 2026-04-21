@@ -66,6 +66,7 @@ class DispatchCommand:
     target_flow_fraction: float
     runtime_fraction: float
     is_shut_in: bool
+    target_thermal_demand_mw: float = 0.0
 
 
 @dataclass
@@ -91,6 +92,7 @@ class DispatchResults:
     hourly_geothermal_thermal_output: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     annual_aggregates: dict[str, float] = field(default_factory=dict)
     summary_metrics: dict[str, float] = field(default_factory=dict)
+    hourly_thermal_demand: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
 
     @classmethod
     def initialize(cls, num_timesteps: int) -> "DispatchResults":
@@ -103,6 +105,7 @@ class DispatchResults:
             hourly_unmet_demand=zeros.copy(),
             hourly_pumping_power=zeros.copy(),
             hourly_geothermal_thermal_output=zeros.copy(),
+            hourly_thermal_demand=zeros.copy(),
         )
 
 
@@ -115,14 +118,49 @@ class DispatchStrategy(ABC):
 class DemandFollowingDispatchStrategy(DispatchStrategy):
     def dispatch(self, timestep_state: dict[str, Any], demand: float) -> DispatchCommand:
         if demand <= 0:
-            return DispatchCommand(target_flow_fraction=0.0, runtime_fraction=0.0, is_shut_in=True)
+            return DispatchCommand(
+                target_flow_fraction=0.0,
+                runtime_fraction=0.0,
+                is_shut_in=True,
+                target_thermal_demand_mw=0.0,
+            )
 
         max_flow_fraction = timestep_state.get("maximum_dispatch_flow_fraction", 1.0)
-        runtime_fraction = 1.0
+        min_flow_fraction = timestep_state.get("minimum_dispatch_flow_fraction", 0.0)
+        min_runtime_fraction = timestep_state.get("minimum_dispatch_runtime_fraction", 0.0)
+        nominal_heat_output_mw = timestep_state.get("nominal_heat_output_mw", 0.0)
+
+        if nominal_heat_output_mw <= 0:
+            return DispatchCommand(
+                target_flow_fraction=0.0,
+                runtime_fraction=0.0,
+                is_shut_in=True,
+                target_thermal_demand_mw=demand,
+            )
+
+        required_fraction = demand / nominal_heat_output_mw
+        if required_fraction <= 0:
+            return DispatchCommand(
+                target_flow_fraction=0.0,
+                runtime_fraction=0.0,
+                is_shut_in=True,
+                target_thermal_demand_mw=0.0,
+            )
+
+        if min_flow_fraction > 0 and required_fraction < min_flow_fraction:
+            runtime_fraction = required_fraction / min_flow_fraction
+            runtime_fraction = max(runtime_fraction, min_runtime_fraction)
+            runtime_fraction = min(runtime_fraction, 1.0)
+            flow_fraction = min_flow_fraction
+        else:
+            flow_fraction = min(required_fraction, max_flow_fraction)
+            runtime_fraction = 1.0
+
         return DispatchCommand(
-            target_flow_fraction=min(max_flow_fraction, 1.0),
-            runtime_fraction=runtime_fraction,
+            target_flow_fraction=max(0.0, min(flow_fraction, max_flow_fraction)),
+            runtime_fraction=max(0.0, min(runtime_fraction, 1.0)),
             is_shut_in=False,
+            target_thermal_demand_mw=demand,
         )
 
 
@@ -156,9 +194,129 @@ class PlaceholderDispatchPlantAdapter(DispatchPlantAdapter):
         return None
 
 
+class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
+    def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        self._model = model
+        model.reserv.Calculate(model)
+        model.wellbores.Calculate(model)
+
+        self._nominal_flow_kg_per_sec = model.wellbores.prodwellflowrate.value
+        self._nprod = model.wellbores.nprod.value
+        self._tinj = model.wellbores.Tinj.value
+        self._cpwater = model.reserv.cpwater.value
+        self._enduse_efficiency = model.surfaceplant.enduse_efficiency_factor.value
+        self._initial_heat_content_pj = model.reserv.InitialReservoirHeatContent.value
+        self._remaining_heat_content_pj = self._initial_heat_content_pj
+        self._initial_reservoir_temperature_c = model.reserv.Trock.value
+        self._reservoir_temperature_span_c = max(self._initial_reservoir_temperature_c - self._tinj, 0.0)
+        if self._initial_heat_content_pj <= 0 or self._reservoir_temperature_span_c <= 0:
+            raise ValueError(
+                "Cylindrical dispatchable mode requires a positive initial reservoir heat content. "
+                "Check cylindrical reservoir geometry and ensure `Number of Multilateral Sections` is greater than zero."
+            )
+        self._base_temp_drop_c = float(np.atleast_1d(model.wellbores.ProdTempDrop.value)[0])
+        self._base_pumping_power_mw = float(np.atleast_1d(model.wellbores.PumpingPower.value)[0])
+        self._base_injection_pumping_power_mw = float(np.atleast_1d(model.wellbores.PumpingPowerInj.value)[0])
+        self._base_production_pumping_power_mw = float(np.atleast_1d(model.wellbores.PumpingPowerProd.value)[0])
+        self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
+
+    def _current_reservoir_temperature(self) -> float:
+        if self._initial_heat_content_pj <= 0 or self._reservoir_temperature_span_c <= 0:
+            return self._tinj
+
+        fraction_remaining = max(min(self._remaining_heat_content_pj / self._initial_heat_content_pj, 1.0), 0.0)
+        return self._tinj + (fraction_remaining * self._reservoir_temperature_span_c)
+
+    def _temperature_drop_for_flow_fraction(self, flow_fraction: float, current_reservoir_temperature_c: float) -> float:
+        if flow_fraction <= 0:
+            return 0.0
+
+        scaled_temp_drop = self._base_temp_drop_c / max(flow_fraction, 0.25)
+        return min(max(scaled_temp_drop, 0.0), max(current_reservoir_temperature_c - self._tinj, 0.0))
+
+    def thermal_state_for_flow_fraction(self, flow_fraction: float) -> dict[str, float]:
+        if flow_fraction <= 0:
+            current_reservoir_temperature_c = self._current_reservoir_temperature()
+            return {
+                "produced_temperature_c": current_reservoir_temperature_c,
+                "useful_heat_mw": 0.0,
+                "extracted_heat_mw": 0.0,
+                "pumping_power_mw": 0.0,
+                "production_pumping_power_mw": 0.0,
+                "injection_pumping_power_mw": 0.0,
+                "actual_flow_kg_per_sec": 0.0,
+            }
+
+        current_reservoir_temperature_c = self._current_reservoir_temperature()
+        actual_flow_kg_per_sec = self._nominal_flow_kg_per_sec * flow_fraction
+        temp_drop_c = self._temperature_drop_for_flow_fraction(flow_fraction, current_reservoir_temperature_c)
+        produced_temperature_c = max(self._tinj, current_reservoir_temperature_c - temp_drop_c)
+        extracted_heat_mw = (
+            self._nprod * actual_flow_kg_per_sec * self._cpwater * max(produced_temperature_c - self._tinj, 0.0) / 1.0e6
+        )
+        useful_heat_mw = extracted_heat_mw * self._enduse_efficiency
+        flow_scale = flow_fraction ** 3
+        production_pumping_power_mw = self._base_production_pumping_power_mw * flow_scale
+        injection_pumping_power_mw = self._base_injection_pumping_power_mw * flow_scale
+        pumping_power_mw = self._base_pumping_power_mw * flow_scale
+
+        return {
+            "produced_temperature_c": produced_temperature_c,
+            "useful_heat_mw": useful_heat_mw,
+            "extracted_heat_mw": extracted_heat_mw,
+            "pumping_power_mw": pumping_power_mw,
+            "production_pumping_power_mw": production_pumping_power_mw,
+            "injection_pumping_power_mw": injection_pumping_power_mw,
+            "actual_flow_kg_per_sec": actual_flow_kg_per_sec,
+        }
+
+    def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        current_reservoir_temperature_c = self._current_reservoir_temperature()
+        if dispatch_command.is_shut_in or dispatch_command.target_flow_fraction <= 0 or dispatch_command.runtime_fraction <= 0:
+            return DispatchTimestepResult(
+                produced_temperature=current_reservoir_temperature_c,
+                runtime_fraction=0.0,
+            )
+
+        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction)
+        potential_useful_heat_mw = thermal_state["useful_heat_mw"] * dispatch_command.runtime_fraction
+        served_thermal_demand_mw = min(dispatch_command.target_thermal_demand_mw, potential_useful_heat_mw)
+        unmet_thermal_demand_mw = max(dispatch_command.target_thermal_demand_mw - served_thermal_demand_mw, 0.0)
+
+        extracted_energy_kwh = thermal_state["extracted_heat_mw"] * dispatch_command.runtime_fraction * 1000.0
+        self._remaining_heat_content_pj = max(
+            self._remaining_heat_content_pj - (extracted_energy_kwh * 3600.0 * 1000.0 / 1.0e15),
+            0.0,
+        )
+
+        return DispatchTimestepResult(
+            produced_temperature=thermal_state["produced_temperature_c"],
+            plant_outlet_thermal_power=potential_useful_heat_mw,
+            pumping_power=thermal_state["pumping_power_mw"] * dispatch_command.runtime_fraction,
+            served_thermal_demand=served_thermal_demand_mw,
+            unmet_thermal_demand=unmet_thermal_demand_mw,
+            actual_flow=thermal_state["actual_flow_kg_per_sec"],
+            runtime_fraction=dispatch_command.runtime_fraction,
+        )
+
+    def design_metrics(self) -> dict[str, float]:
+        design_state = self.thermal_state_for_flow_fraction(self._maximum_dispatch_flow_fraction)
+        return {
+            "design_heat_extracted_mw": design_state["extracted_heat_mw"],
+            "design_heat_produced_mw": design_state["useful_heat_mw"],
+            "design_pumping_power_mw": design_state["pumping_power_mw"],
+            "design_pumping_power_prod_mw": design_state["production_pumping_power_mw"],
+            "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
+            "design_flow_kg_per_sec": design_state["actual_flow_kg_per_sec"],
+        }
+
+    def finalize(self) -> None:
+        return None
+
+
 class DispatchAdapterFactory:
     _registry = {
-        "CylindricalReservoir": lambda: PlaceholderDispatchPlantAdapter("CylindricalReservoir"),
+        "CylindricalReservoir": lambda: CylindricalDispatchPlantAdapter(),
         "MPFReservoir": lambda: PlaceholderDispatchPlantAdapter("MPFReservoir"),
         "LHSReservoir": lambda: PlaceholderDispatchPlantAdapter("LHSReservoir"),
         "SFReservoir": lambda: PlaceholderDispatchPlantAdapter("SFReservoir"),
@@ -215,13 +373,112 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             )
 
         demand_profile = DemandProfileFactory.from_model(model)
-        model.dispatch_results = DispatchResults.initialize(demand_profile.num_timesteps)
+        dispatch_demand_kwh = np.tile(demand_profile.series, model.surfaceplant.plant_lifetime.value)
+        model.dispatch_results = DispatchResults.initialize(len(dispatch_demand_kwh))
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
         model.dispatch_adapter.initialize(model, design_state={})
+        design_metrics = getattr(model.dispatch_adapter, "design_metrics", lambda: {})()
 
-        raise NotImplementedError(
-            "Dispatchable operating mode framework is configured, but the hourly dispatch simulation loop is not "
-            "implemented yet."
+        for timestep_index, timestep_demand_kwh in enumerate(dispatch_demand_kwh):
+            timestep_demand_mw = timestep_demand_kwh / 1000.0
+            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+            timestep_state = {
+                "nominal_heat_output_mw": nominal_state["useful_heat_mw"],
+                "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
+                "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
+                "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
+            }
+            dispatch_command = self._dispatch_strategy.dispatch(timestep_state, timestep_demand_mw)
+            timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
+
+            model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_kwh
+            model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
+            model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
+            model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
+            model.dispatch_results.hourly_demand_served[timestep_index] = timestep_result.served_thermal_demand * 1000.0
+            model.dispatch_results.hourly_unmet_demand[timestep_index] = timestep_result.unmet_thermal_demand * 1000.0
+            model.dispatch_results.hourly_pumping_power[timestep_index] = timestep_result.pumping_power
+            model.dispatch_results.hourly_geothermal_thermal_output[timestep_index] = timestep_result.plant_outlet_thermal_power
+
+        model.dispatch_adapter.finalize()
+        model.dispatch_results.summary_metrics.update(design_metrics)
+        self._finalize_dispatch_results(model, dispatch_demand_kwh)
+        model.economics.Calculate(model)
+
+    @staticmethod
+    def _finalize_dispatch_results(model: "Model", dispatch_demand_kwh: np.ndarray) -> None:
+        timesteps_per_year = 8760
+        plant_lifetime_years = model.surfaceplant.plant_lifetime.value
+        efficiency = model.surfaceplant.enduse_efficiency_factor.value
+
+        served_heat_kwh = model.dispatch_results.hourly_demand_served
+        unmet_heat_kwh = model.dispatch_results.hourly_unmet_demand
+        useful_heat_mw = served_heat_kwh / 1000.0
+        extracted_heat_mw = useful_heat_mw / efficiency if efficiency > 0 else np.zeros_like(useful_heat_mw)
+        pumping_power_mw = model.dispatch_results.hourly_pumping_power
+
+        model.economics.timestepsperyear.value = timesteps_per_year
+        model.surfaceplant.utilization_factor.value = float(np.average(model.dispatch_results.hourly_runtime_fraction))
+
+        model.wellbores.ProducedTemperature.value = model.dispatch_results.hourly_produced_temperature.copy()
+        model.wellbores.PumpingPower.value = pumping_power_mw.copy()
+        model.wellbores.PumpingPowerInj.value = pumping_power_mw.copy()
+        model.wellbores.PumpingPowerProd.value = np.zeros_like(pumping_power_mw)
+        model.wellbores.redrill.value = 0
+
+        model.surfaceplant.HeatProduced.value = useful_heat_mw.copy()
+        model.surfaceplant.HeatExtracted.value = extracted_heat_mw.copy()
+        model.surfaceplant.PumpingkWh.value = np.zeros(plant_lifetime_years)
+        model.surfaceplant.HeatkWhExtracted.value = np.zeros(plant_lifetime_years)
+        model.surfaceplant.HeatkWhProduced.value = np.zeros(plant_lifetime_years)
+        model.surfaceplant.RemainingReservoirHeatContent.value = np.zeros(plant_lifetime_years)
+
+        for year_index in range(plant_lifetime_years):
+            start = year_index * timesteps_per_year
+            end = start + timesteps_per_year
+            model.surfaceplant.HeatkWhProduced.value[year_index] = float(np.sum(served_heat_kwh[start:end]))
+            model.surfaceplant.HeatkWhExtracted.value[year_index] = float(np.sum(extracted_heat_mw[start:end] * 1000.0))
+            model.surfaceplant.PumpingkWh.value[year_index] = float(np.sum(pumping_power_mw[start:end] * 1000.0))
+
+        model.surfaceplant.RemainingReservoirHeatContent.value = model.surfaceplant.remaining_reservoir_heat_content(
+            model.reserv.InitialReservoirHeatContent.value,
+            model.surfaceplant.HeatkWhExtracted.value,
+        )
+
+        annual_served_kwh = model.surfaceplant.HeatkWhProduced.value
+        annual_unmet_kwh = np.array([
+            float(np.sum(unmet_heat_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
+            for year_index in range(plant_lifetime_years)
+        ])
+        annual_demand_kwh = np.array([
+            float(np.sum(dispatch_demand_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
+            for year_index in range(plant_lifetime_years)
+        ])
+
+        design_heat_produced_mw = model.dispatch_results.summary_metrics.get("design_heat_produced_mw", 0.0)
+        average_runtime_fraction = float(np.average(model.dispatch_results.hourly_runtime_fraction))
+        average_capacity_factor = float(
+            np.average(
+                served_heat_kwh / (design_heat_produced_mw * 1000.0)
+            )
+        ) if design_heat_produced_mw > 0 else 0.0
+
+        model.dispatch_results.annual_aggregates = {
+            "annual_served_heat_kwh": annual_served_kwh.tolist(),
+            "annual_unmet_heat_kwh": annual_unmet_kwh.tolist(),
+            "annual_heat_demand_kwh": annual_demand_kwh.tolist(),
+        }
+        model.dispatch_results.summary_metrics.update(
+            {
+                "peak_hourly_demand_kwh": float(np.max(dispatch_demand_kwh)),
+                "peak_served_heat_kwh": float(np.max(served_heat_kwh)),
+                "peak_unmet_heat_kwh": float(np.max(unmet_heat_kwh)),
+                "annual_served_heat_kwh": float(np.sum(annual_served_kwh)),
+                "annual_unmet_heat_kwh": float(np.sum(annual_unmet_kwh)),
+                "average_runtime_fraction": average_runtime_fraction,
+                "dispatch_capacity_factor": average_capacity_factor,
+                "observed_peak_flow_kg_per_sec": float(np.max(model.dispatch_results.hourly_flow)),
+            }
         )
 
 
