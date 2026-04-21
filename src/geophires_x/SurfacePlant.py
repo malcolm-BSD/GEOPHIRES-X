@@ -1,10 +1,12 @@
+import copy
 import numpy as np
 
 from .EconomicsUtils import CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME
 from .GeoPHIRESUtils import quantity
 from .NumpyUtils import np_trapz
-from .OptionList import EndUseOptions, PlantType
-from .Parameter import floatParameter, intParameter, listParameter, OutputParameter, ReadParameter, \
+from .OptionList import DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode, PlantType
+from .Parameter import floatParameter, intParameter, OutputParameter, ReadParameter, \
+    TimeSeriesParameter, strParameter, \
     coerce_int_params_to_enum_values
 from .SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from .Units import *
@@ -429,31 +431,100 @@ class SurfacePlant:
             ErrMessage="assume default heat rate ($0.02/kWh)",
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
         )
-        self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = listParameter(
+        self.operating_mode = self.ParameterDict["Operating Mode"] = strParameter(
+            "Operating Mode",
+            DefaultValue=OperatingMode.BASELOAD.value,
+            Required=False,
+            ErrMessage="assume default operating mode (Baseload)",
+            ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
+        )
+        self.dispatch_demand_source = self.ParameterDict["Dispatch Demand Source"] = strParameter(
+            "Dispatch Demand Source",
+            DefaultValue=DispatchDemandSource.ANNUAL_HEAT_DEMAND.value,
+            Required=False,
+            ErrMessage="assume default dispatch demand source (Annual Heat Demand)",
+            ToolTipText="Select the demand profile source used by dispatchable mode.",
+        )
+        self.dispatch_flow_strategy = self.ParameterDict["Dispatch Flow Strategy"] = strParameter(
+            "Dispatch Flow Strategy",
+            DefaultValue=DispatchFlowStrategy.DEMAND_FOLLOWING.value,
+            Required=False,
+            ErrMessage="assume default dispatch flow strategy (Demand Following)",
+            ToolTipText="Select the dispatch control strategy used by dispatchable mode.",
+        )
+        self.maximum_dispatch_flow_fraction = self.ParameterDict["Maximum Dispatch Flow Fraction"] = floatParameter(
+            "Maximum Dispatch Flow Fraction",
+            DefaultValue=1.0,
+            Min=0.0,
+            Max=100.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default maximum dispatch flow fraction (1.0)",
+            ToolTipText="Maximum production flow multiplier available to dispatchable operation.",
+        )
+        self.minimum_dispatch_flow_fraction = self.ParameterDict["Minimum Dispatch Flow Fraction"] = floatParameter(
+            "Minimum Dispatch Flow Fraction",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default minimum dispatch flow fraction (0.0)",
+            ToolTipText="Minimum production flow fraction when dispatchable operation is on.",
+        )
+        self.minimum_dispatch_runtime_fraction = self.ParameterDict["Minimum Dispatch Runtime Fraction"] = floatParameter(
+            "Minimum Dispatch Runtime Fraction",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default minimum dispatch runtime fraction (0.0)",
+            ToolTipText="Minimum on-hour runtime fraction when dispatchable operation is on.",
+        )
+        self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual heat demand profile (none)",
             ToolTipText="Historical annual heating demand profile"
         )
         self.HeatDemand = self.HeatingDemand
-        self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = listParameter(
+        self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = TimeSeriesParameter(
             "Annual Cooling Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual cooling demand profile (none)",
             ToolTipText="Historical annual cooling demand profile",
         )
-        self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = listParameter(
+        self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = TimeSeriesParameter(
             "Annual Electricity Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual electricity demand profile (none)",
             ToolTipText="Historical annual electricity demand profile",
         )
@@ -686,7 +757,7 @@ class SurfacePlant:
                 ParameterToModify = item[1]
                 key = ParameterToModify.Name.strip()
                 if key in model.InputParameters:
-                    ParameterReadIn = model.InputParameters[key]
+                    ParameterReadIn = copy.copy(model.InputParameters[key])
 
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, model)
@@ -697,6 +768,12 @@ class SurfacePlant:
                         ParameterToModify.value = end_use_option
                         if end_use_option == EndUseOptions.HEAT:
                             self.plant_type.value = PlantType.INDUSTRIAL
+                    elif ParameterToModify.Name == 'Operating Mode':
+                        ParameterToModify.value = OperatingMode.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'Dispatch Demand Source':
+                        ParameterToModify.value = DispatchDemandSource.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'Dispatch Flow Strategy':
+                        ParameterToModify.value = DispatchFlowStrategy.from_input_string(ParameterReadIn.sValue)
                     elif ParameterToModify.Name == 'Power Plant Type':
                         ParameterToModify.value = PlantType.from_input_string(ParameterReadIn.sValue)
                         if self.enduse_option.value == EndUseOptions.ELECTRICITY:
@@ -759,8 +836,27 @@ class SurfacePlant:
                     msg = (f'No valid plant outlet pressure provided. GEOPHIRES will calculate plant outlet pressure '
                            f'based on production wellhead pressure and surface equipment pressure drop of 10 psi')
                     model.logger.warning(msg)
+
         else:
             model.logger.info('No parameters read because no content provided')
+
+        if not isinstance(self.operating_mode.value, OperatingMode):
+            self.operating_mode.value = OperatingMode.from_input_string(self.operating_mode.value)
+        if not isinstance(self.dispatch_demand_source.value, DispatchDemandSource):
+            self.dispatch_demand_source.value = DispatchDemandSource.from_input_string(self.dispatch_demand_source.value)
+        if not isinstance(self.dispatch_flow_strategy.value, DispatchFlowStrategy):
+            self.dispatch_flow_strategy.value = DispatchFlowStrategy.from_input_string(self.dispatch_flow_strategy.value)
+
+        if self.operating_mode.value == OperatingMode.DISPATCHABLE:
+            if self.dispatch_demand_source.value != DispatchDemandSource.ANNUAL_HEAT_DEMAND:
+                raise ValueError(
+                    f'Dispatchable mode currently supports only `{DispatchDemandSource.ANNUAL_HEAT_DEMAND.value}` '
+                    f'as the dispatch demand source.'
+                )
+            if self.maximum_dispatch_flow_fraction.value < self.minimum_dispatch_flow_fraction.value:
+                raise ValueError(
+                    'Maximum Dispatch Flow Fraction must be greater than or equal to Minimum Dispatch Flow Fraction.'
+                )
 
         coerce_int_params_to_enum_values(self.ParameterDict)
 
