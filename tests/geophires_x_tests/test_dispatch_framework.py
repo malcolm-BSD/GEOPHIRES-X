@@ -116,3 +116,61 @@ class DispatchFrameworkTestCase(BaseTestCase):
                 self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
                 self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
                 self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+
+    def test_dispatchable_upp_run(self):
+        from geophires_x.UPPReservoir import UPPReservoir
+
+        model = self._new_model()
+        model.reserv = UPPReservoir(model)
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="5"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.1"),
+            "Reservoir Output Profile": ParameterEntry(
+                Name="Reservoir Output Profile",
+                sValue="160,159,158,157,156,155,154,153,152,151,150",
+            ),
+            "Reservoir Output Profile Time Step": ParameterEntry(
+                Name="Reservoir Output Profile Time Step",
+                sValue="0.1",
+            ),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+
+    def test_dispatchable_sbt_is_explicitly_unsupported_for_now(self):
+        from geophires_x.SBTEconomics import SBTEconomics
+        from geophires_x.SBTReservoir import SBTReservoir
+        from geophires_x.SBTWellbores import SBTWellbores
+
+        model = self._new_model()
+        model.reserv = SBTReservoir(model)
+        model.wellbores = SBTWellbores(model)
+        model.economics = SBTEconomics(model)
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="8"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.05"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        model.read_parameters()
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "Dispatchable timestep simulation has not been implemented yet for SBTReservoir",
+        ):
+            model.Calculate()

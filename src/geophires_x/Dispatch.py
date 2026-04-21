@@ -439,7 +439,7 @@ class DispatchAdapterFactory:
         "MPFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("MPFReservoir"),
         "LHSReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("LHSReservoir"),
         "SFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("SFReservoir"),
-        "UPPReservoir": lambda: PlaceholderDispatchPlantAdapter("UPPReservoir"),
+        "UPPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("UPPReservoir"),
         "SBTReservoir": lambda: PlaceholderDispatchPlantAdapter("SBTReservoir"),
     }
 
@@ -497,6 +497,12 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
         model.dispatch_adapter.initialize(model, design_state={})
         design_metrics = getattr(model.dispatch_adapter, "design_metrics", lambda: {})()
+
+        if not hasattr(model.dispatch_adapter, "thermal_state_for_flow_fraction"):
+            model.dispatch_adapter.evaluate_timestep(
+                DispatchCommand(target_flow_fraction=0.0, runtime_fraction=0.0, is_shut_in=True),
+                0,
+            )
 
         for timestep_index, timestep_demand_kwh in enumerate(dispatch_demand_kwh):
             timestep_demand_mw = timestep_demand_kwh / 1000.0
