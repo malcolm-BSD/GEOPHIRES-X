@@ -314,12 +314,131 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         return None
 
 
+class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
+    def __init__(self, supported_reservoir_name: str):
+        self._supported_reservoir_name = supported_reservoir_name
+
+    def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        self._model = model
+        model.reserv.Calculate(model)
+        model.wellbores.Calculate(model)
+
+        self._nominal_flow_kg_per_sec = model.wellbores.prodwellflowrate.value
+        self._nprod = model.wellbores.nprod.value
+        self._tinj = model.wellbores.Tinj.value
+        self._cpwater = model.reserv.cpwater.value
+        self._enduse_efficiency = model.surfaceplant.enduse_efficiency_factor.value
+        self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
+
+        self._baseline_produced_temperature = np.asarray(model.wellbores.ProducedTemperature.value, dtype=float)
+        self._baseline_pumping_power_mw = np.asarray(model.wellbores.PumpingPower.value, dtype=float)
+        self._baseline_pumping_power_prod_mw = np.asarray(model.wellbores.PumpingPowerProd.value, dtype=float)
+        self._baseline_pumping_power_inj_mw = np.asarray(model.wellbores.PumpingPowerInj.value, dtype=float)
+        self._baseline_heat_extracted_mw = (
+            self._nprod
+            * self._nominal_flow_kg_per_sec
+            * self._cpwater
+            * np.maximum(self._baseline_produced_temperature - self._tinj, 0.0)
+            / 1.0e6
+        )
+        self._baseline_cumulative_extracted_kwh = np.cumsum(self._baseline_heat_extracted_mw * 1000.0)
+        self._baseline_total_extracted_kwh = float(self._baseline_cumulative_extracted_kwh[-1]) if self._baseline_cumulative_extracted_kwh.size > 0 else 0.0
+        self._cumulative_extracted_kwh = 0.0
+
+        if self._baseline_total_extracted_kwh <= 0:
+            raise ValueError(
+                f"{self._supported_reservoir_name} dispatchable mode requires a positive baseline extracted-energy profile."
+            )
+
+    def _baseline_index_for_depletion(self) -> int:
+        if self._baseline_total_extracted_kwh <= 0:
+            return 0
+
+        depletion_fraction = min(max(self._cumulative_extracted_kwh / self._baseline_total_extracted_kwh, 0.0), 1.0)
+        return min(int(round(depletion_fraction * (len(self._baseline_produced_temperature) - 1))), len(self._baseline_produced_temperature) - 1)
+
+    def thermal_state_for_flow_fraction(self, flow_fraction: float) -> dict[str, float]:
+        baseline_index = self._baseline_index_for_depletion()
+        baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
+        baseline_heat_extracted_mw = self._baseline_heat_extracted_mw[baseline_index]
+        baseline_pumping_power_mw = self._baseline_pumping_power_mw[baseline_index]
+        baseline_pumping_power_prod_mw = self._baseline_pumping_power_prod_mw[baseline_index]
+        baseline_pumping_power_inj_mw = self._baseline_pumping_power_inj_mw[baseline_index]
+
+        if flow_fraction <= 0:
+            return {
+                "produced_temperature_c": baseline_temperature_c,
+                "useful_heat_mw": 0.0,
+                "extracted_heat_mw": 0.0,
+                "pumping_power_mw": 0.0,
+                "production_pumping_power_mw": 0.0,
+                "injection_pumping_power_mw": 0.0,
+                "actual_flow_kg_per_sec": 0.0,
+            }
+
+        actual_flow_kg_per_sec = self._nominal_flow_kg_per_sec * flow_fraction
+        extracted_heat_mw = baseline_heat_extracted_mw * flow_fraction
+        useful_heat_mw = extracted_heat_mw * self._enduse_efficiency
+        flow_scale = flow_fraction ** 3
+
+        return {
+            "produced_temperature_c": baseline_temperature_c,
+            "useful_heat_mw": useful_heat_mw,
+            "extracted_heat_mw": extracted_heat_mw,
+            "pumping_power_mw": baseline_pumping_power_mw * flow_scale,
+            "production_pumping_power_mw": baseline_pumping_power_prod_mw * flow_scale,
+            "injection_pumping_power_mw": baseline_pumping_power_inj_mw * flow_scale,
+            "actual_flow_kg_per_sec": actual_flow_kg_per_sec,
+        }
+
+    def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        baseline_index = self._baseline_index_for_depletion()
+        baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
+
+        if dispatch_command.is_shut_in or dispatch_command.target_flow_fraction <= 0 or dispatch_command.runtime_fraction <= 0:
+            return DispatchTimestepResult(
+                produced_temperature=baseline_temperature_c,
+                runtime_fraction=0.0,
+            )
+
+        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction)
+        potential_useful_heat_mw = thermal_state["useful_heat_mw"] * dispatch_command.runtime_fraction
+        served_thermal_demand_mw = min(dispatch_command.target_thermal_demand_mw, potential_useful_heat_mw)
+        unmet_thermal_demand_mw = max(dispatch_command.target_thermal_demand_mw - served_thermal_demand_mw, 0.0)
+        extracted_energy_kwh = thermal_state["extracted_heat_mw"] * dispatch_command.runtime_fraction * 1000.0
+        self._cumulative_extracted_kwh += extracted_energy_kwh
+
+        return DispatchTimestepResult(
+            produced_temperature=thermal_state["produced_temperature_c"],
+            plant_outlet_thermal_power=potential_useful_heat_mw,
+            pumping_power=thermal_state["pumping_power_mw"] * dispatch_command.runtime_fraction,
+            served_thermal_demand=served_thermal_demand_mw,
+            unmet_thermal_demand=unmet_thermal_demand_mw,
+            actual_flow=thermal_state["actual_flow_kg_per_sec"],
+            runtime_fraction=dispatch_command.runtime_fraction,
+        )
+
+    def design_metrics(self) -> dict[str, float]:
+        design_state = self.thermal_state_for_flow_fraction(self._maximum_dispatch_flow_fraction)
+        return {
+            "design_heat_extracted_mw": design_state["extracted_heat_mw"],
+            "design_heat_produced_mw": design_state["useful_heat_mw"],
+            "design_pumping_power_mw": design_state["pumping_power_mw"],
+            "design_pumping_power_prod_mw": design_state["production_pumping_power_mw"],
+            "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
+            "design_flow_kg_per_sec": design_state["actual_flow_kg_per_sec"],
+        }
+
+    def finalize(self) -> None:
+        return None
+
+
 class DispatchAdapterFactory:
     _registry = {
         "CylindricalReservoir": lambda: CylindricalDispatchPlantAdapter(),
-        "MPFReservoir": lambda: PlaceholderDispatchPlantAdapter("MPFReservoir"),
-        "LHSReservoir": lambda: PlaceholderDispatchPlantAdapter("LHSReservoir"),
-        "SFReservoir": lambda: PlaceholderDispatchPlantAdapter("SFReservoir"),
+        "MPFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("MPFReservoir"),
+        "LHSReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("LHSReservoir"),
+        "SFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("SFReservoir"),
         "UPPReservoir": lambda: PlaceholderDispatchPlantAdapter("UPPReservoir"),
         "SBTReservoir": lambda: PlaceholderDispatchPlantAdapter("SBTReservoir"),
     }

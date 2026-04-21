@@ -78,3 +78,41 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
         self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
         self.assertEqual(8760, model.economics.timestepsperyear.value)
+
+    def test_dispatchable_reduced_order_reservoirs_run(self):
+        from geophires_x.LHSReservoir import LHSReservoir
+        from geophires_x.MPFReservoir import MPFReservoir
+        from geophires_x.SFReservoir import SFReservoir
+
+        reservoir_models = {
+            "MPFReservoir": (MPFReservoir, "1"),
+            "LHSReservoir": (LHSReservoir, "2"),
+            "SFReservoir": (SFReservoir, "3"),
+        }
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        for reservoir_name, reservoir_def in reservoir_models.items():
+            with self.subTest(reservoir=reservoir_name):
+                reservoir_class, reservoir_model_value = reservoir_def
+                model = self._new_model()
+                model.reserv = reservoir_class(model)
+                model.InputParameters = {
+                    "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                    "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+                    "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                    "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue=reservoir_model_value),
+                    "Reservoir Depth": ParameterEntry(Name="Reservoir Depth", sValue="3"),
+                    "Gradient 1": ParameterEntry(Name="Gradient 1", sValue="70"),
+                    "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+                    "Maximum Dispatch Flow Fraction": ParameterEntry(
+                        Name="Maximum Dispatch Flow Fraction", sValue="1.1"
+                    ),
+                    "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+                }
+
+                model.read_parameters()
+                model.Calculate()
+
+                self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
+                self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+                self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
