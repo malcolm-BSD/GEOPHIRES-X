@@ -66,6 +66,25 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(40.0, model.update(40.0, dt_hours=12.0, is_shut_in=False))
         self.assertGreater(model.update(40.0, dt_hours=12.0, is_shut_in=True), 40.0)
 
+    def _new_cylindrical_dispatch_adapter(self):
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
+        model = self._new_model()
+        model.reserv = CylindricalReservoir(model)
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+        }
+        model.read_parameters()
+        adapter = CylindricalDispatchPlantAdapter()
+        adapter.initialize(model, design_state={})
+        return model, adapter
+
     def test_dispatchable_cylindrical_run_populates_dispatch_results_and_economics(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
@@ -95,26 +114,10 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(8760, model.economics.timestepsperyear.value)
 
     def test_cylindrical_recovery_restores_state_during_shut_in_period(self):
-        from geophires_x.CylindricalReservoir import CylindricalReservoir
-
-        model = self._new_model()
-        model.reserv = CylindricalReservoir(model)
-        model.InputParameters = {
-            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
-            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
-            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
-            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
-            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
-            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
-            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
-        }
-        model.read_parameters()
+        model, recovering_adapter = self._new_cylindrical_dispatch_adapter()
 
         dispatch_strategy = DemandFollowingDispatchStrategy()
-        recovering_adapter = CylindricalDispatchPlantAdapter()
-        nonrecovering_adapter = CylindricalDispatchPlantAdapter()
-        recovering_adapter.initialize(model, design_state={})
-        nonrecovering_adapter.initialize(model, design_state={})
+        _, nonrecovering_adapter = self._new_cylindrical_dispatch_adapter()
         nonrecovering_adapter._recovery_model = NoRecoveryModel()
 
         def run_cycle(adapter):
@@ -149,6 +152,43 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertAlmostEqual(recovering_depleted, nonrecovering_depleted, places=6)
         self.assertGreater(recovering_recovered, nonrecovering_recovered)
         self.assertGreater(recovering_temperature, nonrecovering_temperature)
+
+    def test_cylindrical_recovery_improves_served_energy_when_post_shut_in_demand_is_supply_limited(self):
+        model, recovering_adapter = self._new_cylindrical_dispatch_adapter()
+        _, nonrecovering_adapter = self._new_cylindrical_dispatch_adapter()
+        nonrecovering_adapter._recovery_model = NoRecoveryModel()
+        dispatch_strategy = DemandFollowingDispatchStrategy()
+
+        def run_cycle(adapter):
+            served_heat = 0.0
+            hour_index = 0
+
+            def step(demand_mw: float) -> None:
+                nonlocal served_heat, hour_index
+                nominal_state = adapter.thermal_state_for_flow_fraction(1.0)
+                dispatch_command = dispatch_strategy.dispatch(
+                    {
+                        "nominal_heat_output_mw": nominal_state["useful_heat_mw"],
+                        "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
+                        "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
+                        "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
+                    },
+                    demand_mw,
+                )
+                result = adapter.evaluate_timestep(dispatch_command, hour_index)
+                served_heat += result.served_thermal_demand
+                hour_index += 1
+
+            for _ in range(720):
+                step(40.0)
+            for _ in range(1440):
+                step(0.0)
+            for _ in range(720):
+                step(40.0)
+
+            return served_heat
+
+        self.assertGreater(run_cycle(recovering_adapter), run_cycle(nonrecovering_adapter))
 
     def test_dispatchable_reduced_order_reservoirs_run(self):
         from geophires_x.LHSReservoir import LHSReservoir
