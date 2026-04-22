@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 from geophires_x.Dispatch import DemandProfileFactory
 from geophires_x.Model import Model
@@ -12,11 +13,11 @@ from tests.base_test_case import BaseTestCase
 
 
 class DispatchFrameworkTestCase(BaseTestCase):
-    def _new_model(self) -> Model:
+    def _new_model(self, input_file: Optional[str] = None) -> Model:
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
         sys.argv = [""]
-        model = Model(enable_geophires_logging_config=False)
+        model = Model(enable_geophires_logging_config=False, input_file=input_file)
         sys.argv = stash_sys_argv
         os.chdir(stash_cwd)
         return model
@@ -50,7 +51,8 @@ class DispatchFrameworkTestCase(BaseTestCase):
         profile = DemandProfileFactory.from_model(model)
 
         self.assertEqual(8760, profile.num_timesteps)
-        self.assertAlmostEqual(13188.2, profile.series[0], places=1)
+        self.assertEqual("MW", profile.units)
+        self.assertAlmostEqual(13.1882, profile.series[0], places=4)
 
     def test_dispatchable_cylindrical_run_populates_dispatch_results_and_economics(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
@@ -76,6 +78,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(8760, len(model.surfaceplant.HeatProduced.value))
         self.assertGreater(model.dispatch_results.summary_metrics["design_heat_extracted_mw"], 0.0)
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["peak_hourly_demand_mw"], 0.0)
         self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
         self.assertEqual(8760, model.economics.timestepsperyear.value)
 
@@ -148,29 +151,30 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
         self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
 
-    def test_dispatchable_sbt_is_explicitly_unsupported_for_now(self):
-        from geophires_x.SBTEconomics import SBTEconomics
-        from geophires_x.SBTReservoir import SBTReservoir
-        from geophires_x.SBTWellbores import SBTWellbores
-
-        model = self._new_model()
-        model.reserv = SBTReservoir(model)
-        model.wellbores = SBTWellbores(model)
-        model.economics = SBTEconomics(model)
+    def test_dispatchable_sbt_uloop_run(self):
+        example_file = str(Path(__file__).resolve().parents[1] / "examples" / "example_SBT_ULoop.txt")
+        model = self._new_model(example_file)
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        model.InputParameters = {
-            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
-            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
-            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
-            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="8"),
-            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
-            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.05"),
-            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
-        }
+        model.InputParameters["Operating Mode"] = ParameterEntry(Name="Operating Mode", sValue="Dispatchable")
+        model.InputParameters["End-Use Option"] = ParameterEntry(Name="End-Use Option", sValue="2")
+        model.InputParameters["Plant Lifetime"] = ParameterEntry(Name="Plant Lifetime", sValue="1")
+        model.InputParameters["Economic Model"] = ParameterEntry(Name="Economic Model", sValue="2")
+        model.InputParameters["Power Plant Type"] = ParameterEntry(Name="Power Plant Type", sValue="9")
+        model.InputParameters["Maximum Dispatch Flow Fraction"] = ParameterEntry(
+            Name="Maximum Dispatch Flow Fraction", sValue="1.05"
+        )
+        model.InputParameters["Annual Heat Demand"] = ParameterEntry(Name="Annual Heat Demand", sValue=csv_file)
+        model.InputParameters["SBT Generate Wireframe Graphics"] = ParameterEntry(
+            Name="SBT Generate Wireframe Graphics", sValue="False"
+        )
 
         model.read_parameters()
-        with self.assertRaisesRegex(
-            NotImplementedError,
-            "Dispatchable timestep simulation has not been implemented yet for SBTReservoir",
-        ):
-            model.Calculate()
+        model.Calculate()
+
+        self.assertEqual("SBTDispatchPlantAdapter", type(model.dispatch_adapter).__name__)
+        self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
+        self.assertEqual(8760, len(model.surfaceplant.HeatProduced.value))
+        self.assertGreater(model.dispatch_results.summary_metrics["design_heat_extracted_mw"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["peak_hourly_demand_mw"], 0.0)
+        self.assertGreaterEqual(model.economics.LCOH.value, 0.0)

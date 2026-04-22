@@ -6,8 +6,10 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from geophires_x.OptionList import DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode
+from geophires_x.GeoPHIRESUtils import quantity
+from geophires_x.OptionList import Configuration, DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode
 from geophires_x.OptionList import PlantType
+from geophires_x.Units import EnergyUnit, PowerUnit
 
 if TYPE_CHECKING:
     from geophires_x.Model import Model
@@ -30,12 +32,70 @@ def _as_float_series(raw_series: Any) -> np.ndarray:
     return series
 
 
+def _as_baseline_series(raw_series: Any, parameter_name: str) -> np.ndarray:
+    series = np.asarray(raw_series, dtype=float)
+    if series.ndim == 0:
+        series = np.array([float(series)], dtype=float)
+    else:
+        series = np.ravel(series).astype(float, copy=False)
+
+    if series.size == 0:
+        raise ValueError(f"Dispatchable mode requires a non-empty `{parameter_name}` baseline profile.")
+
+    return series
+
+
+def _coerce_series_length(
+    raw_series: Any,
+    target_length: int,
+    parameter_name: str,
+    default_value: float = 0.0,
+) -> np.ndarray:
+    series = np.asarray(raw_series, dtype=float)
+    if series.ndim == 0:
+        return np.full(target_length, float(series), dtype=float)
+
+    series = np.ravel(series).astype(float, copy=False)
+    if series.size == 0:
+        return np.full(target_length, default_value, dtype=float)
+
+    if series.size == 1 and target_length > 1:
+        return np.full(target_length, float(series[0]), dtype=float)
+
+    if series.size != target_length:
+        raise ValueError(
+            f"Dispatchable mode expected `{parameter_name}` to have {target_length} values, received {series.size}."
+        )
+
+    return series
+
+
 @dataclass
 class DemandProfile:
     series: np.ndarray
     units: str
     num_timesteps: int
     time_step_hours: float = 1.0
+
+
+def _series_to_mw(series: np.ndarray, units: Any, time_step_hours: float) -> np.ndarray:
+    units_value = _enum_value_or_str(units)
+
+    if units in [PowerUnit.W, PowerUnit.KW, PowerUnit.MW, PowerUnit.GW] or units_value in [it.value for it in PowerUnit]:
+        converted = np.array([
+            quantity(value, units_value).to("MW").magnitude for value in series
+        ], dtype=float)
+        return converted
+
+    if units in [EnergyUnit.WH, EnergyUnit.KWH, EnergyUnit.MWH, EnergyUnit.GWH, EnergyUnit.MMBTU] or units_value in [
+        it.value for it in EnergyUnit
+    ]:
+        converted_energy_mwh = np.array([
+            quantity(value, units_value).to("MWh").magnitude for value in series
+        ], dtype=float)
+        return converted_energy_mwh / time_step_hours
+
+    raise ValueError(f"Unsupported dispatch demand units `{units_value}`. Expected hourly energy or thermal power units.")
 
 
 class DemandProfileFactory:
@@ -57,8 +117,9 @@ class DemandProfileFactory:
                 f"Dispatchable mode requires an hourly one-year demand profile with 8760 timesteps; received {len(series)}."
             )
 
-        units = _enum_value_or_str(getattr(model.surfaceplant.HeatingDemand, "CurrentYUnits", ""))
-        return DemandProfile(series=series, units=str(units), num_timesteps=len(series))
+        units = getattr(model.surfaceplant.HeatingDemand, "CurrentYUnits", EnergyUnit.KWH)
+        series_mw = _series_to_mw(series, units, time_step_hours=1.0)
+        return DemandProfile(series=series_mw, units=PowerUnit.MW.value, num_timesteps=len(series_mw))
 
 
 @dataclass
@@ -330,10 +391,26 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         self._enduse_efficiency = model.surfaceplant.enduse_efficiency_factor.value
         self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
 
-        self._baseline_produced_temperature = np.asarray(model.wellbores.ProducedTemperature.value, dtype=float)
-        self._baseline_pumping_power_mw = np.asarray(model.wellbores.PumpingPower.value, dtype=float)
-        self._baseline_pumping_power_prod_mw = np.asarray(model.wellbores.PumpingPowerProd.value, dtype=float)
-        self._baseline_pumping_power_inj_mw = np.asarray(model.wellbores.PumpingPowerInj.value, dtype=float)
+        self._baseline_produced_temperature = _as_baseline_series(
+            model.wellbores.ProducedTemperature.value,
+            "ProducedTemperature",
+        )
+        baseline_length = len(self._baseline_produced_temperature)
+        self._baseline_pumping_power_mw = _coerce_series_length(
+            model.wellbores.PumpingPower.value,
+            baseline_length,
+            "PumpingPower",
+        )
+        self._baseline_pumping_power_prod_mw = _coerce_series_length(
+            model.wellbores.PumpingPowerProd.value,
+            baseline_length,
+            "PumpingPowerProd",
+        )
+        self._baseline_pumping_power_inj_mw = _coerce_series_length(
+            model.wellbores.PumpingPowerInj.value,
+            baseline_length,
+            "PumpingPowerInj",
+        )
         self._baseline_heat_extracted_mw = (
             self._nprod
             * self._nominal_flow_kg_per_sec
@@ -433,6 +510,29 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         return None
 
 
+class SBTDispatchPlantAdapter(AnalyticalReservoirDispatchPlantAdapter):
+    def __init__(self):
+        super().__init__("SBTReservoir")
+
+    def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        configuration = model.wellbores.Configuration.value
+        if not isinstance(configuration, Configuration):
+            configuration = Configuration.from_input_string(configuration)
+
+        if configuration == Configuration.COAXIAL:
+            raise NotImplementedError(
+                "Dispatchable mode for SBTReservoir currently supports only U-loop style configurations; "
+                "coaxial SBT is not implemented."
+            )
+
+        if configuration not in [Configuration.ULOOP, Configuration.EAVORLOOP]:
+            raise ValueError(
+                f"Unsupported SBT configuration for dispatchable mode: {_enum_value_or_str(configuration)}"
+            )
+
+        super().initialize(model, design_state)
+
+
 class DispatchAdapterFactory:
     _registry = {
         "CylindricalReservoir": lambda: CylindricalDispatchPlantAdapter(),
@@ -440,7 +540,7 @@ class DispatchAdapterFactory:
         "LHSReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("LHSReservoir"),
         "SFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("SFReservoir"),
         "UPPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("UPPReservoir"),
-        "SBTReservoir": lambda: PlaceholderDispatchPlantAdapter("SBTReservoir"),
+        "SBTReservoir": lambda: SBTDispatchPlantAdapter(),
     }
 
     @classmethod
@@ -492,8 +592,8 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             )
 
         demand_profile = DemandProfileFactory.from_model(model)
-        dispatch_demand_kwh = np.tile(demand_profile.series, model.surfaceplant.plant_lifetime.value)
-        model.dispatch_results = DispatchResults.initialize(len(dispatch_demand_kwh))
+        dispatch_demand_mw = np.tile(demand_profile.series, model.surfaceplant.plant_lifetime.value)
+        model.dispatch_results = DispatchResults.initialize(len(dispatch_demand_mw))
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
         model.dispatch_adapter.initialize(model, design_state={})
         design_metrics = getattr(model.dispatch_adapter, "design_metrics", lambda: {})()
@@ -504,8 +604,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 0,
             )
 
-        for timestep_index, timestep_demand_kwh in enumerate(dispatch_demand_kwh):
-            timestep_demand_mw = timestep_demand_kwh / 1000.0
+        for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
             nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
             timestep_state = {
                 "nominal_heat_output_mw": nominal_state["useful_heat_mw"],
@@ -516,7 +615,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             dispatch_command = self._dispatch_strategy.dispatch(timestep_state, timestep_demand_mw)
             timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
 
-            model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_kwh
+            model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
             model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
             model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
             model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
@@ -527,11 +626,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
         model.dispatch_adapter.finalize()
         model.dispatch_results.summary_metrics.update(design_metrics)
-        self._finalize_dispatch_results(model, dispatch_demand_kwh)
+        self._finalize_dispatch_results(model, dispatch_demand_mw, demand_profile.time_step_hours)
         model.economics.Calculate(model)
 
     @staticmethod
-    def _finalize_dispatch_results(model: "Model", dispatch_demand_kwh: np.ndarray) -> None:
+    def _finalize_dispatch_results(model: "Model", dispatch_demand_mw: np.ndarray, time_step_hours: float) -> None:
         timesteps_per_year = 8760
         plant_lifetime_years = model.surfaceplant.plant_lifetime.value
         efficiency = model.surfaceplant.enduse_efficiency_factor.value
@@ -575,6 +674,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             float(np.sum(unmet_heat_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
             for year_index in range(plant_lifetime_years)
         ])
+        dispatch_demand_kwh = dispatch_demand_mw * 1000.0 * time_step_hours
         annual_demand_kwh = np.array([
             float(np.sum(dispatch_demand_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
             for year_index in range(plant_lifetime_years)
@@ -595,7 +695,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         }
         model.dispatch_results.summary_metrics.update(
             {
-                "peak_hourly_demand_kwh": float(np.max(dispatch_demand_kwh)),
+                "peak_hourly_demand_mw": float(np.max(dispatch_demand_mw)),
                 "peak_served_heat_kwh": float(np.max(served_heat_kwh)),
                 "peak_unmet_heat_kwh": float(np.max(unmet_heat_kwh)),
                 "annual_served_heat_kwh": float(np.sum(annual_served_kwh)),
