@@ -76,6 +76,8 @@ class Model(object):
         if input_file is None and len(sys.argv) > 1:
             input_file = sys.argv[1]
 
+        self.input_file_path = Path(input_file).resolve() if input_file and not str(input_file).startswith('http') else None
+
         # Key step - read the entire provided input file
         self.InputParameters = read_input_file(logger=self.logger, input_file_name=input_file)
 

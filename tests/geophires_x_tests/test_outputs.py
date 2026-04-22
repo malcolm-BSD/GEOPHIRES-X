@@ -34,9 +34,11 @@ class OutputsTestCase(BaseTestCase):
                 # TODO expand test to assert more about output HTML
         except RuntimeError as e:
             # https://github.com/NREL/GEOPHIRES-X/issues/365
-            has_expected_error_msg = "cannot unpack non-iterable NoneType object" in str(
-                e
-            ) or "Can't find a usable tk.tcl" in str(e)
+            has_expected_error_msg = (
+                "cannot unpack non-iterable NoneType object" in str(e)
+                or "Can't find a usable tk.tcl" in str(e)
+                or 'invalid command name "tcl_findLibrary"' in str(e)
+            )
             if has_expected_error_msg and os.name == "nt" and "TOXPYTHON" in os.environ:
                 _log.warning(
                     f"Ignoring error while testing HTML output file "
@@ -182,6 +184,43 @@ class OutputsTestCase(BaseTestCase):
         self.assertTrue(html_output_path.exists())
         for graph_path in graph_paths:
             self.assertTrue(graph_path.exists())
+
+    def test_full_scale_dispatch_example_input_runs(self):
+        input_path = Path(__file__).resolve().parents[1] / "example1_dispatchable_full_scale.txt"
+        text_output_path = input_path.parent / "example1_dispatchable_full_scale_text.out"
+        html_output_path = input_path.parent / "example1_dispatchable_full_scale.html"
+        dispatch_profile_path = input_path.parent / "example1_dispatchable_full_scale_dispatch_profile.csv"
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
+        ]
+        graph_paths = [
+            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
+            for title in graph_titles
+        ]
+
+        for artifact_path in [text_output_path, html_output_path, dispatch_profile_path, *graph_paths]:
+            if artifact_path.exists():
+                artifact_path.unlink()
+
+        result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+
+        self.assertTrue(Path(result.output_file_path).exists())
+        self.assertTrue(text_output_path.exists())
+        self.assertTrue(html_output_path.exists())
+        self.assertTrue(dispatch_profile_path.exists())
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
+
+        with open(text_output_path, encoding="UTF-8") as f:
+            output_text = f.read()
+        self.assertIn("***DISPATCH RESULTS***", output_text)
+
+        with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+        self.assertEqual(8760 * 5, len(rows))
+        self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
 
     # noinspection PyMethodMayBeStatic
     def _strip_drive(self, p: str) -> str:

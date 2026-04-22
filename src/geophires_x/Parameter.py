@@ -5,6 +5,7 @@ import copy
 import dataclasses
 import csv
 import math
+import os
 from typing import Optional
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -36,6 +37,39 @@ _JSON_PARAMETER_TYPE_NUMBER = 'number'
 _JSON_PARAMETER_TYPE_ARRAY = 'array'
 _JSON_PARAMETER_TYPE_BOOLEAN = 'boolean'
 _JSON_PARAMETER_TYPE_OBJECT = 'object'
+
+
+def _resolve_input_source(candidate: str, model) -> str:
+    if not isinstance(candidate, str):
+        return candidate
+
+    stripped = candidate.strip()
+    if stripped == '' or '\n' in stripped or '\r' in stripped:
+        return candidate
+
+    parsed = urlparse(candidate)
+    if parsed.scheme in ['http', 'https']:
+        return candidate
+
+    expanded = Path(os.path.expandvars(os.path.expanduser(stripped)))
+    try:
+        if expanded.is_file():
+            return str(expanded)
+    except (OSError, ValueError):
+        return candidate
+
+    input_file_path = getattr(model, 'input_file_path', None)
+    if input_file_path is None:
+        return candidate
+
+    resolved = Path(input_file_path).parent / expanded
+    try:
+        if resolved.is_file():
+            return str(resolved.resolve())
+    except (OSError, ValueError):
+        return candidate
+
+    return candidate
 
 class HasQuantity(ABC):
 
@@ -397,13 +431,17 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             if content:
                 seems_like_URL = True
                 ParameterReadIn.sValue = content
-        elif is_existing_file_path(ParameterReadIn.sValue):
-            content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
-            if content:
-                seems_like_file = True
-                ParameterReadIn.sValue = content
-            else:
-                seems_like_file = False
+        else:
+            resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
+            if resolved_source != ParameterReadIn.sValue:
+                ParameterReadIn.sValue = resolved_source
+            if is_existing_file_path(ParameterReadIn.sValue):
+                content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
+                if content:
+                    seems_like_file = True
+                    ParameterReadIn.sValue = content
+                else:
+                    seems_like_file = False
         # if the file or URL is provided but not valid, log an error and raise an exception
         if (seems_like_file or seems_like_URL) and not content:
             err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a valid file path.'
@@ -486,11 +524,12 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         # for a filename, make sure the file exists. The user can also provide a URL, so make sure that is valid.
         # If they are OK, then just assign the input text string to the Parameter.
         # When the Parameter is used, the code is responsible for reading the content of the file or URL and using it correctly.
-        if is_existing_file_path(ParameterReadIn.sValue) or url_returns_content(ParameterReadIn.sValue):
-            ParamToModify.value = ParameterReadIn.sValue
+        resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
+        if is_existing_file_path(resolved_source) or url_returns_content(resolved_source):
+            ParamToModify.value = resolved_source
             ParamToModify.Provided = True
             ParamToModify.Valid = True
-            model.logger.info(f'Validated filename input for {ParamToModify.Name}: {ParameterReadIn.sValue}')
+            model.logger.info(f'Validated filename input for {ParamToModify.Name}: {resolved_source}')
         else:
             if ParamToModify.Name == "Reservoir Output File Name":
                 ParamToModify.value = ParameterReadIn.sValue
@@ -615,7 +654,7 @@ def _try_parse_pair_vector_csv_file(path_str: str, param_to_modify=None, model=N
     if path_str.startswith('http'):
         return None
 
-    path = Path(path_str)
+    path = Path(_resolve_input_source(path_str, model))
     if not path.is_file():
         return None
 
@@ -735,7 +774,7 @@ def _try_read_numeric_list_from_source(parameter_read_in: ParameterEntry, param_
                 return parsed_values
             continue
 
-        file_path = Path(candidate)
+        file_path = Path(_resolve_input_source(candidate, model))
         if file_path.is_file():
             if file_path.stat().st_size > _PAIR_VECTOR_MAX_BYTES:
                 continue
@@ -1544,11 +1583,13 @@ def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_m
                     is_list = True
                 # if it is None, then it did not successfully parse out as a list, so it is likely just a simple value with units,
                 # so we will try to process it as that below
-            elif parameter_read_in.sValue.strip().startswith('http') or is_existing_file_path(parameter_read_in.sValue):
-                param_to_modify.value = get_data_from_file_or_url(parameter_read_in.sValue, param_to_modify, model)
+            else:
+                resolved_source = _resolve_input_source(parameter_read_in.sValue, model)
+                if resolved_source.strip().startswith('http') or is_existing_file_path(resolved_source):
+                    param_to_modify.value = get_data_from_file_or_url(resolved_source, param_to_modify, model)
 
-                # the file or URl may have returned a list, so set the flag
-                is_list = is_numeric_sequence_string(str(param_to_modify.value))
+                    # the file or URl may have returned a list, so set the flag
+                    is_list = is_numeric_sequence_string(str(param_to_modify.value))
 
         # deal with the case where the user has provided units. That will be indicated by a space in it
         # the strategy is to look for a space in the value, and if there is one, then we will assume that the value has a unit in it,
