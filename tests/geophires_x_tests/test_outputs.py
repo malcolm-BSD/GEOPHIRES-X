@@ -2,9 +2,11 @@ import logging
 import os
 import sys
 import tempfile
+from csv import DictReader
 from pathlib import Path
 
 from geophires_x.Model import Model
+from geophires_x.OutputsRich import removeDisallowedFilenameChars
 from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
@@ -97,6 +99,89 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
         self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
+
+    def test_dispatch_profile_csv_is_written(self):
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
+        output_path = Path(tempfile.gettempdir(), "dispatch_profile_results_test.out").absolute()
+        csv_output_path = Path(tempfile.gettempdir(), "dispatch_profile_results_test.csv").absolute()
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        model = self._new_model()
+        model.reserv = CylindricalReservoir(model)
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
+            "Dispatch Profile Output File": ParameterEntry(
+                Name="Dispatch Profile Output File", sValue=str(csv_output_path)
+            ),
+        }
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        self.assertTrue(csv_output_path.exists())
+        with open(csv_output_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+
+        self.assertEqual(8760, len(rows))
+        self.assertEqual("1", rows[0]["Year"])
+        self.assertEqual("1", rows[0]["Hour of Year"])
+        self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
+        self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+        self.assertGreaterEqual(float(rows[0]["Produced Temperature (degC)"]), 0.0)
+
+    def test_dispatch_html_graphs_are_generated_when_enabled(self):
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
+        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_results_test.out").absolute()
+        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_results_test.html").absolute()
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
+        ]
+        graph_paths = [
+            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
+            for title in graph_titles
+        ]
+        for graph_path in graph_paths:
+            if graph_path.exists():
+                graph_path.unlink()
+
+        model = self._new_model()
+        model.reserv = CylindricalReservoir(model)
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
+            "HTML Output File": ParameterEntry(Name="HTML Output File", sValue=str(html_output_path)),
+            "Generate Dispatch HTML Graphs": ParameterEntry(Name="Generate Dispatch HTML Graphs", sValue="1"),
+        }
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        self.assertTrue(html_output_path.exists())
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
 
     # noinspection PyMethodMayBeStatic
     def _strip_drive(self, p: str) -> str:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import datetime
 import math
 import time
@@ -64,6 +65,22 @@ class Outputs:
                 ToolTipText='Provide a HTML output name if you want to have HTML output (no output if not provided)',
         ))
 
+        self.dispatch_profile_output_file = self.ParameterDict[
+            self.dispatch_profile_output_file.Name
+        ] = filepath_parameter(
+            strParameter(
+                'Dispatch Profile Output File',
+                DefaultValue='dispatch_profile.csv',
+                Required=False,
+                Provided=False,
+                ErrMessage='assume no dispatch profile csv output',
+                ToolTipText=(
+                    'Provide a CSV output filename if you want hourly dispatch profile export '
+                    '(no dispatch profile CSV output if not provided)'
+                ),
+            )
+        )
+
         # noinspection SpellCheckingInspection
         self.printoutput = self.ParameterDict[self.printoutput.Name] = boolParameter(
                 'Print Output to Console',
@@ -72,6 +89,15 @@ class Outputs:
                 Provided=False,
                 ErrMessage='assume no output to console',
                 ToolTipText='Provide a 0 if you do not want to print output to the console',
+            )
+
+        self.generate_dispatch_html_graphs = self.ParameterDict[self.generate_dispatch_html_graphs.Name] = boolParameter(
+                'Generate Dispatch HTML Graphs',
+                DefaultValue=False,
+                Required=False,
+                Provided=False,
+                ErrMessage='assume no dispatch html graphs',
+                ToolTipText='Provide a 1 to generate optional dispatch graphs in HTML output',
             )
 
         model.logger.info(f'Complete {__class__!s}: {__name__}')
@@ -875,6 +901,8 @@ class Outputs:
             addon_df
         )
 
+        self._write_dispatch_profile_output(model)
+
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')
 
     # noinspection PyMethodMayBeStatic
@@ -1006,4 +1034,49 @@ class Outputs:
         f.write(NL)
         for field_name, value, units in dispatch_rows:
             f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+
+    def _write_dispatch_profile_output(self, model: Model) -> None:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None or not self.dispatch_profile_output_file.Provided:
+            return
+
+        num_timesteps = len(dispatch_results.hourly_thermal_demand)
+        if num_timesteps == 0:
+            return
+
+        timesteps_per_year = 8760
+        with open(self.dispatch_profile_output_file.value, 'w', encoding='UTF-8', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    'Year',
+                    'Hour of Year',
+                    'Simulation Hour',
+                    'Thermal Demand (MW)',
+                    'Geothermal Thermal Output (MW)',
+                    'Demand Served (MW)',
+                    'Unmet Demand (MW)',
+                    'Produced Temperature (degC)',
+                    'Flow Rate (kg/s)',
+                    'Runtime Fraction',
+                    'Pumping Power (MW)',
+                ]
+            )
+
+            for timestep_index in range(num_timesteps):
+                writer.writerow(
+                    [
+                        timestep_index // timesteps_per_year + 1,
+                        timestep_index % timesteps_per_year + 1,
+                        timestep_index + 1,
+                        float(dispatch_results.hourly_thermal_demand[timestep_index]),
+                        float(dispatch_results.hourly_geothermal_thermal_output[timestep_index]),
+                        float(dispatch_results.hourly_demand_served[timestep_index] / 1000.0),
+                        float(dispatch_results.hourly_unmet_demand[timestep_index] / 1000.0),
+                        float(dispatch_results.hourly_produced_temperature[timestep_index]),
+                        float(dispatch_results.hourly_flow[timestep_index]),
+                        float(dispatch_results.hourly_runtime_fraction[timestep_index]),
+                        float(dispatch_results.hourly_pumping_power[timestep_index]),
+                    ]
+                )
 

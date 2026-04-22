@@ -31,6 +31,15 @@ VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
 
 _GRAPH_FIGSIZE = (12, 6)
 
+
+def _set_plot_xlim(ax, x: pd.array) -> None:
+    x_min = float(np.min(x))
+    x_max = float(np.max(x))
+    if x_min == x_max:
+        ax.set_xlim(x_min - 0.5, x_max + 0.5)
+    else:
+        ax.set_xlim(x_min, x_max)
+
 def print_outputs_rich(
         text_output_file: strParameter,
         html_output_file: strParameter,
@@ -939,6 +948,9 @@ def print_outputs_rich(
         Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
                               html_output_file.value, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
                               addon_df)
+        if getattr(model.outputs, 'generate_dispatch_html_graphs', None) is not None and \
+                model.outputs.generate_dispatch_html_graphs.value and getattr(model, 'dispatch_results', None) is not None:
+            Plot_Dispatch_Graphs_Into_HTML(model, html_output_file.value)
         # make district heating plot
         if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
             MakeDistrictHeatingPlot(html_output_file.value, model.surfaceplant.dh_geothermal_heating.value,
@@ -1290,7 +1302,7 @@ def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: p
     ax1.set_xlabel(UpgradeSymbologyOfUnits(x_label), color = COLOR_PRICE, fontsize=14)
     ax1.set_ylabel(UpgradeSymbologyOfUnits(y1_label), color=COLOR_PRICE, fontsize=14)
     ax1.tick_params(axis="y", labelcolor=COLOR_PRICE)
-    ax1.set_xlim(x.min(), x.max())
+    _set_plot_xlim(ax1, x)
     ax1.legend(loc='lower left')
 
     ax2 = ax1.twinx()
@@ -1308,6 +1320,7 @@ def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: p
     plt.savefig(save_path)
     short_names.add(title)
     full_names.add(save_path)
+    plt.close(fig)
 
     InsertImagesIntoHTML(html_path, short_names, full_names)
 
@@ -1336,7 +1349,7 @@ def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_la
     ax.set_xlabel(UpgradeSymbologyOfUnits(x_label), color = COLOR_PRICE, fontsize=14)
     ax.set_ylabel(UpgradeSymbologyOfUnits(y_label), color=COLOR_PRICE, fontsize=14)
     ax.tick_params(axis="y", labelcolor=COLOR_PRICE)
-    ax.set_xlim(x.min(), x.max())
+    _set_plot_xlim(ax, x)
     ax.legend(loc='best')
     #plt.ylim(y.min(), y.max())
     #plt.gca().legend((UpgradeSymbologyOfUnits(x_label), UpgradeSymbologyOfUnits(y_label)), loc='best')
@@ -1349,8 +1362,83 @@ def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_la
     plt.savefig(save_path)
     short_names.add(title)
     full_names.add(save_path)
+    plt.close(fig)
 
     InsertImagesIntoHTML(html_path, short_names, full_names)
+
+
+def Plot_Multi_Graph(title: str, html_path: str, x: pd.array, ys: list[pd.array], x_label: str,
+                     y_label: str, series_labels: list[str]) -> None:
+    """
+    Plot multiple series sharing the same y-axis.
+    """
+    colors = ["#3399e6", "#69b3a2", "#c04b37", "#d4a017"]
+    fig, ax = plt_subplots(figsize=_GRAPH_FIGSIZE)
+
+    for idx, y in enumerate(ys):
+        ax.plot(x, y, label=UpgradeSymbologyOfUnits(series_labels[idx]), color=colors[idx % len(colors)], lw=2.5)
+
+    ax.set_xlabel(UpgradeSymbologyOfUnits(x_label), color=colors[0], fontsize=14)
+    ax.set_ylabel(UpgradeSymbologyOfUnits(y_label), color=colors[0], fontsize=14)
+    ax.tick_params(axis="y", labelcolor=colors[0])
+    _set_plot_xlim(ax, x)
+    ax.legend(loc='best')
+    fig.suptitle(profile_title_adjusted_for_figure(title), fontsize=20)
+
+    full_names: set = set()
+    short_names: set = set()
+    title = removeDisallowedFilenameChars(title.replace(' ', '_'))
+    save_path = Path(Path(html_path).parent, f'{title}.png')
+    plt.savefig(save_path)
+    short_names.add(title)
+    full_names.add(save_path)
+    plt.close(fig)
+
+    InsertImagesIntoHTML(html_path, short_names, full_names)
+
+
+def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
+    dispatch_results = getattr(model, 'dispatch_results', None)
+    if dispatch_results is None:
+        return
+
+    hours = np.arange(1, len(dispatch_results.hourly_thermal_demand) + 1, dtype=float)
+    if hours.size == 0:
+        return
+
+    Plot_Multi_Graph(
+        'DISPATCH PROFILE: Demand, Served, and Unmet Heat',
+        html_path,
+        hours,
+        [
+            dispatch_results.hourly_thermal_demand,
+            dispatch_results.hourly_demand_served / 1000.0,
+            dispatch_results.hourly_unmet_demand / 1000.0,
+        ],
+        'Simulation Hour',
+        'Thermal Power (MW)',
+        ['Thermal Demand (MW)', 'Demand Served (MW)', 'Unmet Demand (MW)'],
+    )
+    Plot_Twin_Graph(
+        'DISPATCH PROFILE: Produced Temperature and Flow Rate',
+        html_path,
+        hours,
+        dispatch_results.hourly_produced_temperature,
+        dispatch_results.hourly_flow,
+        'Simulation Hour',
+        'Produced Temperature (degC)',
+        'Flow Rate (kg/s)',
+    )
+    Plot_Twin_Graph(
+        'DISPATCH PROFILE: Runtime Fraction and Pumping Power',
+        html_path,
+        hours,
+        dispatch_results.hourly_runtime_fraction,
+        dispatch_results.hourly_pumping_power,
+        'Simulation Hour',
+        'Runtime Fraction',
+        'Pumping Power (MW)',
+    )
 
 
 def Plot_Tables_Into_HTML(enduse_option: intParameter, plant_type: intParameter, html_path: str,
@@ -1548,6 +1636,7 @@ def MakeDistrictHeatingPlot(html_path: str, dh_geothermal_heating: pd.array, dai
     plt.savefig(save_path)
     short_names.add(title)
     full_names.add(save_path)
+    plt.close()
 
     InsertImagesIntoHTML(html_path, short_names, full_names)
 
