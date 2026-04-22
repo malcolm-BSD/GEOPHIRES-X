@@ -359,6 +359,18 @@ class GeophiresXResult:
                 "Average Annual Total Heating Production",
                 "Average Annual Electricity Use for Pumping",
             ],
+            "DISPATCH RESULTS": [
+                "Design heat produced",
+                "Annual geothermal heat delivered",
+                "Annual unmet thermal demand",
+                "Dispatch capacity factor",
+                "Average runtime fraction",
+                "Peak geothermal contribution",
+                "Peak unmet load",
+                "Peak hourly demand",
+                "Design flow rate",
+                "Observed peak flow rate",
+            ],
             "Simulation Metadata": [
                 _StringValueField("GEOPHIRES Version"),
                 "Calculation Time",

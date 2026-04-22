@@ -57,6 +57,7 @@ def print_outputs_rich(
     CAPEX = []
     OPEX = []
     surface_equipment_results = []
+    dispatch_results = []
     # addon_results = []
 
     simulation_metadata.append(OutputTableItem('GEOPHIRES Version', geophires_x.__version__))
@@ -150,6 +151,31 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Total Avoided Carbon Emissions', '{0:10.2f}'.format(
             model.economics.CarbonThatWouldHaveBeenProducedTotal.value),
                                        model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value))
+
+    if getattr(model, 'dispatch_results', None) is not None:
+        dispatch_metrics = model.dispatch_results.summary_metrics
+        dispatch_results.extend([
+            OutputTableItem('Design heat produced', '{0:10.2f}'.format(
+                dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
+            OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
+                dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
+            OutputTableItem('Annual unmet thermal demand', '{0:10.2f}'.format(
+                dispatch_metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
+            OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
+                dispatch_metrics.get('dispatch_capacity_factor', 0.0) * 100.0), '%'),
+            OutputTableItem('Average runtime fraction', '{0:10.2f}'.format(
+                dispatch_metrics.get('average_runtime_fraction', 0.0) * 100.0), '%'),
+            OutputTableItem('Peak geothermal contribution', '{0:10.2f}'.format(
+                dispatch_metrics.get('peak_served_heat_kwh', 0.0) / 1000.0), 'MW'),
+            OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
+                dispatch_metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0), 'MW'),
+            OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
+                dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
+            OutputTableItem('Design flow rate', '{0:10.2f}'.format(
+                dispatch_metrics.get('design_total_flow_kg_per_sec', 0.0)), 'kg/s'),
+            OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
+                dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
+        ])
 
     if model.economics.econmodel.value == EconomicModel.FCR:
         economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))
@@ -889,7 +915,7 @@ def print_outputs_rich(
                           engineering_parameters,
                           resource_characteristics, reservoir_parameters, reservoir_stimulation_results, CAPEX,
                           OPEX,
-                          surface_equipment_results, sdac_results, addon_results, hce, ahce, cashflow,
+                          surface_equipment_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow,
                           pumping_power_profiles, sdac_df, addon_df)
 
         # Get rid of any trailing spaces in that output file - they are confusing the testing code
@@ -907,7 +933,7 @@ def print_outputs_rich(
     if html_output_file.Provided:
         Write_HTML_Output(html_output_file.value, simulation_metadata, summary, economic_parameters,
                           engineering_parameters, resource_characteristics, reservoir_parameters,
-                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, sdac_results,
+                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results, sdac_results,
                           addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
         Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
@@ -1008,8 +1034,9 @@ def Write_Complex_Text_table(title: str, df_table: pd.DataFrame, time_steps_per_
 def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
-                      cashflow: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
+                      dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
+                      ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
+                      sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
     This function writes out the text output
     :param output_path: the path to the output file
@@ -1034,12 +1061,16 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
     :type OPEX: list
     :param surface_equipment_results: the surface equipment simulation results
     :type surface_equipment_results: list
+    :param dispatch_results: the dispatch results
+    :type dispatch_results: list
     :param sdac_results: the sdac results
     :type sdac_results: list
     :param hce: the heating, cooling and/or electricity production profile
     :type hce: pd.DataFrame
     :param cashflow: the revenue & cashflow profile
     :type cashflow: pd.DataFrame
+    :param pumping_power_profiles: the pumping power profiles
+    :type pumping_power_profiles: pd.DataFrame
     :param sdac_df: the sdac dataframe
     :type sdac_df: pd.DataFrame
     :return: None
@@ -1066,6 +1097,8 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
         Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, f)
         Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, f)
         Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, f)
+        if len(dispatch_results) > 0:
+            Write_Simple_Text_Table('DISPATCH RESULTS', dispatch_results, f)
         if len(addon_results) > 0:
             Write_Simple_Text_Table('ADD-ON ECONOMICS', addon_results, f)
         if len(sdac_results) > 0:
@@ -1075,6 +1108,8 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
         Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, f)
         Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, f)
         Write_Complex_Text_table('REVENUE & CASHFLOW PROFILE', cashflow, 1, f)
+        if len(pumping_power_profiles) > 0:
+            Write_Complex_Text_table('PUMPING POWER PROFILES', pumping_power_profiles, 1, f)
         if len(addon_df) > 0:
             Write_Complex_Text_table('ADD-ON PROFILE', addon_df, 1, f)
         if len(sdac_df) > 0:
@@ -1130,7 +1165,7 @@ def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_
 def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
+                      dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
                       cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
                       sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
@@ -1157,6 +1192,8 @@ def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, 
     :type OPEX: list
     :param surface_equipment_results: the surface equipment simulation results
     :type surface_equipment_results: list
+    :param dispatch_results: the dispatch results
+    :type dispatch_results: list
     :param sdac_results: the sdac results
     :type sdac_results: list
     :param addon_results: the addon results
@@ -1197,6 +1234,8 @@ def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, 
     Write_Simple_HTML_Table('CAPITAL COSTS', CAPEX, console)
     Write_Simple_HTML_Table('OPERATING AND MAINTENANCE COSTS', OPEX, console)
     Write_Simple_HTML_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, console)
+    if len(dispatch_results) > 0:
+        Write_Simple_HTML_Table('DISPATCH RESULTS', dispatch_results, console)
     if len(addon_results) > 0:
         Write_Simple_HTML_Table('ADD-ON ECONOMICS', addon_results, console)
     if len(sdac_results) > 0:

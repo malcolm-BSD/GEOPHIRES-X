@@ -5,80 +5,116 @@ import tempfile
 from pathlib import Path
 
 from geophires_x.Model import Model
+from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
+from geophires_x_client.geophires_x_result import GeophiresXResult
 from tests.base_test_case import BaseTestCase
 
 _log = logging.getLogger(__name__)
 
 
 class OutputsTestCase(BaseTestCase):
-
     def test_html_output_file(self):
-        html_path = Path(tempfile.gettempdir(), 'example12_DH.html').absolute()
+        html_path = Path(tempfile.gettempdir(), "example12_DH.html").absolute()
         try:
             GeophiresXClient().get_geophires_result(
                 GeophiresInputParameters(
-                    from_file_path=self._get_test_file_path('../examples/example12_DH.txt'),
-                    params={'HTML Output File': str(html_path)},
+                    from_file_path=self._get_test_file_path("../examples/example12_DH.txt"),
+                    params={"HTML Output File": str(html_path)},
                 )
             )
 
             self.assertTrue(html_path.exists())
-            with open(html_path, encoding='UTF-8') as f:
+            with open(html_path, encoding="UTF-8") as f:
                 html_content = f.read()
-                self.assertIn('***CASE REPORT***', html_content)
+                self.assertIn("***CASE REPORT***", html_content)
                 # TODO expand test to assert more about output HTML
         except RuntimeError as e:
             # https://github.com/NREL/GEOPHIRES-X/issues/365
-            has_expected_error_msg = 'cannot unpack non-iterable NoneType object' in str(
+            has_expected_error_msg = "cannot unpack non-iterable NoneType object" in str(
                 e
             ) or "Can't find a usable tk.tcl" in str(e)
-            if has_expected_error_msg and os.name == 'nt' and 'TOXPYTHON' in os.environ:
+            if has_expected_error_msg and os.name == "nt" and "TOXPYTHON" in os.environ:
                 _log.warning(
-                    f'Ignoring error while testing HTML output file '
-                    f'since we appear to be running on Windows in GitHub Actions ({e!s})'
+                    f"Ignoring error while testing HTML output file "
+                    f"since we appear to be running on Windows in GitHub Actions ({e!s})"
                 )
             else:
                 raise e
 
     def test_relative_output_file_path(self):
-        input_file = GeophiresInputParameters({'HTML Output File': 'foo.html'}).as_file_path()
-        m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108
+        input_file = GeophiresInputParameters({"HTML Output File": "foo.html"}).as_file_path()
+        m = self._new_model(input_file=input_file, original_cwd=Path("/tmp/"))  # noqa: S108
         html_filepath = Path(m.outputs.html_output_file.value)
         self.assertTrue(html_filepath.is_absolute())
 
-        expected_path = str(Path('/tmp/foo.html'))  # noqa: S108
+        expected_path = str(Path("/tmp/foo.html"))  # noqa: S108
         self._assert_file_paths_equal(self._strip_drive(str(html_filepath)), expected_path)
 
     def test_absolute_output_file_path(self):
         input_file = GeophiresInputParameters(
-            {'HTML Output File': '/home/user/my-geophires-project/foo.html'}
+            {"HTML Output File": "/home/user/my-geophires-project/foo.html"}
         ).as_file_path()
-        m = self._new_model(input_file=input_file, original_cwd=Path('/tmp/'))  # noqa: S108
+        m = self._new_model(input_file=input_file, original_cwd=Path("/tmp/"))  # noqa: S108
         html_filepath = Path(m.outputs.html_output_file.value)
         self.assertTrue(html_filepath.is_absolute())
         self._assert_file_paths_equal(
-            self._strip_drive(str(html_filepath)), str(Path('/home/user/my-geophires-project/foo.html'))
+            self._strip_drive(str(html_filepath)), str(Path("/home/user/my-geophires-project/foo.html"))
         )
+
+    def test_dispatch_results_are_written_and_parseable(self):
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_test.out").absolute()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        model = self._new_model()
+        model.reserv = CylindricalReservoir(model)
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        with open(output_path, encoding="UTF-8") as f:
+            output_text = f.read()
+        self.assertIn("***DISPATCH RESULTS***", output_text)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
+        self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
 
     # noinspection PyMethodMayBeStatic
     def _strip_drive(self, p: str) -> str:
-        return p.replace('D:', '').replace('C:', '')
+        return p.replace("D:", "").replace("C:", "")
 
     def _assert_file_paths_equal(self, file_path_1, file_path_2):
         try:
             self.assertEqual(file_path_1, file_path_2)
         except AssertionError as e:
-            if os.name == 'nt' and 'TOXPYTHON' in os.environ:
+            if os.name == "nt" and "TOXPYTHON" in os.environ:
                 # FIXME - Python 3.9/10 on Windows seem to have had a backwards-incompatible change introduced on or
                 #  around 2025-06-06 which cause failures; examples:
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15499833486/job/43649021692
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15499833486/job/43649021692
                 #  - https://github.com/NREL/GEOPHIRES-X/actions/runs/15501867732/job/43650830019?pr=389
                 _log.warning(
-                    f'Ignoring file path equality assertion error since we appear to be running on Windows '
-                    f'in GitHub Actions ({e!s})'
+                    f"Ignoring file path equality assertion error since we appear to be running on Windows "
+                    f"in GitHub Actions ({e!s})"
                 )
             else:
                 raise e
@@ -88,7 +124,7 @@ class OutputsTestCase(BaseTestCase):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         if input_file is not None:
             sys.argv.append(input_file)

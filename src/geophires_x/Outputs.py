@@ -31,6 +31,7 @@ class Outputs:
     """
 
     VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
+    DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
 
     def __init__(self, model: Model, output_file: str = 'HDR.out'):
         model.logger.info(f'Init {__class__!s}: {__name__}')
@@ -239,6 +240,8 @@ class Outputs:
                     f.write(f'      {model.economics.CarbonThatWouldHaveBeenProducedTotal.display_name}:'
                             f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
                             f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
+
+                self._write_dispatch_results(model, f)
 
                 f.write(NL)
                 f.write(NL)
@@ -971,4 +974,36 @@ class Outputs:
     @staticmethod
     def _field_label(field_name: str, print_width_before_value: int) -> str:
         return f'{field_name}:{" " * (print_width_before_value - len(field_name) - 1)}'
+
+    @staticmethod
+    def _dispatch_output_rows(model: Model) -> list[tuple[str, float, str]]:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None:
+            return []
+
+        metrics = dispatch_results.summary_metrics
+        return [
+            ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
+            ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('Dispatch capacity factor', metrics.get('dispatch_capacity_factor', 0.0) * 100.0, '%'),
+            ('Average runtime fraction', metrics.get('average_runtime_fraction', 0.0) * 100.0, '%'),
+            ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
+            ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
+            ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
+            ('Design flow rate', metrics.get('design_total_flow_kg_per_sec', 0.0), 'kg/s'),
+            ('Observed peak flow rate', metrics.get('observed_peak_flow_kg_per_sec', 0.0), 'kg/s'),
+        ]
+
+    def _write_dispatch_results(self, model: Model, f) -> None:
+        dispatch_rows = self._dispatch_output_rows(model)
+        if len(dispatch_rows) == 0:
+            return
+
+        f.write(NL)
+        f.write(NL)
+        f.write(f'                           ***{self.DISPATCH_RESULTS_CATEGORY_NAME}***\n')
+        f.write(NL)
+        for field_name, value, units in dispatch_rows:
+            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
 
