@@ -170,6 +170,39 @@ class DispatchResults:
         )
 
 
+class ReservoirRecoveryModel(ABC):
+    @abstractmethod
+    def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        raise NotImplementedError
+
+
+class NoRecoveryModel(ReservoirRecoveryModel):
+    def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        return state
+
+
+class ReducedOrderRecoveryModel(ReservoirRecoveryModel):
+    def __init__(
+        self,
+        equilibrium_state: float,
+        recovery_time_constant_hours: float,
+        state_bounds: tuple[float, float],
+    ):
+        self._equilibrium_state = float(equilibrium_state)
+        self._recovery_time_constant_hours = max(float(recovery_time_constant_hours), 1.0)
+        self._state_min = float(min(state_bounds))
+        self._state_max = float(max(state_bounds))
+
+    def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        clipped_state = float(np.clip(state, self._state_min, self._state_max))
+        if not is_shut_in or dt_hours <= 0:
+            return clipped_state
+
+        recovery_fraction = 1.0 - np.exp(-dt_hours / self._recovery_time_constant_hours)
+        recovered_state = clipped_state + (self._equilibrium_state - clipped_state) * recovery_fraction
+        return float(np.clip(recovered_state, self._state_min, self._state_max))
+
+
 class DispatchStrategy(ABC):
     @abstractmethod
     def dispatch(self, timestep_state: dict[str, Any], demand: float) -> DispatchCommand:
@@ -280,6 +313,11 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         self._base_injection_pumping_power_mw = float(np.atleast_1d(model.wellbores.PumpingPowerInj.value)[0])
         self._base_production_pumping_power_mw = float(np.atleast_1d(model.wellbores.PumpingPowerProd.value)[0])
         self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
+        self._recovery_model: ReservoirRecoveryModel = ReducedOrderRecoveryModel(
+            equilibrium_state=self._initial_heat_content_pj,
+            recovery_time_constant_hours=24.0 * 30.0,
+            state_bounds=(0.0, self._initial_heat_content_pj),
+        )
 
     def _current_reservoir_temperature(self) -> float:
         if self._initial_heat_content_pj <= 0 or self._reservoir_temperature_span_c <= 0:
@@ -334,8 +372,13 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
         current_reservoir_temperature_c = self._current_reservoir_temperature()
         if dispatch_command.is_shut_in or dispatch_command.target_flow_fraction <= 0 or dispatch_command.runtime_fraction <= 0:
+            self._remaining_heat_content_pj = self._recovery_model.update(
+                self._remaining_heat_content_pj,
+                dt_hours=1.0,
+                is_shut_in=True,
+            )
             return DispatchTimestepResult(
-                produced_temperature=current_reservoir_temperature_c,
+                produced_temperature=self._current_reservoir_temperature(),
                 runtime_fraction=0.0,
             )
 
@@ -348,6 +391,12 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         self._remaining_heat_content_pj = max(
             self._remaining_heat_content_pj - (extracted_energy_kwh * 3600.0 * 1000.0 / 1.0e15),
             0.0,
+        )
+        shut_in_hours = max(1.0 - dispatch_command.runtime_fraction, 0.0)
+        self._remaining_heat_content_pj = self._recovery_model.update(
+            self._remaining_heat_content_pj,
+            dt_hours=shut_in_hours,
+            is_shut_in=shut_in_hours > 0.0,
         )
 
         return DispatchTimestepResult(
@@ -426,6 +475,11 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             raise ValueError(
                 f"{self._supported_reservoir_name} dispatchable mode requires a positive baseline extracted-energy profile."
             )
+        self._recovery_model: ReservoirRecoveryModel = ReducedOrderRecoveryModel(
+            equilibrium_state=0.0,
+            recovery_time_constant_hours=24.0 * 21.0,
+            state_bounds=(0.0, self._baseline_total_extracted_kwh),
+        )
 
     def _baseline_index_for_depletion(self) -> int:
         if self._baseline_total_extracted_kwh <= 0:
@@ -473,8 +527,13 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
 
         if dispatch_command.is_shut_in or dispatch_command.target_flow_fraction <= 0 or dispatch_command.runtime_fraction <= 0:
+            self._cumulative_extracted_kwh = self._recovery_model.update(
+                self._cumulative_extracted_kwh,
+                dt_hours=1.0,
+                is_shut_in=True,
+            )
             return DispatchTimestepResult(
-                produced_temperature=baseline_temperature_c,
+                produced_temperature=self._baseline_produced_temperature[self._baseline_index_for_depletion()],
                 runtime_fraction=0.0,
             )
 
@@ -484,6 +543,12 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         unmet_thermal_demand_mw = max(dispatch_command.target_thermal_demand_mw - served_thermal_demand_mw, 0.0)
         extracted_energy_kwh = thermal_state["extracted_heat_mw"] * dispatch_command.runtime_fraction * 1000.0
         self._cumulative_extracted_kwh += extracted_energy_kwh
+        shut_in_hours = max(1.0 - dispatch_command.runtime_fraction, 0.0)
+        self._cumulative_extracted_kwh = self._recovery_model.update(
+            self._cumulative_extracted_kwh,
+            dt_hours=shut_in_hours,
+            is_shut_in=shut_in_hours > 0.0,
+        )
 
         return DispatchTimestepResult(
             produced_temperature=thermal_state["produced_temperature_c"],
