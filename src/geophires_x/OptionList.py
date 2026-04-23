@@ -118,6 +118,7 @@ class OperatingMode(GeophiresInputEnum):
 
 class DispatchDemandSource(GeophiresInputEnum):
     ANNUAL_HEAT_DEMAND = 1, "Annual Heat Demand"
+    ANNUAL_ELECTRICITY_DEMAND = 2, "Annual Electricity Demand"
 
     @staticmethod
     def from_int(int_val):

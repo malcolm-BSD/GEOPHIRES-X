@@ -3073,6 +3073,11 @@ class Economics:
             'design_heat_produced_mw',
             Economics._safe_max(model.surfaceplant.HeatProduced.value),
         )
+        design_electricity_produced_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_gross_electricity_produced_mw',
+            Economics._safe_max(model.surfaceplant.ElectricityProduced.value),
+        )
         # plant costs
         if (model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
             and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]):  # direct-use
@@ -3152,8 +3157,8 @@ class Economics:
                     CCAPP1 = C3 * MaxProducedTemperature ** 3 + C2 * MaxProducedTemperature ** 2 + C1 * MaxProducedTemperature + C0
                 else:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
-                x = np.max(model.surfaceplant.ElectricityProduced.value)
-                y = np.max(model.surfaceplant.ElectricityProduced.value)
+                x = design_electricity_produced_mw
+                y = design_electricity_produced_mw
                 if y == 0.0:
                     y = 15.0
                 z = math.pow(y / 15., -0.06)
@@ -3171,11 +3176,10 @@ class Economics:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
                 # factor 1.1 to make supercritical 10% more expansive than subcritical
                 self.Cplantcorrelation = 1.1 * CCAPP1 * math.pow(
-                    np.max(model.surfaceplant.ElectricityProduced.value) / 15., -0.06) * np.max(
-                    model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6
+                    design_electricity_produced_mw / 15., -0.06) * design_electricity_produced_mw * 1000. / 1E6
 
             elif model.surfaceplant.plant_type.value == PlantType.SINGLE_FLASH:
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 10.:
+                if design_electricity_produced_mw < 10.:
                     C2 = 4.8472E-2
                     C1 = -35.2186
                     C0 = 8.4474E3
@@ -3184,7 +3188,7 @@ class Economics:
                     D0 = 6.9911E3
                     PLL = 5.
                     PRL = 10.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 25.:
+                elif design_electricity_produced_mw < 25.:
                     C2 = 4.0604E-2
                     C1 = -29.3817
                     C0 = 6.9911E3
@@ -3193,7 +3197,7 @@ class Economics:
                     D0 = 5.5263E3
                     PLL = 10.
                     PRL = 25.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 50.:
+                elif design_electricity_produced_mw < 50.:
                     C2 = 3.2773E-2
                     C1 = -23.5519
                     C0 = 5.5263E3
@@ -3202,7 +3206,7 @@ class Economics:
                     D0 = 5.1787E3
                     PLL = 25.
                     PRL = 50.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 75.:
+                elif design_electricity_produced_mw < 75.:
                     C2 = 3.4716E-2
                     C1 = -23.8139
                     C0 = 5.1787E3
@@ -3226,11 +3230,11 @@ class Economics:
                 b = math.log(CCAPPRL / CCAPPLL) / math.log(PRL / PLL)
                 a = CCAPPRL / PRL ** b
                 # factor 0.75 to make double flash 25% more expansive than single flash
-                self.Cplantcorrelation = (0.8 * a * math.pow(np.max(model.surfaceplant.ElectricityProduced.value), b) *
-                                          np.max(model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6)
+                self.Cplantcorrelation = (0.8 * a * math.pow(design_electricity_produced_mw, b) *
+                                          design_electricity_produced_mw * 1000. / 1E6)
 
             elif model.surfaceplant.plant_type.value == PlantType.DOUBLE_FLASH:
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 10.:
+                if design_electricity_produced_mw < 10.:
                     C2 = 4.8472E-2
                     C1 = -35.2186
                     C0 = 8.4474E3
@@ -3239,7 +3243,7 @@ class Economics:
                     D0 = 6.9911E3
                     PLL = 5.
                     PRL = 10.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 25.:
+                elif design_electricity_produced_mw < 25.:
                     C2 = 4.0604E-2
                     C1 = -29.3817
                     C0 = 6.9911E3
@@ -3248,7 +3252,7 @@ class Economics:
                     D0 = 5.5263E3
                     PLL = 10.
                     PRL = 25.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 50.:
+                elif design_electricity_produced_mw < 50.:
                     C2 = 3.2773E-2
                     C1 = -23.5519
                     C0 = 5.5263E3
@@ -3257,7 +3261,7 @@ class Economics:
                     D0 = 5.1787E3
                     PLL = 25.
                     PRL = 50.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 75.:
+                elif design_electricity_produced_mw < 75.:
                     C2 = 3.4716E-2
                     C1 = -23.8139
                     C0 = 5.1787E3
@@ -3280,8 +3284,8 @@ class Economics:
                 CCAPPRL = D2 * maxProdTemp ** 2 + D1 * maxProdTemp + D0
                 b = math.log(CCAPPRL / CCAPPLL) / math.log(PRL / PLL)
                 a = CCAPPRL / PRL ** b
-                self.Cplantcorrelation = (a * math.pow(np.max(model.surfaceplant.ElectricityProduced.value), b) *
-                                          np.max(model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6)
+                self.Cplantcorrelation = (a * math.pow(design_electricity_produced_mw, b) *
+                                          design_electricity_produced_mw * 1000. / 1E6)
 
             if self.ccplantfixed.Valid:
                 self.Cplant.value = self.ccplantfixed.value
@@ -3289,7 +3293,7 @@ class Economics:
                 self.CAPEX_cost_heat_plant = self.Cplant.value * (1.0 - self.CAPEX_heat_electricity_plant_ratio.value)
             else:
                 if self.Power_plant_cost_per_kWe.Provided:
-                    nameplate_capacity_kW = np.max(model.surfaceplant.ElectricityProduced.quantity().to('kW'))
+                    nameplate_capacity_kW = quantity(design_electricity_produced_mw, 'MW').to('kW')
                     direct_plant_cost_MUSD = (nameplate_capacity_kW.magnitude *
                                               model.economics.Power_plant_cost_per_kWe
                                               .quantity().to('MUSD / kW').magnitude)
@@ -3413,13 +3417,18 @@ class Economics:
                 'design_heat_extracted_mw',
                 np.max(model.surfaceplant.HeatExtracted.value),
             )
+            design_electricity_produced_mw = Economics._dispatch_summary_metric(
+                model,
+                'design_gross_electricity_produced_mw',
+                Economics._safe_max(model.surfaceplant.ElectricityProduced.value),
+            )
             # labor cost
             if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # electricity
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 2.5:
+                if design_electricity_produced_mw < 2.5:
                     self.Claborcorrelation = 236. / 1E3  # M$/year
                 else:
                     self.Claborcorrelation = (589. * math.log(
-                        np.max(model.surfaceplant.ElectricityProduced.value)) - 304.) / 1E3  # M$/year
+                        design_electricity_produced_mw) - 304.) / 1E3  # M$/year
             else:
                 if design_heat_extracted_mw < 2.5 * 5.:
                     self.Claborcorrelation = 236. / 1E3  # M$/year

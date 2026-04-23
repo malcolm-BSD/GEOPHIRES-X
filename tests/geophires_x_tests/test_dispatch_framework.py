@@ -46,6 +46,26 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(1, model.surfaceplant.dispatch_analysis_start_year.value)
         self.assertEqual(2, model.surfaceplant.dispatch_analysis_end_year.value)
 
+    def test_dispatch_parameter_parsing_for_electricity(self):
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+            }
+        )
+
+        model.surfaceplant.read_parameters(model)
+
+        self.assertEqual(OperatingMode.DISPATCHABLE, model.surfaceplant.operating_mode.value)
+        self.assertEqual(
+            DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND, model.surfaceplant.dispatch_demand_source.value
+        )
+        self.assertEqual(DispatchFlowStrategy.DEMAND_FOLLOWING, model.surfaceplant.dispatch_flow_strategy.value)
+
     def test_demand_profile_factory_uses_hourly_historical_array(self):
         model = self._new_model()
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
@@ -58,6 +78,26 @@ class DispatchFrameworkTestCase(BaseTestCase):
 
         self.assertEqual(8760, profile.num_timesteps)
         self.assertEqual("MW", profile.units)
+        self.assertAlmostEqual(13.1882, profile.series[0], places=4)
+
+    def test_demand_profile_factory_uses_hourly_electricity_array(self):
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters.update(
+            {
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+            }
+        )
+
+        model.surfaceplant.read_parameters(model)
+        profile = DemandProfileFactory.from_model(model)
+
+        self.assertEqual(8760, profile.num_timesteps)
+        self.assertEqual("MW", profile.units)
+        self.assertEqual("electric", profile.demand_type)
         self.assertAlmostEqual(13.1882, profile.series[0], places=4)
 
     def test_recovery_models_only_recover_during_shut_in(self):
@@ -164,7 +204,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
                 nominal_state = adapter.thermal_state_for_flow_fraction(1.0)
                 dispatch_command = dispatch_strategy.dispatch(
                     {
-                        "nominal_heat_output_mw": nominal_state["useful_heat_mw"],
+                        "nominal_output_mw": nominal_state["dispatch_output_mw"],
                         "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
                         "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
                         "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
@@ -204,7 +244,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
                 nominal_state = adapter.thermal_state_for_flow_fraction(1.0)
                 dispatch_command = dispatch_strategy.dispatch(
                     {
-                        "nominal_heat_output_mw": nominal_state["useful_heat_mw"],
+                        "nominal_output_mw": nominal_state["dispatch_output_mw"],
                         "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
                         "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
                         "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
@@ -212,7 +252,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
                     demand_mw,
                 )
                 result = adapter.evaluate_timestep(dispatch_command, hour_index)
-                served_heat += result.served_thermal_demand
+                served_heat += result.served_demand
                 hour_index += 1
 
             for _ in range(720):
@@ -263,6 +303,30 @@ class DispatchFrameworkTestCase(BaseTestCase):
                 self.assertEqual(8760, len(model.dispatch_results.hourly_produced_temperature))
                 self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
                 self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+
+    def test_dispatchable_electricity_run_populates_dispatch_results_and_economics(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("electric", model.dispatch_results.demand_type)
+        self.assertEqual(8760, len(model.surfaceplant.NetElectricityProduced.value))
+        self.assertGreater(model.dispatch_results.summary_metrics["design_net_electricity_produced_mw"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreaterEqual(model.economics.LCOE.value, 0.0)
 
     def test_dispatchable_upp_run(self):
         from geophires_x.UPPReservoir import UPPReservoir

@@ -1022,21 +1022,34 @@ class Outputs:
             return []
 
         metrics = dispatch_results.summary_metrics
-        return [
+        demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+        rows = [
             ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
             ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
             ('Dispatch analysis duration', metrics.get('dispatch_analysis_year_count', 1.0), 'years'),
-            ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
-            ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
-            ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
             ('Dispatch capacity factor', metrics.get('dispatch_capacity_factor', 0.0) * 100.0, '%'),
             ('Average runtime fraction', metrics.get('average_runtime_fraction', 0.0) * 100.0, '%'),
-            ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
-            ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
             ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
             ('Design flow rate', metrics.get('design_flow_kg_per_sec', 0.0), 'kg/s'),
             ('Observed peak flow rate', metrics.get('observed_peak_flow_kg_per_sec', 0.0), 'kg/s'),
         ]
+        if demand_type == 'electric':
+            rows[3:3] = [
+                ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
+                ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Annual unmet electricity demand', metrics.get('annual_unmet_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Peak geothermal contribution', metrics.get('peak_served_electricity_kwh', 0.0) / 1000.0, 'MW'),
+                ('Peak unmet load', metrics.get('peak_unmet_electricity_kwh', 0.0) / 1000.0, 'MW'),
+            ]
+        else:
+            rows[3:3] = [
+                ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
+                ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
+                ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
+            ]
+        return rows
 
     def _write_dispatch_results(self, model: Model, f) -> None:
         dispatch_rows = self._dispatch_output_rows(model)
@@ -1064,13 +1077,16 @@ class Outputs:
         analysis_start_year = getattr(dispatch_results, 'analysis_start_year', 1)
         with open(self.dispatch_profile_output_file.value, 'w', encoding='UTF-8', newline='') as f:
             writer = csv.writer(f)
+            demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+            demand_column = 'Electricity Demand (MW)' if demand_type == 'electric' else 'Thermal Demand (MW)'
+            output_column = 'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Geothermal Thermal Output (MW)'
             writer.writerow(
                 [
                     'Year',
                     'Hour of Year',
                     'Simulation Hour',
-                    'Thermal Demand (MW)',
-                    'Geothermal Thermal Output (MW)',
+                    demand_column,
+                    output_column,
                     'Demand Served (MW)',
                     'Unmet Demand (MW)',
                     'Produced Temperature (degC)',
@@ -1087,7 +1103,11 @@ class Outputs:
                         timestep_index % timesteps_per_year + 1,
                         simulation_start_hour + timestep_index,
                         float(dispatch_results.hourly_thermal_demand[timestep_index]),
-                        float(dispatch_results.hourly_geothermal_thermal_output[timestep_index]),
+                        float(
+                            dispatch_results.hourly_geothermal_electric_output[timestep_index]
+                            if demand_type == 'electric'
+                            else dispatch_results.hourly_geothermal_thermal_output[timestep_index]
+                        ),
                         float(dispatch_results.hourly_demand_served[timestep_index] / 1000.0),
                         float(dispatch_results.hourly_unmet_demand[timestep_index] / 1000.0),
                         float(dispatch_results.hourly_produced_temperature[timestep_index]),

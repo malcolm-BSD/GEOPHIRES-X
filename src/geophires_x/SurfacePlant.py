@@ -878,10 +878,19 @@ class SurfacePlant:
             self.dispatch_flow_strategy.value = DispatchFlowStrategy.from_input_string(self.dispatch_flow_strategy.value)
 
         if self.operating_mode.value == OperatingMode.DISPATCHABLE:
-            if self.dispatch_demand_source.value != DispatchDemandSource.ANNUAL_HEAT_DEMAND:
+            if self.enduse_option.value == EndUseOptions.HEAT:
+                required_demand_source = DispatchDemandSource.ANNUAL_HEAT_DEMAND
+            elif self.enduse_option.value == EndUseOptions.ELECTRICITY:
+                required_demand_source = DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND
+            else:
                 raise ValueError(
-                    f'Dispatchable mode currently supports only `{DispatchDemandSource.ANNUAL_HEAT_DEMAND.value}` '
-                    f'as the dispatch demand source.'
+                    'Dispatchable mode currently supports only direct-use heat and pure electricity cases.'
+                )
+
+            if self.dispatch_demand_source.value != required_demand_source:
+                raise ValueError(
+                    f'Dispatchable mode for `{self.enduse_option.value.value}` requires '
+                    f'`{required_demand_source.value}` as the dispatch demand source.'
                 )
             if self.maximum_dispatch_flow_fraction.value < self.minimum_dispatch_flow_fraction.value:
                 raise ValueError(

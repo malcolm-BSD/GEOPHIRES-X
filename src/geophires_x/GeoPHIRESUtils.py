@@ -1516,6 +1516,17 @@ def _try_parse_multiline_list(lines: list[Any],
                 second_from = get_unit_from_string(units[1]).value
                 if not isTS:
                     first_to = first_from  # hardcode to no conversion for now, we can make this more flexible in the future if needed
+                else:
+                    try:
+                        source_dims = _ureg.Quantity(1, second_from).dimensionality
+                        target_unit = getattr(second_to, "value", second_to)
+                        target_dims = _ureg.Quantity(1, target_unit).dimensionality
+                        if source_dims != target_dims:
+                            second_to = second_from
+                    except Exception:
+                        second_to = second_from
+                ParamToModify.CurrentXUnits = first_from
+                ParamToModify.CurrentYUnits = second_from
                 is_two_col = True
             else:
                 ParamToModify.CurrentUnits = get_unit_from_string(units)
