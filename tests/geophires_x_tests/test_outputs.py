@@ -371,6 +371,91 @@ class OutputsTestCase(BaseTestCase):
         for graph_path in graph_paths:
             self.assertTrue(graph_path.exists())
 
+    def test_chp_heat_dispatch_html_graphs_are_generated_when_enabled(self):
+        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_heat_results_test.out").absolute()
+        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_heat_results_test.html").absolute()
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
+        ]
+        graph_paths = [
+            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
+            for title in graph_titles
+        ]
+        for graph_path in graph_paths:
+            if graph_path.exists():
+                graph_path.unlink()
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="31"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Heat Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
+                "HTML Output File": ParameterEntry(Name="HTML Output File", sValue=str(html_output_path)),
+                "Generate Dispatch HTML Graphs": ParameterEntry(Name="Generate Dispatch HTML Graphs", sValue="1"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        self.assertTrue(html_output_path.exists())
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
+
+    def test_chp_electric_dispatch_html_graphs_are_generated_when_enabled(self):
+        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_electric_results_test.out").absolute()
+        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_electric_results_test.html").absolute()
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Electricity",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Electric Output",
+        ]
+        graph_paths = [
+            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
+            for title in graph_titles
+        ]
+        for graph_path in graph_paths:
+            if graph_path.exists():
+                graph_path.unlink()
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="52"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=demand_csv_file),
+                "CHP Fraction": ParameterEntry(Name="CHP Fraction", sValue="0.4"),
+                "HTML Output File": ParameterEntry(Name="HTML Output File", sValue=str(html_output_path)),
+                "Generate Dispatch HTML Graphs": ParameterEntry(Name="Generate Dispatch HTML Graphs", sValue="1"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        self.assertTrue(html_output_path.exists())
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
+
     def test_full_scale_dispatch_example_input_runs(self):
         input_path = Path(__file__).resolve().parent / "example1_dispatchable_full_scale.txt"
         text_output_path = input_path.parent / "example1_dispatchable_full_scale_text.out"
