@@ -321,6 +321,28 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
         self.assertGreater(dispatch_results["Design heat produced"]["value"], 0.0)
 
+    def test_chp_dispatch_summary_is_written_to_json_output(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        input_file = GeophiresInputParameters(
+            from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
+            params={
+                "Operating Mode": "Dispatchable",
+                "End-Use Option": "31",
+                "Dispatch Demand Source": "Annual Heat Demand",
+                "Dispatch Flow Strategy": "Demand Following",
+                "Plant Lifetime": "1",
+                "Annual Heat Demand": csv_file,
+            },
+        )
+        result = GeophiresXClient().get_geophires_result(input_file)
+        dispatch_summary = result.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(dispatch_summary["summary_metrics"]["design_net_electricity_produced_mw"], 0.0)
+        self.assertTrue(result.json_output_file_path.exists())
+
     def test_dispatch_html_graphs_are_generated_when_enabled(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 

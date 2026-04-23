@@ -85,3 +85,26 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertIn(prod_temp_key, r_json_obj)
         self.assertGreater(len(r_json_obj[prod_temp_key]["value"]), 100)
         self.assertTrue(all(it > 0 for it in r_json_obj[prod_temp_key]["value"]))
+
+    def test_dispatch_summary_json_property(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Operating Mode": "Dispatchable",
+                    "End-Use Option": "31",
+                    "Dispatch Demand Source": "Annual Heat Demand",
+                    "Dispatch Flow Strategy": "Demand Following",
+                    "Plant Lifetime": "1",
+                    "Annual Heat Demand": self._get_test_file_path("../assets/params/annual_heat_demand.csv"),
+                },
+            )
+        )
+
+        self.assertIsNotNone(r.json_fields)
+        dispatch_summary = r.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertIn("summary_metrics", dispatch_summary)
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)

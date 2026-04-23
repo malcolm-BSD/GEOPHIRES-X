@@ -641,6 +641,15 @@ class GeophiresXResult:
         except FileNotFoundError:
             return {}
 
+    @property
+    def json_fields(self) -> MappingProxyType:
+        return self._json_fields
+
+    @property
+    def dispatch_summary_json(self) -> dict[str, Any] | None:
+        dispatch_summary = self._json_fields.get("Dispatch Summary")
+        return dispatch_summary if isinstance(dispatch_summary, dict) else None
+
     def _get_result_field(
         self,
         field_name: str,
