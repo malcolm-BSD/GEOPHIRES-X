@@ -58,6 +58,13 @@ def _resolve_input_source(candidate: str, model) -> str:
     except (OSError, ValueError):
         return candidate
 
+    repo_root_resolved = Path(__file__).resolve().parents[2] / expanded
+    try:
+        if repo_root_resolved.is_file():
+            return str(repo_root_resolved.resolve())
+    except (OSError, ValueError):
+        return candidate
+
     input_file_path = getattr(model, 'input_file_path', None)
     if input_file_path is None:
         return candidate
@@ -877,11 +884,6 @@ def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=Non
         if parsed is not None:
             return parsed
 
-        # This option is a multiline string
-        parsed = _try_parse_multiline(candidate, ParamToModify=param_to_modify, model=model)
-        if parsed is not None:
-            return parsed
-
         parsed = _try_parse_pair_vector_csv_file(candidate, param_to_modify=param_to_modify, model=model)
         if parsed is not None:
             return parsed
@@ -893,6 +895,20 @@ def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=Non
         except Exception:
             # Fall back to scalar parsing if URL retrieval/parsing fails.
             continue
+
+        resolved_source = _resolve_input_source(candidate, model)
+        parsed_source = urlparse(candidate)
+        if (
+            candidate.lower().endswith('.csv')
+            or resolved_source != candidate
+            or parsed_source.scheme in ['http', 'https']
+        ):
+            continue
+
+        # This option is a multiline string.
+        parsed = _try_parse_multiline(candidate, ParamToModify=param_to_modify, model=model)
+        if parsed is not None:
+            return parsed
 
     return None
 

@@ -1,8 +1,10 @@
 import datetime
+import io
 import string
 import time
 import unicodedata
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -75,7 +77,7 @@ def print_outputs_rich(
     simulation_metadata.append(
         OutputTableItem('Calculation Time', '{0:10.3f}'.format((time.time() - model.tic)) + ' sec'))
 
-    summary.append(OutputTableItem('End-Use Option', str(model.surfaceplant.enduse_option.value.value)))
+    summary.append(OutputTableItem('End-Use Option', str(model.surfaceplant.enduse_option.value.int_value)))
 
     if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY,
                                                   EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
@@ -181,7 +183,7 @@ def print_outputs_rich(
             OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
                 dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
             OutputTableItem('Design flow rate', '{0:10.2f}'.format(
-                dispatch_metrics.get('design_total_flow_kg_per_sec', 0.0)), 'kg/s'),
+                dispatch_metrics.get('design_flow_kg_per_sec', 0.0)), 'kg/s'),
             OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
                 dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
         ])
@@ -280,27 +282,26 @@ def print_outputs_rich(
                                                   EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
         engineering_parameters.append(
             OutputTableItem('Power plant type', model.surfaceplant.plant_type.value.value))
-
+    resource_characteristics.append(
+        OutputTableItem('Maximum reservoir temperature', '{0:10.1f}'.format(model.reserv.Tmax.value),
+                        model.reserv.Tmax.CurrentUnits.value))
+    resource_characteristics.append(
+        OutputTableItem('Number of segments', '{0:10.0f}'.format(model.reserv.numseg.value)))
+    if model.reserv.numseg.value == 1:
         resource_characteristics.append(
-            OutputTableItem('Maximum reservoir temperature', '{0:10.1f}'.format(model.reserv.Tmax.value),
-                            model.reserv.Tmax.CurrentUnits.value))
-        resource_characteristics.append(
-            OutputTableItem('Number of segments', '{0:10.0f}'.format(model.reserv.numseg.value)))
-        if model.reserv.numseg.value == 1:
-            resource_characteristics.append(
-                OutputTableItem('Geothermal gradient', '{0:10.4g}'.format(model.reserv.gradient.value[0]),
-                                model.reserv.gradient.CurrentUnits.value))
-        else:
-            for i in range(1, model.reserv.numseg.value):
-                resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Geothermal gradient',
-                                                                '{0:10.4g}'.format(
-                                                                    model.reserv.gradient.value[i - 1]),
-                                                                model.reserv.gradient.CurrentUnits.value))
-                resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Thickness', '{0:10.0f}'.format(
-                    model.reserv.layerthickness.value[i - 1]), model.reserv.layerthickness.CurrentUnits.value))
-            resource_characteristics.append(OutputTableItem(f'Segment {str(i + 1)} Geothermal gradient',
-                                                            '{0:10.4g}'.format(model.reserv.gradient.value[i]),
+            OutputTableItem('Geothermal gradient', '{0:10.4g}'.format(model.reserv.gradient.value[0]),
+                            model.reserv.gradient.CurrentUnits.value))
+    else:
+        for i in range(1, model.reserv.numseg.value):
+            resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Geothermal gradient',
+                                                            '{0:10.4g}'.format(
+                                                                model.reserv.gradient.value[i - 1]),
                                                             model.reserv.gradient.CurrentUnits.value))
+            resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Thickness', '{0:10.0f}'.format(
+                model.reserv.layerthickness.value[i - 1]), model.reserv.layerthickness.CurrentUnits.value))
+        resource_characteristics.append(OutputTableItem(f'Segment {str(i + 1)} Geothermal gradient',
+                                                        '{0:10.4g}'.format(model.reserv.gradient.value[i]),
+                                                        model.reserv.gradient.CurrentUnits.value))
     if model.wellbores.IsAGS.value:
         reservoir_parameters.append(
             OutputTableItem('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.'))
@@ -920,30 +921,16 @@ def print_outputs_rich(
     pumping_power_profiles = pumping_power_profiles.reset_index()
 
     if text_output_file.Provided:
-        Write_Text_Output(text_output_file.value, simulation_metadata, summary, economic_parameters,
-                          engineering_parameters,
-                          resource_characteristics, reservoir_parameters, reservoir_stimulation_results, CAPEX,
-                          OPEX,
-                          surface_equipment_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow,
-                          pumping_power_profiles, sdac_df, addon_df)
+        Write_RTF_Output(text_output_file.value, simulation_metadata, summary, economic_parameters,
+                         engineering_parameters, resource_characteristics, reservoir_parameters,
+                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results,
+                         sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
-        # Get rid of any trailing spaces in that output file - they are confusing the testing code
-        with open(text_output_file.value, 'r+') as fp:
-            lines = fp.readlines()
-            fp.seek(0)
-            fp.truncate()
-            for line in lines:
-                line = line.rstrip() + '\n'
-                fp.write(line)
-
-    # uncomment these to allow for testing of the HTML output
-    #        self.html_output_file.value = 'd:\\temp\\test_table_geophires.html'
-    #        self.html_output_file.Provided = True
     if html_output_file.Provided:
         Write_HTML_Output(html_output_file.value, simulation_metadata, summary, economic_parameters,
                           engineering_parameters, resource_characteristics, reservoir_parameters,
-                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results, sdac_results,
-                          addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
+                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results,
+                          sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
         Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
                               html_output_file.value, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
@@ -1088,44 +1075,83 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
     :return: None
     """
     with open(output_path, 'w', encoding='UTF-8') as f:
-        f.write(f'                               *****************{NL}')
-        f.write(f'                               ***CASE REPORT***{NL}')
-        f.write(f'                               *****************{NL}')
-        f.write(f'{NL}')
+        f.write(Build_Text_Output(
+            simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
+            reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
+            dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
+            addon_df
+        ))
 
-        # write out the simulation metadata
-        f.write(f'Simulation Metadata{NL}')
-        f.write(f'----------------------{NL}')
-        for item in simulation_metadata:
-            f.write(f'{item.parameter}: {item.value} {item.units}{NL}')
 
-        # write the simple text tables
-        Write_Simple_Text_Table('SUMMARY OF RESULTS', summary, f)
-        Write_Simple_Text_Table('ECONOMIC PARAMETERS', economic_parameters, f)
-        Write_Simple_Text_Table('ENGINEERING PARAMETERS', engineering_parameters, f)
-        Write_Simple_Text_Table('RESOURCE CHARACTERISTICS', resource_characteristics, f)
-        Write_Simple_Text_Table('RESERVOIR PARAMETERS', reservoir_parameters, f)
-        Write_Simple_Text_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, f)
-        Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, f)
-        Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, f)
-        Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, f)
-        if len(dispatch_results) > 0:
-            Write_Simple_Text_Table('DISPATCH RESULTS', dispatch_results, f)
-        if len(addon_results) > 0:
-            Write_Simple_Text_Table('ADD-ON ECONOMICS', addon_results, f)
-        if len(sdac_results) > 0:
-            Write_Simple_Text_Table('S_DAC_GT ECONOMICS', sdac_results, f)
+def Build_Text_Output(simulation_metadata: list, summary: list, economic_parameters: list, engineering_parameters: list,
+                      resource_characteristics: list, reservoir_parameters: list,
+                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list,
+                      surface_equipment_results: list, dispatch_results: list, sdac_results: list,
+                      addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
+                      pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> str:
+    buffer = io.StringIO()
+    buffer.write(f'                               *****************{NL}')
+    buffer.write(f'                               ***CASE REPORT***{NL}')
+    buffer.write(f'                               *****************{NL}')
+    buffer.write(f'{NL}')
 
-        # write the complex text tables
-        Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, f)
-        Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, f)
-        Write_Complex_Text_table('REVENUE & CASHFLOW PROFILE', cashflow, 1, f)
-        if len(pumping_power_profiles) > 0:
-            Write_Complex_Text_table('PUMPING POWER PROFILES', pumping_power_profiles, 1, f)
-        if len(addon_df) > 0:
-            Write_Complex_Text_table('ADD-ON PROFILE', addon_df, 1, f)
-        if len(sdac_df) > 0:
-            Write_Complex_Text_table('S_DAC_GT PROFILE', sdac_df, 1, f)
+    buffer.write(f'Simulation Metadata{NL}')
+    buffer.write(f'----------------------{NL}')
+    for item in simulation_metadata:
+        buffer.write(f'{item.parameter}: {item.value} {item.units}{NL}')
+
+    Write_Simple_Text_Table('SUMMARY OF RESULTS', summary, buffer)
+    Write_Simple_Text_Table('ECONOMIC PARAMETERS', economic_parameters, buffer)
+    Write_Simple_Text_Table('ENGINEERING PARAMETERS', engineering_parameters, buffer)
+    Write_Simple_Text_Table('RESOURCE CHARACTERISTICS', resource_characteristics, buffer)
+    Write_Simple_Text_Table('RESERVOIR PARAMETERS', reservoir_parameters, buffer)
+    Write_Simple_Text_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, buffer)
+    Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, buffer)
+    Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, buffer)
+    Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, buffer)
+    if len(dispatch_results) > 0:
+        Write_Simple_Text_Table('DISPATCH RESULTS', dispatch_results, buffer)
+    if len(addon_results) > 0:
+        Write_Simple_Text_Table('ADD-ON ECONOMICS', addon_results, buffer)
+    if len(sdac_results) > 0:
+        Write_Simple_Text_Table('S_DAC_GT ECONOMICS', sdac_results, buffer)
+
+    Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, buffer)
+    Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, buffer)
+    Write_Complex_Text_table('REVENUE & CASHFLOW PROFILE', cashflow, 1, buffer)
+    if len(pumping_power_profiles) > 0:
+        Write_Complex_Text_table('PUMPING POWER PROFILES', pumping_power_profiles, 1, buffer)
+    if len(addon_df) > 0:
+        Write_Complex_Text_table('ADD-ON PROFILE', addon_df, 1, buffer)
+    if len(sdac_df) > 0:
+        Write_Complex_Text_table('S_DAC_GT PROFILE', sdac_df, 1, buffer)
+
+    return buffer.getvalue()
+
+
+def _escape_rtf(text: str) -> str:
+    return text.replace('\\', r'\\').replace('{', r'\{').replace('}', r'\}')
+
+
+def Write_RTF_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
+                     engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
+                     reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
+                     dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
+                     ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
+                     sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
+    plain_text = Build_Text_Output(
+        simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
+        reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
+        dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
+        addon_df
+    )
+
+    with open(output_path, 'w', encoding='ASCII', errors='ignore') as f:
+        f.write(r'{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern Courier New;}}' + '\n')
+        f.write(r'\viewkind4\uc1\pard\f0\fs20' + '\n')
+        for line in plain_text.splitlines():
+            f.write(f'{_escape_rtf(line)}\\par\n')
+        f.write('}\n')
 
 
 def Write_Simple_HTML_Table(title: str, items: list, console: rich.console) -> None:
@@ -1174,7 +1200,7 @@ def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_
     console.print(table)
 
 
-def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
+def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
                       dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
@@ -1182,8 +1208,8 @@ def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, 
                       sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
     This function writes out the HTML output
-    :param html_path: the path to the HTML output file
-    :type html_path: str
+    :param html_path: the path to the HTML output file.
+    :type html_path: str | None
     :param simulation_metadata: the simulation metadata
     :type simulation_metadata: list
     :param summary: the summary of results
@@ -1224,7 +1250,13 @@ def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, 
 
     """
 
-    console = Console(style='bold black on white', force_terminal=True, record=True, width=500)
+    console = Console(
+        style='bold black on white',
+        force_terminal=True,
+        record=True,
+        width=500,
+        file=io.StringIO(),
+    )
 
     # write out the simulation metadata
     console.print('*****************')
@@ -1264,8 +1296,8 @@ def Write_HTML_Output(html_path: str, simulation_metadata: list, summary: list, 
     if len(sdac_df) > 0:
         Write_Complex_HTML_Table('S_DAC_GT PROFILE', sdac_df, 1, console)
 
-    # Save it all as HTML.
-    console.save_html(html_path)
+    if html_path is not None:
+        console.save_html(html_path)
 
 
 def profile_title_adjusted_for_figure(title:str) -> str:

@@ -482,6 +482,27 @@ class SurfacePlant:
             ErrMessage="assume default minimum dispatch runtime fraction (0.0)",
             ToolTipText="Minimum on-hour runtime fraction when dispatchable operation is on.",
         )
+        self.dispatch_analysis_start_year = self.ParameterDict["Dispatch Analysis Start Year"] = intParameter(
+            "Dispatch Analysis Start Year",
+            DefaultValue=1,
+            AllowableRange=list(range(1, 10_001)),
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default dispatch analysis start year (1)",
+            ToolTipText="First operating year included in dispatch analysis output.",
+        )
+        self.dispatch_analysis_end_year = self.ParameterDict["Dispatch Analysis End Year"] = intParameter(
+            "Dispatch Analysis End Year",
+            DefaultValue=2,
+            AllowableRange=list(range(2, 10_002)),
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default dispatch analysis end year (2)",
+            ToolTipText=(
+                "Exclusive operating-year end for dispatch analysis output. "
+                "For example, start year 1 and end year 2 runs one operating year."
+            ),
+        )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",
             DefaultValue=[],
@@ -741,6 +762,15 @@ class SurfacePlant:
         """
         model.logger.info(f'Init {self.__class__.__name__}: {__name__}')
 
+        def warn_once(key, message: str, also_print: bool = False) -> None:
+            if key in model._runtime_warnings_issued:
+                return
+
+            model._runtime_warnings_issued.add(key)
+            model.logger.warning(message)
+            if also_print:
+                print(f'Warning: {message}')
+
         # Deal with all the parameter values that the user has provided.  They should really only provide values that
         # they want to change from the default values, but they can provide a value that is already set because it is a
         # default value set in __init__.  It will ignore those.
@@ -830,12 +860,12 @@ class SurfacePlant:
                     self.plant_outlet_pressure.value = 100
                     msg = (f'No valid plant outlet pressure provided. '
                            f'GEOPHIRES will assume default plant outlet pressure ({self.plant_outlet_pressure.value} kPa)')
-                    model.logger.warning(msg)
+                    warn_once(('default_plant_outlet_pressure', self.plant_outlet_pressure.value), msg)
                 else:
                     self.usebuiltinoutletplantcorrelation.value = True
                     msg = (f'No valid plant outlet pressure provided. GEOPHIRES will calculate plant outlet pressure '
                            f'based on production wellhead pressure and surface equipment pressure drop of 10 psi')
-                    model.logger.warning(msg)
+                    warn_once(('calculated_plant_outlet_pressure', 10), msg)
 
         else:
             model.logger.info('No parameters read because no content provided')
@@ -857,6 +887,27 @@ class SurfacePlant:
                 raise ValueError(
                     'Maximum Dispatch Flow Fraction must be greater than or equal to Minimum Dispatch Flow Fraction.'
                 )
+            if self.dispatch_analysis_start_year.value < 1:
+                raise ValueError('Dispatch Analysis Start Year must be greater than or equal to 1.')
+            if self.dispatch_analysis_end_year.value <= self.dispatch_analysis_start_year.value:
+                raise ValueError(
+                    'Dispatch Analysis End Year must be greater than Dispatch Analysis Start Year.'
+                )
+            if self.dispatch_analysis_end_year.value > self.plant_lifetime.value + 1:
+                adjusted_lifetime = self.dispatch_analysis_end_year.value
+                msg = (
+                    'Dispatch analysis operating-year range extends beyond the current plant lifetime. '
+                    f'Adjusting Plant Lifetime from {self.plant_lifetime.value} to {adjusted_lifetime} years '
+                    f'to accommodate Dispatch Analysis End Year {self.dispatch_analysis_end_year.value}.'
+                )
+                self.plant_lifetime.value = adjusted_lifetime
+                self.plant_lifetime.Provided = True
+                self.plant_lifetime.Valid = True
+                warning_key = (
+                    'dispatch_analysis_end_year_extends_plant_lifetime',
+                    self.dispatch_analysis_end_year.value,
+                )
+                warn_once(warning_key, msg, also_print=True)
 
         coerce_int_params_to_enum_values(self.ParameterDict)
 

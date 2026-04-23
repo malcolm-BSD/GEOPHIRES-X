@@ -72,6 +72,7 @@ class Model(object):
         # Should be only those value that they want to change from the default.
         # we do this as soon as possible because what we instantiate may depend on settings in this file
         self.InputParameters = {}
+        self._runtime_warnings_issued = set()
 
         if input_file is None and len(sys.argv) > 1:
             input_file = sys.argv[1]

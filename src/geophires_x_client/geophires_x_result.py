@@ -360,6 +360,9 @@ class GeophiresXResult:
                 "Average Annual Electricity Use for Pumping",
             ],
             "DISPATCH RESULTS": [
+                "Dispatch analysis start year",
+                "Dispatch analysis end year",
+                "Dispatch analysis duration",
                 "Design heat produced",
                 "Annual geothermal heat delivered",
                 "Annual unmet thermal demand",

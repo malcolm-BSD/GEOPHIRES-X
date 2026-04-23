@@ -154,9 +154,18 @@ class DispatchResults:
     annual_aggregates: dict[str, float] = field(default_factory=dict)
     summary_metrics: dict[str, float] = field(default_factory=dict)
     hourly_thermal_demand: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    analysis_start_year: int = 1
+    analysis_end_year: int = 2
+    simulation_start_hour: int = 1
 
     @classmethod
-    def initialize(cls, num_timesteps: int) -> "DispatchResults":
+    def initialize(
+        cls,
+        num_timesteps: int,
+        analysis_start_year: int = 1,
+        analysis_end_year: int = 2,
+        simulation_start_hour: int = 1,
+    ) -> "DispatchResults":
         zeros = np.zeros(num_timesteps, dtype=float)
         return cls(
             hourly_produced_temperature=zeros.copy(),
@@ -167,6 +176,9 @@ class DispatchResults:
             hourly_pumping_power=zeros.copy(),
             hourly_geothermal_thermal_output=zeros.copy(),
             hourly_thermal_demand=zeros.copy(),
+            analysis_start_year=analysis_start_year,
+            analysis_end_year=analysis_end_year,
+            simulation_start_hour=simulation_start_hour,
         )
 
 
@@ -417,7 +429,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
             "design_pumping_power_mw": design_state["pumping_power_mw"],
             "design_pumping_power_prod_mw": design_state["production_pumping_power_mw"],
             "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
-            "design_flow_kg_per_sec": design_state["actual_flow_kg_per_sec"],
+            "design_flow_kg_per_sec": self._nominal_flow_kg_per_sec,
         }
 
     def finalize(self) -> None:
@@ -568,7 +580,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             "design_pumping_power_mw": design_state["pumping_power_mw"],
             "design_pumping_power_prod_mw": design_state["production_pumping_power_mw"],
             "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
-            "design_flow_kg_per_sec": design_state["actual_flow_kg_per_sec"],
+            "design_flow_kg_per_sec": self._nominal_flow_kg_per_sec,
         }
 
     def finalize(self) -> None:
@@ -657,8 +669,16 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             )
 
         demand_profile = DemandProfileFactory.from_model(model)
-        dispatch_demand_mw = np.tile(demand_profile.series, model.surfaceplant.plant_lifetime.value)
-        model.dispatch_results = DispatchResults.initialize(len(dispatch_demand_mw))
+        plant_lifetime_years = model.surfaceplant.plant_lifetime.value
+        analysis_start_year = model.surfaceplant.dispatch_analysis_start_year.value
+        analysis_end_year = model.surfaceplant.dispatch_analysis_end_year.value
+        dispatch_demand_mw = np.tile(demand_profile.series, plant_lifetime_years)
+        model.dispatch_results = DispatchResults.initialize(
+            len(dispatch_demand_mw),
+            analysis_start_year=analysis_start_year,
+            analysis_end_year=analysis_end_year,
+            simulation_start_hour=((analysis_start_year - 1) * 8760) + 1,
+        )
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
         model.dispatch_adapter.initialize(model, design_state={})
         design_metrics = getattr(model.dispatch_adapter, "design_metrics", lambda: {})()
@@ -691,25 +711,46 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
         model.dispatch_adapter.finalize()
         model.dispatch_results.summary_metrics.update(design_metrics)
-        self._finalize_dispatch_results(model, dispatch_demand_mw, demand_profile.time_step_hours)
+        self._finalize_dispatch_results(
+            model,
+            dispatch_demand_mw,
+            demand_profile.time_step_hours,
+            analysis_start_year=analysis_start_year,
+            analysis_end_year=analysis_end_year,
+        )
         model.economics.Calculate(model)
 
     @staticmethod
-    def _finalize_dispatch_results(model: "Model", dispatch_demand_mw: np.ndarray, time_step_hours: float) -> None:
+    def _finalize_dispatch_results(
+        model: "Model",
+        dispatch_demand_mw: np.ndarray,
+        time_step_hours: float,
+        analysis_start_year: int,
+        analysis_end_year: int,
+    ) -> None:
         timesteps_per_year = 8760
         plant_lifetime_years = model.surfaceplant.plant_lifetime.value
         efficiency = model.surfaceplant.enduse_efficiency_factor.value
 
-        served_heat_kwh = model.dispatch_results.hourly_demand_served
-        unmet_heat_kwh = model.dispatch_results.hourly_unmet_demand
+        full_hourly_produced_temperature = model.dispatch_results.hourly_produced_temperature.copy()
+        full_hourly_flow = model.dispatch_results.hourly_flow.copy()
+        full_hourly_runtime_fraction = model.dispatch_results.hourly_runtime_fraction.copy()
+        full_served_heat_kwh = model.dispatch_results.hourly_demand_served.copy()
+        full_unmet_heat_kwh = model.dispatch_results.hourly_unmet_demand.copy()
+        full_pumping_power_mw = model.dispatch_results.hourly_pumping_power.copy()
+        full_hourly_geothermal_output_mw = model.dispatch_results.hourly_geothermal_thermal_output.copy()
+        full_dispatch_demand_mw = model.dispatch_results.hourly_thermal_demand.copy()
+
+        served_heat_kwh = full_served_heat_kwh
+        unmet_heat_kwh = full_unmet_heat_kwh
         useful_heat_mw = served_heat_kwh / 1000.0
         extracted_heat_mw = useful_heat_mw / efficiency if efficiency > 0 else np.zeros_like(useful_heat_mw)
-        pumping_power_mw = model.dispatch_results.hourly_pumping_power
+        pumping_power_mw = full_pumping_power_mw
 
         model.economics.timestepsperyear.value = timesteps_per_year
-        model.surfaceplant.utilization_factor.value = float(np.average(model.dispatch_results.hourly_runtime_fraction))
+        model.surfaceplant.utilization_factor.value = float(np.average(full_hourly_runtime_fraction))
 
-        model.wellbores.ProducedTemperature.value = model.dispatch_results.hourly_produced_temperature.copy()
+        model.wellbores.ProducedTemperature.value = full_hourly_produced_temperature
         model.wellbores.PumpingPower.value = pumping_power_mw.copy()
         model.wellbores.PumpingPowerInj.value = pumping_power_mw.copy()
         model.wellbores.PumpingPowerProd.value = np.zeros_like(pumping_power_mw)
@@ -733,10 +774,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             model.reserv.InitialReservoirHeatContent.value,
             model.surfaceplant.HeatkWhExtracted.value,
         )
+        model.surfaceplant._calculate_derived_outputs(model)
 
         annual_served_kwh = model.surfaceplant.HeatkWhProduced.value
         annual_unmet_kwh = np.array([
-            float(np.sum(unmet_heat_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
+            float(np.sum(full_unmet_heat_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
             for year_index in range(plant_lifetime_years)
         ])
         dispatch_demand_kwh = dispatch_demand_mw * 1000.0 * time_step_hours
@@ -745,26 +787,56 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             for year_index in range(plant_lifetime_years)
         ])
 
+        analysis_start_index = (analysis_start_year - 1) * timesteps_per_year
+        analysis_end_index = (analysis_end_year - 1) * timesteps_per_year
+        analysis_year_slice = slice(analysis_start_year - 1, analysis_end_year - 1)
+
+        model.dispatch_results.hourly_produced_temperature = full_hourly_produced_temperature[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_flow = full_hourly_flow[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_runtime_fraction = full_hourly_runtime_fraction[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_demand_served = full_served_heat_kwh[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_unmet_demand = full_unmet_heat_kwh[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_pumping_power = full_pumping_power_mw[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_geothermal_thermal_output = full_hourly_geothermal_output_mw[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_thermal_demand = full_dispatch_demand_mw[analysis_start_index:analysis_end_index].copy()
+
+        analysis_served_kwh = annual_served_kwh[analysis_year_slice]
+        analysis_unmet_kwh = annual_unmet_kwh[analysis_year_slice]
+        analysis_demand_kwh = annual_demand_kwh[analysis_year_slice]
+        analysis_hourly_served_kwh = model.dispatch_results.hourly_demand_served
+        analysis_hourly_unmet_kwh = model.dispatch_results.hourly_unmet_demand
+        analysis_hourly_demand_mw = model.dispatch_results.hourly_thermal_demand
+
         design_heat_produced_mw = model.dispatch_results.summary_metrics.get("design_heat_produced_mw", 0.0)
         average_runtime_fraction = float(np.average(model.dispatch_results.hourly_runtime_fraction))
         average_capacity_factor = float(
             np.average(
-                served_heat_kwh / (design_heat_produced_mw * 1000.0)
+                analysis_hourly_served_kwh / (design_heat_produced_mw * 1000.0)
             )
         ) if design_heat_produced_mw > 0 else 0.0
 
         model.dispatch_results.annual_aggregates = {
-            "annual_served_heat_kwh": annual_served_kwh.tolist(),
-            "annual_unmet_heat_kwh": annual_unmet_kwh.tolist(),
-            "annual_heat_demand_kwh": annual_demand_kwh.tolist(),
+            "analysis_years": list(range(analysis_start_year, analysis_end_year)),
+            "annual_served_heat_kwh": analysis_served_kwh.tolist(),
+            "annual_unmet_heat_kwh": analysis_unmet_kwh.tolist(),
+            "annual_heat_demand_kwh": analysis_demand_kwh.tolist(),
         }
         model.dispatch_results.summary_metrics.update(
             {
-                "peak_hourly_demand_mw": float(np.max(dispatch_demand_mw)),
-                "peak_served_heat_kwh": float(np.max(served_heat_kwh)),
-                "peak_unmet_heat_kwh": float(np.max(unmet_heat_kwh)),
-                "annual_served_heat_kwh": float(np.sum(annual_served_kwh)),
-                "annual_unmet_heat_kwh": float(np.sum(annual_unmet_kwh)),
+                "dispatch_analysis_start_year": float(analysis_start_year),
+                "dispatch_analysis_end_year": float(analysis_end_year),
+                "dispatch_analysis_year_count": float(analysis_end_year - analysis_start_year),
+                "peak_hourly_demand_mw": float(np.max(analysis_hourly_demand_mw)),
+                "peak_served_heat_kwh": float(np.max(analysis_hourly_served_kwh)),
+                "peak_unmet_heat_kwh": float(np.max(analysis_hourly_unmet_kwh)),
+                "annual_served_heat_kwh": float(np.sum(analysis_served_kwh)),
+                "annual_unmet_heat_kwh": float(np.sum(analysis_unmet_kwh)),
                 "average_runtime_fraction": average_runtime_fraction,
                 "dispatch_capacity_factor": average_capacity_factor,
                 "observed_peak_flow_kg_per_sec": float(np.max(model.dispatch_results.hourly_flow)),

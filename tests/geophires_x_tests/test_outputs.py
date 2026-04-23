@@ -97,6 +97,8 @@ class OutputsTestCase(BaseTestCase):
 
         result = GeophiresXResult(str(output_path))
         dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertEqual(1.0, dispatch_results["Dispatch analysis start year"]["value"])
+        self.assertEqual(2.0, dispatch_results["Dispatch analysis end year"]["value"])
         self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
         self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
@@ -114,11 +116,13 @@ class OutputsTestCase(BaseTestCase):
         model.InputParameters = {
             "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
             "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
-            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="5"),
             "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
             "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
             "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
             "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+            "Dispatch Analysis Start Year": ParameterEntry(Name="Dispatch Analysis Start Year", sValue="3"),
+            "Dispatch Analysis End Year": ParameterEntry(Name="Dispatch Analysis End Year", sValue="5"),
             "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
             "Dispatch Profile Output File": ParameterEntry(
                 Name="Dispatch Profile Output File", sValue=str(csv_output_path)
@@ -134,9 +138,10 @@ class OutputsTestCase(BaseTestCase):
         with open(csv_output_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
 
-        self.assertEqual(8760, len(rows))
-        self.assertEqual("1", rows[0]["Year"])
+        self.assertEqual(8760 * 2, len(rows))
+        self.assertEqual("3", rows[0]["Year"])
         self.assertEqual("1", rows[0]["Hour of Year"])
+        self.assertEqual(str((3 - 1) * 8760 + 1), rows[0]["Simulation Hour"])
         self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Produced Temperature (degC)"]), 0.0)
@@ -186,7 +191,7 @@ class OutputsTestCase(BaseTestCase):
             self.assertTrue(graph_path.exists())
 
     def test_full_scale_dispatch_example_input_runs(self):
-        input_path = Path(__file__).resolve().parents[1] / "example1_dispatchable_full_scale.txt"
+        input_path = Path(__file__).resolve().parent / "example1_dispatchable_full_scale.txt"
         text_output_path = input_path.parent / "example1_dispatchable_full_scale_text.out"
         html_output_path = input_path.parent / "example1_dispatchable_full_scale.html"
         dispatch_profile_path = input_path.parent / "example1_dispatchable_full_scale_dispatch_profile.csv"
@@ -204,7 +209,21 @@ class OutputsTestCase(BaseTestCase):
             if artifact_path.exists():
                 artifact_path.unlink()
 
-        result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+        try:
+            result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+        except RuntimeError as e:
+            has_expected_error_msg = (
+                "cannot unpack non-iterable NoneType object" in str(e)
+                or "Can't find a usable tk.tcl" in str(e)
+                or 'invalid command name "tcl_findLibrary"' in str(e)
+            )
+            if has_expected_error_msg and os.name == "nt" and "TOXPYTHON" in os.environ:
+                _log.warning(
+                    f"Ignoring error while testing full-scale dispatch example HTML output "
+                    f"since we appear to be running on Windows in GitHub Actions ({e!s})"
+                )
+                return
+            raise e
 
         self.assertTrue(Path(result.output_file_path).exists())
         self.assertTrue(text_output_path.exists())
@@ -219,7 +238,8 @@ class OutputsTestCase(BaseTestCase):
 
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
-        self.assertEqual(8760 * 5, len(rows))
+        self.assertEqual(8760, len(rows))
+        self.assertEqual("1", rows[0]["Year"])
         self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
 
     # noinspection PyMethodMayBeStatic

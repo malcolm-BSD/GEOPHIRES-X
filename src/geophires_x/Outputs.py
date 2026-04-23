@@ -20,7 +20,7 @@ from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
     OutputParameter, ReadParameter, ParameterEntry
 from geophires_x.OptionList import EndUseOptions, EconomicModel, ReservoirModel, FractureShape, ReservoirVolume, \
-    PlantType
+    OperatingMode, PlantType
 from geophires_x.Parameter import Parameter
 
 NL = '\n'
@@ -49,11 +49,11 @@ class Outputs:
 
         self.text_output_file = self.ParameterDict[self.text_output_file.Name] = filepath_parameter(strParameter(
                 'Improved Text Output File',
-                DefaultValue='GEOPHIRES_Text.html',
+                DefaultValue='GEOPHIRES_Text.rtf',
                 Required=False,
                 Provided=False,
-                ErrMessage='assume no improved text output',
-                ToolTipText='Provide a improved text output name if you want to have improved text output (no output if not provided)',
+                ErrMessage='assume no rich text output',
+                ToolTipText='Provide any value to enable rich text output written next to the main .out file as .rtf',
         ))
 
         self.html_output_file = self.ParameterDict[self.html_output_file.Name] = filepath_parameter(strParameter(
@@ -62,7 +62,7 @@ class Outputs:
                 Required=False,
                 Provided=False,
                 ErrMessage='assume no HTML output',
-                ToolTipText='Provide a HTML output name if you want to have HTML output (no output if not provided)',
+                ToolTipText='Provide any value to enable HTML output written next to the main .out file as .html',
         ))
 
         self.dispatch_profile_output_file = self.ParameterDict[
@@ -104,6 +104,10 @@ class Outputs:
 
     def __str__(self):
         return 'Outputs'
+
+    def _sibling_output_path(self, suffix: str) -> str:
+        output_path = Path(self.output_file)
+        return str(output_path.with_suffix(suffix))
 
     def read_parameters(self, model: Model, default_output_path: Path = None) -> None:
         """
@@ -215,7 +219,7 @@ class Outputs:
                 f.write('                           ***SUMMARY OF RESULTS***\n')
                 f.write(NL)
                 f.write(f'      {model.surfaceplant.enduse_option_output.display_name}: '
-                        f'{model.surfaceplant.enduse_option_output.value}\n')
+                        f'{model.surfaceplant.enduse_option.value.int_value}\n')
                 if model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
                     f.write('      Surface Application: ' + str(model.surfaceplant.plant_type.value.value) + NL)
                 if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity component
@@ -891,6 +895,14 @@ class Outputs:
             model.logger.critical(msg)
             raise RuntimeError(msg) from ex
 
+        if self.text_output_file.Provided:
+            self.text_output_file.value = self._sibling_output_path('.rtf')
+            self.text_output_file.Valid = True
+
+        if self.html_output_file.Provided:
+            self.html_output_file.value = self._sibling_output_path('.html')
+            self.html_output_file.Valid = True
+
         print_outputs_rich(
             self.text_output_file,
             self.html_output_file,
@@ -1011,6 +1023,9 @@ class Outputs:
 
         metrics = dispatch_results.summary_metrics
         return [
+            ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
+            ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
+            ('Dispatch analysis duration', metrics.get('dispatch_analysis_year_count', 1.0), 'years'),
             ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
             ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
             ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
@@ -1019,7 +1034,7 @@ class Outputs:
             ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
             ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
             ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
-            ('Design flow rate', metrics.get('design_total_flow_kg_per_sec', 0.0), 'kg/s'),
+            ('Design flow rate', metrics.get('design_flow_kg_per_sec', 0.0), 'kg/s'),
             ('Observed peak flow rate', metrics.get('observed_peak_flow_kg_per_sec', 0.0), 'kg/s'),
         ]
 
@@ -1045,6 +1060,8 @@ class Outputs:
             return
 
         timesteps_per_year = 8760
+        simulation_start_hour = getattr(dispatch_results, 'simulation_start_hour', 1)
+        analysis_start_year = getattr(dispatch_results, 'analysis_start_year', 1)
         with open(self.dispatch_profile_output_file.value, 'w', encoding='UTF-8', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(
@@ -1066,9 +1083,9 @@ class Outputs:
             for timestep_index in range(num_timesteps):
                 writer.writerow(
                     [
-                        timestep_index // timesteps_per_year + 1,
+                        analysis_start_year + (timestep_index // timesteps_per_year),
                         timestep_index % timesteps_per_year + 1,
-                        timestep_index + 1,
+                        simulation_start_hour + timestep_index,
                         float(dispatch_results.hourly_thermal_demand[timestep_index]),
                         float(dispatch_results.hourly_geothermal_thermal_output[timestep_index]),
                         float(dispatch_results.hourly_demand_served[timestep_index] / 1000.0),
