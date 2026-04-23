@@ -138,18 +138,57 @@ class DemandProfileFactory:
         )
 
 
+def _dispatch_target_mode(model: "Model") -> str:
+    source = model.surfaceplant.dispatch_demand_source.value
+    if not isinstance(source, DispatchDemandSource):
+        source = DispatchDemandSource.from_input_string(source)
+
+    if source == DispatchDemandSource.ANNUAL_HEAT_DEMAND:
+        return "thermal"
+    if source == DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND:
+        return "electric"
+
+    raise ValueError(f"Unsupported dispatch demand source: {_enum_value_or_str(source)}")
+
+
+def _surfaceplant_has_electric_component(enduse_option: EndUseOptions) -> bool:
+    return enduse_option in [
+        EndUseOptions.ELECTRICITY,
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+    ]
+
+
+def _surfaceplant_has_heat_component(enduse_option: EndUseOptions) -> bool:
+    return enduse_option in [
+        EndUseOptions.HEAT,
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+    ]
+
+
 def _dispatch_surfaceplant_mode(model: "Model") -> str:
     enduse_option = model.surfaceplant.enduse_option.value
     if enduse_option == EndUseOptions.HEAT:
         return "thermal"
-    if enduse_option == EndUseOptions.ELECTRICITY:
+    if _surfaceplant_has_electric_component(enduse_option):
         if model.surfaceplant.plant_type.value not in [PlantType.SUB_CRITICAL_ORC, PlantType.SUPER_CRITICAL_ORC]:
             raise ValueError(
-                "Dispatchable electricity mode currently supports only subcritical and supercritical ORC plants."
+                "Dispatchable electricity and CHP mode currently support only subcritical and supercritical ORC plants."
             )
+        if _surfaceplant_has_heat_component(enduse_option):
+            return "chp"
         return "electric"
 
-    raise ValueError("Dispatchable mode currently supports only direct-use heat and pure electricity cases.")
+    raise ValueError("Dispatchable mode currently supports direct-use heat, pure electricity, and ORC CHP cases.")
 
 
 def _get_orc_coefficients(model: "Model") -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
@@ -216,7 +255,6 @@ def _electricity_dispatch_state(
     net_electricity_mw = gross_electricity_mw - pumping_power_mw
 
     return {
-        "dispatch_output_mw": max(net_electricity_mw, 0.0),
         "gross_electricity_mw": gross_electricity_mw,
         "net_electricity_mw": net_electricity_mw,
         "heat_extracted_mw": heat_extracted_mw,
@@ -228,6 +266,47 @@ def _electricity_dispatch_state(
             net_electricity_mw / heat_towards_electricity_mw if heat_towards_electricity_mw > 0 else 0.0
         ),
     }
+
+
+def _dispatch_output_state(
+    model: "Model",
+    produced_temperature_c: float,
+    actual_flow_kg_per_sec: float,
+    pumping_power_mw: float,
+) -> dict[str, float]:
+    enduse_option = model.surfaceplant.enduse_option.value
+    target_mode = _dispatch_target_mode(model)
+
+    if not _surfaceplant_has_electric_component(enduse_option):
+        extracted_heat_mw = (
+            model.wellbores.nprod.value
+            * actual_flow_kg_per_sec
+            * model.reserv.cpwater.value
+            * max(produced_temperature_c - model.wellbores.Tinj.value, 0.0)
+            / 1.0e6
+        )
+        useful_heat_mw = extracted_heat_mw * model.surfaceplant.enduse_efficiency_factor.value
+        return {
+            "dispatch_output_mw": useful_heat_mw,
+            "useful_heat_mw": useful_heat_mw,
+            "gross_electricity_mw": 0.0,
+            "net_electricity_mw": 0.0,
+            "extracted_heat_mw": extracted_heat_mw,
+            "heat_extracted_mw": extracted_heat_mw,
+            "heat_produced_mw": useful_heat_mw,
+            "plant_entering_temperature_c": 0.0,
+            "availability_mj_per_kg": 0.0,
+            "reinjection_temperature_c": 0.0,
+            "first_law_efficiency": 0.0,
+        }
+
+    power_state = _electricity_dispatch_state(model, produced_temperature_c, actual_flow_kg_per_sec, pumping_power_mw)
+    power_state["extracted_heat_mw"] = power_state["heat_extracted_mw"]
+    power_state["useful_heat_mw"] = power_state["heat_produced_mw"]
+    power_state["dispatch_output_mw"] = (
+        power_state["useful_heat_mw"] if target_mode == "thermal" else max(power_state["net_electricity_mw"], 0.0)
+    )
+    return power_state
 
 
 @dataclass
@@ -434,7 +513,8 @@ class PlaceholderDispatchPlantAdapter(DispatchPlantAdapter):
 class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
         self._model = model
-        self._dispatch_mode = _dispatch_surfaceplant_mode(model)
+        self._dispatch_mode = _dispatch_target_mode(model)
+        self._surfaceplant_mode = _dispatch_surfaceplant_mode(model)
         model.reserv.Calculate(model)
         model.wellbores.Calculate(model)
 
@@ -480,49 +560,33 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
     def thermal_state_for_flow_fraction(self, flow_fraction: float) -> dict[str, float]:
         if flow_fraction <= 0:
             current_reservoir_temperature_c = self._current_reservoir_temperature()
-            state = {
+            state = _dispatch_output_state(self._model, current_reservoir_temperature_c, 0.0, 0.0)
+            state.update({
                 "produced_temperature_c": current_reservoir_temperature_c,
-                "useful_heat_mw": 0.0,
-                "extracted_heat_mw": 0.0,
                 "pumping_power_mw": 0.0,
                 "production_pumping_power_mw": 0.0,
                 "injection_pumping_power_mw": 0.0,
                 "actual_flow_kg_per_sec": 0.0,
-            }
-            if self._dispatch_mode == "thermal":
-                state["dispatch_output_mw"] = 0.0
-            else:
-                state.update(_electricity_dispatch_state(self._model, current_reservoir_temperature_c, 0.0, 0.0))
+            })
             return state
 
         current_reservoir_temperature_c = self._current_reservoir_temperature()
         actual_flow_kg_per_sec = self._nominal_flow_kg_per_sec * flow_fraction
         temp_drop_c = self._temperature_drop_for_flow_fraction(flow_fraction, current_reservoir_temperature_c)
         produced_temperature_c = max(self._tinj, current_reservoir_temperature_c - temp_drop_c)
-        extracted_heat_mw = (
-            self._nprod * actual_flow_kg_per_sec * self._cpwater * max(produced_temperature_c - self._tinj, 0.0) / 1.0e6
-        )
-        useful_heat_mw = extracted_heat_mw * self._enduse_efficiency
         flow_scale = flow_fraction ** 3
         production_pumping_power_mw = self._base_production_pumping_power_mw * flow_scale
         injection_pumping_power_mw = self._base_injection_pumping_power_mw * flow_scale
         pumping_power_mw = self._base_pumping_power_mw * flow_scale
 
-        state = {
+        state = _dispatch_output_state(self._model, produced_temperature_c, actual_flow_kg_per_sec, pumping_power_mw)
+        state.update({
             "produced_temperature_c": produced_temperature_c,
-            "useful_heat_mw": useful_heat_mw,
-            "extracted_heat_mw": extracted_heat_mw,
             "pumping_power_mw": pumping_power_mw,
             "production_pumping_power_mw": production_pumping_power_mw,
             "injection_pumping_power_mw": injection_pumping_power_mw,
             "actual_flow_kg_per_sec": actual_flow_kg_per_sec,
-        }
-        if self._dispatch_mode == "thermal":
-            state["dispatch_output_mw"] = useful_heat_mw
-        else:
-            state.update(
-                _electricity_dispatch_state(self._model, produced_temperature_c, actual_flow_kg_per_sec, pumping_power_mw)
-            )
+        })
         return state
 
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
@@ -596,7 +660,8 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
 
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
         self._model = model
-        self._dispatch_mode = _dispatch_surfaceplant_mode(model)
+        self._dispatch_mode = _dispatch_target_mode(model)
+        self._surfaceplant_mode = _dispatch_surfaceplant_mode(model)
         model.reserv.Calculate(model)
         model.wellbores.Calculate(model)
 
@@ -664,46 +729,32 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         baseline_pumping_power_inj_mw = self._baseline_pumping_power_inj_mw[baseline_index]
 
         if flow_fraction <= 0:
-            state = {
+            state = _dispatch_output_state(self._model, baseline_temperature_c, 0.0, 0.0)
+            state.update({
                 "produced_temperature_c": baseline_temperature_c,
-                "useful_heat_mw": 0.0,
-                "extracted_heat_mw": 0.0,
                 "pumping_power_mw": 0.0,
                 "production_pumping_power_mw": 0.0,
                 "injection_pumping_power_mw": 0.0,
                 "actual_flow_kg_per_sec": 0.0,
-            }
-            if self._dispatch_mode == "thermal":
-                state["dispatch_output_mw"] = 0.0
-            else:
-                state.update(_electricity_dispatch_state(self._model, baseline_temperature_c, 0.0, 0.0))
+            })
             return state
 
         actual_flow_kg_per_sec = self._nominal_flow_kg_per_sec * flow_fraction
-        extracted_heat_mw = baseline_heat_extracted_mw * flow_fraction
-        useful_heat_mw = extracted_heat_mw * self._enduse_efficiency
         flow_scale = flow_fraction ** 3
 
-        state = {
+        state = _dispatch_output_state(
+            self._model,
+            baseline_temperature_c,
+            actual_flow_kg_per_sec,
+            baseline_pumping_power_mw * flow_scale,
+        )
+        state.update({
             "produced_temperature_c": baseline_temperature_c,
-            "useful_heat_mw": useful_heat_mw,
-            "extracted_heat_mw": extracted_heat_mw,
             "pumping_power_mw": baseline_pumping_power_mw * flow_scale,
             "production_pumping_power_mw": baseline_pumping_power_prod_mw * flow_scale,
             "injection_pumping_power_mw": baseline_pumping_power_inj_mw * flow_scale,
             "actual_flow_kg_per_sec": actual_flow_kg_per_sec,
-        }
-        if self._dispatch_mode == "thermal":
-            state["dispatch_output_mw"] = useful_heat_mw
-        else:
-            state.update(
-                _electricity_dispatch_state(
-                    self._model,
-                    baseline_temperature_c,
-                    actual_flow_kg_per_sec,
-                    baseline_pumping_power_mw * flow_scale,
-                )
-            )
+        })
         return state
 
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
@@ -906,7 +957,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             model,
             dispatch_demand_mw,
             demand_profile.time_step_hours,
-            demand_type=dispatch_mode,
+            demand_type=demand_profile.demand_type,
             analysis_start_year=analysis_start_year,
             analysis_end_year=analysis_end_year,
         )
@@ -924,6 +975,9 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         timesteps_per_year = 8760
         plant_lifetime_years = model.surfaceplant.plant_lifetime.value
         efficiency = model.surfaceplant.enduse_efficiency_factor.value
+        enduse_option = model.surfaceplant.enduse_option.value
+        has_heat_component = _surfaceplant_has_heat_component(enduse_option)
+        has_electric_component = _surfaceplant_has_electric_component(enduse_option)
         total_timesteps = plant_lifetime_years * timesteps_per_year
         analysis_start_index = (analysis_start_year - 1) * timesteps_per_year
         analysis_end_index = analysis_start_index + len(model.dispatch_results.hourly_produced_temperature)
@@ -960,28 +1014,32 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         model.wellbores.PumpingPowerProd.value = np.zeros_like(pumping_power_mw)
         model.wellbores.redrill.value = 0
 
-        if demand_type == "thermal":
-            served_heat_kwh = full_served_demand_kwh
-            unmet_demand_kwh = full_unmet_demand_kwh
-            model.surfaceplant.HeatProduced.value = (served_heat_kwh / 1000.0).copy()
+        served_heat_kwh = full_served_demand_kwh
+        unmet_demand_kwh = full_unmet_demand_kwh
+        model.surfaceplant.HeatProduced.value = (
+            full_hourly_geothermal_thermal_output.copy() if has_heat_component else np.zeros(total_timesteps)
+        )
+        if has_heat_component or has_electric_component:
+            model.surfaceplant.HeatExtracted.value = full_hourly_heat_extracted.copy()
+        else:
             model.surfaceplant.HeatExtracted.value = (
                 model.surfaceplant.HeatProduced.value / efficiency if efficiency > 0 else np.zeros_like(served_heat_kwh)
             )
-            model.surfaceplant.ElectricityProduced.value = np.zeros(total_timesteps)
-            model.surfaceplant.NetElectricityProduced.value = np.zeros(total_timesteps)
-            model.surfaceplant.TenteringPP.value = np.zeros(total_timesteps)
-            model.surfaceplant.Availability.value = np.zeros(total_timesteps)
-            model.surfaceplant.FirstLawEfficiency.value = np.zeros(total_timesteps)
-        else:
-            served_heat_kwh = full_served_demand_kwh
-            unmet_demand_kwh = full_unmet_demand_kwh
-            model.surfaceplant.HeatProduced.value = np.zeros(total_timesteps)
-            model.surfaceplant.HeatExtracted.value = full_hourly_heat_extracted.copy()
-            model.surfaceplant.ElectricityProduced.value = full_hourly_gross_electric_output.copy()
-            model.surfaceplant.NetElectricityProduced.value = full_hourly_geothermal_electric_output.copy()
-            model.surfaceplant.TenteringPP.value = full_hourly_tentering_powerplant.copy()
-            model.surfaceplant.Availability.value = full_hourly_availability.copy()
-            model.surfaceplant.FirstLawEfficiency.value = full_hourly_first_law_efficiency.copy()
+        model.surfaceplant.ElectricityProduced.value = (
+            full_hourly_gross_electric_output.copy() if has_electric_component else np.zeros(total_timesteps)
+        )
+        model.surfaceplant.NetElectricityProduced.value = (
+            full_hourly_geothermal_electric_output.copy() if has_electric_component else np.zeros(total_timesteps)
+        )
+        model.surfaceplant.TenteringPP.value = (
+            full_hourly_tentering_powerplant.copy() if has_electric_component else np.zeros(total_timesteps)
+        )
+        model.surfaceplant.Availability.value = (
+            full_hourly_availability.copy() if has_electric_component else np.zeros(total_timesteps)
+        )
+        model.surfaceplant.FirstLawEfficiency.value = (
+            full_hourly_first_law_efficiency.copy() if has_electric_component else np.zeros(total_timesteps)
+        )
 
         model.surfaceplant.PumpingkWh.value = np.zeros(plant_lifetime_years)
         model.surfaceplant.HeatkWhExtracted.value = np.zeros(plant_lifetime_years)
@@ -993,16 +1051,19 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         for year_index in range(plant_lifetime_years):
             start = year_index * timesteps_per_year
             end = start + timesteps_per_year
-            if demand_type == "thermal":
-                model.surfaceplant.HeatkWhProduced.value[year_index] = float(np.sum(served_heat_kwh[start:end]))
+            if has_heat_component:
+                model.surfaceplant.HeatkWhProduced.value[year_index] = float(
+                    np.sum(model.surfaceplant.HeatProduced.value[start:end] * 1000.0)
+                )
             model.surfaceplant.HeatkWhExtracted.value[year_index] = float(np.sum(model.surfaceplant.HeatExtracted.value[start:end] * 1000.0))
             model.surfaceplant.PumpingkWh.value[year_index] = float(np.sum(pumping_power_mw[start:end] * 1000.0))
-            model.surfaceplant.TotalkWhProduced.value[year_index] = float(
-                np.sum(model.surfaceplant.ElectricityProduced.value[start:end] * 1000.0)
-            )
-            model.surfaceplant.NetkWhProduced.value[year_index] = float(
-                np.sum(model.surfaceplant.NetElectricityProduced.value[start:end] * 1000.0)
-            )
+            if has_electric_component:
+                model.surfaceplant.TotalkWhProduced.value[year_index] = float(
+                    np.sum(model.surfaceplant.ElectricityProduced.value[start:end] * 1000.0)
+                )
+                model.surfaceplant.NetkWhProduced.value[year_index] = float(
+                    np.sum(model.surfaceplant.NetElectricityProduced.value[start:end] * 1000.0)
+                )
 
         model.surfaceplant.RemainingReservoirHeatContent.value = model.surfaceplant.remaining_reservoir_heat_content(
             model.reserv.InitialReservoirHeatContent.value,

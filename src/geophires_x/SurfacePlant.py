@@ -879,18 +879,33 @@ class SurfacePlant:
 
         if self.operating_mode.value == OperatingMode.DISPATCHABLE:
             if self.enduse_option.value == EndUseOptions.HEAT:
-                required_demand_source = DispatchDemandSource.ANNUAL_HEAT_DEMAND
+                allowed_demand_sources = (DispatchDemandSource.ANNUAL_HEAT_DEMAND,)
             elif self.enduse_option.value == EndUseOptions.ELECTRICITY:
-                required_demand_source = DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND
+                allowed_demand_sources = (DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND,)
+            elif self.enduse_option.value in [
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+            ]:
+                allowed_demand_sources = (
+                    DispatchDemandSource.ANNUAL_HEAT_DEMAND,
+                    DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND,
+                )
             else:
                 raise ValueError(
-                    'Dispatchable mode currently supports only direct-use heat and pure electricity cases.'
+                    'Dispatchable mode currently supports direct-use heat, pure electricity, and CHP cases.'
                 )
 
-            if self.dispatch_demand_source.value != required_demand_source:
+            if self.dispatch_demand_source.value not in allowed_demand_sources:
+                allowed_demand_source_labels = ', '.join(
+                    f'`{source.value}`' for source in sorted(allowed_demand_sources, key=lambda item: item.int_value)
+                )
                 raise ValueError(
                     f'Dispatchable mode for `{self.enduse_option.value.value}` requires '
-                    f'`{required_demand_source.value}` as the dispatch demand source.'
+                    f'{allowed_demand_source_labels} as the dispatch demand source.'
                 )
             if self.maximum_dispatch_flow_fraction.value < self.minimum_dispatch_flow_fraction.value:
                 raise ValueError(

@@ -328,6 +328,57 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
         self.assertGreaterEqual(model.economics.LCOE.value, 0.0)
 
+    def test_dispatchable_chp_heat_following_run_populates_both_heat_and_electric_outputs(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="31"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Heat Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("thermal", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(model.surfaceplant.HeatkWhProduced.value[0], 0.0)
+        self.assertGreater(model.surfaceplant.NetkWhProduced.value[0], 0.0)
+        self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+        self.assertGreaterEqual(model.economics.LCOE.value, 0.0)
+
+    def test_dispatchable_chp_electricity_following_run_populates_both_heat_and_electric_outputs(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="52"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+                "CHP Fraction": ParameterEntry(Name="CHP Fraction", sValue="0.4"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("electric", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(model.surfaceplant.NetkWhProduced.value[0], 0.0)
+        self.assertGreater(model.surfaceplant.HeatkWhProduced.value[0], 0.0)
+        self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
+        self.assertGreaterEqual(model.economics.LCOE.value, 0.0)
+
     def test_dispatchable_upp_run(self):
         from geophires_x.UPPReservoir import UPPReservoir
 
