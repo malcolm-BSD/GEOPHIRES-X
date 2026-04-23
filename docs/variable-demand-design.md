@@ -2,655 +2,616 @@
 
 ## Objective
 
-Extend GEOPHIRES-X to support a new `dispatchable` operating mode alongside the existing default `baseload` mode.
+Extend GEOPHIRES-X with a `Dispatchable` operating mode alongside the existing default `Baseload` mode.
 
-In `baseload` mode, the current behavior remains unchanged: the model assumes constant production flow and continuous operation, with reservoir decline driven by sustained extraction.
+`Baseload` keeps the legacy behavior unchanged.
 
-In `dispatchable` mode, the user supplies an hourly thermal demand profile at the point of use. GEOPHIRES-X then simulates plant operation against that demand using variable flow, variable runtime, or both, subject to geothermal system limits. The design must maximize code reuse, minimize disruption to the existing codebase, and preserve backward compatibility.
+`Dispatchable` uses an hourly one-year demand profile, simulates geothermal response with variable flow and runtime, stores dispatch-specific hourly results, and feeds dispatch-aware annual energy into the existing economics framework.
 
-## Design Principles
+This document reflects the current implementation state and the next planned extension for dispatchable electricity cases.
 
-1. Preserve the current baseload path unchanged.
-2. Introduce dispatchable behavior as an additive operating mode, not as a rewrite of existing calculations.
-3. Reuse existing demand-profile infrastructure by building on the historical array framework already present in `Parameter.py` and `SurfacePlant.py`.
-4. Separate operating control from reservoir and plant physics.
-5. Make transient dispatch simulation opt-in and model-specific.
-6. Provide clean extension points for future shut-in regeneration and additional reservoir-model support.
-
-## Scope
-
-### In Scope for v1
-
-- New operating mode selection: `Baseload` or `Dispatchable`
-- Hourly thermal demand input using historical arrays
-- Dispatch simulation using hourly timesteps
-- Operation driven by both variable flow and variable runtime through a dispatch strategy
-- Separate design-capacity and operating-profile concepts for economics
-- Dispatch-aware outputs:
-  - timestep produced temperature
-  - demand served and unmet demand
-  - timestep flow profile
-  - dispatch-aware LCOH, LCOE, and LCOC where applicable
-- Initial dispatchable reservoir-model support priority:
-  - first: cylindrical
-  - second: MPF / LHS / SF
-  - third: UPP
-  - fourth: SBT
-
-### Explicitly Out of Scope for v1
-
-- High-fidelity shut-in regeneration physics
-- New solver code for every reservoir model
-- Daily/weekly/monthly/seasonal dispatch input as a primary internal format
-- Changes to default baseload sizing logic for existing runs
-- Retrofitting unsupported models to silently behave as dispatchable
-
-## Problem Statement
-
-The current codebase is structured around a mostly steady production rate per well and precomputed decline-style profiles. That works for baseload operation but is not sufficient for demand-following operation because dispatch requires:
-
-- a time-varying operating command
-- a timestep-based operating loop
-- delivered heat comparison against demand
-- partial-load operation
-- shut-in behavior
-- capacity planning that distinguishes installed design from actual utilization
-
-The core design challenge is not demand ingestion. It is introducing a new operating loop without destabilizing the current baseload calculation path.
-
-## Proposed High-Level Solution
-
-Add a new operating-mode abstraction above the existing reservoir, wellbore, surface plant, and economics objects.
+## Implemented Scope
 
 ### Operating Modes
 
 - `Baseload`
-  - current GEOPHIRES-X behavior
-  - uses the existing calculation path unchanged
+  - existing GEOPHIRES-X calculation path
+  - still the default
 
 - `Dispatchable`
-  - new hourly simulation path
-  - uses historical-array hourly demand input
-  - uses a dispatch strategy to choose flow and runtime each timestep
-  - updates geothermal outputs over time
+  - implemented as a separate operating-mode strategy
+  - currently supports direct-use heat cases
+  - currently supports the `Annual Heat Demand` demand source
+  - currently supports the `Demand Following` dispatch flow strategy
 
-The dispatchable path should be implemented as a separate simulation workflow, not as conditional logic woven deeply into every existing calculation.
+### Planned Extension: Electricity Dispatch
 
-## Key Architectural Decision
+The next dispatch extension will add support for pure electricity cases without changing the existing heat-dispatch behavior.
 
-The design introduces a new dispatch simulation layer, rather than modifying the current baseload methods to become dual-purpose.
+Planned initial scope:
 
-That layer should:
+- `EndUseOptions.ELECTRICITY`
+- `Annual Electricity Demand` as a new hourly demand input
+- `Demand Following` dispatch flow strategy
+- pure power-generation plants first
+- CHP remains out of scope for the first electricity-dispatch implementation
 
-1. read the hourly demand profile
-2. compute an operating command for each timestep
-3. evaluate geothermal capability for that operating command
-4. calculate served and unmet demand
-5. accumulate dispatch-aware profiles and annual aggregates
+The current hard stop in `DispatchableOperatingModeStrategy` for non-heat cases remains correct until the items in the design section below are implemented.
 
-This keeps the current model objects reusable while minimizing invasive changes.
+### Supported Reservoir Families
 
-## Integration with Historical Arrays
+Dispatchable mode is implemented for:
 
-GEOPHIRES-X already supports historical arrays and already defines demand-oriented parameters in `SurfacePlant`:
+- `CylindricalReservoir`
+- `MPFReservoir`
+- `LHSReservoir`
+- `SFReservoir`
+- `UPPReservoir`
+- `SBTReservoir`
+  - `U-loop` and `EavorLoop` configurations only
+  - coaxial SBT remains unsupported
+
+Dispatchable mode still fails explicitly for unsupported reservoir families rather than silently approximating them.
+
+### Demand Input
+
+The canonical dispatch input is:
 
 - `Annual Heat Demand`
-- `Annual Cooling Demand`
-- `Annual Electricity Demand`
-
-The dispatchable-mode design will reuse that framework instead of adding a new parallel demand-input mechanism.
-
-### Canonical v1 Input
-
-For dispatchable geothermal heat operation, the canonical input is:
-
-- an hourly historical array
+- hourly historical array
 - 8760 timesteps
-- representing thermal demand at the point of use
+- point-of-use thermal demand
 
-### Historical Array Requirements for Dispatchable Mode
+The canonical regression asset is:
 
-- The dispatch demand series must be stored as an hourly one-year array.
-- Existing historical-array parsing, normalization, and optional resampling should be reused.
-- For dispatchable heat mode, `Annual Heat Demand` becomes the required demand input.
-- The dispatch loop should treat the array as the target thermal load delivered to the user, not as geothermal extraction demand.
+- `tests/assets/params/annual_heat_demand.csv`
 
-### Backward Compatibility
+The first column is hour, and the second column is thermal demand in `MMBtu`. The dispatch layer normalizes that series to thermal power in `MW`.
 
-- Existing historical-array support remains unchanged.
-- Existing baseload cases that provide these demand arrays but do not opt into dispatchable mode retain their current behavior.
-- Dispatchable mode introduces explicit new parameters; no existing parameter changes meaning.
+Historical-array file inputs now resolve relative paths against the input file location, so file-based examples can reference nearby demand CSV files directly.
 
-## Proposed Object-Oriented Design
+### Planned Electricity Demand Input
 
-### New Concepts
+Electricity dispatch will add a second canonical demand input:
 
-The design introduces the following new responsibilities.
+- `Annual Electricity Demand`
+- hourly historical array
+- 8760 timesteps
+- point-of-use electric demand
 
-#### 1. Operating Mode Strategy
+Canonical test asset for the initial implementation:
 
-Purpose:
-- select the correct simulation path without changing the current default behavior
+- `D:\temp\Annual_Electricity_Demand.csv`
 
-Proposed interface:
+Observed file structure:
+
+- header row: `Time (hour),Demand (MW)`
+- first column: hour index
+- second column: electric demand in `MW`
+
+The electricity-dispatch layer should treat that series as already being in delivered electric power units, without thermal unit conversion.
+
+## Implemented Architecture
+
+### Operating-Mode Strategy
+
+Implemented in `Dispatch.py`:
 
 - `OperatingModeStrategy`
-  - `run(model) -> None`
-
-Implementations:
-
 - `BaseloadOperatingModeStrategy`
-  - delegates to existing `Model.Calculate()` behavior
-
 - `DispatchableOperatingModeStrategy`
-  - runs the hourly dispatch simulation
 
-This is the primary Strategy pattern in the design.
+`Model` selects the strategy after input parsing. This keeps the baseload path isolated from dispatch logic.
 
-#### 2. Demand Profile Adapter
+### Demand Profile Adapter
 
-Purpose:
-- provide a canonical hourly demand series to the dispatch loop
-- isolate historical-array parsing/storage details from dispatch logic
-
-Proposed interface:
+Implemented in `Dispatch.py`:
 
 - `DemandProfile`
-  - `series`
-  - `units`
-  - `num_timesteps`
-  - `time_step_hours`
-
 - `DemandProfileFactory`
-  - builds `DemandProfile` from existing `SurfacePlant.HeatingDemand`
 
-This allows the dispatch loop to consume demand cleanly without depending on raw parameter internals.
+This layer converts `Annual Heat Demand` into a canonical hourly `MW` series for dispatch use.
 
-#### 3. Dispatch Strategy
+Planned extension:
 
-Purpose:
-- decide how to meet demand using both flow and runtime
+- `DemandProfileFactory` should support both `Annual Heat Demand` and `Annual Electricity Demand`
+- the returned profile should carry a demand kind, such as `thermal` or `electric`
+- heat demand remains normalized from `MMBtu` to thermal `MW`
+- electricity demand remains in electric `MW`
 
-Proposed interface:
+### Dispatch Strategy
+
+Implemented in `Dispatch.py`:
 
 - `DispatchStrategy`
-  - `dispatch(timestep_state, demand) -> DispatchCommand`
-
-Proposed command object:
-
-- `DispatchCommand`
-  - `target_flow_fraction`
-  - `runtime_fraction`
-  - `is_shut_in`
-
-For v1, one default strategy is sufficient:
-
 - `DemandFollowingDispatchStrategy`
-  - attempts to meet thermal demand
-  - can vary both flow and runtime
-  - respects min/max operating limits
-  - caps output at geothermal capability
-  - records unmet demand if demand exceeds capability
+- `DispatchCommand`
 
-This keeps dispatch policy separate from the geothermal physics implementation.
+The default strategy can modulate both:
 
-#### 4. Dispatch-Capable Plant Adapter
-
-Purpose:
-- bridge the current model objects into a timestep-based interface without rewriting them all at once
-
-Proposed interface:
-
-- `DispatchPlantAdapter`
-  - `initialize(model, design_state)`
-  - `evaluate_timestep(dispatch_command, timestep_index) -> DispatchTimestepResult`
-  - `finalize()`
-
-`DispatchTimestepResult` should include:
-
-- produced temperature
-- plant outlet thermal power
-- pumping power
-- electrical output if applicable
-- served thermal demand
-- unmet thermal demand
-- actual flow
+- flow fraction
 - runtime fraction
 
-This adapter layer is the key to minimizing codebase disruption.
+It respects:
 
-#### 5. Dispatch State Store
+- `Maximum Dispatch Flow Fraction`
+- `Minimum Dispatch Flow Fraction`
+- `Minimum Dispatch Runtime Fraction`
 
-Purpose:
-- accumulate timestep outputs and annual summaries without changing existing baseload output arrays
+Planned extension:
 
-Proposed object:
+- the strategy input should be generalized from thermal-only metrics to delivered-output metrics
+- for heat cases, delivered output remains useful geothermal heat
+- for electricity cases, delivered output becomes net electric power
+- the demand-following algorithm itself can remain structurally the same once the adapter contract exposes the correct delivered-output quantity
+
+### Dispatch Plant Adapters
+
+Implemented in `Dispatch.py`:
+
+- `DispatchPlantAdapter`
+- `DispatchAdapterFactory`
+- `CylindricalDispatchPlantAdapter`
+- `AnalyticalReservoirDispatchPlantAdapter`
+- `SBTDispatchPlantAdapter`
+
+Current behavior by family:
+
+- Cylindrical uses a reduced-order heat-content model.
+- MPF/LHS/SF/UPP use a baseline-profile depletion mapping built from existing reservoir outputs.
+- SBT uses the same baseline-profile approach with SBT-specific validation.
+
+Planned extension for electricity:
+
+- keep the reservoir-side dispatch adapters and recovery model structure
+- extend the plant adapter contract so the same reservoir response can be evaluated against either:
+  - useful thermal output for heat cases
+  - net electric output for electricity cases
+
+The smallest safe first scope is:
+
+- `SurfacePlantSubcriticalOrc`
+- `SurfacePlantSupercriticalOrc`
+
+Flash and CHP configurations should remain unsupported until off-design power behavior is validated.
+
+Planned adapter additions:
+
+- a neutral timestep state object or dictionary that includes:
+  - `useful_heat_mw`
+  - `gross_electric_mw`
+  - `net_electric_mw`
+  - `pumping_power_mw`
+  - `produced_temperature`
+- a neutral delivered-output accessor used by the dispatch strategy
+- preservation of the current thermal-only fields for backward compatibility during migration if needed
+
+### Dispatch Results Store
+
+Implemented in `Dispatch.py`:
 
 - `DispatchResults`
-  - hourly produced temperature
-  - hourly flow
-  - hourly runtime fraction
-  - hourly demand served
-  - hourly unmet demand
-  - hourly pumping power
-  - hourly geothermal thermal output
-  - annual aggregates
-  - dispatch-specific summary metrics
 
-## Reuse of Existing Components
+Stored outputs include:
 
-### Reservoir and Wellbore Models
+- hourly produced temperature
+- hourly flow
+- hourly runtime fraction
+- hourly demand served
+- hourly unmet demand
+- hourly pumping power
+- hourly geothermal thermal output
+- hourly thermal demand
+- annual dispatch aggregates
+- dispatch summary metrics
 
-The current reservoir and wellbore classes should not be fully rewritten for v1.
+Planned extension:
 
-Instead, v1 should introduce a dispatch-capability adapter per supported model family.
+- add electricity-specific hourly outputs:
+  - hourly electric demand
+  - hourly net electric output
+  - hourly unmet electric demand
+  - hourly gross electric generation if useful for reporting
+- either generalize thermal field names to neutral demand/output names or add parallel electric fields while preserving current heat outputs
 
-Examples:
+## Dispatch Analysis Window
 
-- `CylindricalDispatchAdapter`
-- `MPFDispatchAdapter`
-- `LHSDispatchAdapter`
-- `SFDispatchAdapter`
-- `UPPDispatchAdapter`
-- `SBTDispatchAdapter`
+Dispatchable mode now supports an explicit operating-year analysis window.
 
-These adapters are responsible for mapping an hourly operating command onto the existing underlying model behavior.
+Implemented surface-plant parameters:
 
-### Surface Plant
+- `Dispatch Analysis Start Year`
+- `Dispatch Analysis End Year`
 
-Existing `SurfacePlant` and subclass logic should continue to be the source of plant-side heat and power calculations where feasible.
+Semantics:
 
-However, dispatchable mode should not assume the current annual-profile logic is sufficient. The dispatch path should expose an instantaneous or per-timestep plant-evaluation interface, even if that interface is initially implemented through reduced-order approximations derived from existing behavior.
+- `Start Year` is inclusive
+- `End Year` is exclusive
+- duration is implied by `End Year - Start Year`
 
-### Economics
+Default behavior:
 
-Existing economics classes remain the source of:
+- `Dispatch Analysis Start Year = 1`
+- `Dispatch Analysis End Year = 2`
 
-- CAPEX calculations
-- standard OPEX logic
-- LCOH/LCOE/LCOC framework
-
-Dispatchable mode should extend economics with:
-
-- separate design capacity metrics
-- operating-profile-derived utilization metrics
-- dispatch-aware annual delivered energy
-- dispatch-aware unserved demand reporting
-
-The economics layer should not own dispatch logic. It should consume dispatch results.
-
-### Outputs
-
-Existing output generation can be reused for baseload mode without change.
-
-Dispatchable mode should add:
-
-- dispatch summary section
-- dispatch profile section
-- optional hourly-profile export hooks
-
-The output classes should read from `DispatchResults`, not rerun dispatch calculations.
-
-## Proposed Minimal Changes to Existing Code
-
-To minimize disruption, the following changes should be made at controlled extension points.
-
-### 1. Model-Level Mode Selection
-
-Add a new explicit input parameter:
-
-- `Operating Mode`
-  - default: `Baseload`
-  - allowed values: `Baseload`, `Dispatchable`
-
-`Model` should select the operating-mode strategy after input parsing and before calculation.
-
-### 2. SurfacePlant Input Extension
-
-Reuse the existing historical-array demand parameters instead of creating new raw input types.
-
-Add dispatch-specific parameters near demand and plant-operation settings:
-
-- `Dispatch Demand Source`
-  - default: `Annual Heat Demand`
-- `Dispatch Flow Strategy`
-  - default: `Demand Following`
-- `Maximum Dispatch Flow Fraction`
-  - user-specified multiple of nominal flow
-- `Minimum Dispatch Flow Fraction`
-  - optional lower operating bound
-- `Minimum Dispatch Runtime Fraction`
-  - optional lower runtime threshold
-
-These new parameters are additive and do not change the meaning of current parameters.
-
-### 3. Reservoir/Plant Dispatch Adapter Registry
-
-Add a small registry or factory that maps model family to a dispatch adapter.
+That means the default dispatch analysis covers the first operating year after construction.
 
 Example:
 
-- `DispatchAdapterFactory.create(model) -> DispatchPlantAdapter`
+- `Dispatch Analysis Start Year = 3`
+- `Dispatch Analysis End Year = 5`
 
-Behavior:
+means the stored dispatch analysis covers operating years 3 and 4.
 
-- if model supports dispatchable mode, return the appropriate adapter
-- if unsupported, raise a clear error in dispatchable mode
+Validation rules:
 
-This is preferable to scattering `if dispatchable:` blocks across model code.
+- start year must be `>= 1`
+- end year must be `> start year`
+- end year must be `<= Plant Lifetime + 1`
 
-### 4. Dispatch Results Storage
+Implementation detail:
 
-Add a new results object rather than overloading existing annual-profile arrays with mixed semantics.
+- reservoir and plant state are still advanced across the full operating life for consistency with annual economics
+- the stored hourly dispatch results, dispatch CSV export, and dispatch summary metrics are sliced to the requested operating-year window
 
-This preserves the meaning of current outputs and reduces regression risk.
+## Economics Integration
 
-## v1 Dispatch Simulation Semantics
+Dispatchable mode now feeds the existing economics framework instead of replacing it.
 
-### Internal Timestep
+Implemented behavior:
 
-The internal timestep for v1 is fixed at:
+- design-capacity metrics are computed from dispatch design conditions
+- key heat/pumping CAPEX sizing uses dispatch design capacity instead of only realized utilization
+- annual served heat from dispatch is passed into the standard heat-only economics path
+- dispatch summary metrics report delivered and unmet heat separately
 
-- 1 hour
+This preserves the existing economics structure while distinguishing:
 
-This aligns with the user requirement and existing historical-array resampling design.
+- design capacity
+- actual operating profile
 
-### Demand Interpretation
+Planned electricity-dispatch economics behavior:
 
-The dispatch demand series represents:
+- use dispatch design conditions to size power-plant CAPEX consistently with the heat-dispatch path
+- feed annual delivered net electricity into the existing electricity economics path
+- preserve pumping and parasitic loads in net generation accounting
+- report unmet electric demand separately from generated electricity
 
-- thermal demand at the point of use
+## Recovery Model Hook
 
-It does not represent:
+Implemented in `Dispatch.py`:
 
-- geothermal extraction demand
-- requested wellhead heat rate
-- surface plant gross thermal output
+- `ReservoirRecoveryModel`
+- `NoRecoveryModel`
+- `ReducedOrderRecoveryModel`
 
-This distinction is important because served demand depends on produced temperature, flow, runtime, and plant-side conversion losses.
+Current behavior:
 
-### Control Variables
+- shut-in hours can restore some reservoir state through a reduced-order recovery model
+- cylindrical and analytical/baseline-profile adapters both use the recovery hook
 
-The dispatch controller may use:
+This is still reduced-order behavior, not a validated high-fidelity regeneration model.
 
-- variable flow
-- variable runtime
-- or both
+## Outputs
 
-For v1, the default strategy should allow both because the user explicitly wants dispatch to choose between them.
+### Standard Output
 
-### Peak Demand and Oversizing
+Implemented in `Outputs.py` and `OutputsRich.py`:
 
-The model should allow:
+- dedicated `DISPATCH RESULTS` section
 
-- flow up to a user-specified multiple of nominal flow
-- unmet demand when geothermal capability is insufficient
+Current dispatch summary output includes:
 
-This preserves a realistic distinction between:
-
-- what the demand requests
-- what the geothermal system can actually provide
-
-### Zero-Demand Timesteps
-
-The conceptual long-term target is:
-
-- true shut-in with thermal recovery
-
-However, v1 fidelity is explicitly limited to a placeholder framework. Therefore:
-
-- v1 should support shut-in semantics and state transitions
-- v1 may set the system to zero production during zero-demand hours
-- v1 should include explicit hooks for future thermal recovery
-- v1 should not claim validated regeneration physics unless that model is actually implemented
-
-## Reservoir Model Support Strategy
-
-Dispatchable mode should be phased by model family.
-
-### Tier 1: Cylindrical
-
-First supported model family because it is the best candidate for a reduced-order dispatch implementation with minimal complexity.
-
-### Tier 2: MPF / LHS / SF
-
-Second priority because these are still reduced-order reservoir models and conceptually fit the dispatch adapter pattern.
-
-### Tier 3: UPP
-
-Supported later because it depends on externally supplied temperature profiles and therefore needs a clear interpretation under variable operation.
-
-### Tier 4: SBT
-
-Supported after the reduced-order families because of added geometry and transient complexity.
-
-### Unsupported in v1
-
-The following should be explicitly rejected in dispatchable mode unless separately implemented:
-
-- SUTRA
-- TOUGH2
-- AGS / CLGS unless a dedicated dispatch adapter is added
-
-Failing explicitly is safer than silent approximation.
-
-## Economics Design
-
-Dispatchable mode requires separate concepts for design and operation.
-
-### Design Capacity
-
-Design capacity should represent the system capability or installed design basis used for capital sizing.
-
-Examples:
-
-- nominal production flow
-- peak allowed dispatch flow
-- installed surface-plant capacity
-
-### Operating Profile
-
-Operating profile should represent actual simulated use over time.
-
-Examples:
-
-- hourly flow
-- runtime fraction
-- delivered thermal energy
-- average and peak served demand
-- annual capacity factor
-
-### v1 Economics Approach
-
-The dispatchable economics design should:
-
-- continue using existing CAPEX logic wherever possible
-- size design-related CAPEX from dispatch design capacity inputs
-- calculate revenues and utilization from actual dispatch results
-- calculate LCOH/LCOE/LCOC from dispatch-served annual energy
-
-This preserves the current economics framework while introducing the required design-versus-operation separation.
-
-## Outputs Design
-
-Dispatchable mode should add a dedicated output section rather than altering the meaning of current baseload summaries.
-
-### Mandatory v1 Dispatch Outputs
-
-Priority order from user requirements:
-
-1. timestep produced temperature
-2. demand served and unmet demand
-3. timestep flow profile
-4. dispatch-aware LCOH / LCOE / LCOC
-
-### Recommended Additional Outputs
-
-- annual geothermal energy delivered
+- dispatch analysis start year
+- dispatch analysis end year
+- dispatch analysis duration
+- design heat produced
+- annual geothermal heat delivered
 - annual unmet thermal demand
 - dispatch capacity factor
 - average runtime fraction
 - peak geothermal contribution
 - peak unmet load
-- design flow versus observed peak flow
+- peak hourly demand
+- design flow rate
+- observed peak flow rate
 
-## Proposed Class Responsibilities
+Dispatch summary field meanings:
 
-### New Classes
+- `Dispatch analysis start year`
+  - first operating year included in the reported dispatch analysis window
+  - inclusive
 
-- `OperatingModeStrategy`
-- `BaseloadOperatingModeStrategy`
-- `DispatchableOperatingModeStrategy`
-- `DemandProfile`
-- `DemandProfileFactory`
-- `DispatchStrategy`
-- `DemandFollowingDispatchStrategy`
-- `DispatchCommand`
-- `DispatchPlantAdapter`
-- `DispatchAdapterFactory`
-- `DispatchResults`
-- model-specific dispatch adapters
+- `Dispatch analysis end year`
+  - operating-year boundary at which the reported dispatch analysis window stops
+  - exclusive
 
-### Existing Classes with Minimal Extensions
+- `Dispatch analysis duration`
+  - number of operating years in the reported dispatch analysis window
+  - equal to `Dispatch analysis end year - Dispatch analysis start year`
 
-- `Model`
-  - choose operating-mode strategy
+- `Design heat produced`
+  - geothermal useful thermal output used as the dispatch design basis
+  - reported in `MW`
+  - this is a design-capacity style metric, not an annual average
 
-- `SurfacePlant`
-  - expose dispatch-related parameters
-  - provide access to canonical demand input
+- `Annual geothermal heat delivered`
+  - total geothermal heat actually served to the demand profile over the selected analysis window
+  - normalized to `GWh/year` in the report
 
-- `Economics`
-  - consume dispatch results for utilization and levelized metrics
+- `Annual unmet thermal demand`
+  - total demand not served by the geothermal system over the selected analysis window
+  - normalized to `GWh/year` in the report
 
-- `Outputs` / `OutputsRich`
-  - render dispatch-specific summaries and profiles
+- `Dispatch capacity factor`
+  - average served thermal output divided by dispatch design heat output over the selected analysis window
+  - reported as a percentage
+  - this indicates how heavily the dispatch design capacity is used on average
 
-## Sequence of Control in Dispatchable Mode
+- `Average runtime fraction`
+  - average of the hourly runtime fraction over the selected analysis window
+  - reported as a percentage
+  - `100%` means the plant ran the full hour on average, while lower values indicate partial-hour runtime or shut-in behavior
 
-### Initialization
+- `Peak geothermal contribution`
+  - maximum hourly geothermal heat actually delivered to the load during the selected analysis window
+  - reported in `MW`
 
-1. Parse input file
-2. Build canonical hourly demand profile from historical arrays
-3. Select dispatchable operating-mode strategy
-4. Create the appropriate dispatch adapter for the selected reservoir/plant family
-5. Establish design state:
-   - nominal flow
-   - max dispatch flow fraction
-   - design capacity metrics
+- `Peak unmet load`
+  - maximum hourly demand shortfall during the selected analysis window
+  - reported in `MW`
 
-### Hourly Simulation Loop
+- `Peak hourly demand`
+  - maximum hourly thermal demand requested by the dispatch profile during the selected analysis window
+  - reported in `MW`
 
-For each hour:
+- `Design flow rate`
+  - nominal production-well design flow used as the dispatch design basis
+  - reported in `kg/s`
+  - this is currently the nominal per-well production flow input used by the dispatch model
 
-1. read demand
-2. build timestep state
-3. ask dispatch strategy for a command
-4. evaluate geothermal system response through the dispatch adapter
-5. compute served and unmet demand
-6. store timestep outputs in `DispatchResults`
-7. update internal state for next hour
+- `Observed peak flow rate`
+  - highest actual hourly flow reached during the selected analysis window
+  - reported in `kg/s`
+  - this reflects dispatch behavior and may be lower than design flow if demand never requires the full design point
 
-### Finalization
+### Hourly Dispatch CSV Export
 
-1. aggregate annual dispatch metrics
-2. pass results into economics
-3. render outputs
+Implemented output parameter:
 
-## Shut-In Regeneration Design Hook
+- `Dispatch Profile Output File`
 
-Although true regeneration is not in scope for v1 fidelity, the design must reserve a clean extension point for it.
+Current CSV columns include:
 
-Recommended interface:
+- `Year`
+- `Hour of Year`
+- `Simulation Hour`
+- `Thermal Demand (MW)`
+- `Geothermal Thermal Output (MW)`
+- `Demand Served (MW)`
+- `Unmet Demand (MW)`
+- `Produced Temperature (degC)`
+- `Flow Rate (kg/s)`
+- `Runtime Fraction`
+- `Pumping Power (MW)`
 
-- `ReservoirRecoveryModel`
-  - `update(state, dt_hours, is_shut_in) -> state`
+The `Year` and `Simulation Hour` fields respect the selected dispatch analysis window.
 
-v1 implementation:
+Dispatch CSV column meanings:
 
-- `NoRecoveryModel`
+- `Year`
+  - operating year for that timestep within the selected dispatch analysis window
 
-future implementation:
+- `Hour of Year`
+  - hour index within the operating year
+  - ranges from `1` to `8760`
 
-- reduced-order recovery model tuned by reservoir family
+- `Simulation Hour`
+  - absolute hour index within the full operating-life dispatch simulation
+  - useful when the analysis window starts after operating year 1
 
-This allows v1 to implement dispatchable flow behavior now without closing the door on later recovery physics.
+- `Thermal Demand (MW)`
+  - point-of-use hourly thermal demand presented to the dispatch solver
 
-## Error Handling and Compatibility Rules
+- `Geothermal Thermal Output (MW)`
+  - geothermal thermal output produced during that timestep before unmet demand is accounted for
+
+- `Demand Served (MW)`
+  - portion of thermal demand actually met by geothermal supply during that timestep
+
+- `Unmet Demand (MW)`
+  - portion of thermal demand not met during that timestep
+
+- `Produced Temperature (degC)`
+  - geothermal produced-fluid temperature used for that timestep
+
+- `Flow Rate (kg/s)`
+  - actual production flow used during that timestep
+
+- `Runtime Fraction`
+  - fraction of the hour for which the plant operated
+  - `1.0` means the plant ran for the full hour
+  - `0.5` means it ran for half the hour
+  - `0.0` means shut-in for the full hour
+
+- `Pumping Power (MW)`
+  - pumping power consumed during that timestep
+
+### Optional HTML Dispatch Graphs
+
+Implemented output parameter:
+
+- `Generate Dispatch HTML Graphs`
+
+When enabled with an HTML output file for a dispatchable run, the HTML output includes dispatch graphs for:
+
+- demand, served, and unmet heat
+- produced temperature and flow rate
+- runtime fraction and pumping power
+
+Planned electricity-dispatch outputs:
+
+- demand, served, and unmet electricity
+- gross and net electric generation
+- produced temperature and flow rate
+- runtime fraction and pumping power
+
+## Implemented Input Parameters
+
+Dispatchable mode currently uses these additive parameters:
+
+- `Operating Mode`
+- `Dispatch Demand Source`
+- `Dispatch Flow Strategy`
+- `Maximum Dispatch Flow Fraction`
+- `Minimum Dispatch Flow Fraction`
+- `Minimum Dispatch Runtime Fraction`
+- `Dispatch Analysis Start Year`
+- `Dispatch Analysis End Year`
+- `Annual Heat Demand`
+
+Planned additive input parameters for electricity dispatch:
+
+- `Annual Electricity Demand`
+
+Planned `Dispatch Demand Source` extension:
+
+- `Annual Heat Demand`
+- `Annual Electricity Demand`
+
+Optional dispatch-related output parameters:
+
+- `Dispatch Profile Output File`
+- `Generate Dispatch HTML Graphs`
+
+## Validation and Compatibility Rules
 
 ### Backward Compatibility
 
-- `Baseload` remains the default operating mode
-- existing input files keep their current meaning
-- dispatchable mode requires explicit new parameters
-- unsupported reservoir models in dispatchable mode should fail explicitly with a clear message
+- `Baseload` remains the default
+- existing non-dispatch runs keep their existing meaning
+- dispatchable mode is opt-in
 
-### Validation Rules for Dispatchable Mode
+### Dispatch Validation
 
-- hourly demand profile required
-- dispatch demand must be thermal demand at point of use
-- max dispatch flow fraction must be greater than or equal to nominal
-- unsupported reservoir model plus `Dispatchable` operating mode is a fatal configuration error
+- `Annual Heat Demand` is required for dispatchable heat mode
+- the demand profile must normalize to an hourly one-year series
+- maximum dispatch flow fraction must be greater than or equal to minimum dispatch flow fraction
+- dispatch analysis year window must lie within plant lifetime
+- unsupported reservoir/configuration combinations fail explicitly
 
-## Risks
+Planned electricity-dispatch validation:
 
-### Primary Technical Risks
+- `Annual Electricity Demand` is required for dispatchable electricity mode
+- the demand profile must normalize to an hourly one-year series
+- dispatchable electricity initially supports only pure electricity cases
+- dispatchable electricity initially supports only explicitly enabled plant families with validated off-design power behavior
+- CHP remains unsupported until a combined objective and reporting model is defined
 
-1. Existing reservoir/wellbore code assumes scalar or fixed-profile flow in many locations.
-2. Some plant and economics logic assume annual aggregates derived from baseload behavior.
-3. Users may over-interpret v1 dispatchable results as including recovery physics when they do not.
-4. UPP and SBT may require more model-specific adaptation than reduced-order families.
+## Example Input
 
-### Mitigations
+The canonical full-scale dispatch example is:
 
-1. Isolate dispatch through adapters and strategies.
-2. Keep baseload path untouched.
-3. Explicitly label v1 as variable-demand dispatch without validated regeneration.
-4. Roll out support by model family in priority order.
+- `tests/geophires_x_tests/example1_dispatchable_full_scale.txt`
 
-## Recommended Implementation Phases
+It demonstrates:
 
-### Phase 1: Framework
+- dispatchable operating mode
+- canonical hourly demand ingestion
+- reduced-order MPF dispatch support
+- dispatch analysis-year window selection
+- dispatch summary reporting
+- improved text output
+- HTML output
+- dispatch profile CSV export
+- optional dispatch HTML graphs
 
-- add operating mode parameter
-- add dispatch strategy and demand-profile objects
-- add dispatch results container
-- integrate with historical arrays
+## Remaining Limitations
 
-### Phase 2: Cylindrical v1
+- dispatchable mode currently supports direct-use heat only
+- only `Annual Heat Demand` is implemented as a dispatch source
+- only `Demand Following` is implemented as a dispatch strategy
+- SBT dispatch excludes coaxial configuration
+- shut-in recovery is reduced-order and not yet a validated reservoir-regeneration model
+- unsupported reservoir families still fail explicitly in dispatchable mode
 
-- implement cylindrical dispatch adapter
-- support hourly dispatch loop
-- produce timestep outputs
-- connect dispatch-aware economics and reporting
+## Planned Electricity Dispatch Design
 
-### Phase 3: Reduced-Order Expansion
+### Problem Statement
 
-- add MPF / LHS / SF adapters
-- validate common dispatch abstractions
+The current dispatch implementation is thermal-demand-centric. It assumes the dispatched commodity is geothermal heat delivered to the load.
 
-### Phase 4: UPP and SBT
+That is why `DispatchableOperatingModeStrategy` currently rejects non-heat cases.
 
-- add model-specific adapters
-- resolve model-specific transient assumptions
+Electricity cases need a different dispatch target:
 
-### Phase 5: Regeneration
+- thermal dispatch target: useful geothermal heat delivered
+- electricity dispatch target: net electric power delivered
 
-- implement recovery model interface
-- add reduced-order shut-in recovery behavior
-- validate annual energy-recovery improvements
+Removing the current `EndUseOptions.HEAT` guard without redesign would produce physically misleading results and incorrect unmet-demand accounting.
+
+### Design Goals
+
+- preserve current heat-dispatch behavior without regression
+- add electricity dispatch as a second supported commodity path
+- reuse the existing strategy and adapter architecture
+- keep reservoir-side reduced-order behavior aligned with the current dispatch implementation
+- avoid introducing fake thermal-demand proxies for electric dispatch
+
+### Proposed Implementation Sequence
+
+1. Add `Annual Electricity Demand` as a `TimeSeriesParameter`.
+2. Extend `DispatchDemandSource` with `Annual Electricity Demand`.
+3. Generalize `DemandProfile` so it carries both:
+   - hourly series
+   - demand kind: `thermal` or `electric`
+4. Generalize the dispatch adapter contract to expose both thermal and electric performance metrics.
+5. Change dispatch strategy inputs to use a neutral delivered-output metric.
+6. Add dispatch results storage for electricity-specific hourly and annual metrics.
+7. Extend reporting, CSV export, HTML graphs, and JSON output for electricity dispatch.
+8. Relax the non-heat guard only for explicitly supported electricity plant types.
+
+### Initial Supported Electricity Scope
+
+First supported electricity-dispatch target:
+
+- `EndUseOptions.ELECTRICITY`
+- `SurfacePlantSubcriticalOrc`
+- `SurfacePlantSupercriticalOrc`
+
+Deferred:
+
+- flash plants
+- CHP
+- hybrid objectives that co-optimize heat and electricity simultaneously
+
+### Testing Asset
+
+Use this file for initial electricity-dispatch testing and regression coverage:
+
+- `D:\temp\Annual_Electricity_Demand.csv`
+
+Expected characteristics:
+
+- 8760 hourly entries
+- hour index in column 1
+- electric demand in `MW` in column 2
+
+Recommended test coverage:
+
+- parse and normalize `Annual Electricity Demand`
+- dispatchable electricity run with ORC plant and valid annual electricity profile
+- unmet electric demand accounting
+- annual net electric generation handed to economics
+- dispatch CSV and HTML outputs for electricity mode
+- explicit failure for unsupported plant types and CHP
 
 ## Recommendation
 
-This functionality should be implemented in the existing GEOPHIRES-X codebase, not in a new codebase.
+The current implementation is the right shape for continued expansion:
 
-The correct approach is a major but controlled extension:
-
-- preserve the current baseload path
-- add dispatchable operation as a distinct operating-mode strategy
-- reuse historical arrays for hourly demand input
-- use adapters and strategies to isolate transient dispatch behavior
-- phase in model support by priority
-- defer validated regeneration physics to a later phase
-
-This approach maximizes code reuse, minimizes invasive changes, and keeps the current model behavior stable for existing users.
+- keep baseload untouched
+- keep dispatch isolated through strategies and adapters
+- continue using historical arrays as the canonical hourly demand path
+- extend support reservoir-by-reservoir rather than introducing generic silent approximations
+- treat recovery and additional demand/control modes as later extensions rather than overloading the current v1 implementation
