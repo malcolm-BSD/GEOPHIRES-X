@@ -347,6 +347,8 @@ class DispatchFrameworkTestCase(BaseTestCase):
 
         self.assertEqual("thermal", model.dispatch_results.demand_type)
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["design_net_electricity_produced_mw"], 0.0)
         self.assertGreater(model.surfaceplant.HeatkWhProduced.value[0], 0.0)
         self.assertGreater(model.surfaceplant.NetkWhProduced.value[0], 0.0)
         self.assertGreaterEqual(model.economics.LCOH.value, 0.0)
@@ -374,6 +376,8 @@ class DispatchFrameworkTestCase(BaseTestCase):
 
         self.assertEqual("electric", model.dispatch_results.demand_type)
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["design_heat_produced_mw"], 0.0)
         self.assertGreater(model.surfaceplant.NetkWhProduced.value[0], 0.0)
         self.assertGreater(model.surfaceplant.HeatkWhProduced.value[0], 0.0)
         self.assertGreaterEqual(model.economics.LCOH.value, 0.0)

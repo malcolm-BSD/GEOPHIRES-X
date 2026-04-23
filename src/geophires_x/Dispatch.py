@@ -645,7 +645,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
             "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
             "design_flow_kg_per_sec": self._nominal_flow_kg_per_sec,
         }
-        if self._dispatch_mode == "electric":
+        if self._surfaceplant_mode in ("electric", "chp"):
             metrics["design_gross_electricity_produced_mw"] = design_state.get("gross_electricity_mw", 0.0)
             metrics["design_net_electricity_produced_mw"] = max(design_state.get("net_electricity_mw", 0.0), 0.0)
         return metrics
@@ -812,7 +812,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             "design_pumping_power_inj_mw": design_state["injection_pumping_power_mw"],
             "design_flow_kg_per_sec": self._nominal_flow_kg_per_sec,
         }
-        if self._dispatch_mode == "electric":
+        if self._surfaceplant_mode in ("electric", "chp"):
             metrics["design_gross_electricity_produced_mw"] = design_state.get("gross_electricity_mw", 0.0)
             metrics["design_net_electricity_produced_mw"] = max(design_state.get("net_electricity_mw", 0.0), 0.0)
         return metrics
@@ -1074,6 +1074,8 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         annual_served_kwh = (
             model.surfaceplant.HeatkWhProduced.value if demand_type == "thermal" else model.surfaceplant.NetkWhProduced.value
         )
+        annual_heat_delivered_kwh = model.surfaceplant.HeatkWhProduced.value.copy()
+        annual_electricity_delivered_kwh = model.surfaceplant.NetkWhProduced.value.copy()
         annual_unmet_kwh = np.array([
             float(np.sum(unmet_demand_kwh[year_index * timesteps_per_year:(year_index + 1) * timesteps_per_year]))
             for year_index in range(plant_lifetime_years)
@@ -1119,6 +1121,8 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         model.dispatch_results.hourly_thermal_demand = full_dispatch_demand_mw[analysis_start_index:analysis_end_index].copy()
 
         analysis_served_kwh = annual_served_kwh[analysis_year_slice]
+        analysis_heat_delivered_kwh = annual_heat_delivered_kwh[analysis_year_slice]
+        analysis_electricity_delivered_kwh = annual_electricity_delivered_kwh[analysis_year_slice]
         analysis_unmet_kwh = annual_unmet_kwh[analysis_year_slice]
         analysis_demand_kwh = annual_demand_kwh[analysis_year_slice]
         analysis_hourly_served_kwh = model.dispatch_results.hourly_demand_served
@@ -1139,6 +1143,10 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         ) if capacity_basis_mw > 0 else 0.0
 
         model.dispatch_results.annual_aggregates = {"analysis_years": list(range(analysis_start_year, analysis_end_year))}
+        if has_heat_component:
+            model.dispatch_results.annual_aggregates["annual_served_heat_kwh"] = analysis_heat_delivered_kwh.tolist()
+        if has_electric_component:
+            model.dispatch_results.annual_aggregates["annual_served_electricity_kwh"] = analysis_electricity_delivered_kwh.tolist()
         model.dispatch_results.summary_metrics.update(
             {
                 "dispatch_analysis_start_year": float(analysis_start_year),
@@ -1150,10 +1158,21 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 "observed_peak_flow_kg_per_sec": float(np.max(model.dispatch_results.hourly_flow)),
             }
         )
+        if has_heat_component:
+            model.dispatch_results.summary_metrics.update(
+                {
+                    "annual_served_heat_kwh": float(np.sum(analysis_heat_delivered_kwh)),
+                }
+            )
+        if has_electric_component:
+            model.dispatch_results.summary_metrics.update(
+                {
+                    "annual_served_electricity_kwh": float(np.sum(analysis_electricity_delivered_kwh)),
+                }
+            )
         if demand_type == "thermal":
             model.dispatch_results.annual_aggregates.update(
                 {
-                    "annual_served_heat_kwh": analysis_served_kwh.tolist(),
                     "annual_unmet_heat_kwh": analysis_unmet_kwh.tolist(),
                     "annual_heat_demand_kwh": analysis_demand_kwh.tolist(),
                 }
@@ -1162,14 +1181,12 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 {
                     "peak_served_heat_kwh": float(np.max(analysis_hourly_served_kwh)),
                     "peak_unmet_heat_kwh": float(np.max(analysis_hourly_unmet_kwh)),
-                    "annual_served_heat_kwh": float(np.sum(analysis_served_kwh)),
                     "annual_unmet_heat_kwh": float(np.sum(analysis_unmet_kwh)),
                 }
             )
         else:
             model.dispatch_results.annual_aggregates.update(
                 {
-                    "annual_served_electricity_kwh": analysis_served_kwh.tolist(),
                     "annual_unmet_electricity_kwh": analysis_unmet_kwh.tolist(),
                     "annual_electricity_demand_kwh": analysis_demand_kwh.tolist(),
                 }
@@ -1178,7 +1195,6 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 {
                     "peak_served_electricity_kwh": float(np.max(analysis_hourly_served_kwh)),
                     "peak_unmet_electricity_kwh": float(np.max(analysis_hourly_unmet_kwh)),
-                    "annual_served_electricity_kwh": float(np.sum(analysis_served_kwh)),
                     "annual_unmet_electricity_kwh": float(np.sum(analysis_unmet_kwh)),
                 }
             )

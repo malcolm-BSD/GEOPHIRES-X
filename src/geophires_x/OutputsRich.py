@@ -166,12 +166,45 @@ def print_outputs_rich(
     if getattr(model, 'dispatch_results', None) is not None:
         dispatch_metrics = model.dispatch_results.summary_metrics
         demand_type = getattr(model.dispatch_results, 'demand_type', 'thermal')
+        enduse_option = model.surfaceplant.enduse_option.value
+        has_heat_component = enduse_option in [
+            EndUseOptions.HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
+        has_electric_component = enduse_option in [
+            EndUseOptions.ELECTRICITY,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
+        dispatch_summary_items = []
         if demand_type == 'electric':
-            dispatch_results.extend([
-                OutputTableItem('Design net electricity produced', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_net_electricity_produced_mw', 0.0)), 'MW'),
-                OutputTableItem('Annual geothermal electricity delivered', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
+            if has_heat_component:
+                dispatch_summary_items.append(
+                    OutputTableItem('Design heat produced', '{0:10.2f}'.format(
+                        dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW')
+                )
+            if has_electric_component:
+                dispatch_summary_items.extend([
+                    OutputTableItem('Design net electricity produced', '{0:10.2f}'.format(
+                        dispatch_metrics.get('design_net_electricity_produced_mw', 0.0)), 'MW'),
+                    OutputTableItem('Annual geothermal electricity delivered', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                ])
+            if has_heat_component:
+                dispatch_summary_items.append(
+                    OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year')
+                )
+            dispatch_summary_items.extend([
                 OutputTableItem('Annual unmet electricity demand', '{0:10.2f}'.format(
                     dispatch_metrics.get('annual_unmet_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
                 OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
@@ -190,11 +223,21 @@ def print_outputs_rich(
                     dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
             ])
         else:
-            dispatch_results.extend([
-                OutputTableItem('Design heat produced', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
-                OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
+            if has_heat_component:
+                dispatch_summary_items.extend([
+                    OutputTableItem('Design heat produced', '{0:10.2f}'.format(
+                        dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
+                    OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                ])
+            if has_electric_component:
+                dispatch_summary_items.extend([
+                    OutputTableItem('Design net electricity produced', '{0:10.2f}'.format(
+                        dispatch_metrics.get('design_net_electricity_produced_mw', 0.0)), 'MW'),
+                    OutputTableItem('Annual geothermal electricity delivered', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                ])
+            dispatch_summary_items.extend([
                 OutputTableItem('Annual unmet thermal demand', '{0:10.2f}'.format(
                     dispatch_metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
                 OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
@@ -212,6 +255,7 @@ def print_outputs_rich(
                 OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
                     dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
             ])
+        dispatch_results.extend(dispatch_summary_items)
 
     if model.economics.econmodel.value == EconomicModel.FCR:
         economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))

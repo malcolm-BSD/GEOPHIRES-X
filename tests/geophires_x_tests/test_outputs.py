@@ -163,8 +163,11 @@ class OutputsTestCase(BaseTestCase):
         dispatch_results = result.result["DISPATCH RESULTS"]
         economics = result.result["ECONOMIC PARAMETERS"]
         self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertIsNotNone(dispatch_results["Annual geothermal electricity delivered"])
         self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Annual geothermal electricity delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Design heat produced"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
         self.assertIsNotNone(economics["CHP: Percent cost allocation for electrical plant"])
 
     def test_dispatch_profile_csv_is_written(self):
@@ -284,6 +287,39 @@ class OutputsTestCase(BaseTestCase):
         self.assertAlmostEqual(13.1882, float(rows[0]["Electricity Demand (MW)"]), places=4)
         self.assertGreaterEqual(float(rows[0]["Geothermal Electric Output (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+
+    def test_chp_electric_dispatch_results_are_written_and_parseable(self):
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_electric_test.out").absolute()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="52"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+                "CHP Fraction": ParameterEntry(Name="CHP Fraction", sValue="0.4"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNotNone(dispatch_results["Annual geothermal electricity delivered"])
+        self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertGreater(dispatch_results["Annual geothermal electricity delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Design heat produced"]["value"], 0.0)
 
     def test_dispatch_html_graphs_are_generated_when_enabled(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir

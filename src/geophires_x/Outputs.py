@@ -1023,6 +1023,25 @@ class Outputs:
 
         metrics = dispatch_results.summary_metrics
         demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+        enduse_option = model.surfaceplant.enduse_option.value
+        has_heat_component = enduse_option in [
+            EndUseOptions.HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
+        has_electric_component = enduse_option in [
+            EndUseOptions.ELECTRICITY,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
         rows = [
             ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
             ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
@@ -1033,22 +1052,41 @@ class Outputs:
             ('Design flow rate', metrics.get('design_flow_kg_per_sec', 0.0), 'kg/s'),
             ('Observed peak flow rate', metrics.get('observed_peak_flow_kg_per_sec', 0.0), 'kg/s'),
         ]
+        summary_rows = []
         if demand_type == 'electric':
-            rows[3:3] = [
-                ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
-                ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            if has_heat_component:
+                summary_rows.append(('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'))
+            if has_electric_component:
+                summary_rows.extend([
+                    ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            if has_heat_component:
+                summary_rows.append(
+                    ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year')
+                )
+            summary_rows.extend([
                 ('Annual unmet electricity demand', metrics.get('annual_unmet_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
                 ('Peak geothermal contribution', metrics.get('peak_served_electricity_kwh', 0.0) / 1000.0, 'MW'),
                 ('Peak unmet load', metrics.get('peak_unmet_electricity_kwh', 0.0) / 1000.0, 'MW'),
-            ]
+            ])
         else:
-            rows[3:3] = [
-                ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
-                ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            if has_heat_component:
+                summary_rows.extend([
+                    ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            if has_electric_component:
+                summary_rows.extend([
+                    ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            summary_rows.extend([
                 ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
                 ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
                 ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
-            ]
+            ])
+        rows[3:3] = summary_rows
         return rows
 
     def _write_dispatch_results(self, model: Model, f) -> None:
