@@ -133,6 +133,40 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
         self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
 
+    def test_chp_heat_following_dispatch_results_are_written_and_parseable(self):
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_heat_test.out").absolute()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="31"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Heat Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        with open(output_path, encoding="UTF-8") as f:
+            output_text = f.read()
+        self.assertIn("***DISPATCH RESULTS***", output_text)
+        self.assertIn("CHP: Percent cost allocation for electrical plant", output_text)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        economics = result.result["ECONOMIC PARAMETERS"]
+        self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Design heat produced"]["value"], 0.0)
+        self.assertIsNotNone(economics["CHP: Percent cost allocation for electrical plant"])
+
     def test_dispatch_profile_csv_is_written(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
@@ -190,6 +224,45 @@ class OutputsTestCase(BaseTestCase):
                 "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
                 "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
                 "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=demand_csv_file),
+                "Dispatch Profile Output File": ParameterEntry(
+                    Name="Dispatch Profile Output File", sValue=str(csv_output_path)
+                ),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        self.assertTrue(csv_output_path.exists())
+        with open(csv_output_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+
+        self.assertEqual(8760, len(rows))
+        self.assertEqual("1", rows[0]["Year"])
+        self.assertEqual("1", rows[0]["Hour of Year"])
+        self.assertAlmostEqual(13.1882, float(rows[0]["Electricity Demand (MW)"]), places=4)
+        self.assertGreaterEqual(float(rows[0]["Geothermal Electric Output (MW)"]), 0.0)
+        self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+
+    def test_chp_electric_dispatch_profile_csv_is_written(self):
+        output_path = Path(tempfile.gettempdir(), "dispatch_profile_chp_electric_results_test.out").absolute()
+        csv_output_path = Path(tempfile.gettempdir(), "dispatch_profile_chp_electric_results_test.csv").absolute()
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="52"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=demand_csv_file),
+                "CHP Fraction": ParameterEntry(Name="CHP Fraction", sValue="0.4"),
                 "Dispatch Profile Output File": ParameterEntry(
                     Name="Dispatch Profile Output File", sValue=str(csv_output_path)
                 ),
