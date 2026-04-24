@@ -615,16 +615,22 @@
         "Dispatch analysis end year": {},
         "Dispatch analysis duration": {},
         "Design heat produced": {},
+        "Design cooling produced": {},
         "Design net electricity produced": {},
         "Annual geothermal heat delivered": {},
+        "Annual geothermal cooling delivered": {},
         "Annual geothermal electricity delivered": {},
         "Annual unmet thermal demand": {},
+        "Annual unmet cooling demand": {},
         "Annual unmet electricity demand": {},
+        "Annual heat pump electricity consumed": {},
+        "Annual peaking boiler heat delivered": {},
         "Dispatch capacity factor": {},
         "Average runtime fraction": {},
         "Peak geothermal contribution": {},
         "Peak unmet load": {},
         "Peak hourly demand": {},
+        "Peak peaking boiler demand": {},
         "Design flow rate": {},
         "Observed peak flow rate": {}
       }
@@ -659,6 +665,7 @@
           "type": "string",
           "enum": [
             "thermal",
+            "cooling",
             "electric"
           ]
         },
@@ -681,7 +688,8 @@
               "type": "string",
               "enum": [
                 "Annual Heat Demand",
-                "Annual Electricity Demand"
+                "Annual Electricity Demand",
+                "Annual Cooling Demand"
               ]
             },
             "flow_strategy": {
@@ -744,10 +752,16 @@
             "annual_served_heat_kwh": {
               "type": "number"
             },
+            "annual_served_cooling_kwh": {
+              "type": "number"
+            },
             "annual_served_electricity_kwh": {
               "type": "number"
             },
             "annual_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_cooling_kwh": {
               "type": "number"
             },
             "annual_unmet_electricity_kwh": {
@@ -756,7 +770,13 @@
             "peak_served_heat_kwh": {
               "type": "number"
             },
+            "peak_served_cooling_kwh": {
+              "type": "number"
+            },
             "peak_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_cooling_kwh": {
               "type": "number"
             },
             "peak_served_electricity_kwh": {
@@ -769,6 +789,12 @@
               "type": "number"
             },
             "design_heat_produced_mw": {
+              "type": "number"
+            },
+            "design_cooling_produced_mw": {
+              "type": "number"
+            },
+            "design_heat_pump_electricity_consumed_mw": {
               "type": "number"
             },
             "design_pumping_power_mw": {
@@ -787,6 +813,15 @@
               "type": "number"
             },
             "design_net_electricity_produced_mw": {
+              "type": "number"
+            },
+            "annual_heat_pump_electricity_kwh": {
+              "type": "number"
+            },
+            "annual_district_heating_boiler_kwh": {
+              "type": "number"
+            },
+            "peak_district_heating_boiler_mw": {
               "type": "number"
             }
           },
@@ -807,6 +842,12 @@
                 "type": "number"
               }
             },
+            "annual_served_cooling_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
             "annual_served_electricity_kwh": {
               "type": "array",
               "items": {
@@ -819,7 +860,19 @@
                 "type": "number"
               }
             },
+            "annual_unmet_cooling_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
             "annual_heat_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_cooling_demand_kwh": {
               "type": "array",
               "items": {
                 "type": "number"
@@ -832,6 +885,18 @@
               }
             },
             "annual_electricity_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_heat_pump_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_district_heating_boiler_kwh": {
               "type": "array",
               "items": {
                 "type": "number"

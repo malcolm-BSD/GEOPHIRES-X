@@ -264,7 +264,10 @@ class Model(object):
         self.operating_mode_strategy = create_operating_mode_strategy(self.surfaceplant.operating_mode.value)
 
         # if end-use option is 8 (district heating), some calculations are required prior to the reservoir and wellbore simulations
-        if self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+        if (
+            self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING
+            and self.surfaceplant.operating_mode.value != OperatingMode.DISPATCHABLE
+        ):
             self.surfaceplant.CalculateDHDemand(self)  # calculate district heating demand
 
         self.logger.info(f'complete {str(__class__)}: {__name__}')

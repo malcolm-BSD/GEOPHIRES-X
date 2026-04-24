@@ -60,7 +60,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "Wellfield cost. ", get_result_prop("CAPITAL COSTS (M$)", "Drilling and completion costs")["description"]
         )
         self.assertEqual(
-            ["thermal", "electric"],
+            ["thermal", "cooling", "electric"],
             get_result_prop("Dispatch Summary", "demand_type")["enum"],
         )
         self.assertIn(

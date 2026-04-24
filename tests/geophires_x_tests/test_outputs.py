@@ -180,6 +180,91 @@ class OutputsTestCase(BaseTestCase):
                 self.assertGreater(dispatch_results["Annual geothermal electricity delivered"]["value"], 0.0)
                 self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
 
+    def test_heat_pump_dispatch_results_are_written_and_parseable(self):
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_heat_pump_test.out").absolute()
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+                "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="6"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Heat Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertIsNotNone(dispatch_results["Annual heat pump electricity consumed"])
+        self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Annual heat pump electricity consumed"]["value"], 0.0)
+
+    def test_absorption_chiller_dispatch_results_are_written_and_parseable(self):
+        cooling_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_cooling_demand.csv")
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_absorption_chiller_test.out").absolute()
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+                "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="5"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Cooling Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Cooling Demand": ParameterEntry(Name="Annual Cooling Demand", sValue=cooling_csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNotNone(dispatch_results["Design cooling produced"])
+        self.assertIsNotNone(dispatch_results["Annual geothermal cooling delivered"])
+        self.assertIsNotNone(dispatch_results["Annual unmet cooling demand"])
+        self.assertGreater(dispatch_results["Design cooling produced"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
+
+    def test_district_heating_dispatch_results_are_written_and_parseable(self):
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_district_heating_test.out").absolute()
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+                "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="7"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Heat Demand"),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=demand_csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNotNone(dispatch_results["Annual geothermal heat delivered"])
+        self.assertIsNotNone(dispatch_results["Annual peaking boiler heat delivered"])
+        self.assertIsNotNone(dispatch_results["Peak peaking boiler demand"])
+        self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
+
     def test_chp_heat_following_dispatch_results_are_written_and_parseable(self):
         output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_heat_test.out").absolute()
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
@@ -391,6 +476,68 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["design_net_electricity_produced_mw"], 0.0)
         self.assertTrue(result.json_output_file_path.exists())
+
+    def test_heat_pump_dispatch_summary_is_written_to_json_output(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        input_file = GeophiresInputParameters(
+            from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
+            params={
+                "Operating Mode": "Dispatchable",
+                "End-Use Option": "2",
+                "Power Plant Type": "6",
+                "Dispatch Demand Source": "Annual Heat Demand",
+                "Dispatch Flow Strategy": "Demand Following",
+                "Plant Lifetime": "1",
+                "Annual Heat Demand": csv_file,
+            },
+        )
+        result = GeophiresXClient().get_geophires_result(input_file)
+        dispatch_summary = result.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertEqual("Annual Heat Demand", dispatch_summary["dispatch_settings"]["demand_source"])
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_heat_pump_electricity_kwh"], 0.0)
+
+    def test_absorption_chiller_dispatch_summary_is_written_to_json_output(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_cooling_demand.csv")
+        input_file = GeophiresInputParameters(
+            from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
+            params={
+                "Operating Mode": "Dispatchable",
+                "End-Use Option": "2",
+                "Power Plant Type": "5",
+                "Dispatch Demand Source": "Annual Cooling Demand",
+                "Dispatch Flow Strategy": "Demand Following",
+                "Plant Lifetime": "1",
+                "Annual Cooling Demand": csv_file,
+            },
+        )
+        result = GeophiresXClient().get_geophires_result(input_file)
+        dispatch_summary = result.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual("cooling", dispatch_summary["demand_type"])
+        self.assertEqual("Annual Cooling Demand", dispatch_summary["dispatch_settings"]["demand_source"])
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_cooling_kwh"], 0.0)
+
+    def test_district_heating_dispatch_summary_is_written_to_json_output(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        input_file = GeophiresInputParameters(
+            from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
+            params={
+                "Operating Mode": "Dispatchable",
+                "End-Use Option": "2",
+                "Power Plant Type": "7",
+                "Dispatch Demand Source": "Annual Heat Demand",
+                "Dispatch Flow Strategy": "Demand Following",
+                "Plant Lifetime": "1",
+                "Annual Heat Demand": csv_file,
+            },
+        )
+        result = GeophiresXClient().get_geophires_result(input_file)
+        dispatch_summary = result.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_district_heating_boiler_kwh"], 0.0)
 
     def test_dispatch_html_graphs_are_generated_when_enabled(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir

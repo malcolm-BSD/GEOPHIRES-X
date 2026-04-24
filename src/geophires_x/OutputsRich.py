@@ -185,6 +185,7 @@ def print_outputs_rich(
             EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
             EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
         ]
+        plant_type = model.surfaceplant.plant_type.value
         dispatch_summary_items = []
         if demand_type == 'electric':
             if has_heat_component:
@@ -215,6 +216,31 @@ def print_outputs_rich(
                     dispatch_metrics.get('peak_served_electricity_kwh', 0.0) / 1000.0), 'MW'),
                 OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
                     dispatch_metrics.get('peak_unmet_electricity_kwh', 0.0) / 1000.0), 'MW'),
+                OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
+                    dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
+                OutputTableItem('Design flow rate', '{0:10.2f}'.format(
+                    dispatch_metrics.get('design_flow_kg_per_sec', 0.0)), 'kg/s'),
+                OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
+                    dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
+            ])
+        elif demand_type == 'cooling':
+            dispatch_summary_items.extend([
+                OutputTableItem('Design heat produced', '{0:10.2f}'.format(
+                    dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
+                OutputTableItem('Design cooling produced', '{0:10.2f}'.format(
+                    dispatch_metrics.get('design_cooling_produced_mw', 0.0)), 'MW'),
+                OutputTableItem('Annual geothermal cooling delivered', '{0:10.2f}'.format(
+                    dispatch_metrics.get('annual_served_cooling_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('Annual unmet cooling demand', '{0:10.2f}'.format(
+                    dispatch_metrics.get('annual_unmet_cooling_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
+                    dispatch_metrics.get('dispatch_capacity_factor', 0.0) * 100.0), '%'),
+                OutputTableItem('Average runtime fraction', '{0:10.2f}'.format(
+                    dispatch_metrics.get('average_runtime_fraction', 0.0) * 100.0), '%'),
+                OutputTableItem('Peak geothermal contribution', '{0:10.2f}'.format(
+                    dispatch_metrics.get('peak_served_cooling_kwh', 0.0) / 1000.0), 'MW'),
+                OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
+                    dispatch_metrics.get('peak_unmet_cooling_kwh', 0.0) / 1000.0), 'MW'),
                 OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
                     dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
                 OutputTableItem('Design flow rate', '{0:10.2f}'.format(
@@ -255,6 +281,18 @@ def print_outputs_rich(
                 OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
                     dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
             ])
+            if plant_type == PlantType.HEAT_PUMP:
+                dispatch_summary_items.append(
+                    OutputTableItem('Annual heat pump electricity consumed', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_heat_pump_electricity_kwh', 0.0) / 1.0e6), 'GWh/year')
+                )
+            if plant_type == PlantType.DISTRICT_HEATING:
+                dispatch_summary_items.extend([
+                    OutputTableItem('Annual peaking boiler heat delivered', '{0:10.2f}'.format(
+                        dispatch_metrics.get('annual_district_heating_boiler_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                    OutputTableItem('Peak peaking boiler demand', '{0:10.2f}'.format(
+                        dispatch_metrics.get('peak_district_heating_boiler_mw', 0.0)), 'MW'),
+                ])
         dispatch_results.extend(dispatch_summary_items)
 
     if model.economics.econmodel.value == EconomicModel.FCR:
@@ -778,7 +816,10 @@ def print_outputs_rich(
     short_pt = ShortenArrayToAnnual(model.wellbores.ProducedTemperature.value,
                                     model.surfaceplant.plant_lifetime.value,
                                     model.economics.timestepsperyear.value)
-    hce[f'Thermal Drawdown (%)|:8.4f'] = short_pt / short_pt[0]
+    if short_pt[0] == 0:
+        hce[f'Thermal Drawdown (%)|:8.4f'] = np.zeros_like(short_pt)
+    else:
+        hce[f'Thermal Drawdown (%)|:8.4f'] = short_pt / short_pt[0]
 
     hce[
         f'Geofluid Temperature ({model.wellbores.ProducedTemperature.CurrentUnits.value})|:8.2f'] = ShortenArrayToAnnual(
@@ -1522,6 +1563,11 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         y_label = 'Electric Power (MW)'
         legend = ['Electricity Demand (MW)', 'Demand Served (MW)', 'Unmet Demand (MW)']
         geothermal_output = dispatch_results.hourly_geothermal_electric_output
+    elif demand_type == 'cooling':
+        profile_title = 'DISPATCH PROFILE: Demand, Served, and Unmet Cooling'
+        y_label = 'Cooling Power (MW)'
+        legend = ['Cooling Demand (MW)', 'Demand Served (MW)', 'Unmet Demand (MW)']
+        geothermal_output = dispatch_results.hourly_cooling_output
     else:
         profile_title = 'DISPATCH PROFILE: Demand, Served, and Unmet Heat'
         y_label = 'Thermal Power (MW)'
@@ -1555,14 +1601,16 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
     )
     Plot_Twin_Graph(
         'DISPATCH PROFILE: Runtime Fraction and Electric Output' if demand_type == 'electric'
-        else 'DISPATCH PROFILE: Runtime Fraction and Pumping Power',
+        else ('DISPATCH PROFILE: Runtime Fraction and Cooling Output' if demand_type == 'cooling'
+              else 'DISPATCH PROFILE: Runtime Fraction and Pumping Power'),
         html_path,
         hours,
         dispatch_results.hourly_runtime_fraction,
-        geothermal_output if demand_type == 'electric' else dispatch_results.hourly_pumping_power,
+        geothermal_output if demand_type in ['electric', 'cooling'] else dispatch_results.hourly_pumping_power,
         'Simulation Hour',
         'Runtime Fraction',
-        'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Pumping Power (MW)',
+        'Geothermal Electric Output (MW)' if demand_type == 'electric'
+        else ('Cooling Output (MW)' if demand_type == 'cooling' else 'Pumping Power (MW)'),
         filename_prefix=filename_prefix,
     )
 

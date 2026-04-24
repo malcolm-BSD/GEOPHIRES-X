@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -58,7 +59,7 @@ class GeophiresXSchemaGenerator:
             ],
             "properties": {
                 "schema_version": {"type": "integer", "enum": [1]},
-                "demand_type": {"type": "string", "enum": ["thermal", "electric"]},
+                "demand_type": {"type": "string", "enum": ["thermal", "cooling", "electric"]},
                 "surfaceplant_mode": {"type": "string", "enum": ["thermal", "electric", "chp"]},
                 "dispatch_settings": {
                     "type": "object",
@@ -66,7 +67,7 @@ class GeophiresXSchemaGenerator:
                     "properties": {
                         "demand_source": {
                             "type": "string",
-                            "enum": ["Annual Heat Demand", "Annual Electricity Demand"],
+                            "enum": ["Annual Heat Demand", "Annual Electricity Demand", "Annual Cooling Demand"],
                         },
                         "flow_strategy": {
                             "type": "string",
@@ -97,21 +98,30 @@ class GeophiresXSchemaGenerator:
                         "dispatch_capacity_factor": {"type": "number"},
                         "observed_peak_flow_kg_per_sec": {"type": "number"},
                         "annual_served_heat_kwh": {"type": "number"},
+                        "annual_served_cooling_kwh": {"type": "number"},
                         "annual_served_electricity_kwh": {"type": "number"},
                         "annual_unmet_heat_kwh": {"type": "number"},
+                        "annual_unmet_cooling_kwh": {"type": "number"},
                         "annual_unmet_electricity_kwh": {"type": "number"},
                         "peak_served_heat_kwh": {"type": "number"},
+                        "peak_served_cooling_kwh": {"type": "number"},
                         "peak_unmet_heat_kwh": {"type": "number"},
+                        "peak_unmet_cooling_kwh": {"type": "number"},
                         "peak_served_electricity_kwh": {"type": "number"},
                         "peak_unmet_electricity_kwh": {"type": "number"},
                         "design_heat_extracted_mw": {"type": "number"},
                         "design_heat_produced_mw": {"type": "number"},
+                        "design_cooling_produced_mw": {"type": "number"},
+                        "design_heat_pump_electricity_consumed_mw": {"type": "number"},
                         "design_pumping_power_mw": {"type": "number"},
                         "design_pumping_power_prod_mw": {"type": "number"},
                         "design_pumping_power_inj_mw": {"type": "number"},
                         "design_flow_kg_per_sec": {"type": "number"},
                         "design_gross_electricity_produced_mw": {"type": "number"},
                         "design_net_electricity_produced_mw": {"type": "number"},
+                        "annual_heat_pump_electricity_kwh": {"type": "number"},
+                        "annual_district_heating_boiler_kwh": {"type": "number"},
+                        "peak_district_heating_boiler_mw": {"type": "number"},
                     },
                     "additionalProperties": False,
                 },
@@ -120,11 +130,16 @@ class GeophiresXSchemaGenerator:
                     "properties": {
                         "analysis_years": {"type": "array", "items": {"type": "integer"}},
                         "annual_served_heat_kwh": number_array_schema,
+                        "annual_served_cooling_kwh": number_array_schema,
                         "annual_served_electricity_kwh": number_array_schema,
                         "annual_unmet_heat_kwh": number_array_schema,
+                        "annual_unmet_cooling_kwh": number_array_schema,
                         "annual_heat_demand_kwh": number_array_schema,
+                        "annual_cooling_demand_kwh": number_array_schema,
                         "annual_unmet_electricity_kwh": number_array_schema,
                         "annual_electricity_demand_kwh": number_array_schema,
+                        "annual_heat_pump_electricity_kwh": number_array_schema,
+                        "annual_district_heating_boiler_kwh": number_array_schema,
                     },
                     "additionalProperties": False,
                 },
@@ -466,6 +481,12 @@ def _get_min_and_max(param: dict, default_val="") -> Tuple:
 
 
 def _fix_floating_point_error(val: Any) -> Any:
+    try:
+        if isinstance(val, (float, int)) and math.isinf(float(val)):
+            return None
+    except (TypeError, ValueError):
+        pass
+
     if ".0000" in str(val):
         return format(float(val), ".1f")
 

@@ -879,7 +879,10 @@ class SurfacePlant:
 
         if self.operating_mode.value == OperatingMode.DISPATCHABLE:
             if self.enduse_option.value == EndUseOptions.HEAT:
-                allowed_demand_sources = (DispatchDemandSource.ANNUAL_HEAT_DEMAND,)
+                if self.plant_type.value == PlantType.ABSORPTION_CHILLER:
+                    allowed_demand_sources = (DispatchDemandSource.ANNUAL_COOLING_DEMAND,)
+                else:
+                    allowed_demand_sources = (DispatchDemandSource.ANNUAL_HEAT_DEMAND,)
             elif self.enduse_option.value == EndUseOptions.ELECTRICITY:
                 allowed_demand_sources = (DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND,)
             elif self.enduse_option.value in [
