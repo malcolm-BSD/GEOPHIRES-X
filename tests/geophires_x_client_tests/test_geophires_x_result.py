@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any
 
 from geophires_x_client import GeophiresXClient
@@ -306,3 +308,19 @@ class GeophiresXResultTestCase(BaseTestCase):
         )
 
         self.assertEqual("DIRECT_USE_HEAT", r.result["metadata"]["End-Use Option"])
+
+    def test_legacy_transmission_pipeline_cost_label_is_parsed(self) -> None:
+        with NamedTemporaryFile("w", suffix=".out", delete=False, encoding="utf-8") as f:
+            f.write("***CAPITAL COSTS (M$)***\n")
+            f.write("      Transmission pipeline cost:                          2.00 MUSD\n")
+            output_file_path = f.name
+
+        try:
+            r = GeophiresXResult(output_file_path)
+        finally:
+            Path(output_file_path).unlink(missing_ok=True)
+
+        self.assertEqual(
+            {"value": 2.0, "unit": "MUSD"},
+            r.result["CAPITAL COSTS (M$)"]["Transmission/pipeline Cost"],
+        )

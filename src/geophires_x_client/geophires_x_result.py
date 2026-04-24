@@ -39,6 +39,14 @@ class _UnlabeledStringField:
         self.marker_prefixes = marker_prefixes
 
 
+class _AliasedField:
+    """Marker for fields that may appear under one of several report labels."""
+
+    def __init__(self, field_name: str, aliases: list[str]):
+        self.field_name: str = field_name
+        self.aliases = aliases
+
+
 class GeophiresXResult:
     """Parsed representation of a GEOPHIRES text output file.
 
@@ -298,7 +306,9 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
-                "Transmission/pipeline Cost",
+                _AliasedField(
+                    "Transmission/pipeline Cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
+                ),
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",
@@ -481,6 +491,10 @@ class GeophiresXResult:
                 if isinstance(field, _EqualSignDelimitedField):
                     self.result[category][field.field_name] = self._get_equal_sign_delimited_field(
                         field.field_name, search_lines=search_lines
+                    )
+                elif isinstance(field, _AliasedField):
+                    self.result[category][field.field_name] = self._get_aliased_result_field(
+                        field.aliases, search_lines=search_lines
                     )
                 elif isinstance(field, _UnlabeledStringField):
                     self.result[category][field.field_name] = self._get_unlabeled_string_field(
@@ -738,6 +752,19 @@ class GeophiresXResult:
             unit = "count"
 
         return {"value": self._parse_number(str_val, field=f'field "{field_name}"'), "unit": unit}
+
+    def _get_aliased_result_field(
+        self, field_names: list[str], is_string_value_field: bool = False, search_lines: list[str] | None = None
+    ):
+        for field_name in field_names:
+            result = self._get_result_field(
+                field_name, is_string_value_field=is_string_value_field, search_lines=search_lines
+            )
+            if result is not None:
+                return result
+
+        self._logger.debug(f"Aliased field not found: {field_names}")
+        return None
 
     def _get_equal_sign_delimited_field(self, field_name, search_lines: list[str] | None = None):
         if search_lines is None:
