@@ -1,4 +1,6 @@
-# VALCO Design Plan
+# VALCO Design Document
+
+This document reflects the current implemented state of the `VALCO(E|H|C)` feature family on this branch.
 
 ## Basis
 
@@ -21,7 +23,7 @@ Any implementation should state this boundary clearly in code comments, docs, an
 
 ## Purpose
 
-The goal is to add an optional `VALCO(E|H|C)` feature family to GEOPHIRES that complements baseline
+The implemented feature adds an optional `VALCO(E|H|C)` family to GEOPHIRES that complements baseline
 `LCOE`, `LCOH`, and `LCOC` in the same way that `XLCO(E|H|C)` complements them, while remaining a distinct metric.
 
 `VALCO` is not another ESG benefit calculation.
@@ -90,7 +92,7 @@ Phase 10 completion date:
 
 ## Relationship To XLCO
 
-`VALCO` should follow the `XLCO` implementation pattern operationally, but not algebraically.
+`VALCO` follows the `XLCO` implementation pattern operationally, but not algebraically.
 
 Shared implementation expectations:
 
@@ -106,9 +108,9 @@ Key differences from `XLCO`:
 - `XLCO` modifies the discounted numerator with market and social benefit streams
 - `VALCO` adjusts baseline `LCO*` by relative value terms
 - `XLCO` has `Market` and `MarketSocial` outputs
-- `VALCO` should have a single primary output per commodity plus optional component outputs
+- `VALCO` has a single primary output per commodity plus optional component outputs
 
-`VALCO` and `XLCO` should remain distinct calculations, but they should compose in a defined order.
+`VALCO` and `XLCO` remain distinct calculations, and they compose in a defined order.
 
 Locked requirement:
 
@@ -159,9 +161,9 @@ This is a competitiveness metric, not a revenue forecast and not a project cash-
 
 GEOPHIRES is not the IEA GEC Model and does not contain a built-in regional hourly market model.
 
-So the design should preserve the IEA structure while adapting the inputs pragmatically.
+So the implementation preserves the IEA structure while adapting the inputs pragmatically.
 
-Recommended rule:
+Implemented rule:
 
 - GEOPHIRES should implement the `VALCO` accounting identity directly
 - but should not attempt in v1 to reproduce the IEA hourly market simulation internally
@@ -169,11 +171,11 @@ Recommended rule:
   - `LCO*` if `XLCO` is inactive
   - `XLCO*_Market` if `XLCO` is active
 
-Instead, GEOPHIRES should support two calculation modes.
+GEOPHIRES supports two calculation modes.
 
 ### Mode 1: Direct Value Inputs
 
-This is the recommended v1 implementation.
+This mode is implemented.
 
 Users provide component values directly in public cost units:
 
@@ -201,7 +203,7 @@ This is the cleanest way to stay faithful to the source structure without invent
 
 ### Mode 2: Derived Component Inputs
 
-This should be a later phase.
+This mode is implemented.
 
 Users provide underlying terms from which GEOPHIRES derives component values.
 
@@ -211,9 +213,10 @@ For electricity this follows the IEA concepts:
 - capacity value from capacity credit, basis capacity value, and annual utilization
 - flexibility value from flexibility multiplier, base flexibility value, and annual utilization
 
-This mode should be added only after the direct-input mode is stable.
+This mode was added after the direct-input mode was stabilized, and the branch now supports both direct and derived
+inputs.
 
-## Proposed Outputs
+## Implemented Outputs
 
 Primary outputs:
 
@@ -470,7 +473,7 @@ These decisions are now locked for implementation:
 
 ## Validation Strategy
 
-Validation should be split into three layers.
+Validation is split into three layers.
 
 ### Layer 1: Algebra Tests
 
@@ -499,18 +502,18 @@ This mirrors the upgraded `XLCO` test approach.
 
 ## Examples
 
-Recommended initial example files:
+Implemented example files:
 
 - `example_VALCOE.txt`
 - `example_VALCOH.txt`
 - `example_VALCOC.txt`
 
-Recommended v1 example philosophy:
+Current example philosophy:
 
 - do not claim these reproduce IEA system values directly
 - instead show transparent, controlled component adjustments with easy-to-check arithmetic
 
-## Phased Implementation Plan
+## Implemented Sequence
 
 ### Phase 1: Design Lock
 
@@ -577,7 +580,7 @@ Recommended v1 example philosophy:
 - keep electricity, heat, and cooling energy value derivation on direct inputs for now
 - document explicit-series or dispatch-like value modeling as a later follow-on, not part of the v1/v2 internal implementation
 
-## Recommended Implementation Order
+## Implemented Order
 
 1. Implement direct-input `VALCOE/H/C` with shared commodity-aware internals and explicit `XLCO_Market` composition.
 2. Reuse the existing `levelized_costs.py` basis helper instead of touching baseline `LCO*` math.
@@ -586,27 +589,16 @@ Recommended v1 example philosophy:
 5. Add schema/client/output surfaces only after core calculation behavior is stable.
 6. Add derived-mode formulas only after direct mode is fully tested and documented.
 
-## Open Questions
+## Resolved Decisions
 
-These should be answered explicitly before coding starts:
+The implementation resolves the original pre-coding questions as follows:
 
-1. Should `VALCO Calculation Mode` be an enum parameter or implicit from which inputs are provided?
-2. Should direct-value inputs be accepted only in public units, or also in internal normalized units?
-3. Do we want component outputs only, or also the raw technology/system values as diagnostics?
-4. Should `VALCO` be shown in the same output block as `LCO*` and `XLCO*`, or in a separate competitiveness block?
-5. Do we want any v1 combined examples where both `XLCO` and `VALCO` are active simultaneously?
-6. Should the active `VALCO` base cost be surfaced as an output for transparency?
-
-## Recommended Answers
-
-My recommendation:
-
-1. use an explicit `VALCO Calculation Mode` enum
-2. accept public units only in v1
-3. expose component adjustments now; raw value diagnostics later
-4. show `VALCO` near `LCO*` and `XLCO*`, but label it clearly as a competitiveness metric
-5. keep `XLCO` and `VALCO` simultaneously computable, with `VALCO` adjusting `XLCO_Market` when available
-6. add an output such as `VALCOE_BaseCostUsed` later only if debugging or auditability needs it
+1. `VALCO Calculation Mode` is an explicit enum parameter.
+2. User-facing direct-value inputs are accepted in public units.
+3. Component adjustments are exposed now; raw diagnostic value surfaces are deferred.
+4. `VALCO` appears alongside `LCO*` and `XLCO*` outputs and is labeled as a competitiveness metric.
+5. `XLCO` and `VALCO` can be active simultaneously, with `VALCO` adjusting `XLCO*_Market` when available.
+6. There is no separate exposed `VALCO*_BaseCostUsed` output in the current implementation.
 
 ## Phase 1 Checklist
 
@@ -647,11 +639,11 @@ Phase 1 is complete. The following design-lock items are accepted:
   - client parsing
   - schema generation
 
-## Immediate Next Step
+## Follow-On Work
 
-The planned implementation phases are complete.
+The implementation phases described above are complete.
 
-The next sensible follow-on options are:
+Reasonable follow-on options, if needed later, are:
 
 - add explicit electricity energy-value derivation from segmented or time-series inputs
 - decide whether heat and cooling need analogous energy-value derivation paths

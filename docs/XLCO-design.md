@@ -1,4 +1,6 @@
-# XLCOE Design Plan
+# XLCO Design Document
+
+This document reflects the current implemented state of the `XLCO(E|H|C)` feature family on this branch.
 
 ## Basis
 
@@ -49,9 +51,10 @@ where:
 
 ## Purpose
 
-The goal is to add `XLCOE` support to GEOPHIRES without disturbing existing `LCOE`, `LCOH`, and `LCOC` behavior.
+The implemented feature adds `XLCOE` support to GEOPHIRES without disturbing existing `LCOE`, `LCOH`, and `LCOC`
+behavior.
 
-The implementation should:
+The implementation:
 
 - preserve the existing investor-grade `LCOE`
 - add explicit, traceable ESG cash-flow modifiers
@@ -70,7 +73,7 @@ These decisions were fixed for the original electricity-only v1:
 4. Make the first example mirror the paper's closed-loop California framing
 5. Add tests and examples that reproduce the paper's published results-table values exactly
 
-These decisions are fixed for the next extension:
+These decisions are implemented in the generalized extension:
 
 1. Preserve all existing `XLCOE_*` inputs and outputs for backward compatibility
 2. Add parallel extended outputs for heat and cooling rather than overloading the electricity outputs
@@ -78,9 +81,10 @@ These decisions are fixed for the next extension:
 4. Reuse the same market-versus-social split for electricity, heat, and cooling
 5. Allocate shared project-level ESG benefits across active commodities using baseline discounted-cost share by default
 
-## Proposed Terminology
+## Implemented Terminology
 
-To stay faithful to the paper and avoid ambiguity, GEOPHIRES should treat extended levelized cost as a family of outputs rather than a single scalar with shifting meaning.
+To stay faithful to the paper and avoid ambiguity, GEOPHIRES treats extended levelized cost as a family of outputs
+rather than a single scalar with shifting meaning.
 
 Recommended output names:
 
@@ -124,10 +128,10 @@ When discussing the generalized implementation, this document will use `XLC*` as
 - new policy optimization solvers
 - probabilistic ESG distributions
 
-## XLC Star Generalization
+## Implemented XLC Star Generalization
 
-The next implementation step should promote the current electricity-only `XLCOE` logic into a generalized `XLC*`
-framework that supports electricity, heat, cooling, or any active combination of them.
+The original electricity-only `XLCOE` logic has been promoted into a generalized `XLC*` framework that supports
+electricity, heat, cooling, or any active combination of them.
 
 The governing pattern is the same for each active commodity:
 
@@ -146,12 +150,12 @@ where:
 This is an extension of the existing `XLCOE` structure, not a replacement of the baseline `LCOE`, `LCOH`, or `LCOC`
 calculations.
 
-## Internal Architecture Extension
+## Implemented Internal Architecture
 
-The implementation should not add separate one-off code paths for `XLCOE`, `XLCOH`, and `XLCOC`. Instead, it should
-introduce a generalized commodity-aware internal model.
+The implementation does not add separate one-off code paths for `XLCOE`, `XLCOH`, and `XLCOC`. Instead, it uses a
+generalized commodity-aware internal model.
 
-Recommended internal concepts:
+Implemented internal concepts include:
 
 - `Commodity`
   - `ELECTRICITY`
@@ -168,9 +172,8 @@ Recommended internal concepts:
   - `market`
   - `market_social`
 
-Recommended main internal entrypoint:
-
-- `calculate_extended_levelized_cost_outputs(econ, model) -> dict[Commodity, ExtendedCostResult]`
+Implemented main internal entrypoints live in the shared levelized-cost support modules and commodity-specific XLCO
+helpers.
 
 Compatibility wrappers may still exist:
 
@@ -178,24 +181,17 @@ Compatibility wrappers may still exist:
 - `calculate_xlcoh_outputs(...)`
 - `calculate_xlcoc_outputs(...)`
 
-## Baseline Cost Basis Refactor
+## Implemented Baseline Cost Basis Refactor
 
-The current electricity-only implementation reconstructs the baseline discounted numerator from the already-computed
-`LCOE` and the discounted electricity denominator. That approach is acceptable for the current `XLCOE` slice, but it
-is too narrow for a clean `XLCOH` / `XLCOC` extension because:
+The original electricity-only implementation reconstructed the baseline discounted numerator from the already-computed
+`LCOE` and the discounted electricity denominator. That approach was too narrow for a clean `XLCOH` / `XLCOC`
+extension because:
 
 - `LCOH` and `LCOC` use different denominators
 - `LCOH` and `LCOC` are publicly reported in `$ / MMBTU`, not `cents / kWh`
 - multiple end-use branches in `CalculateLCOELCOHLCOC(...)` already perform commodity-specific cost allocation
 
-Before generalized `XLC*` calculations are implemented, GEOPHIRES should extract a shared helper from
-`CalculateLCOELCOHLCOC(...)` that returns commodity-specific baseline levelized-cost bases.
-
-Recommended helper:
-
-- `build_levelized_cost_bases(econ, model) -> dict[Commodity, LevelizedCostBasis]`
-
-This helper should mirror the existing baseline logic for:
+The generalized implementation now uses shared helpers that mirror the existing baseline logic for:
 
 - electricity-only projects
 - direct-use heat projects
@@ -210,11 +206,11 @@ allocation logic.
 
 ## Unit Handling
 
-The generalized implementation should use a single internal computational basis:
+The generalized implementation uses a single internal computational basis:
 
 - internal basis: `cents / kWh-equivalent`
 
-The public outputs should still be reported in the same units as the corresponding baseline commodity:
+The public outputs are reported in the same units as the corresponding baseline commodity:
 
 - electricity: `cents / kWh`
 - heat: the same public units as `LCOH`
@@ -1204,7 +1200,7 @@ Implementation work described by this document is complete.
 
 Reasonable follow-on work, if needed later:
 
-1. add more user-facing narrative documentation outside the design plan if `XLC*` becomes a headline feature
+1. add more user-facing narrative documentation outside this design document if `XLC*` becomes a headline feature
 2. consider exposing the shared-benefit allocation basis as a configurable option if users need alternatives to
    discounted-cost share
 3. add additional example variants for district-heating and heat-pump `XLCOH` scenarios if those branches become
