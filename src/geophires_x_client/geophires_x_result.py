@@ -1118,26 +1118,54 @@ class GeophiresXResult:
             return None
 
     def _get_end_use_option(self) -> EndUseOption:
-        try:
-            end_use_option_snippet = next(filter(lambda x: "End-Use Option: " in x, self._lines)).split(
-                "End-Use Option: "
-            )[1]
+        def _parse_end_use_option_value(raw_value: str) -> EndUseOption | None:
+            normalized = raw_value.strip()
+            if not normalized:
+                return None
 
-            if "Direct-Use Heat" in end_use_option_snippet:
+            if is_int(normalized):
+                int_value = int(normalized)
+                try:
+                    return EndUseOption(int_value)
+                except ValueError:
+                    self._logger.warning(f"Unknown End-Use Option integer value in result output: {int_value}")
+                    return None
+
+            if "Direct-Use Heat" in normalized:
                 return EndUseOption.DIRECT_USE_HEAT
-            elif "Electricity" in end_use_option_snippet:
+            if normalized == "Electricity":
                 return EndUseOption.ELECTRICITY
-        except StopIteration:
-            # FIXME clean up
+            if "Cogeneration Topping Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_TOPPING_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_TOPPING_EXTRA_HEAT
+            if "Cogeneration Bottoming Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_BOTTOMING_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_BOTTOMING_EXTRA_HEAT
+            if "Cogeneration Parallel Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_PARALLEL_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_PARALLEL_EXTRA_HEAT
+
+            return None
+
+        for marker in ("End-Use Option: ", "End-Use: "):
             try:
-                end_use_option_snippet = next(filter(lambda x: "End-Use: " in x, self._lines)).split("End-Use: ")[1]
-
-                if "Direct-Use Heat" in end_use_option_snippet:
-                    return EndUseOption.DIRECT_USE_HEAT
-                elif "Electricity" in end_use_option_snippet:
-                    return EndUseOption.ELECTRICITY
+                end_use_option_snippet = next(filter(lambda x: marker in x, self._lines)).split(marker)[1]
+                parsed_option = _parse_end_use_option_value(end_use_option_snippet)
+                if parsed_option is not None:
+                    return parsed_option
             except StopIteration:
-                # FIXME
-                self._logger.error("Failed to parse End-Use Option")
+                continue
 
+        summary_result = self.result.get("SUMMARY OF RESULTS", {})
+        for summary_field in ("End-Use Option", "End-Use", "Surface Application"):
+            summary_value = summary_result.get(summary_field)
+            if isinstance(summary_value, dict):
+                parsed_option = _parse_end_use_option_value(summary_value.get("value", ""))
+                if parsed_option is not None:
+                    return parsed_option
+
+        self._logger.error("Failed to parse End-Use Option")
         return None

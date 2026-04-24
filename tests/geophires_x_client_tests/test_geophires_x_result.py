@@ -114,3 +114,20 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertIn("summary_metrics", dispatch_summary)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
+
+    def test_metadata_end_use_option_parses_numeric_output_value(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                params={
+                    "Print Output to Console": 0,
+                    "End-Use Option": 2,
+                    "Reservoir Model": 1,
+                    "Time steps per year": 1,
+                    "Reservoir Depth": 3,
+                    "Gradient 1": 50,
+                    "Maximum Temperature": 250,
+                }
+            )
+        )
+
+        self.assertEqual("DIRECT_USE_HEAT", r.result["metadata"]["End-Use Option"])

@@ -872,6 +872,10 @@ class SurfacePlant:
 
         if not isinstance(self.operating_mode.value, OperatingMode):
             self.operating_mode.value = OperatingMode.from_input_string(self.operating_mode.value)
+        if not isinstance(self.enduse_option.value, EndUseOptions):
+            self.enduse_option.value = EndUseOptions.from_int(int(self.enduse_option.value))
+        if not isinstance(self.plant_type.value, PlantType):
+            self.plant_type.value = PlantType.from_int(int(self.plant_type.value))
         if not isinstance(self.dispatch_demand_source.value, DispatchDemandSource):
             self.dispatch_demand_source.value = DispatchDemandSource.from_input_string(self.dispatch_demand_source.value)
         if not isinstance(self.dispatch_flow_strategy.value, DispatchFlowStrategy):

@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from .SurfacePlant import SurfacePlant
+from .OptionList import EndUseOptions, PlantType
 import geophires_x.Model as Model
 
 
@@ -18,6 +19,10 @@ class SurfacePlantIndustrialHeat(SurfacePlant):
 
         model.logger.info(f'Init {self.__class__.__name__}: {__name__}')
         super().__init__(model)   # Initialize all the parameters in the superclass
+
+        # The default surface-plant instance in Model is industrial direct-use heat.
+        self.enduse_option.value = EndUseOptions.HEAT
+        self.plant_type.value = PlantType.INDUSTRIAL
 
         # There are no parameters unique to this class, so we don't need to set any up here.
 
