@@ -131,6 +131,11 @@ class AGSOutputs(Outputs.Outputs):
                     else:
                         f.write(f"      LCOE:                                                 " + "{0:.1f}".format(
                             model.economics.LCOE.value) + " " + model.economics.LCOE.CurrentUnits.value + NL)
+                        if model.economics.DoXLCOCalculations.value:
+                            f.write(f"      XLCOE Market:                                         " + "{0:.1f}".format(
+                                model.economics.XLCOE_Market.value) + " " + model.economics.XLCOE_Market.CurrentUnits.value + NL)
+                            f.write(f"      XLCOE Market + Social:                                " + "{0:.1f}".format(
+                                model.economics.XLCOE_MarketSocial.value) + " " + model.economics.XLCOE_MarketSocial.CurrentUnits.value + NL)
 
                     f.write(NL)
                     f.write('                                        ******************************\n')

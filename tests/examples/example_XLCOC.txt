@@ -1,0 +1,86 @@
+# Example XLCOC: Absorption-chiller cooling with extended market and social modifiers
+
+# Based on example11_AC.txt, with XLCOC monetization inputs enabled.
+
+# ***Subsurface technical parameters***
+# *************************************
+Reservoir Model,3
+Drawdown Parameter,.00002
+Reservoir Depth,2.1
+Number of Segments,1
+Gradient 1,45
+Maximum Temperature,400
+Number of Production Wells,2
+Number of Injection Wells,2
+Production Well Diameter,8.5
+Injection Well Diameter,8.5
+Ramey Production Wellbore Model,0
+Production Wellbore Temperature Drop,5
+Injection Wellbore Temperature Gain,3
+Production Flow Rate per Well,50
+Reservoir Volume Option,1
+Fracture Shape,1
+Fracture Area,200000
+Number of Fractures,12
+Fracture Separation,80
+Injectivity Index,5
+Injection Temperature,80
+Maximum Drawdown,1
+Reservoir Heat Capacity,1000
+Reservoir Density,3000
+Reservoir Thermal Conductivity,3
+Water Loss Fraction,0.02
+
+# ***Surface Technical Parameters***
+# **********************************
+End-Use Option,2
+Power Plant Type,5
+Circulation Pump Efficiency,.80
+Utilization Factor,.9
+End-Use Efficiency Factor,.9
+Surface Temperature,15
+Ambient Temperature,15
+Absorption Chiller COP,0.72
+
+# ***Financial Parameters***
+# **************************
+Plant Lifetime,30
+Economic Model,2
+Discount Rate,0.05
+Inflation Rate During Construction,0.05
+
+# ***Capital and O&M Cost Parameters***
+# *************************************
+Well Drilling and Completion Capital Cost Adjustment Factor,1
+Well Drilling Cost Correlation,1
+Reservoir Stimulation Capital Cost Adjustment Factor,1
+Surface Plant Capital Cost Adjustment Factor,1
+Field Gathering System Capital Cost Adjustment Factor,1
+Exploration Capital Cost Adjustment Factor,1
+Wellfield O&M Cost Adjustment Factor,1
+Surface Plant O&M Cost Adjustment Factor,1
+Water Cost Adjustment Factor,1
+Electricity Rate,.07
+Absorption Chiller Capital Cost,3.74
+Absorption Chiller O&M Cost,0.065
+
+# ***Extended Levelized Cost Parameters***
+# ****************************************
+Do XLCO(E|H|C) Calculations,1
+XLCOC Avoided Emissions Intensity,0.20
+XLCO(E|H|C) Carbon Price,25
+XLCOC Thermal REC,15
+XLCOC Displaced Water Use Intensity,1.0
+XLCO(E|H|C) Water Shadow Price,0.50
+XLCO(E|H|C) Operations Jobs Per MW,0.2
+XLCO(E|H|C) Construction Jobs Per Rig,37
+XLCO(E|H|C) Indirect Jobs Multiplier,1.5
+XLCO(E|H|C) Average Monthly Wage,4000
+Social Discount Rate,0.05
+
+# ***Simulation Parameters***
+# ***************************
+Print Output to Console,1
+Time steps per year,10
+Starting Cooling Sale Price,0.0655
+Ending Cooling Sale Price,0.0655

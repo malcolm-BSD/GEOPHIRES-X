@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any
 
 from geophires_x_client import GeophiresXClient
@@ -44,6 +46,181 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertIn("value", r.result["SUMMARY OF RESULTS"][field_name])
         self.assertGreater(r.result["SUMMARY OF RESULTS"][field_name]["value"], 1)
         self.assertEqual(r.result["SUMMARY OF RESULTS"][field_name]["unit"], "MUSD")
+
+    def test_xlcoe_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOE REC Price": 15.0,
+                    "XLCOE Displaced Water Use Intensity": 1.0,
+                    "XLCO(E|H|C) Water Shadow Price": 0.5,
+                    "XLCO(E|H|C) Operations Jobs Per MW": 0.2,
+                    "XLCO(E|H|C) Indirect Jobs Multiplier": 1.5,
+                    "XLCO(E|H|C) Average Monthly Wage": 4000.0,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        market_field = "Extended Electricity Breakeven Price (XLCOE Market)"
+        social_field = "Extended Electricity Breakeven Price (XLCOE Market + Social)"
+        baseline_lcoe = summary["Electricity breakeven price"]["value"]
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual("cents/kWh", summary[market_field]["unit"])
+        self.assertEqual("cents/kWh", summary[social_field]["unit"])
+        self.assertLess(summary[market_field]["value"], baseline_lcoe)
+        self.assertLess(summary[social_field]["value"], summary[market_field]["value"])
+
+    def test_xlcoh_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOH Thermal REC": 15.0,
+                    "XLCOH Displaced Water Use Intensity": 1.0,
+                    "XLCO(E|H|C) Water Shadow Price": 0.5,
+                    "XLCO(E|H|C) Operations Jobs Per MW": 0.2,
+                    "XLCO(E|H|C) Indirect Jobs Multiplier": 1.5,
+                    "XLCO(E|H|C) Average Monthly Wage": 4000.0,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        market_field = "Extended Heat Breakeven Price (XLCOH Market)"
+        social_field = "Extended Heat Breakeven Price (XLCOH Market + Social)"
+        baseline_lcoh_field = "Direct-Use heat breakeven price (LCOH)"
+        baseline_lcoh = summary[baseline_lcoh_field]["value"]
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual(summary[baseline_lcoh_field]["unit"], summary[market_field]["unit"])
+        self.assertEqual(summary[baseline_lcoh_field]["unit"], summary[social_field]["unit"])
+        self.assertLess(summary[market_field]["value"], baseline_lcoh)
+        self.assertLess(summary[social_field]["value"], summary[market_field]["value"])
+
+    def test_xlcoc_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOC Thermal REC": 15.0,
+                    "XLCOC Displaced Water Use Intensity": 1.0,
+                    "XLCO(E|H|C) Water Shadow Price": 0.5,
+                    "XLCO(E|H|C) Operations Jobs Per MW": 0.2,
+                    "XLCO(E|H|C) Indirect Jobs Multiplier": 1.5,
+                    "XLCO(E|H|C) Average Monthly Wage": 4000.0,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        market_field = "Extended Cooling Breakeven Price (XLCOC Market)"
+        social_field = "Extended Cooling Breakeven Price (XLCOC Market + Social)"
+        baseline_lcoc_field = "Direct-Use Cooling Breakeven Price (LCOC)"
+        baseline_lcoc = summary[baseline_lcoc_field]["value"]
+
+        self.assertIn(market_field, summary)
+        self.assertIn(social_field, summary)
+        self.assertEqual(summary[baseline_lcoc_field]["unit"], summary[market_field]["unit"])
+        self.assertEqual(summary[baseline_lcoc_field]["unit"], summary[social_field]["unit"])
+        self.assertLess(summary[market_field]["value"], baseline_lcoc)
+        self.assertLess(summary[social_field]["value"], summary[market_field]["value"])
+
+    def test_valcoe_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOE System Average Energy Value": 1.0,
+                    "VALCOE Technology Energy Value": 2.5,
+                    "VALCOE System Average Capacity Value": 0.2,
+                    "VALCOE Technology Capacity Value": 0.1,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Electricity Breakeven Price (VALCOE)"
+        energy_field = "VALCOE Energy Adjustment"
+        capacity_field = "VALCOE Capacity Adjustment"
+        flexibility_field = "VALCOE Flexibility Adjustment"
+        baseline_lcoe = summary["Electricity breakeven price"]["value"]
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(energy_field, summary)
+        self.assertIn(capacity_field, summary)
+        self.assertIn(flexibility_field, summary)
+        self.assertEqual("cents/kWh", summary[valco_field]["unit"])
+        self.assertEqual("cents/kWh", summary[energy_field]["unit"])
+        self.assertEqual(-1.5, summary[energy_field]["value"])
+        self.assertEqual(0.1, summary[capacity_field]["value"])
+        self.assertEqual(0.0, summary[flexibility_field]["value"])
+        self.assertAlmostEqual(baseline_lcoe - 1.4, summary[valco_field]["value"], places=7)
+
+    def test_valcoh_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOH System Average Capacity Value": 1.0,
+                    "VALCOH Technology Capacity Value": 0.25,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Heat Breakeven Price (VALCOH)"
+        adjustment_field = "VALCOH Capacity Adjustment"
+        baseline_lcoh_field = "Direct-Use heat breakeven price (LCOH)"
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(adjustment_field, summary)
+        self.assertEqual(summary[baseline_lcoh_field]["unit"], summary[valco_field]["unit"])
+        self.assertEqual(0.75, summary[adjustment_field]["value"])
+        self.assertAlmostEqual(
+            summary[baseline_lcoh_field]["value"] + 0.75,
+            summary[valco_field]["value"],
+            places=7,
+        )
+
+    def test_valcoc_fields_are_parsed_from_summary(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
+                params={
+                    "Do VALCO(E|H|C) Calculations": True,
+                    "VALCOC System Average Flexibility Value": 0.5,
+                    "VALCOC Technology Flexibility Value": 0.2,
+                },
+            )
+        )
+        summary = r.result["SUMMARY OF RESULTS"]
+
+        valco_field = "Value-Adjusted Cooling Breakeven Price (VALCOC)"
+        adjustment_field = "VALCOC Flexibility Adjustment"
+        baseline_lcoc_field = "Direct-Use Cooling Breakeven Price (LCOC)"
+
+        self.assertIn(valco_field, summary)
+        self.assertIn(adjustment_field, summary)
+        self.assertEqual(summary[baseline_lcoc_field]["unit"], summary[valco_field]["unit"])
+        self.assertEqual(0.3, summary[adjustment_field]["value"])
+        self.assertAlmostEqual(
+            summary[baseline_lcoc_field]["value"] + 0.3,
+            summary[valco_field]["value"],
+            places=7,
+        )
 
     def test_sam_economic_model_result_csv(self) -> None:
         r: GeophiresXResult = GeophiresXResult(self._get_test_file_path("sam-em-csv-test.out"))
@@ -131,3 +308,19 @@ class GeophiresXResultTestCase(BaseTestCase):
         )
 
         self.assertEqual("DIRECT_USE_HEAT", r.result["metadata"]["End-Use Option"])
+
+    def test_legacy_transmission_pipeline_cost_label_is_parsed(self) -> None:
+        with NamedTemporaryFile("w", suffix=".out", delete=False, encoding="utf-8") as f:
+            f.write("***CAPITAL COSTS (M$)***\n")
+            f.write("      Transmission pipeline cost:                          2.00 MUSD\n")
+            output_file_path = f.name
+
+        try:
+            r = GeophiresXResult(output_file_path)
+        finally:
+            Path(output_file_path).unlink(missing_ok=True)
+
+        self.assertEqual(
+            {"value": 2.0, "unit": "MUSD"},
+            r.result["CAPITAL COSTS (M$)"]["Transmission/pipeline Cost"],
+        )

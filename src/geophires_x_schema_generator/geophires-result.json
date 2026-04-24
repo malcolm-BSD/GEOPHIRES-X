@@ -22,6 +22,16 @@
           "description": "LCOE. For SAM economic models, this is the nominal LCOE value (as opposed to real).",
           "units": "cents/kWh"
         },
+        "Extended Electricity Breakeven Price (XLCOE Market)": {
+          "type": "number",
+          "description": "XLCOE_Market",
+          "units": "cents/kWh"
+        },
+        "Extended Electricity Breakeven Price (XLCOE Market + Social)": {
+          "type": "number",
+          "description": "XLCOE_MarketSocial",
+          "units": "cents/kWh"
+        },
         "Total CAPEX": {
           "type": "number",
           "description": "The total capital expenditure (CAPEX) required to construct the plant. This value includes all direct and indirect costs, and contingency. For SAM Economic models, it also includes any cost escalation from inflation during construction. It is used as the total installed cost input for SAM Economic Models.",

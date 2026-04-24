@@ -1,0 +1,83 @@
+# Example 1 variant calibrated for a fast XLCOE high-case approximation.
+# The XLCO coefficients below are kept fixed at the published high-case values.
+# Only non-XLCO project and economic inputs are adjusted to move the run toward
+# the published 8.0 / 3.4 / 1.1 XLCOE outputs.
+
+
+# ***Subsurface technical parameters***
+# *************************************
+Reservoir Model,1,                        			---Multiple Fractures reservoir model
+Reservoir Depth,3.1,                     				---[km] Calibrated from Example1 for faster XLCOE high-case approximation
+Number of Segments,1,                  				---[-]
+Gradient 1,58,                          			---[deg.C/km] Calibrated from Example1 for faster XLCOE high-case approximation
+Maximum Temperature,400,                  			---[deg.C]
+Number of Production Wells,1,            			---[-] Calibrated from Example1 for faster XLCOE high-case approximation
+Number of Injection Wells,1,            			---[-] Calibrated from Example1 for faster XLCOE high-case approximation
+Production Well Diameter,7,		     			---[inch]
+Injection Well Diameter,7,					---[inch]
+Ramey Production Wellbore Model,True,
+Production Wellbore Temperature Drop,.5,			---[deg.C]
+Injection Wellbore Temperature Gain,0,   			---[deg.C]
+Production Flow Rate per Well,135,       			---[kg/s] Calibrated from Example1 for faster XLCOE high-case approximation
+Fracture Shape,3,                       			---[-] Should be 1 2 3 or 4. See manual for details
+Fracture Height,900, 						---[m]
+Reservoir Volume Option,3,              			---[-] Should be 1 2 3 or 4. See manual for details
+Number of Fractures,20,		  				---[-]
+Reservoir Volume,1000000000,		 			---[m^3]
+Water Loss Fraction,.02,					---[-]
+Productivity Index,5,						---[kg/s/bar]
+Injectivity Index,5,						---[kg/s/bar]
+Injection Temperature,50,		 			---[deg.C]
+Maximum Drawdown,1,			  			---[-] no redrilling considered
+Reservoir Heat Capacity,1000,		  			---[J/kg/K]
+Reservoir Density,2700,			  			---[kg/m^3]
+Reservoir Thermal Conductivity,2.7,	  			---[W/m/K]
+
+# ***SURFACE TECHNICAL PARAMETERS***
+# **********************************
+End-Use Option,1,			  			---[-] Electricity
+Power Plant Type,2,			  			---[-] Supercritical ORC
+Circulation Pump Efficiency,.8,	  				---[-] between .1 and 1
+Utilization Factor,.9,			  			---[-] between .1 and 1
+Surface Temperature,20,		  				---[deg.C]
+Ambient Temperature,20,		 				---[deg.C]
+
+# ***FINANCIAL PARAMETERS***
+# **************************
+Plant Lifetime,19,			  			---[years] Calibrated from Example1 for faster XLCOE high-case approximation
+Economic Model,3,			  			---[-] BICYCLE model
+Inflation Rate During Construction,0,   			---[-]
+Construction Years,15,                            ---[years] Calibrated from Example1 for faster XLCOE high-case approximation
+
+# ***CAPITAL AND O&M COST PARAMETERS***
+# *************************************
+Well Drilling and Completion Capital Cost,0,       ---[MUSD/well] Calibrated from Example1 for faster XLCOE high-case approximation
+Reservoir Stimulation Capital Cost Adjustment Factor,1,		---[-] Use built-in correlations
+Surface Plant Capital Cost Adjustment Factor,1,			---[-] Use built-in correlations
+Field Gathering System Capital Cost Adjustment Factor,1,	---[-] Use built-in correlations
+Exploration Capital Cost Adjustment Factor,1,			---[-] Use built-in correlations
+Wellfield O&M Cost Adjustment Factor,1,				---[-] Use built-in correlations
+Surface Plant O&M Cost Adjustment Factor,1,			---[-] Use built-in correlations
+Water Cost Adjustment Factor,1,					---[-] Use built-in correlations
+
+# ***Extended Levelized Cost Parameters***
+# ****************************************
+Do XLCO(E|H|C) Calculations,True
+# general parameters for all three XLCO types
+XLCO(E|H|C) Carbon Price,35.0, US$/tonne CO2
+XLCO(E|H|C) Water Shadow Price,0.5, US$/m3
+XLCO(E|H|C) Operations Jobs Per MW,1.7
+XLCO(E|H|C) Construction Jobs Per Rig,37
+XLCO(E|H|C) Indirect Jobs Multiplier,1.0
+XLCO(E|H|C) Average Monthly Wage,7000, US$/work/month
+Idle Rig Discount Rate,0.10
+Social Discount Rate,0.04
+# specific parameters for XLCOE
+XLCOE REC Price,38, US$/MWh
+XLCOE Avoided Emissions Intensity,0.44, TONNEPERMWH
+XLCOE Displaced Water Use Intensity,7.5, m3/MWh
+
+# ***Simulation Parameters***
+# ***************************
+Print Output to Console,1,		  			---[-] Should be 0 (don't print results) or 1 (print results)
+Time steps per year,6,		  				---[1/year]

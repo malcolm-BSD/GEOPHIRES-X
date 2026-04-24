@@ -42,6 +42,7 @@ from geophires_x.SurfacePlantAGS import SurfacePlantAGS
 from geophires_x.AGSEconomics import AGSEconomics
 from geophires_x.AGSOutputs import AGSOutputs
 from geophires_x.EconomicsAddOns import EconomicsAddOns
+from geophires_x.formula_evaluator import resolve_model_parameter_formulas
 
 
 class Model(object):
@@ -261,6 +262,8 @@ class Model(object):
 
         # re-read the parameters for the newly instantiated surface plant
         self.surfaceplant.read_parameters(self)
+        resolve_model_parameter_formulas(self)
+        self.wellbores._set_well_counts_from_parameters(self)
         self.operating_mode_strategy = create_operating_mode_strategy(self.surfaceplant.operating_mode.value)
 
         # if end-use option is 8 (district heating), some calculations are required prior to the reservoir and wellbore simulations

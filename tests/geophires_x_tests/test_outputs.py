@@ -55,6 +55,108 @@ class OutputsTestCase(BaseTestCase):
             else:
                 raise e
 
+    def test_text_output_file_contains_xlcoe_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOE REC Price": 15.0,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Extended Electricity Breakeven Price (XLCOE Market)", output_content)
+        self.assertIn("Extended Electricity Breakeven Price (XLCOE Market + Social)", output_content)
+
+    def test_text_output_file_contains_xlcoh_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCO(E|H|C) Carbon Price": 25.0,
+                    "XLCOH Thermal REC": 15.0,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Extended Heat Breakeven Price (XLCOH Market)", output_content)
+        self.assertIn("Extended Heat Breakeven Price (XLCOH Market + Social)", output_content)
+
+    def test_text_output_file_contains_xlcoc_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
+                params={
+                    "Do XLCO(E|H|C) Calculations": True,
+                    "XLCOC Thermal REC": 15.0,
+                    "XLCO(E|H|C) Water Shadow Price": 0.5,
+                },
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Extended Cooling Breakeven Price (XLCOC Market)", output_content)
+        self.assertIn("Extended Cooling Breakeven Price (XLCOC Market + Social)", output_content)
+
+    def test_text_output_file_contains_valcoe_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={"Do VALCO(E|H|C) Calculations": True},
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Value-Adjusted Electricity Breakeven Price (VALCOE)", output_content)
+        self.assertIn("VALCOE Energy Adjustment", output_content)
+        self.assertIn("VALCOE Capacity Adjustment", output_content)
+        self.assertIn("VALCOE Flexibility Adjustment", output_content)
+
+    def test_text_output_file_contains_valcoh_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example2.txt"),
+                params={"Do VALCO(E|H|C) Calculations": True},
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Value-Adjusted Heat Breakeven Price (VALCOH)", output_content)
+        self.assertIn("VALCOH Energy Adjustment", output_content)
+        self.assertIn("VALCOH Capacity Adjustment", output_content)
+        self.assertIn("VALCOH Flexibility Adjustment", output_content)
+
+    def test_text_output_file_contains_valcoc_summary_lines(self):
+        result = GeophiresXClient().get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
+                params={"Do VALCO(E|H|C) Calculations": True},
+            )
+        )
+
+        with open(result.output_file_path, encoding="utf-8") as f:
+            output_content = f.read()
+
+        self.assertIn("Value-Adjusted Cooling Breakeven Price (VALCOC)", output_content)
+        self.assertIn("VALCOC Energy Adjustment", output_content)
+        self.assertIn("VALCOC Capacity Adjustment", output_content)
+        self.assertIn("VALCOC Flexibility Adjustment", output_content)
+
     def test_relative_output_file_path(self):
         input_file = GeophiresInputParameters({"HTML Output File": "foo.html"}).as_file_path()
         m = self._new_model(input_file=input_file, original_cwd=Path("/tmp/"))  # noqa: S108

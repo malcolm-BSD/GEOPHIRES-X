@@ -18,31 +18,73 @@ from .geophires_input_parameters import EndUseOption
 
 
 class _EqualSignDelimitedField:
+    """Marker for fields rendered as ``name = value`` in GEOPHIRES text output."""
+
     def __init__(self, field_name: str):
         self.field_name: str = field_name
 
 
 class _StringValueField:
+    """Marker for fields whose payload is a raw string value instead of a number/unit pair."""
+
     def __init__(self, field_name: str):
         self.field_name: str = field_name
 
 
 class _UnlabeledStringField:
+    """Marker for string fields identified by one of several prefix snippets."""
+
     def __init__(self, field_name: str, marker_prefixes: list[str]):
         self.field_name: str = field_name
         self.marker_prefixes = marker_prefixes
 
 
+class _AliasedField:
+    """Marker for fields that may appear under one of several report labels."""
+
+    def __init__(self, field_name: str, aliases: list[str]):
+        self.field_name: str = field_name
+        self.aliases = aliases
+
+
 class GeophiresXResult:
+    """Parsed representation of a GEOPHIRES text output file.
+
+    The class uses a curated field map rather than attempting to parse every line generically.
+    That keeps the parser stable as the report evolves and lets newer summary fields such as
+    ``XLCO*`` and ``VALCO*`` be added explicitly without changing the parsing model for the
+    rest of the report.
+    """
+
     _RESULT_FIELDS_BY_CATEGORY = MappingProxyType(
         {
             "SUMMARY OF RESULTS": [
+                # Keep the summary field list authoritative and append new parser-formula outputs
+                # here so clients can read them without depending on report-order heuristics.
                 _StringValueField("End-Use Option"),
                 _StringValueField("End-Use"),
                 _StringValueField("Surface Application"),
                 _EqualSignDelimitedField("Reservoir Model"),  # SUTRA only
                 "Average Net Electricity Production",
                 "Electricity breakeven price",
+                "Extended Electricity Breakeven Price (XLCOE Market)",
+                "Extended Electricity Breakeven Price (XLCOE Market + Social)",
+                "Value-Adjusted Electricity Breakeven Price (VALCOE)",
+                "VALCOE Energy Adjustment",
+                "VALCOE Capacity Adjustment",
+                "VALCOE Flexibility Adjustment",
+                "Extended Heat Breakeven Price (XLCOH Market)",
+                "Extended Heat Breakeven Price (XLCOH Market + Social)",
+                "Value-Adjusted Heat Breakeven Price (VALCOH)",
+                "VALCOH Energy Adjustment",
+                "VALCOH Capacity Adjustment",
+                "VALCOH Flexibility Adjustment",
+                "Extended Cooling Breakeven Price (XLCOC Market)",
+                "Extended Cooling Breakeven Price (XLCOC Market + Social)",
+                "Value-Adjusted Cooling Breakeven Price (VALCOC)",
+                "VALCOC Energy Adjustment",
+                "VALCOC Capacity Adjustment",
+                "VALCOC Flexibility Adjustment",
                 "Total CAPEX",
                 "Total CAPEX ($/kW)",
                 "Average Direct-Use Heat Production",
@@ -264,7 +306,9 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
-                "Transmission/pipeline Cost",
+                _AliasedField(
+                    "Transmission/pipeline Cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
+                ),
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",
@@ -447,6 +491,10 @@ class GeophiresXResult:
                 if isinstance(field, _EqualSignDelimitedField):
                     self.result[category][field.field_name] = self._get_equal_sign_delimited_field(
                         field.field_name, search_lines=search_lines
+                    )
+                elif isinstance(field, _AliasedField):
+                    self.result[category][field.field_name] = self._get_aliased_result_field(
+                        field.aliases, search_lines=search_lines
                     )
                 elif isinstance(field, _UnlabeledStringField):
                     self.result[category][field.field_name] = self._get_unlabeled_string_field(
@@ -704,6 +752,19 @@ class GeophiresXResult:
             unit = "count"
 
         return {"value": self._parse_number(str_val, field=f'field "{field_name}"'), "unit": unit}
+
+    def _get_aliased_result_field(
+        self, field_names: list[str], is_string_value_field: bool = False, search_lines: list[str] | None = None
+    ):
+        for field_name in field_names:
+            result = self._get_result_field(
+                field_name, is_string_value_field=is_string_value_field, search_lines=search_lines
+            )
+            if result is not None:
+                return result
+
+        self._logger.debug(f"Aliased field not found: {field_names}")
+        return None
 
     def _get_equal_sign_delimited_field(self, field_name, search_lines: list[str] | None = None):
         if search_lines is None:

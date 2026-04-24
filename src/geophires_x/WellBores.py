@@ -719,6 +719,7 @@ class WellBores:
             DefaultValue=2,
             AllowableRange=list(range(1, max_doublets+1, 1)),
             UnitType=Units.NONE,
+            AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume default number of production wells (2)",
             ToolTipText="Number of (identical) production wells"
@@ -729,6 +730,7 @@ class WellBores:
             DefaultValue=2,
             AllowableRange=list(range(0, max_doublets+1, 1)),
             UnitType=Units.NONE,
+            AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume default number of injection wells (2)",
             ToolTipText="Number of (identical) injection wells"
@@ -738,6 +740,7 @@ class WellBores:
             DefaultValue=2,
             AllowableRange=list(range(0, max_doublets+1, 1)),
             UnitType=Units.NONE,
+            AllowFormulaInput=True,
             ToolTipText="Pass this parameter to set the Number of Production Wells and Number of Injection Wells to "
                         "same value."
         )
@@ -748,6 +751,7 @@ class WellBores:
             Min=0,
             Max=max_doublets-1,
             UnitType=Units.NONE,
+            AllowFormulaInput=True,
             Required=False,
             ToolTipText="Number of (identical) injection wells per production well. "
                         "For example, provide 0.666 to specify a 3:2 production:injection well ratio. "

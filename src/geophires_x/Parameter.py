@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import re
+import sys
 import csv
 import math
+from collections.abc import Iterable
+from typing import Any, List, Optional
 import os
-from typing import Optional
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
@@ -212,9 +215,11 @@ class Parameter(HasQuantity):
         return self.PreferredUnits == self.CurrentUnits
 
     parameter_category: str = None
-    ValuesEnum:GeophiresInputEnum = None
+    ValuesEnum: GeophiresInputEnum = None
+    AllowFormulaInput: bool = False
+    FormulaExpression: Optional[str] = None
+    EvaluatedFromFormula: bool = False
     auto_raise_exception_on_invalid_read: bool = False
-
 
     def __post_init__(self):
         if self.PreferredUnits is None:
@@ -341,6 +346,7 @@ class listParameter(Parameter):
     Min: float = -1.8e308
     Max: float = 1.8e308
     json_parameter_type: str = _JSON_PARAMETER_TYPE_ARRAY
+    auto_raise_exception_on_invalid_read: bool = False
 
 
 @dataclass
@@ -413,6 +419,30 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     """
     model.logger.info(f'Init {str(__name__)}: {sys._getframe().f_code.co_name} for {ParamToModify.Name}')
 
+    stripped_value = ParameterReadIn.sValue.strip()
+    if stripped_value.startswith('='):
+        if not isinstance(ParamToModify, (intParameter, floatParameter)) or not ParamToModify.AllowFormulaInput:
+            err_msg = f'Error: Parameter given ({ParameterReadIn.sValue}) for {ParamToModify.Name} does not allow formula input.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+        formula_expression = stripped_value[1:].strip()
+        if len(formula_expression) == 0:
+            err_msg = f'Error: Parameter given ({ParameterReadIn.sValue}) for {ParamToModify.Name} has an empty formula.'
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
+
+        ParamToModify.FormulaExpression = formula_expression
+        ParamToModify.EvaluatedFromFormula = False
+        ParamToModify.Provided = True
+        ParamToModify.Valid = False
+        model.logger.info(f'Deferred formula read for {ParamToModify.Name}: {formula_expression}')
+        model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+        return
     #First, check to see if they are trying to set something to its default value.
     # If so, notify and return without doing any of the rest of the processing, since we know that the default value
     # is valid and in the correct units, so there is no need to do any of the validation or conversion that we do for other values.
@@ -943,10 +973,9 @@ def ConvertUnits(ParamToModify, strUnit: str, model) -> str:
 
         # First we need to deal the possibility that there is a suffix on the units (like /yr, kwh, or /tonne)
         # that will make it not be recognized by the currency conversion engine.
-        # generally, we will just strip the suffix off of a copy of the string that represents the units,
-        # then allow the conversion to happen. For now, we ignore the suffix.
-        # this has the consequence that we don't do any conversion based on that suffix, so units like EUR/MMBTU
-        # will trigger a conversion to USD/MMBTU, where MMBY+TU doesn't get converted to KW (or whatever)
+        # We strip the suffix off of a copy of the string that represents the units,
+        # derive the suffix conversion factor using pint, then allow the currency conversion to happen.
+        Factor = 1.0
         currSuff = prefSuff = ""
         elements = currType.split("/")
         if len(elements) > 1:
@@ -957,13 +986,15 @@ def ConvertUnits(ParamToModify, strUnit: str, model) -> str:
             prefType = elements[0]  # strip off the suffix, but save it
             prefSuff = "/" + elements[1]
 
+        if currSuff != prefSuff:
+            Factor *= 1 / _ureg.Quantity(1, currSuff[1:]).to(prefSuff[1:]).magnitude
+
         # Let's try to deal with first the simple conversion where the required units have a prefix like M (m) or K (k)
         # that means a "million" or a "thousand", like MUSD (or KUSD), and the user provided USD (or KUSD) or KEUR, MEUR
         # we have to deal with the case that the M, m, K, or k are NOT prefixes, but rather are a part of the currency name.
         cc = CurrencyCodes()
         currFactor = prefFactor = 1.0
         currPrefix = prefPrefix = False
-        Factor = 1.0
         prefShort = prefType
         currShort = currType
         # if either of these returns a symbol, then we must have prefixes we need to deal with
@@ -994,7 +1025,7 @@ def ConvertUnits(ParamToModify, strUnit: str, model) -> str:
 
             val = float(val) * Factor
             strUnit = str(val)
-            ParamToModify.CurrentUnits = currType
+            ParamToModify.CurrentUnits = f'{currType}{currSuff}'
             return strUnit
 
         try:

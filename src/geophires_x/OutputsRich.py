@@ -55,6 +55,10 @@ def print_outputs_rich(
       code complexity, maintenance overhead, inconsistency, and potential for bugs. Rich output should instead be
       generated in a module that uses GeophiresXClient or an equivalent pattern which maintains Outputs.PrintOutputs
       as the ultimate source of truth/authority for output logic.
+
+    The XLCO and VALCO summary entries below intentionally mirror Outputs.PrintOutputs so the
+    text report, rich report, client parser, and generated schema all expose the same
+    competitiveness metrics for each active commodity.
     """
 
     # data structures and assignments for HTML and Improved Text Output formats
@@ -112,27 +116,159 @@ def print_outputs_rich(
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
+        if model.economics.DoXLCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
+                                model.economics.XLCOE_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_MarketSocial.value),
+                                model.economics.XLCOE_MarketSocial.CurrentUnits.value))
+        if model.economics.DoVALCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.VALCOE.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE.value),
+                                model.economics.VALCOE.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_EnergyAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_EnergyAdjustment.value),
+                                model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_CapacityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_CapacityAdjustment.value),
+                                model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_FlexibilityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_FlexibilityAdjustment.value),
+                                model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value))
     elif model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
+        if model.economics.DoXLCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_Market.value),
+                                model.economics.XLCOH_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_MarketSocial.value),
+                                model.economics.XLCOH_MarketSocial.CurrentUnits.value))
+        if model.economics.DoVALCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.VALCOH.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH.value),
+                                model.economics.VALCOH.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_EnergyAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_EnergyAdjustment.value),
+                                model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_CapacityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_CapacityAdjustment.value),
+                                model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_FlexibilityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_FlexibilityAdjustment.value),
+                                model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value))
     elif (model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and
           model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER):
         summary.append(OutputTableItem('Direct-Use Cooling Breakeven Price (LCOC)',
                                        '{0:10.2f}'.format(model.economics.LCOC.value),
                                        model.economics.LCOC.CurrentUnits.value))
+        if model.economics.DoXLCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOC_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOC_Market.value),
+                                model.economics.XLCOC_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOC_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOC_MarketSocial.value),
+                                model.economics.XLCOC_MarketSocial.CurrentUnits.value))
+        if model.economics.DoVALCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.VALCOC.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOC.value),
+                                model.economics.VALCOC.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOC_EnergyAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOC_EnergyAdjustment.value),
+                                model.economics.VALCOC_EnergyAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOC_CapacityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOC_CapacityAdjustment.value),
+                                model.economics.VALCOC_CapacityAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOC_FlexibilityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOC_FlexibilityAdjustment.value),
+                                model.economics.VALCOC_FlexibilityAdjustment.CurrentUnits.value))
     elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
                                                     EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
                                                     EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
                                                     EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
                                                     EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
                                                     EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+        # Keep the cogen rich-output shape aligned with the text report: one electricity block and
+        # one heat block, each optionally augmented by XLCO and VALCO rows.
         summary.append(
             OutputTableItem('Electricity breakeven price', '{0:10.2f}'.format(model.economics.LCOE.value),
                             model.economics.LCOE.CurrentUnits.value))
+        if model.economics.DoXLCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_Market.value),
+                                model.economics.XLCOE_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOE_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOE_MarketSocial.value),
+                                model.economics.XLCOE_MarketSocial.CurrentUnits.value))
+        if model.economics.DoVALCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.VALCOE.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE.value),
+                                model.economics.VALCOE.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_EnergyAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_EnergyAdjustment.value),
+                                model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_CapacityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_CapacityAdjustment.value),
+                                model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOE_FlexibilityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOE_FlexibilityAdjustment.value),
+                                model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value))
         summary.append(OutputTableItem('Direct-Use heat breakeven price (LCOH)',
                                        '{0:10.2f}'.format(model.economics.LCOH.value),
                                        model.economics.LCOH.CurrentUnits.value))
+        if model.economics.DoXLCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_Market.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_Market.value),
+                                model.economics.XLCOH_Market.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.XLCOH_MarketSocial.display_name,
+                                '{0:10.2f}'.format(model.economics.XLCOH_MarketSocial.value),
+                                model.economics.XLCOH_MarketSocial.CurrentUnits.value))
+        if model.economics.DoVALCOCalculations.value:
+            summary.append(
+                OutputTableItem(model.economics.VALCOH.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH.value),
+                                model.economics.VALCOH.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_EnergyAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_EnergyAdjustment.value),
+                                model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_CapacityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_CapacityAdjustment.value),
+                                model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value))
+            summary.append(
+                OutputTableItem(model.economics.VALCOH_FlexibilityAdjustment.display_name,
+                                '{0:10.2f}'.format(model.economics.VALCOH_FlexibilityAdjustment.value),
+                                model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value))
 
     summary.append(OutputTableItem('Number of production wells', '{0:10.0f}'.format(model.wellbores.nprod.value)))
     summary.append(OutputTableItem('Number of injection wells', '{0:10.0f}'.format(model.wellbores.ninj.value)))
