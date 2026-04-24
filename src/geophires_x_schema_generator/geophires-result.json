@@ -608,12 +608,240 @@
         "Average Annual Electricity Use for Pumping": {}
       }
     },
+    "DISPATCH RESULTS": {
+      "type": "object",
+      "properties": {
+        "Dispatch analysis start year": {},
+        "Dispatch analysis end year": {},
+        "Dispatch analysis duration": {},
+        "Design heat produced": {},
+        "Design net electricity produced": {},
+        "Annual geothermal heat delivered": {},
+        "Annual geothermal electricity delivered": {},
+        "Annual unmet thermal demand": {},
+        "Annual unmet electricity demand": {},
+        "Dispatch capacity factor": {},
+        "Average runtime fraction": {},
+        "Peak geothermal contribution": {},
+        "Peak unmet load": {},
+        "Peak hourly demand": {},
+        "Design flow rate": {},
+        "Observed peak flow rate": {}
+      }
+    },
     "Simulation Metadata": {
       "type": "object",
       "properties": {
         "GEOPHIRES Version": {},
         "Calculation Time": {}
       }
+    },
+    "Dispatch Summary": {
+      "type": "object",
+      "description": "Structured dispatchable-operation summary emitted for dispatch runs. Includes dispatch settings, the analyzed operating-year window, scalar summary metrics, and annual aggregate arrays.",
+      "required": [
+        "schema_version",
+        "demand_type",
+        "surfaceplant_mode",
+        "dispatch_settings",
+        "analysis_window",
+        "summary_metrics",
+        "annual_aggregates"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "demand_type": {
+          "type": "string",
+          "enum": [
+            "thermal",
+            "electric"
+          ]
+        },
+        "surfaceplant_mode": {
+          "type": "string",
+          "enum": [
+            "thermal",
+            "electric",
+            "chp"
+          ]
+        },
+        "dispatch_settings": {
+          "type": "object",
+          "required": [
+            "demand_source",
+            "flow_strategy"
+          ],
+          "properties": {
+            "demand_source": {
+              "type": "string",
+              "enum": [
+                "Annual Heat Demand",
+                "Annual Electricity Demand"
+              ]
+            },
+            "flow_strategy": {
+              "type": "string",
+              "enum": [
+                "Demand Following"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "analysis_window": {
+          "type": "object",
+          "required": [
+            "start_year",
+            "end_year",
+            "year_count",
+            "simulation_start_hour"
+          ],
+          "properties": {
+            "start_year": {
+              "type": "integer"
+            },
+            "end_year": {
+              "type": "integer"
+            },
+            "year_count": {
+              "type": "integer"
+            },
+            "simulation_start_hour": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "summary_metrics": {
+          "type": "object",
+          "properties": {
+            "dispatch_analysis_start_year": {
+              "type": "number"
+            },
+            "dispatch_analysis_end_year": {
+              "type": "number"
+            },
+            "dispatch_analysis_year_count": {
+              "type": "number"
+            },
+            "peak_hourly_demand_mw": {
+              "type": "number"
+            },
+            "average_runtime_fraction": {
+              "type": "number"
+            },
+            "dispatch_capacity_factor": {
+              "type": "number"
+            },
+            "observed_peak_flow_kg_per_sec": {
+              "type": "number"
+            },
+            "annual_served_heat_kwh": {
+              "type": "number"
+            },
+            "annual_served_electricity_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_electricity_kwh": {
+              "type": "number"
+            },
+            "peak_served_heat_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "peak_served_electricity_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_electricity_kwh": {
+              "type": "number"
+            },
+            "design_heat_extracted_mw": {
+              "type": "number"
+            },
+            "design_heat_produced_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_prod_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_inj_mw": {
+              "type": "number"
+            },
+            "design_flow_kg_per_sec": {
+              "type": "number"
+            },
+            "design_gross_electricity_produced_mw": {
+              "type": "number"
+            },
+            "design_net_electricity_produced_mw": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "annual_aggregates": {
+          "type": "object",
+          "properties": {
+            "analysis_years": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "annual_served_heat_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_served_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_unmet_heat_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_heat_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_unmet_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_electricity_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

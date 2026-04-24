@@ -1373,8 +1373,15 @@ def profile_title_adjusted_for_figure(title:str) -> str:
     return title.replace('PROFILE: ', 'PROFILE:\n').replace('PROFILES: ', 'PROFILES:\n')
 
 
+def _graph_file_stem(title: str, filename_prefix: Optional[str] = None) -> str:
+    title_stem = removeDisallowedFilenameChars(title.replace(' ', '_'))
+    if filename_prefix in [None, '']:
+        return title_stem
+    return f'{filename_prefix}_{title_stem}'
+
+
 def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: pd.array,
-                    x_label: str, y1_label: str, y2_label:str) -> None:
+                    x_label: str, y1_label: str, y2_label:str, filename_prefix: Optional[str] = None) -> None:
     """
     This function plots the twin graph
     :param title: the title of the graph
@@ -1416,17 +1423,18 @@ def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: p
 
     full_names: set = set()
     short_names: set = set()
-    title = removeDisallowedFilenameChars(title.replace(' ', '_'))
-    save_path = Path(Path(html_path).parent, f'{title}.png')
+    file_stem = _graph_file_stem(title, filename_prefix)
+    save_path = Path(Path(html_path).parent, f'{file_stem}.png')
     plt.savefig(save_path)
-    short_names.add(title)
+    short_names.add(file_stem)
     full_names.add(save_path)
     plt.close(fig)
 
     InsertImagesIntoHTML(html_path, short_names, full_names)
 
 
-def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_label: str, y_label: str) -> None:
+def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_label: str, y_label: str,
+                      filename_prefix: Optional[str] = None) -> None:
     """
     This function plots the single graph
     :param title: the title of the graph
@@ -1458,10 +1466,10 @@ def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_la
 
     full_names: set = set()
     short_names: set = set()
-    title = removeDisallowedFilenameChars(title.replace(' ', '_'))
-    save_path = Path(Path(html_path).parent, f'{title}.png')
+    file_stem = _graph_file_stem(title, filename_prefix)
+    save_path = Path(Path(html_path).parent, f'{file_stem}.png')
     plt.savefig(save_path)
-    short_names.add(title)
+    short_names.add(file_stem)
     full_names.add(save_path)
     plt.close(fig)
 
@@ -1469,7 +1477,7 @@ def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_la
 
 
 def Plot_Multi_Graph(title: str, html_path: str, x: pd.array, ys: list[pd.array], x_label: str,
-                     y_label: str, series_labels: list[str]) -> None:
+                     y_label: str, series_labels: list[str], filename_prefix: Optional[str] = None) -> None:
     """
     Plot multiple series sharing the same y-axis.
     """
@@ -1488,10 +1496,10 @@ def Plot_Multi_Graph(title: str, html_path: str, x: pd.array, ys: list[pd.array]
 
     full_names: set = set()
     short_names: set = set()
-    title = removeDisallowedFilenameChars(title.replace(' ', '_'))
-    save_path = Path(Path(html_path).parent, f'{title}.png')
+    file_stem = _graph_file_stem(title, filename_prefix)
+    save_path = Path(Path(html_path).parent, f'{file_stem}.png')
     plt.savefig(save_path)
-    short_names.add(title)
+    short_names.add(file_stem)
     full_names.add(save_path)
     plt.close(fig)
 
@@ -1508,6 +1516,7 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         return
 
     demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+    filename_prefix = removeDisallowedFilenameChars(Path(html_path).stem)
     if demand_type == 'electric':
         profile_title = 'DISPATCH PROFILE: Demand, Served, and Unmet Electricity'
         y_label = 'Electric Power (MW)'
@@ -1531,6 +1540,7 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         'Simulation Hour',
         y_label,
         legend,
+        filename_prefix=filename_prefix,
     )
     Plot_Twin_Graph(
         'DISPATCH PROFILE: Produced Temperature and Flow Rate',
@@ -1541,6 +1551,7 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         'Simulation Hour',
         'Produced Temperature (degC)',
         'Flow Rate (kg/s)',
+        filename_prefix=filename_prefix,
     )
     Plot_Twin_Graph(
         'DISPATCH PROFILE: Runtime Fraction and Electric Output' if demand_type == 'electric'
@@ -1552,6 +1563,7 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         'Simulation Hour',
         'Runtime Fraction',
         'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Pumping Power (MW)',
+        filename_prefix=filename_prefix,
     )
 
 

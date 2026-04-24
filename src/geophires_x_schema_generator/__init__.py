@@ -37,6 +37,101 @@ _log = _get_logger()
 
 
 class GeophiresXSchemaGenerator:
+    @staticmethod
+    def _dispatch_summary_schema() -> dict:
+        number_array_schema = {"type": "array", "items": {"type": "number"}}
+        return {
+            "type": "object",
+            "description": (
+                "Structured dispatchable-operation summary emitted for dispatch runs. "
+                "Includes dispatch settings, the analyzed operating-year window, scalar summary metrics, "
+                "and annual aggregate arrays."
+            ),
+            "required": [
+                "schema_version",
+                "demand_type",
+                "surfaceplant_mode",
+                "dispatch_settings",
+                "analysis_window",
+                "summary_metrics",
+                "annual_aggregates",
+            ],
+            "properties": {
+                "schema_version": {"type": "integer", "enum": [1]},
+                "demand_type": {"type": "string", "enum": ["thermal", "electric"]},
+                "surfaceplant_mode": {"type": "string", "enum": ["thermal", "electric", "chp"]},
+                "dispatch_settings": {
+                    "type": "object",
+                    "required": ["demand_source", "flow_strategy"],
+                    "properties": {
+                        "demand_source": {
+                            "type": "string",
+                            "enum": ["Annual Heat Demand", "Annual Electricity Demand"],
+                        },
+                        "flow_strategy": {
+                            "type": "string",
+                            "enum": ["Demand Following"],
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+                "analysis_window": {
+                    "type": "object",
+                    "required": ["start_year", "end_year", "year_count", "simulation_start_hour"],
+                    "properties": {
+                        "start_year": {"type": "integer"},
+                        "end_year": {"type": "integer"},
+                        "year_count": {"type": "integer"},
+                        "simulation_start_hour": {"type": "integer"},
+                    },
+                    "additionalProperties": False,
+                },
+                "summary_metrics": {
+                    "type": "object",
+                    "properties": {
+                        "dispatch_analysis_start_year": {"type": "number"},
+                        "dispatch_analysis_end_year": {"type": "number"},
+                        "dispatch_analysis_year_count": {"type": "number"},
+                        "peak_hourly_demand_mw": {"type": "number"},
+                        "average_runtime_fraction": {"type": "number"},
+                        "dispatch_capacity_factor": {"type": "number"},
+                        "observed_peak_flow_kg_per_sec": {"type": "number"},
+                        "annual_served_heat_kwh": {"type": "number"},
+                        "annual_served_electricity_kwh": {"type": "number"},
+                        "annual_unmet_heat_kwh": {"type": "number"},
+                        "annual_unmet_electricity_kwh": {"type": "number"},
+                        "peak_served_heat_kwh": {"type": "number"},
+                        "peak_unmet_heat_kwh": {"type": "number"},
+                        "peak_served_electricity_kwh": {"type": "number"},
+                        "peak_unmet_electricity_kwh": {"type": "number"},
+                        "design_heat_extracted_mw": {"type": "number"},
+                        "design_heat_produced_mw": {"type": "number"},
+                        "design_pumping_power_mw": {"type": "number"},
+                        "design_pumping_power_prod_mw": {"type": "number"},
+                        "design_pumping_power_inj_mw": {"type": "number"},
+                        "design_flow_kg_per_sec": {"type": "number"},
+                        "design_gross_electricity_produced_mw": {"type": "number"},
+                        "design_net_electricity_produced_mw": {"type": "number"},
+                    },
+                    "additionalProperties": False,
+                },
+                "annual_aggregates": {
+                    "type": "object",
+                    "properties": {
+                        "analysis_years": {"type": "array", "items": {"type": "integer"}},
+                        "annual_served_heat_kwh": number_array_schema,
+                        "annual_served_electricity_kwh": number_array_schema,
+                        "annual_unmet_heat_kwh": number_array_schema,
+                        "annual_heat_demand_kwh": number_array_schema,
+                        "annual_unmet_electricity_kwh": number_array_schema,
+                        "annual_electricity_demand_kwh": number_array_schema,
+                    },
+                    "additionalProperties": False,
+                },
+            },
+            "additionalProperties": False,
+        }
+
     def __init__(self):
         pass
 
@@ -44,7 +139,7 @@ class GeophiresXSchemaGenerator:
     def _get_dummy_model():
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
-        sys.argv = ['']
+        sys.argv = [""]
         try:
             dummy_model = Model(enable_geophires_logging_config=False)
             return dummy_model
@@ -58,35 +153,34 @@ class GeophiresXSchemaGenerator:
         """
         dummy_model = self._get_dummy_model()
         return [
-            (dummy_model.reserv, 'Reservoir'),
-            (TDPReservoir(dummy_model), 'Reservoir'),
-            (LHSReservoir(dummy_model), 'Reservoir'),
-            (MPFReservoir(dummy_model), 'Reservoir'),
-            (SFReservoir(dummy_model), 'Reservoir'),
-            (UPPReservoir(dummy_model), 'Reservoir'),
-            (CylindricalReservoir(dummy_model), 'Reservoir'),
-            (SBTReservoir(dummy_model), 'Reservoir'),
-            (SUTRAReservoir(dummy_model), 'Reservoir'),
-            (TOUGH2Reservoir(dummy_model), 'Reservoir'),
-            (dummy_model.wellbores, 'Well Bores'),
-            (AGSWellBores(dummy_model), 'Well Bores'),
-            (SBTWellbores(dummy_model), 'Well Bores'),
-            (SUTRAWellBores(dummy_model), 'Well Bores'),
-            (dummy_model.surfaceplant, 'Surface Plant'),
-            (SurfacePlantAGS(dummy_model), 'Surface Plant'),
-            (SurfacePlantSUTRA(dummy_model), 'Surface Plant'),
-            (dummy_model.economics, 'Economics'),
-            (AGSEconomics(dummy_model), 'Economics'),
-            (SBTEconomics(dummy_model), 'Economics'),
-            (SUTRAEconomics(dummy_model), 'Economics'),
-            (EconomicsAddOns(dummy_model), 'Economics'),
+            (dummy_model.reserv, "Reservoir"),
+            (TDPReservoir(dummy_model), "Reservoir"),
+            (LHSReservoir(dummy_model), "Reservoir"),
+            (MPFReservoir(dummy_model), "Reservoir"),
+            (SFReservoir(dummy_model), "Reservoir"),
+            (UPPReservoir(dummy_model), "Reservoir"),
+            (CylindricalReservoir(dummy_model), "Reservoir"),
+            (SBTReservoir(dummy_model), "Reservoir"),
+            (SUTRAReservoir(dummy_model), "Reservoir"),
+            (TOUGH2Reservoir(dummy_model), "Reservoir"),
+            (dummy_model.wellbores, "Well Bores"),
+            (AGSWellBores(dummy_model), "Well Bores"),
+            (SBTWellbores(dummy_model), "Well Bores"),
+            (SUTRAWellBores(dummy_model), "Well Bores"),
+            (dummy_model.surfaceplant, "Surface Plant"),
+            (SurfacePlantAGS(dummy_model), "Surface Plant"),
+            (SurfacePlantSUTRA(dummy_model), "Surface Plant"),
+            (dummy_model.economics, "Economics"),
+            (AGSEconomics(dummy_model), "Economics"),
+            (SBTEconomics(dummy_model), "Economics"),
+            (SUTRAEconomics(dummy_model), "Economics"),
+            (EconomicsAddOns(dummy_model), "Economics"),
         ]
 
     def get_schema_title(self) -> str:
-        return 'GEOPHIRES'
+        return "GEOPHIRES"
 
     def get_parameters_json(self) -> Tuple[str, str]:
-
         def with_category(param_dict: dict, category: str):
             def _with_cat(p: Parameter, cat: str):
                 p.parameter_category = cat
@@ -117,32 +211,32 @@ class GeophiresXSchemaGenerator:
         for param_name in input_params:
             param = input_params[param_name]
 
-            units_val = param['CurrentUnits'] if isinstance(param['CurrentUnits'], str) else None
+            units_val = param["CurrentUnits"] if isinstance(param["CurrentUnits"], str) else None
             min_val, max_val = _get_min_and_max(param, default_val=None)
 
             properties[param_name] = {
-                'description': param['ToolTipText'],
-                'type': param['json_parameter_type'],
-                'units': units_val,
-                'category': param['parameter_category'],
-                'default': _fix_floating_point_error(param['DefaultValue']),
-                'minimum': min_val,
-                'maximum': max_val,
+                "description": param["ToolTipText"],
+                "type": param["json_parameter_type"],
+                "units": units_val,
+                "category": param["parameter_category"],
+                "default": _fix_floating_point_error(param["DefaultValue"]),
+                "minimum": min_val,
+                "maximum": max_val,
             }
 
-            if param['Required']:
+            if param["Required"]:
                 required.append(param_name)
 
-            if param['ValuesEnum']:
-                properties[param_name]['enum_values'] = param['ValuesEnum']
+            if param["ValuesEnum"]:
+                properties[param_name]["enum_values"] = param["ValuesEnum"]
 
         request_schema = {
-            'definitions': {},
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'title': f'{self.get_schema_title()} Request Schema',
-            'required': required,
-            'properties': properties,
+            "definitions": {},
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "title": f"{self.get_schema_title()} Request Schema",
+            "required": required,
+            "properties": properties,
         }
 
         result_schema = self.get_result_json_schema(output_params_json)
@@ -156,12 +250,12 @@ class GeophiresXSchemaGenerator:
         output_params = json.loads(output_params_json)
         display_name_aliases = {}
         for param_name in output_params:
-            if 'display_name' in output_params[param_name]:
-                display_name = output_params[param_name]['display_name']
-                if display_name not in [None, ''] and display_name != param_name:
+            if "display_name" in output_params[param_name]:
+                display_name = output_params[param_name]["display_name"]
+                if display_name not in [None, ""] and display_name != param_name:
                     # output_params[display_name] = output_params[param_name]
                     display_name_aliases[display_name] = output_params[param_name]
-                    display_name_aliases[display_name]['output_parameter_name'] = param_name
+                    display_name_aliases[display_name]["output_parameter_name"] = param_name
 
         output_params = {**output_params, **display_name_aliases}
 
@@ -172,41 +266,43 @@ class GeophiresXSchemaGenerator:
             for field in GeophiresXResult._RESULT_FIELDS_BY_CATEGORY[category]:
                 param_name = field if isinstance(field, str) else field.field_name
 
-                ignored_output_param_names = ['After-Tax IRR']  # Silently ignored in favor of "After-tax IRR"
+                ignored_output_param_names = ["After-Tax IRR"]  # Silently ignored in favor of "After-tax IRR"
 
                 if param_name in ignored_output_param_names:
                     continue
 
                 if param_name in properties:
-                    _log.warning(f'Param {param_name} is already in properties: {properties[param_name]}')
+                    _log.warning(f"Param {param_name} is already in properties: {properties[param_name]}")
 
                 param = {} if param_name not in properties else properties[param_name]
 
                 if param_name in output_params:
                     output_param = output_params[param_name]
-                    param['type'] = output_param['json_parameter_type']
-                    description = output_param['ToolTipText']
-                    if 'output_parameter_name' in output_param:
-                        if description is not None and description != '':
-                            description = f'{output_param["output_parameter_name"]}. {description}'
+                    param["type"] = output_param["json_parameter_type"]
+                    description = output_param["ToolTipText"]
+                    if "output_parameter_name" in output_param:
+                        if description is not None and description != "":
+                            description = f"{output_param['output_parameter_name']}. {description}"
                         else:
-                            description = output_param['output_parameter_name']
-                    param['description'] = description
-                    param['units'] = (
-                        output_param['CurrentUnits'] if isinstance(output_param['CurrentUnits'], str) else None
+                            description = output_param["output_parameter_name"]
+                    param["description"] = description
+                    param["units"] = (
+                        output_param["CurrentUnits"] if isinstance(output_param["CurrentUnits"], str) else None
                     )
 
                 cat_properties[param_name] = param.copy()
 
-            properties[category] = {'type': 'object', 'properties': cat_properties}
+            properties[category] = {"type": "object", "properties": cat_properties}
+
+        properties["Dispatch Summary"] = self._dispatch_summary_schema()
 
         result_schema = {
-            'definitions': {},
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'title': f'{self.get_schema_title()} Result Schema',
-            'required': required,
-            'properties': properties,
+            "definitions": {},
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "title": f"{self.get_schema_title()} Result Schema",
+            "required": required,
+            "properties": properties,
         }
 
         return result_schema
@@ -217,18 +313,18 @@ class GeophiresXSchemaGenerator:
 
         input_params_by_category: dict = {}
         for input_param_name, input_param in input_params.items():
-            category: str = input_param['parameter_category']
+            category: str = input_param["parameter_category"]
             if category not in input_params_by_category:
                 input_params_by_category[category] = {}  # []
 
             input_params_by_category[category][input_param_name] = input_param
 
         def get_input_params_table(_category_params, category_name) -> str:
-            category_display = category_name if category_name is not None else ''
+            category_display = category_name if category_name is not None else ""
             _input_rst = f"""
 {category_display}
-{'-' * len(category_display)}
-    .. list-table:: {category_display}{' ' if len(category_display) > 0 else ''}Parameters
+{"-" * len(category_display)}
+    .. list-table:: {category_display}{" " if len(category_display) > 0 else ""}Parameters
        :header-rows: 1
 
        * - Name
@@ -245,48 +341,48 @@ class GeophiresXSchemaGenerator:
                 # if param['Required']:
                 #     TODO designate required params
 
-                default_value = _fix_floating_point_error(_get_key(param, 'DefaultValue'))
+                default_value = _fix_floating_point_error(_get_key(param, "DefaultValue"))
 
                 min_val, max_val = _get_min_and_max(param)
 
-                _input_rst += f"""\n       * - {param['Name']}
-         - {_get_key(param, 'ToolTipText')}
-         - {_get_key(param, 'PreferredUnits')}
-         - {_get_key(param, 'json_parameter_type')}
+                _input_rst += f"""\n       * - {param["Name"]}
+         - {_get_key(param, "ToolTipText")}
+         - {_get_key(param, "PreferredUnits")}
+         - {_get_key(param, "json_parameter_type")}
          - {default_value}
          - {min_val}
          - {max_val}"""
 
             return _input_rst
 
-        input_rst = ''
+        input_rst = ""
         for category, category_params in input_params_by_category.items():
             input_rst += get_input_params_table(category_params, category)
 
         output_rst = self.get_output_params_table_rst(output_params_json)
 
         schema_ref_base_url = (
-            'https://github.com/softwareengineerprogrammer/GEOPHIRES/blob/main/src/geophires_x_schema_generator/'
+            "https://github.com/softwareengineerprogrammer/GEOPHIRES/blob/main/src/geophires_x_schema_generator/"
         )
-        input_schema_ref_rst = ''
+        input_schema_ref_rst = ""
         if self.get_input_schema_reference() is not None:
             input_schema_ref_rst = (
-                f'Schema: '
-                f'`{self.get_input_schema_reference()} '
-                f'<{schema_ref_base_url}{self.get_input_schema_reference()}>`__'
+                f"Schema: "
+                f"`{self.get_input_schema_reference()} "
+                f"<{schema_ref_base_url}{self.get_input_schema_reference()}>`__"
             )
 
-        output_schema_ref_rst = ''
+        output_schema_ref_rst = ""
         if self.get_output_schema_reference() is not None:
             output_schema_ref_rst = (
-                f'Schema: '
-                f'`{self.get_output_schema_reference()} '
-                f'<{schema_ref_base_url}{self.get_output_schema_reference()}>`__'
+                f"Schema: "
+                f"`{self.get_output_schema_reference()} "
+                f"<{schema_ref_base_url}{self.get_output_schema_reference()}>`__"
             )
 
-        display_title = f'{self.get_schema_title()} Parameters'
+        display_title = f"{self.get_schema_title()} Parameters"
         rst = f"""{display_title}
-{'=' * len(display_title)}
+{"=" * len(display_title)}
 
 .. contents::
 
@@ -308,20 +404,20 @@ Outputs
 
         output_params_by_category: dict = {}
 
-        for category, category_params in output_schema['properties'].items():
+        for category, category_params in output_schema["properties"].items():
             if category not in output_params_by_category:
                 output_params_by_category[category] = {}  # []
 
-            for param_name, param in category_params['properties'].items():
+            for param_name, param in category_params["properties"].items():
                 output_params_by_category[category][param_name] = param
 
         def get_output_params_table(_category_params, category_name) -> str:
-            category_display = category_name if category_name is not None else ''
-            category_display = category_display.replace(' (M$)', '').replace(' (M$/yr)', '')
+            category_display = category_name if category_name is not None else ""
+            category_display = category_display.replace(" (M$)", "").replace(" (M$/yr)", "")
             _output_rst = f"""
 {category_display}
-{'-' * len(category_display)}
-    .. list-table:: {category_display}{' ' if len(category_display) > 0 else ''}Outputs
+{"-" * len(category_display)}
+    .. list-table:: {category_display}{" " if len(category_display) > 0 else ""}Outputs
        :header-rows: 1
 
        * - Name
@@ -331,47 +427,47 @@ Outputs
 
             for _param_name, _param in _category_params.items():
                 _output_rst += f"""\n       * - {_param_name}
-         - {_get_key(_param, 'description')}
-         - {_get_key(_param, 'units')}
-         - {_get_key(_param, 'type')}"""
+         - {_get_key(_param, "description")}
+         - {_get_key(_param, "units")}
+         - {_get_key(_param, "type")}"""
 
             return _output_rst
 
-        output_rst = ''
+        output_rst = ""
         for category, category_params in output_params_by_category.items():
             output_rst += get_output_params_table(category_params, category)
 
         return output_rst
 
     def get_input_schema_reference(self) -> str:
-        return 'geophires-request.json'
+        return "geophires-request.json"
 
     def get_output_schema_reference(self) -> str:
-        return 'geophires-result.json'
+        return "geophires-result.json"
 
 
-def _get_key(param: dict, k: str, default_val='') -> Any:
-    if k in param and str(param[k]) != '':
+def _get_key(param: dict, k: str, default_val="") -> Any:
+    if k in param and str(param[k]) != "":
         return param[k]
     else:
         return default_val
 
 
-def _get_min_and_max(param: dict, default_val='') -> Tuple:
-    min_val = _get_key(param, 'Min', default_val=default_val)
-    max_val = _get_key(param, 'Max', default_val=default_val)
+def _get_min_and_max(param: dict, default_val="") -> Tuple:
+    min_val = _get_key(param, "Min", default_val=default_val)
+    max_val = _get_key(param, "Max", default_val=default_val)
 
-    if 'AllowableRange' in param:
+    if "AllowableRange" in param:
         # TODO warn if min/max are defined and at odds with allowable range
-        min_val = min(param['AllowableRange'])
-        max_val = max(param['AllowableRange'])
+        min_val = min(param["AllowableRange"])
+        max_val = max(param["AllowableRange"])
 
     return _fix_floating_point_error(min_val), _fix_floating_point_error(max_val)
 
 
 def _fix_floating_point_error(val: Any) -> Any:
-    if '.0000' in str(val):
-        return format(float(val), '.1f')
+    if ".0000" in str(val):
+        return format(float(val), ".1f")
 
     return val
 
@@ -385,7 +481,7 @@ class HipRaXSchemaGenerator(GeophiresXSchemaGenerator):
         return [(dummy_model, None)]
 
     def get_schema_title(self) -> str:
-        return 'HIP-RA-X'
+        return "HIP-RA-X"
 
     def get_result_json_schema(self, output_params_json) -> dict:
         return None  # FIXME TODO
@@ -410,20 +506,20 @@ class HipRaXSchemaGenerator(GeophiresXSchemaGenerator):
             param = output_params[param_name]
 
             def get_key(k):
-                if k in param and str(param[k]) != '':  # noqa
+                if k in param and str(param[k]) != "":  # noqa
                     return param[k]  # noqa
                 else:
-                    return ''
+                    return ""
 
-            output_rst += f"""\n       * - {param['Name']}
-         - {get_key('ToolTipText')}
-         - {get_key('PreferredUnits')}
-         - {get_key('json_parameter_type')}"""
+            output_rst += f"""\n       * - {param["Name"]}
+         - {get_key("ToolTipText")}
+         - {get_key("PreferredUnits")}
+         - {get_key("json_parameter_type")}"""
 
         return output_rst
 
     def get_input_schema_reference(self) -> str:
-        return 'hip-ra-x-request.json'
+        return "hip-ra-x-request.json"
 
     def get_output_schema_reference(self) -> str:
         return None

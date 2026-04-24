@@ -104,7 +104,13 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertIsNotNone(r.json_fields)
         dispatch_summary = r.dispatch_summary_json
         self.assertIsNotNone(dispatch_summary)
+        self.assertEqual(1, dispatch_summary["schema_version"])
         self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertEqual("chp", dispatch_summary["surfaceplant_mode"])
+        self.assertEqual("Annual Heat Demand", dispatch_summary["dispatch_settings"]["demand_source"])
+        self.assertEqual("Demand Following", dispatch_summary["dispatch_settings"]["flow_strategy"])
+        self.assertEqual(1, dispatch_summary["analysis_window"]["start_year"])
+        self.assertEqual(2, dispatch_summary["analysis_window"]["end_year"])
         self.assertIn("summary_metrics", dispatch_summary)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)

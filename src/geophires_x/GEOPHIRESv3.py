@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+from geophires_x.Dispatch import build_dispatch_summary_json
 import geophires_x.Model as Model
 import geophires_x.OptionList as OptionList
 
@@ -69,15 +70,9 @@ def main(enable_geophires_logging_config=True):
             model.sdacgteconomics.OutputParameterDict, indent=4, sort_keys=True, supress_warnings=True
         )
         json_merged = {**json_merged, **json.loads(json_sdacgt)}
-    if getattr(model, "dispatch_results", None) is not None:
-        json_merged["Dispatch Summary"] = {
-            "demand_type": getattr(model.dispatch_results, "demand_type", "thermal"),
-            "analysis_start_year": getattr(model.dispatch_results, "analysis_start_year", 1),
-            "analysis_end_year": getattr(model.dispatch_results, "analysis_end_year", 2),
-            "simulation_start_hour": getattr(model.dispatch_results, "simulation_start_hour", 1),
-            "summary_metrics": dict(model.dispatch_results.summary_metrics),
-            "annual_aggregates": dict(model.dispatch_results.annual_aggregates),
-        }
+    dispatch_summary = build_dispatch_summary_json(model)
+    if dispatch_summary is not None:
+        json_merged["Dispatch Summary"] = dispatch_summary
 
     json_outputfile = Path(original_cwd, 'HDR.json')
     if len(sys.argv) > 2:

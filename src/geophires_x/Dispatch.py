@@ -180,9 +180,15 @@ def _dispatch_surfaceplant_mode(model: "Model") -> str:
     if enduse_option == EndUseOptions.HEAT:
         return "thermal"
     if _surfaceplant_has_electric_component(enduse_option):
-        if model.surfaceplant.plant_type.value not in [PlantType.SUB_CRITICAL_ORC, PlantType.SUPER_CRITICAL_ORC]:
+        if model.surfaceplant.plant_type.value not in [
+            PlantType.SUB_CRITICAL_ORC,
+            PlantType.SUPER_CRITICAL_ORC,
+            PlantType.SINGLE_FLASH,
+            PlantType.DOUBLE_FLASH,
+        ]:
             raise ValueError(
-                "Dispatchable electricity and CHP mode currently support only subcritical and supercritical ORC plants."
+                "Dispatchable electricity and CHP mode currently support subcritical ORC, supercritical ORC, "
+                "single-flash, and double-flash plants."
             )
         if _surfaceplant_has_heat_component(enduse_option):
             return "chp"
@@ -205,7 +211,63 @@ def _get_orc_coefficients(model: "Model") -> tuple[float, float, float, float, f
             return (-3.78e-1, 7.604e-3, -1.55e-5, -3.7915e-1, 7.4268e-3, -1.499e-5, 49.26, 0.02, 0.0, 56.26, 0.02, 0.0)
         return (-3.7915e-1, 7.4268e-3, -1.499e-5, -4.041e-1, 7.55136e-3, -1.55e-5, 56.26, 0.02, 0.0, 63.26, 0.02, 0.0)
 
-    raise ValueError("Dispatchable electricity mode currently supports only subcritical and supercritical ORC plants.")
+    raise ValueError(
+        "Dispatchable electricity mode currently supports only ORC plants in `_get_orc_coefficients`."
+    )
+
+
+def _get_flash_coefficients(model: "Model") -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
+    ambient_temperature = model.surfaceplant.ambient_temperature.value
+    plant_type = model.surfaceplant.plant_type.value
+
+    if plant_type == PlantType.SINGLE_FLASH:
+        if ambient_temperature < 15.0:
+            return (
+                1.78931e-1, 8.65629e-4, -4.27318e-7,
+                1.58056e-1, 9.68352e-4, -5.85412e-7,
+                -10.2242, 7.79126e-1, -1.11519e-3,
+                -5.17039, 7.83893e-1, -1.10232e-3,
+            )
+        return (
+            1.58056e-1, 9.68352e-4, -5.85412e-7,
+            1.33708e-1, 1.09230e-3, -7.78996e-7,
+            -5.17039, 7.83893e-1, -1.10232e-3,
+            -1.89707e-1, 7.88562e-1, -1.08914e-3,
+        )
+
+    if plant_type == PlantType.DOUBLE_FLASH:
+        if ambient_temperature < 15.0:
+            return (
+                2.26956e-1, 1.22731e-3, -1.20000e-6,
+                1.99847e-1, 1.37050e-3, -1.42165e-6,
+                5.22091, 5.02466e-1, -7.70928e-4,
+                11.6859, 5.09406e-1, -7.69455e-4,
+            )
+        return (
+            1.99847e-1, 1.37050e-3, -1.42165e-6,
+            1.69439e-1, 1.53079e-3, -1.66771e-6,
+            11.6859, 5.09406e-1, -7.69455e-4,
+            18.0798, 5.16356e-1, -7.67751e-4,
+        )
+
+    raise ValueError(
+        "Dispatchable electricity mode currently supports only flash plants in `_get_flash_coefficients`."
+    )
+
+
+def _get_reinjection_coefficients(
+    model: "Model",
+) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
+    plant_type = model.surfaceplant.plant_type.value
+    if plant_type in [PlantType.SUB_CRITICAL_ORC, PlantType.SUPER_CRITICAL_ORC]:
+        return _get_orc_coefficients(model)
+    if plant_type in [PlantType.SINGLE_FLASH, PlantType.DOUBLE_FLASH]:
+        return _get_flash_coefficients(model)
+
+    raise ValueError(
+        "Dispatchable electricity mode currently supports subcritical ORC, supercritical ORC, "
+        "single-flash, and double-flash plants."
+    )
 
 
 def _electricity_dispatch_state(
@@ -232,7 +294,7 @@ def _electricity_dispatch_state(
         surfaceplant.ambient_temperature.value,
         plant_entering_temperature,
         model.wellbores.Tinj.value,
-        *_get_orc_coefficients(model),
+        *_get_reinjection_coefficients(model),
     )
     electricity_produced, heat_extracted, heat_produced, heat_towards_electricity = surfaceplant.electricity_heat_production(
         surfaceplant.enduse_option.value,
@@ -1205,3 +1267,30 @@ def create_operating_mode_strategy(operating_mode: OperatingMode) -> OperatingMo
         return DispatchableOperatingModeStrategy()
 
     return BaseloadOperatingModeStrategy()
+
+
+def build_dispatch_summary_json(model: "Model") -> dict[str, Any] | None:
+    dispatch_results = getattr(model, "dispatch_results", None)
+    if dispatch_results is None:
+        return None
+
+    analysis_start_year = int(getattr(dispatch_results, "analysis_start_year", 1))
+    analysis_end_year = int(getattr(dispatch_results, "analysis_end_year", 2))
+
+    return {
+        "schema_version": 1,
+        "demand_type": getattr(dispatch_results, "demand_type", "thermal"),
+        "surfaceplant_mode": _dispatch_surfaceplant_mode(model),
+        "dispatch_settings": {
+            "demand_source": _enum_value_or_str(model.surfaceplant.dispatch_demand_source.value),
+            "flow_strategy": _enum_value_or_str(model.surfaceplant.dispatch_flow_strategy.value),
+        },
+        "analysis_window": {
+            "start_year": analysis_start_year,
+            "end_year": analysis_end_year,
+            "year_count": analysis_end_year - analysis_start_year,
+            "simulation_start_hour": int(getattr(dispatch_results, "simulation_start_hour", 1)),
+        },
+        "summary_metrics": dict(dispatch_results.summary_metrics),
+        "annual_aggregates": dict(dispatch_results.annual_aggregates),
+    }

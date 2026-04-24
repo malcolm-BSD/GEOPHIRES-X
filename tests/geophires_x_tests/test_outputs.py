@@ -17,6 +17,14 @@ _log = logging.getLogger(__name__)
 
 
 class OutputsTestCase(BaseTestCase):
+    @staticmethod
+    def _dispatch_graph_path(html_output_path: Path, title: str) -> Path:
+        file_stem = (
+            f"{removeDisallowedFilenameChars(html_output_path.stem)}_"
+            f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
+        )
+        return Path(html_output_path.parent, f"{file_stem}.png")
+
     def test_html_output_file(self):
         html_path = Path(tempfile.gettempdir(), "example12_DH.html").absolute()
         try:
@@ -132,6 +140,45 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Annual geothermal electricity delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
         self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
+
+    def test_flash_electric_dispatch_results_are_written_and_parseable(self):
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        for plant_type in ["3", "4"]:
+            with self.subTest(plant_type=plant_type):
+                output_path = Path(
+                    tempfile.gettempdir(), f"dispatch_results_flash_{plant_type}_electric_test.out"
+                ).absolute()
+                model = self._new_model(
+                    input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt")
+                )
+                model.InputParameters.update(
+                    {
+                        "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                        "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue=plant_type),
+                        "Dispatch Demand Source": ParameterEntry(
+                            Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                        ),
+                        "Dispatch Flow Strategy": ParameterEntry(
+                            Name="Dispatch Flow Strategy", sValue="Demand Following"
+                        ),
+                        "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                        "Annual Electricity Demand": ParameterEntry(
+                            Name="Annual Electricity Demand", sValue=demand_csv_file
+                        ),
+                    }
+                )
+
+                model.read_parameters()
+                model.Calculate()
+                model.outputs.output_file = str(output_path)
+                model.outputs.PrintOutputs(model)
+
+                result = GeophiresXResult(str(output_path))
+                dispatch_results = result.result["DISPATCH RESULTS"]
+                self.assertIsNotNone(dispatch_results["Annual geothermal electricity delivered"])
+                self.assertGreater(dispatch_results["Annual geothermal electricity delivered"]["value"], 0.0)
+                self.assertGreater(dispatch_results["Design net electricity produced"]["value"], 0.0)
 
     def test_chp_heat_following_dispatch_results_are_written_and_parseable(self):
         output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_heat_test.out").absolute()
@@ -337,7 +384,9 @@ class OutputsTestCase(BaseTestCase):
         result = GeophiresXClient().get_geophires_result(input_file)
         dispatch_summary = result.dispatch_summary_json
         self.assertIsNotNone(dispatch_summary)
+        self.assertEqual(1, dispatch_summary["schema_version"])
         self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertEqual("chp", dispatch_summary["surfaceplant_mode"])
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["design_net_electricity_produced_mw"], 0.0)
@@ -355,10 +404,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
             "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
         ]
-        graph_paths = [
-            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
-            for title in graph_titles
-        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
         for graph_path in graph_paths:
             if graph_path.exists():
                 graph_path.unlink()
@@ -397,10 +443,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
             "DISPATCH PROFILE: Runtime Fraction and Electric Output",
         ]
-        graph_paths = [
-            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
-            for title in graph_titles
-        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
         for graph_path in graph_paths:
             if graph_path.exists():
                 graph_path.unlink()
@@ -439,10 +482,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
             "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
         ]
-        graph_paths = [
-            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
-            for title in graph_titles
-        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
         for graph_path in graph_paths:
             if graph_path.exists():
                 graph_path.unlink()
@@ -480,10 +520,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
             "DISPATCH PROFILE: Runtime Fraction and Electric Output",
         ]
-        graph_paths = [
-            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
-            for title in graph_titles
-        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
         for graph_path in graph_paths:
             if graph_path.exists():
                 graph_path.unlink()
@@ -524,10 +561,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
             "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
         ]
-        graph_paths = [
-            Path(html_output_path.parent, f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}.png")
-            for title in graph_titles
-        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
 
         for artifact_path in [text_output_path, html_output_path, dispatch_profile_path, *graph_paths]:
             if artifact_path.exists():

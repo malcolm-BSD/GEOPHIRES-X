@@ -46,20 +46,28 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIsNotNone(req_schema)  # TODO sanity checks on content
         self.assertIsNotNone(result_schema)  # TODO sanity checks on content
 
-        print(f'Generated result schema: {json.dumps(result_schema, indent=2)}')
+        print(f"Generated result schema: {json.dumps(result_schema, indent=2)}")
 
         def get_result_prop(cat: str, name: str) -> dict:
-            return result_schema['properties'][cat]['properties'][name]
+            return result_schema["properties"][cat]["properties"][name]
 
         self.assertIn(
-            'multiple of invested capital',
-            get_result_prop('ECONOMIC PARAMETERS', 'Project MOIC')['description'].lower(),
+            "multiple of invested capital",
+            get_result_prop("ECONOMIC PARAMETERS", "Project MOIC")["description"].lower(),
         )
 
         self.assertIn(
-            'Wellfield cost. ', get_result_prop('CAPITAL COSTS (M$)', 'Drilling and completion costs')['description']
+            "Wellfield cost. ", get_result_prop("CAPITAL COSTS (M$)", "Drilling and completion costs")["description"]
+        )
+        self.assertEqual(
+            ["thermal", "electric"],
+            get_result_prop("Dispatch Summary", "demand_type")["enum"],
+        )
+        self.assertIn(
+            "analysis_window",
+            result_schema["properties"]["Dispatch Summary"]["required"],
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
