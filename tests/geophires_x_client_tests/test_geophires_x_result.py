@@ -85,3 +85,49 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertIn(prod_temp_key, r_json_obj)
         self.assertGreater(len(r_json_obj[prod_temp_key]["value"]), 100)
         self.assertTrue(all(it > 0 for it in r_json_obj[prod_temp_key]["value"]))
+
+    def test_dispatch_summary_json_property(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+                params={
+                    "Operating Mode": "Dispatchable",
+                    "End-Use Option": "31",
+                    "Dispatch Demand Source": "Annual Heat Demand",
+                    "Dispatch Flow Strategy": "Demand Following",
+                    "Plant Lifetime": "1",
+                    "Annual Heat Demand": self._get_test_file_path("../assets/params/annual_heat_demand.csv"),
+                },
+            )
+        )
+
+        self.assertIsNotNone(r.json_fields)
+        dispatch_summary = r.dispatch_summary_json
+        self.assertIsNotNone(dispatch_summary)
+        self.assertEqual(1, dispatch_summary["schema_version"])
+        self.assertEqual("thermal", dispatch_summary["demand_type"])
+        self.assertEqual("chp", dispatch_summary["surfaceplant_mode"])
+        self.assertEqual("Annual Heat Demand", dispatch_summary["dispatch_settings"]["demand_source"])
+        self.assertEqual("Demand Following", dispatch_summary["dispatch_settings"]["flow_strategy"])
+        self.assertEqual(1, dispatch_summary["analysis_window"]["start_year"])
+        self.assertEqual(2, dispatch_summary["analysis_window"]["end_year"])
+        self.assertIn("summary_metrics", dispatch_summary)
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
+        self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
+
+    def test_metadata_end_use_option_parses_numeric_output_value(self) -> None:
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                params={
+                    "Print Output to Console": 0,
+                    "End-Use Option": 2,
+                    "Reservoir Model": 1,
+                    "Time steps per year": 1,
+                    "Reservoir Depth": 3,
+                    "Gradient 1": 50,
+                    "Maximum Temperature": 250,
+                }
+            )
+        )
+
+        self.assertEqual("DIRECT_USE_HEAT", r.result["metadata"]["End-Use Option"])

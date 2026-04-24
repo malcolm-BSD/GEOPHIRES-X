@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import datetime
 import math
 import time
@@ -19,7 +20,7 @@ from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
     OutputParameter, ReadParameter, ParameterEntry
 from geophires_x.OptionList import EndUseOptions, EconomicModel, ReservoirModel, FractureShape, ReservoirVolume, \
-    PlantType
+    OperatingMode, PlantType
 from geophires_x.Parameter import Parameter
 
 NL = '\n'
@@ -31,6 +32,7 @@ class Outputs:
     """
 
     VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
+    DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
 
     def __init__(self, model: Model, output_file: str = 'HDR.out'):
         model.logger.info(f'Init {__class__!s}: {__name__}')
@@ -47,11 +49,11 @@ class Outputs:
 
         self.text_output_file = self.ParameterDict[self.text_output_file.Name] = filepath_parameter(strParameter(
                 'Improved Text Output File',
-                DefaultValue='GEOPHIRES_Text.html',
+                DefaultValue='GEOPHIRES_Text.rtf',
                 Required=False,
                 Provided=False,
-                ErrMessage='assume no improved text output',
-                ToolTipText='Provide a improved text output name if you want to have improved text output (no output if not provided)',
+                ErrMessage='assume no rich text output',
+                ToolTipText='Provide any value to enable rich text output written next to the main .out file as .rtf',
         ))
 
         self.html_output_file = self.ParameterDict[self.html_output_file.Name] = filepath_parameter(strParameter(
@@ -60,8 +62,24 @@ class Outputs:
                 Required=False,
                 Provided=False,
                 ErrMessage='assume no HTML output',
-                ToolTipText='Provide a HTML output name if you want to have HTML output (no output if not provided)',
+                ToolTipText='Provide any value to enable HTML output written next to the main .out file as .html',
         ))
+
+        self.dispatch_profile_output_file = self.ParameterDict[
+            self.dispatch_profile_output_file.Name
+        ] = filepath_parameter(
+            strParameter(
+                'Dispatch Profile Output File',
+                DefaultValue='dispatch_profile.csv',
+                Required=False,
+                Provided=False,
+                ErrMessage='assume no dispatch profile csv output',
+                ToolTipText=(
+                    'Provide a CSV output filename if you want hourly dispatch profile export '
+                    '(no dispatch profile CSV output if not provided)'
+                ),
+            )
+        )
 
         # noinspection SpellCheckingInspection
         self.printoutput = self.ParameterDict[self.printoutput.Name] = boolParameter(
@@ -73,10 +91,30 @@ class Outputs:
                 ToolTipText='Provide a 0 if you do not want to print output to the console',
             )
 
+        self.generate_dispatch_html_graphs = self.ParameterDict[self.generate_dispatch_html_graphs.Name] = boolParameter(
+                'Generate Dispatch HTML Graphs',
+                DefaultValue=False,
+                Required=False,
+                Provided=False,
+                ErrMessage='assume no dispatch html graphs',
+                ToolTipText='Provide a 1 to generate optional dispatch graphs in HTML output',
+            )
+
         model.logger.info(f'Complete {__class__!s}: {__name__}')
 
     def __str__(self):
         return 'Outputs'
+
+    @staticmethod
+    def _thermal_drawdown_ratio(model: Model, idx: int) -> float:
+        initial_temp = float(model.wellbores.ProducedTemperature.value[0])
+        if initial_temp == 0.0:
+            return 0.0
+        return float(model.wellbores.ProducedTemperature.value[idx] / initial_temp)
+
+    def _sibling_output_path(self, suffix: str) -> str:
+        output_path = Path(self.output_file)
+        return str(output_path.with_suffix(suffix))
 
     def read_parameters(self, model: Model, default_output_path: Path = None) -> None:
         """
@@ -188,7 +226,7 @@ class Outputs:
                 f.write('                           ***SUMMARY OF RESULTS***\n')
                 f.write(NL)
                 f.write(f'      {model.surfaceplant.enduse_option_output.display_name}: '
-                        f'{model.surfaceplant.enduse_option_output.value}\n')
+                        f'{model.surfaceplant.enduse_option.value.value}\n')
                 if model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
                     f.write('      Surface Application: ' + str(model.surfaceplant.plant_type.value.value) + NL)
                 if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity component
@@ -239,6 +277,8 @@ class Outputs:
                     f.write(f'      {model.economics.CarbonThatWouldHaveBeenProducedTotal.display_name}:'
                             f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
                             f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
+
+                self._write_dispatch_results(model, f)
 
                 f.write(NL)
                 f.write(NL)
@@ -666,7 +706,7 @@ class Outputs:
                     f.write('                                     (' + model.wellbores.ProducedTemperature.CurrentUnits.value+')               (' + model.wellbores.PumpingPower.CurrentUnits.value + ')              (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  (%)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}              {5:8.4f}'.format(i+1,
-                                                model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value]/model.wellbores.ProducedTemperature.value[0],
+                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                             model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
@@ -677,7 +717,7 @@ class Outputs:
                     f.write('                                   (deg C)                (MW)               (MW)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i,
-                                                model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value]/model.wellbores.ProducedTemperature.value[0],
+                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                                 model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
@@ -688,7 +728,7 @@ class Outputs:
                     f.write('                                    (deg C)                (MWe)              (MWt)             (MWe)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i,
-                                                                                                                                                      model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value] / model.wellbores.ProducedTemperature.value[0],
+                                                                                                                                                       Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                       model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                       model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                       model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.heat_pump_electricity_used.value[i * model.economics.timestepsperyear.value]) + NL)
@@ -699,7 +739,7 @@ class Outputs:
                     f.write('                                    (deg C)                (MWe)               (MWt)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i,
-                                                model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value]/model.wellbores.ProducedTemperature.value[0],
+                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                                 model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
@@ -710,7 +750,7 @@ class Outputs:
                     f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i,
-                                                                                                                                                     model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value] / model.wellbores.ProducedTemperature.value[0],
+                                                                                                                                                      Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                      model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                      model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                      model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.cooling_produced.value[i * model.economics.timestepsperyear.value], ) + NL)
@@ -721,7 +761,7 @@ class Outputs:
                     f.write('                                (deg C)             (MW)            (MW)              (MW)               (%)\n')
                     for i in range(0, model.surfaceplant.plant_lifetime.value):
                         f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i,
-                                                model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value]/model.wellbores.ProducedTemperature.value[0],
+                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                     model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
                                                                                                                             model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
@@ -862,6 +902,12 @@ class Outputs:
             model.logger.critical(msg)
             raise RuntimeError(msg) from ex
 
+        if self.text_output_file.Provided:
+            self.text_output_file.Valid = True
+
+        if self.html_output_file.Provided:
+            self.html_output_file.Valid = True
+
         print_outputs_rich(
             self.text_output_file,
             self.html_output_file,
@@ -871,6 +917,8 @@ class Outputs:
             sdac_df,
             addon_df
         )
+
+        self._write_dispatch_profile_output(model)
 
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')
 
@@ -971,4 +1019,163 @@ class Outputs:
     @staticmethod
     def _field_label(field_name: str, print_width_before_value: int) -> str:
         return f'{field_name}:{" " * (print_width_before_value - len(field_name) - 1)}'
+
+    @staticmethod
+    def _dispatch_output_rows(model: Model) -> list[tuple[str, float, str]]:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None:
+            return []
+
+        metrics = dispatch_results.summary_metrics
+        demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+        enduse_option = model.surfaceplant.enduse_option.value
+        has_heat_component = enduse_option in [
+            EndUseOptions.HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
+        has_electric_component = enduse_option in [
+            EndUseOptions.ELECTRICITY,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+        ]
+        plant_type = model.surfaceplant.plant_type.value
+        rows = [
+            ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
+            ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
+            ('Dispatch analysis duration', metrics.get('dispatch_analysis_year_count', 1.0), 'years'),
+            ('Dispatch capacity factor', metrics.get('dispatch_capacity_factor', 0.0) * 100.0, '%'),
+            ('Average runtime fraction', metrics.get('average_runtime_fraction', 0.0) * 100.0, '%'),
+            ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
+            ('Design flow rate', metrics.get('design_flow_kg_per_sec', 0.0), 'kg/s'),
+            ('Observed peak flow rate', metrics.get('observed_peak_flow_kg_per_sec', 0.0), 'kg/s'),
+        ]
+        summary_rows = []
+        if demand_type == 'electric':
+            if has_heat_component:
+                summary_rows.append(('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'))
+            if has_electric_component:
+                summary_rows.extend([
+                    ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            if has_heat_component:
+                summary_rows.append(
+                    ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year')
+                )
+            summary_rows.extend([
+                ('Annual unmet electricity demand', metrics.get('annual_unmet_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Peak geothermal contribution', metrics.get('peak_served_electricity_kwh', 0.0) / 1000.0, 'MW'),
+                ('Peak unmet load', metrics.get('peak_unmet_electricity_kwh', 0.0) / 1000.0, 'MW'),
+            ])
+        elif demand_type == 'cooling':
+            summary_rows.extend([
+                ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
+                ('Design cooling produced', metrics.get('design_cooling_produced_mw', 0.0), 'MW'),
+                ('Annual geothermal cooling delivered', metrics.get('annual_served_cooling_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Annual unmet cooling demand', metrics.get('annual_unmet_cooling_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Peak geothermal contribution', metrics.get('peak_served_cooling_kwh', 0.0) / 1000.0, 'MW'),
+                ('Peak unmet load', metrics.get('peak_unmet_cooling_kwh', 0.0) / 1000.0, 'MW'),
+            ])
+        else:
+            if has_heat_component:
+                summary_rows.extend([
+                    ('Design heat produced', metrics.get('design_heat_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal heat delivered', metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            if has_electric_component:
+                summary_rows.extend([
+                    ('Design net electricity produced', metrics.get('design_net_electricity_produced_mw', 0.0), 'MW'),
+                    ('Annual geothermal electricity delivered', metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ])
+            summary_rows.extend([
+                ('Annual unmet thermal demand', metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                ('Peak geothermal contribution', metrics.get('peak_served_heat_kwh', 0.0) / 1000.0, 'MW'),
+                ('Peak unmet load', metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0, 'MW'),
+            ])
+            if plant_type == PlantType.HEAT_PUMP:
+                summary_rows.append(
+                    ('Annual heat pump electricity consumed', metrics.get('annual_heat_pump_electricity_kwh', 0.0) / 1.0e6, 'GWh/year')
+                )
+            if plant_type == PlantType.DISTRICT_HEATING:
+                summary_rows.extend([
+                    ('Annual peaking boiler heat delivered', metrics.get('annual_district_heating_boiler_kwh', 0.0) / 1.0e6, 'GWh/year'),
+                    ('Peak peaking boiler demand', metrics.get('peak_district_heating_boiler_mw', 0.0), 'MW'),
+                ])
+        rows[3:3] = summary_rows
+        return rows
+
+    def _write_dispatch_results(self, model: Model, f) -> None:
+        dispatch_rows = self._dispatch_output_rows(model)
+        if len(dispatch_rows) == 0:
+            return
+
+        f.write(NL)
+        f.write(NL)
+        f.write(f'                           ***{self.DISPATCH_RESULTS_CATEGORY_NAME}***\n')
+        f.write(NL)
+        for field_name, value, units in dispatch_rows:
+            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+
+    def _write_dispatch_profile_output(self, model: Model) -> None:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None or not self.dispatch_profile_output_file.Provided:
+            return
+
+        num_timesteps = len(dispatch_results.hourly_thermal_demand)
+        if num_timesteps == 0:
+            return
+
+        timesteps_per_year = 8760
+        simulation_start_hour = getattr(dispatch_results, 'simulation_start_hour', 1)
+        analysis_start_year = getattr(dispatch_results, 'analysis_start_year', 1)
+        with open(self.dispatch_profile_output_file.value, 'w', encoding='UTF-8', newline='') as f:
+            writer = csv.writer(f)
+            demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
+            demand_column = 'Electricity Demand (MW)' if demand_type == 'electric' else 'Thermal Demand (MW)'
+            output_column = 'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Geothermal Thermal Output (MW)'
+            writer.writerow(
+                [
+                    'Year',
+                    'Hour of Year',
+                    'Simulation Hour',
+                    demand_column,
+                    output_column,
+                    'Demand Served (MW)',
+                    'Unmet Demand (MW)',
+                    'Produced Temperature (degC)',
+                    'Flow Rate (kg/s)',
+                    'Runtime Fraction',
+                    'Pumping Power (MW)',
+                ]
+            )
+
+            for timestep_index in range(num_timesteps):
+                writer.writerow(
+                    [
+                        analysis_start_year + (timestep_index // timesteps_per_year),
+                        timestep_index % timesteps_per_year + 1,
+                        simulation_start_hour + timestep_index,
+                        float(dispatch_results.hourly_thermal_demand[timestep_index]),
+                        float(
+                            dispatch_results.hourly_geothermal_electric_output[timestep_index]
+                            if demand_type == 'electric'
+                            else dispatch_results.hourly_geothermal_thermal_output[timestep_index]
+                        ),
+                        float(dispatch_results.hourly_demand_served[timestep_index] / 1000.0),
+                        float(dispatch_results.hourly_unmet_demand[timestep_index] / 1000.0),
+                        float(dispatch_results.hourly_produced_temperature[timestep_index]),
+                        float(dispatch_results.hourly_flow[timestep_index]),
+                        float(dispatch_results.hourly_runtime_fraction[timestep_index]),
+                        float(dispatch_results.hourly_pumping_power[timestep_index]),
+                    ]
+                )
 

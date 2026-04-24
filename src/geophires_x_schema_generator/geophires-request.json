@@ -1338,32 +1338,104 @@
       "minimum": 0.0,
       "maximum": 1.0
     },
+    "Operating Mode": {
+      "description": "Select the simulation operating mode: Baseload or Dispatchable",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Baseload",
+      "minimum": null,
+      "maximum": null
+    },
+    "Dispatch Demand Source": {
+      "description": "Select the demand profile source used by dispatchable mode.",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Annual Heat Demand",
+      "minimum": null,
+      "maximum": null
+    },
+    "Dispatch Flow Strategy": {
+      "description": "Select the dispatch control strategy used by dispatchable mode.",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Demand Following",
+      "minimum": null,
+      "maximum": null
+    },
+    "Maximum Dispatch Flow Fraction": {
+      "description": "Maximum production flow multiplier available to dispatchable operation.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 1.0,
+      "minimum": 0.0,
+      "maximum": 100.0
+    },
+    "Minimum Dispatch Flow Fraction": {
+      "description": "Minimum production flow fraction when dispatchable operation is on.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "Minimum Dispatch Runtime Fraction": {
+      "description": "Minimum on-hour runtime fraction when dispatchable operation is on.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "Dispatch Analysis Start Year": {
+      "description": "First operating year included in dispatch analysis output.",
+      "type": "integer",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "Dispatch Analysis End Year": {
+      "description": "Exclusive operating-year end for dispatch analysis output. For example, start year 1 and end year 2 runs one operating year.",
+      "type": "integer",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 2,
+      "minimum": 2,
+      "maximum": 10001
+    },
     "Annual Heat Demand": {
       "description": "Historical annual heating demand profile",
       "type": "array",
-      "units": null,
+      "units": "kWh",
       "category": "Surface Plant",
       "default": [],
-      "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "minimum": null,
+      "maximum": null
     },
     "Annual Cooling Demand": {
       "description": "Historical annual cooling demand profile",
       "type": "array",
-      "units": null,
+      "units": "kWh",
       "category": "Surface Plant",
       "default": [],
-      "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "minimum": null,
+      "maximum": null
     },
     "Annual Electricity Demand": {
       "description": "Historical annual electricity demand profile",
       "type": "array",
-      "units": null,
+      "units": "kWh",
       "category": "Surface Plant",
       "default": [],
-      "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "minimum": null,
+      "maximum": null
     },
     "Construction Years": {
       "description": "Number of years spent in construction (assumes whole years, no fractions). By default, capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years. For SAM Economic Models, provide Construction CAPEX Schedule to use a custom spread instead.",

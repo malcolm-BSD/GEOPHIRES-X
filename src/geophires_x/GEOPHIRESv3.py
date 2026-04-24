@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+from geophires_x.Dispatch import build_dispatch_summary_json
 import geophires_x.Model as Model
 import geophires_x.OptionList as OptionList
 
@@ -20,6 +21,12 @@ def main(enable_geophires_logging_config=True):
     :return: None
     """
     original_cwd: Path = Path.cwd().absolute()
+    default_outputfile = Path(original_cwd, 'HDR.out')
+
+    # Resolve the default output path before changing directories so all subsequent
+    # reads and writes refer to the same file regardless of the process cwd.
+    if len(sys.argv) <= 2:
+        sys.argv.append(str(default_outputfile))
 
     # set the starting directory to be the directory that this file is in
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -69,8 +76,11 @@ def main(enable_geophires_logging_config=True):
             model.sdacgteconomics.OutputParameterDict, indent=4, sort_keys=True, supress_warnings=True
         )
         json_merged = {**json_merged, **json.loads(json_sdacgt)}
+    dispatch_summary = build_dispatch_summary_json(model)
+    if dispatch_summary is not None:
+        json_merged["Dispatch Summary"] = dispatch_summary
 
-    json_outputfile = Path(original_cwd, 'HDR.json')
+    json_outputfile = default_outputfile.with_suffix('.json')
     if len(sys.argv) > 2:
         output_arg = str(sys.argv[2])
         output_arg_path = Path(output_arg)
@@ -80,7 +90,7 @@ def main(enable_geophires_logging_config=True):
 
     # if the user has asked for it, copy the output file to the screen
     if model.outputs.printoutput.value:
-        outputfile = Path(original_cwd, 'HDR.out')
+        outputfile = default_outputfile
         if len(sys.argv) > 2:
             outputfile = sys.argv[2]
 
