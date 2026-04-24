@@ -9,6 +9,7 @@ import csv
 import math
 from collections.abc import Iterable
 from typing import Any, List, Optional
+import os
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
@@ -19,7 +20,7 @@ import ast
 from forex_python.converter import CurrencyRates, CurrencyCodes, get_rate
 from abc import ABC
 from pint.facets.plain import PlainQuantity
-from pint.errors import DimensionalityError
+from pint.errors import UndefinedUnitError
 
 from geophires_x.OptionList import GeophiresInputEnum
 from geophires_x.Units import *
@@ -39,6 +40,46 @@ _JSON_PARAMETER_TYPE_NUMBER = 'number'
 _JSON_PARAMETER_TYPE_ARRAY = 'array'
 _JSON_PARAMETER_TYPE_BOOLEAN = 'boolean'
 _JSON_PARAMETER_TYPE_OBJECT = 'object'
+
+
+def _resolve_input_source(candidate: str, model) -> str:
+    if not isinstance(candidate, str):
+        return candidate
+
+    stripped = candidate.strip()
+    if stripped == '' or '\n' in stripped or '\r' in stripped:
+        return candidate
+
+    parsed = urlparse(candidate)
+    if parsed.scheme in ['http', 'https']:
+        return candidate
+
+    expanded = Path(os.path.expandvars(os.path.expanduser(stripped)))
+    try:
+        if expanded.is_file():
+            return str(expanded)
+    except (OSError, ValueError):
+        return candidate
+
+    repo_root_resolved = Path(__file__).resolve().parents[2] / expanded
+    try:
+        if repo_root_resolved.is_file():
+            return str(repo_root_resolved.resolve())
+    except (OSError, ValueError):
+        return candidate
+
+    input_file_path = getattr(model, 'input_file_path', None)
+    if input_file_path is None:
+        return candidate
+
+    resolved = Path(input_file_path).parent / expanded
+    try:
+        if resolved.is_file():
+            return str(resolved.resolve())
+    except (OSError, ValueError):
+        return candidate
+
+    return candidate
 
 class HasQuantity(ABC):
 
@@ -178,6 +219,7 @@ class Parameter(HasQuantity):
     AllowFormulaInput: bool = False
     FormulaExpression: Optional[str] = None
     EvaluatedFromFormula: bool = False
+    auto_raise_exception_on_invalid_read: bool = False
 
     def __post_init__(self):
         if self.PreferredUnits is None:
@@ -426,13 +468,17 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             if content:
                 seems_like_URL = True
                 ParameterReadIn.sValue = content
-        elif is_existing_file_path(ParameterReadIn.sValue):
-            content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
-            if content:
-                seems_like_file = True
-                ParameterReadIn.sValue = content
-            else:
-                seems_like_file = False
+        else:
+            resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
+            if resolved_source != ParameterReadIn.sValue:
+                ParameterReadIn.sValue = resolved_source
+            if is_existing_file_path(ParameterReadIn.sValue):
+                content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
+                if content:
+                    seems_like_file = True
+                    ParameterReadIn.sValue = content
+                else:
+                    seems_like_file = False
         # if the file or URL is provided but not valid, log an error and raise an exception
         if (seems_like_file or seems_like_URL) and not content:
             err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a valid file path.'
@@ -515,12 +561,24 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
         # for a filename, make sure the file exists. The user can also provide a URL, so make sure that is valid.
         # If they are OK, then just assign the input text string to the Parameter.
         # When the Parameter is used, the code is responsible for reading the content of the file or URL and using it correctly.
-        if is_existing_file_path(ParameterReadIn.sValue) or url_returns_content(ParameterReadIn.sValue):
-            ParamToModify.value = ParameterReadIn.sValue
+        resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
+        if is_existing_file_path(resolved_source) or url_returns_content(resolved_source):
+            ParamToModify.value = resolved_source
             ParamToModify.Provided = True
             ParamToModify.Valid = True
-            model.logger.info(f'Validated filename input for {ParamToModify.Name}: {ParameterReadIn.sValue}')
+            model.logger.info(f'Validated filename input for {ParamToModify.Name}: {resolved_source}')
         else:
+            if ParamToModify.Name == "Reservoir Output File Name":
+                ParamToModify.value = ParameterReadIn.sValue
+                ParamToModify.Provided = True
+                ParamToModify.Valid = True
+                model.logger.warning(
+                    f'Deferred validation of {ParamToModify.Name} until reservoir output file parsing: '
+                    f'{ParameterReadIn.sValue}'
+                )
+                model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+                return
+
             err_msg = f'Error: Provided value ({ParameterReadIn.sValue}) for {ParamToModify.Name} is not a valid file path or URL.'
             print(err_msg)
             model.logger.fatal(err_msg)
@@ -633,7 +691,7 @@ def _try_parse_pair_vector_csv_file(path_str: str, param_to_modify=None, model=N
     if path_str.startswith('http'):
         return None
 
-    path = Path(path_str)
+    path = Path(_resolve_input_source(path_str, model))
     if not path.is_file():
         return None
 
@@ -753,7 +811,7 @@ def _try_read_numeric_list_from_source(parameter_read_in: ParameterEntry, param_
                 return parsed_values
             continue
 
-        file_path = Path(candidate)
+        file_path = Path(_resolve_input_source(candidate, model))
         if file_path.is_file():
             if file_path.stat().st_size > _PAIR_VECTOR_MAX_BYTES:
                 continue
@@ -856,11 +914,6 @@ def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=Non
         if parsed is not None:
             return parsed
 
-        # This option is a multiline string
-        parsed = _try_parse_multiline(candidate, ParamToModify=param_to_modify, model=model)
-        if parsed is not None:
-            return parsed
-
         parsed = _try_parse_pair_vector_csv_file(candidate, param_to_modify=param_to_modify, model=model)
         if parsed is not None:
             return parsed
@@ -872,6 +925,20 @@ def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=Non
         except Exception:
             # Fall back to scalar parsing if URL retrieval/parsing fails.
             continue
+
+        resolved_source = _resolve_input_source(candidate, model)
+        parsed_source = urlparse(candidate)
+        if (
+            candidate.lower().endswith('.csv')
+            or resolved_source != candidate
+            or parsed_source.scheme in ['http', 'https']
+        ):
+            continue
+
+        # This option is a multiline string.
+        parsed = _try_parse_multiline(candidate, ParamToModify=param_to_modify, model=model)
+        if parsed is not None:
+            return parsed
 
     return None
 
@@ -945,7 +1012,8 @@ def ConvertUnits(ParamToModify, strUnit: str, model) -> str:
             currFactor = currFactor / 1_000_000.0
         elif currPrefix and currType[0] in ['K', 'k']:
             currFactor = currFactor / 1000.0
-        Factor *= currFactor * prefFactor
+        Factor = currFactor * prefFactor
+        Factor *= _ratio_suffix_conversion_factor(prefSuff, currSuff)
         if prefPrefix:
             prefShort = prefType[1:]
         if currPrefix:
@@ -1077,10 +1145,21 @@ def ConvertUnitsBack(ParamToModify: Parameter, model):
     try:
         ParamToModify.value = _ureg.Quantity(ParamToModify.value, convertible_unit(ParamToModify.CurrentUnits)).to(convertible_unit(ParamToModify.PreferredUnits)).magnitude
         ParamToModify.CurrentUnits = ParamToModify.PreferredUnits
-    except (AttributeError, DimensionalityError) as ae:
+    except Exception as conversion_error:
         # TODO refactor to check for/convert currency instead of relying on try/except once currency conversion is
         #  re-enabled - https://github.com/NREL/GEOPHIRES-X/issues/236?title=Currency+conversions+disabled
-        model.logger.warning(f'Failed to convert units with pint, attempting currency conversion ({ae})')
+        if ParamToModify.UnitType not in [Units.CURRENCY, Units.CURRENCYFREQUENCY, Units.COSTPERMASS, Units.ENERGYCOST]:
+            msg = (
+                f'Error: GEOPHIRES failed to convert your units for {ParamToModify.Name} to something it understands. '
+                f'You gave {ParamToModify.CurrentUnits}  - Are the units defined for Pint library, '
+                f' or have you defined them in the user defined units file (GEOPHIRES3_newunits)? '
+                f'Cannot continue. Exiting.'
+            )
+            model.logger.critical(f'Pint conversion failed ({conversion_error})')
+            model.logger.critical(msg)
+            raise RuntimeError(msg) from conversion_error
+
+        model.logger.warning(f'Failed to convert units with pint, attempting currency conversion ({conversion_error})')
 
         try:
             param_modified: Parameter = _parameter_with_currency_units_converted_back_to_preferred_units(ParamToModify,
@@ -1088,13 +1167,13 @@ def ConvertUnitsBack(ParamToModify: Parameter, model):
             ParamToModify.value = param_modified.value
             ParamToModify.CurrentUnits = param_modified.CurrentUnits
             ParamToModify.UnitType = param_modified.UnitType
-        except AttributeError as cce:
-            model.logger.error(f'Currency conversion failed ({cce})')
+        except AttributeError as currency_conversion_error:
+            model.logger.error(f'Currency conversion failed ({currency_conversion_error})')
 
             msg = (
                 f'Error: GEOPHIRES failed to convert your units for {ParamToModify.Name} to something it understands. '
                 f'You gave {ParamToModify.CurrentUnits}  - Are the units defined for Pint library, '
-                f' or have you defined them in the user defined units file (GEOPHIRES3_newunits)? '
+                 f' or have you defined them in the user defined units file (GEOPHIRES3_newunits)? '
                 f'Cannot continue. Exiting.'
             )
             model.logger.critical(msg)
@@ -1102,6 +1181,15 @@ def ConvertUnitsBack(ParamToModify: Parameter, model):
             raise RuntimeError(msg)
 
     model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+
+
+def _ratio_suffix_conversion_factor(preferred_suffix: str, current_suffix: str) -> float:
+    if not preferred_suffix or not current_suffix or preferred_suffix == current_suffix:
+        return 1.0
+
+    preferred_denominator = preferred_suffix.removeprefix("/")
+    current_denominator = current_suffix.removeprefix("/")
+    return _ureg.Quantity(1, convertible_unit(preferred_denominator)).to(convertible_unit(current_denominator)).magnitude
 
 
 def _parameter_with_currency_units_converted_back_to_preferred_units(param: Parameter, model) -> Parameter:
@@ -1159,6 +1247,7 @@ def _parameter_with_currency_units_converted_back_to_preferred_units(param: Para
         elif currPrefix and currType[0] in ['K', 'k']:
             currFactor = currFactor / 1000.0
         Factor = currFactor * prefFactor
+        Factor *= _ratio_suffix_conversion_factor(prefSuff, currSuff)
         if prefPrefix:
             prefShort = prefType[1:]
         if currPrefix:
@@ -1292,9 +1381,21 @@ def LookupUnits(sUnitText: str):
                 if item.value == sUnitText:
                     return item, uType
 
+    try:
+        canonical_unit_text = f'{_ureg.Quantity(1, sUnitText).units:~}'.replace(' ', '')
+    except (UndefinedUnitError, ValueError):
+        canonical_unit_text = None
+
+    if canonical_unit_text is not None and canonical_unit_text != sUnitText.replace(' ', ''):
+        return LookupUnits(canonical_unit_text)
+
     # No match was found with the unit text string, so try with the canonical symbol (if different).
-    symbol = _ureg.get_symbol(sUnitText)
-    if symbol != sUnitText: return LookupUnits(symbol)
+    try:
+        symbol = _ureg.get_symbol(sUnitText)
+    except UndefinedUnitError:
+        return None, None
+    if symbol != sUnitText:
+        return LookupUnits(symbol)
     return None, None
 
 
@@ -1529,11 +1630,13 @@ def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_m
                     is_list = True
                 # if it is None, then it did not successfully parse out as a list, so it is likely just a simple value with units,
                 # so we will try to process it as that below
-            elif parameter_read_in.sValue.strip().startswith('http') or is_existing_file_path(parameter_read_in.sValue):
-                param_to_modify.value = get_data_from_file_or_url(parameter_read_in.sValue, param_to_modify, model)
+            else:
+                resolved_source = _resolve_input_source(parameter_read_in.sValue, model)
+                if resolved_source.strip().startswith('http') or is_existing_file_path(resolved_source):
+                    param_to_modify.value = get_data_from_file_or_url(resolved_source, param_to_modify, model)
 
-                # the file or URl may have returned a list, so set the flag
-                is_list = is_numeric_sequence_string(str(param_to_modify.value))
+                    # the file or URl may have returned a list, so set the flag
+                    is_list = is_numeric_sequence_string(str(param_to_modify.value))
 
         # deal with the case where the user has provided units. That will be indicated by a space in it
         # the strategy is to look for a space in the value, and if there is one, then we will assume that the value has a unit in it,
@@ -1597,8 +1700,28 @@ def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_m
         err_msg = f"Warning: Parameter given ({parameter_read_in.sValue}) for {param_to_modify.Name} is outside of valid range. Please use a value in the valid range."
         print(err_msg)
         model.logger.info(err_msg)
+        invalid_value_for_exception = parameter_read_in.sValue
+        if isinstance(param_to_modify, floatParameter):
+            try:
+                invalid_value_for_exception = float(parameter_read_in.sValue)
+            except (TypeError, ValueError):
+                pass
+        elif isinstance(param_to_modify, intParameter):
+            try:
+                invalid_value_for_exception = int(float(parameter_read_in.sValue))
+            except (TypeError, ValueError):
+                pass
         param_to_modify.value = param_to_modify.DefaultValue #set it to the default value, but log a warning about it
         model.logger.info(f'Continuing with default value ({param_to_modify.DefaultValue}) for {param_to_modify.Name}')
+        param_to_modify.Provided = True
+
+        if param_to_modify.auto_raise_exception_on_invalid_read:
+            raise RuntimeError(
+                f'Error: Parameter given ({invalid_value_for_exception}) for {param_to_modify.Name} outside of valid range.'
+            )
+
+        model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+        return
 
     # All is good
     param_to_modify.Provided = True  # set provided to true because we are using a user provide value now

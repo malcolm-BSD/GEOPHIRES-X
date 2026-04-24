@@ -139,6 +139,14 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "VALCOC Flexibility Adjustment",
             result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
+        self.assertEqual(
+            ["thermal", "cooling", "electric"],
+            get_result_prop("Dispatch Summary", "demand_type")["enum"],
+        )
+        self.assertIn(
+            "analysis_window",
+            result_schema["properties"]["Dispatch Summary"]["required"],
+        )
 
 
 if __name__ == "__main__":

@@ -120,6 +120,9 @@ class AGSOutputs(Outputs.Outputs):
                         model.economics.Cwell.value) + " " + model.economics.Cwell.CurrentUnits.value + NL)
                     f.write(f"      Surface Plant Cost:                                     " + "{0:.1f}".format(
                         model.economics.Cplant.value) + " " + model.economics.Cplant.CurrentUnits.value + NL)
+                    if model.surfaceplant.piping_length.value > 0:
+                        f.write(f"      Transmission/pipeline Cost:                           " + "{0:.1f}".format(
+                            model.economics.Cpiping.value) + " " + model.economics.Cpiping.CurrentUnits.value + NL)
                     f.write(f"      OPEX:                                                  " + "{0:.1f}".format(
                         model.economics.Coam.value) + " " + model.economics.Coam.CurrentUnits.value + NL)
                     if model.surfaceplant.End_use == EndUseOptions.HEAT:

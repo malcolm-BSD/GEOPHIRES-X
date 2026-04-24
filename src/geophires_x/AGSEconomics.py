@@ -201,7 +201,9 @@ class AGSEconomics(Economics.Economics):
                     self.CAPEX_Surface_Plant = np.max(
                         model.surfaceplant.Instantaneous_electricity_production_method_4) * self.Power_plant_cost_per_kWe.value / 1e6  # [M$]
 
-            self.TotalCAPEX = self.CAPEX_Drilling + self.CAPEX_Surface_Plant  # Total system capital cost (only includes drilling and surface plant cost) [M$]
+            # Use the same transmission pipeline cost treatment as the other economic models.
+            self.calculate_transmission_pipeline_cost(model)
+            self.TotalCAPEX = self.CAPEX_Drilling + self.CAPEX_Surface_Plant + self.Cpiping.value  # [M$]
 
             # Calculate OPEX
             if model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
@@ -245,6 +247,7 @@ class AGSEconomics(Economics.Economics):
             self.CCap.value = self.TotalCAPEX
             self.CCap.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cwell.value = self.CAPEX_Drilling
+            self.Cpiping.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cplant.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cplant.value = self.CAPEX_Surface_Plant
             self.Cplant.CurrentUnits = CurrencyUnit.MDOLLARS

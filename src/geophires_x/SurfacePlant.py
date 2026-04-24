@@ -1,10 +1,12 @@
+import copy
 import numpy as np
 
 from .EconomicsUtils import CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME
 from .GeoPHIRESUtils import quantity
 from .NumpyUtils import np_trapz
-from .OptionList import EndUseOptions, PlantType
-from .Parameter import floatParameter, intParameter, listParameter, OutputParameter, ReadParameter, \
+from .OptionList import DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode, PlantType
+from .Parameter import floatParameter, intParameter, OutputParameter, ReadParameter, \
+    TimeSeriesParameter, strParameter, \
     coerce_int_params_to_enum_values
 from .SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from .Units import *
@@ -429,31 +431,121 @@ class SurfacePlant:
             ErrMessage="assume default heat rate ($0.02/kWh)",
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
         )
-        self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = listParameter(
+        self.operating_mode = self.ParameterDict["Operating Mode"] = strParameter(
+            "Operating Mode",
+            DefaultValue=OperatingMode.BASELOAD.value,
+            Required=False,
+            ErrMessage="assume default operating mode (Baseload)",
+            ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
+        )
+        self.dispatch_demand_source = self.ParameterDict["Dispatch Demand Source"] = strParameter(
+            "Dispatch Demand Source",
+            DefaultValue=DispatchDemandSource.ANNUAL_HEAT_DEMAND.value,
+            Required=False,
+            ErrMessage="assume default dispatch demand source (Annual Heat Demand)",
+            ToolTipText="Select the demand profile source used by dispatchable mode.",
+        )
+        self.dispatch_flow_strategy = self.ParameterDict["Dispatch Flow Strategy"] = strParameter(
+            "Dispatch Flow Strategy",
+            DefaultValue=DispatchFlowStrategy.DEMAND_FOLLOWING.value,
+            Required=False,
+            ErrMessage="assume default dispatch flow strategy (Demand Following)",
+            ToolTipText="Select the dispatch control strategy used by dispatchable mode.",
+        )
+        self.maximum_dispatch_flow_fraction = self.ParameterDict["Maximum Dispatch Flow Fraction"] = floatParameter(
+            "Maximum Dispatch Flow Fraction",
+            DefaultValue=1.0,
+            Min=0.0,
+            Max=100.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default maximum dispatch flow fraction (1.0)",
+            ToolTipText="Maximum production flow multiplier available to dispatchable operation.",
+        )
+        self.minimum_dispatch_flow_fraction = self.ParameterDict["Minimum Dispatch Flow Fraction"] = floatParameter(
+            "Minimum Dispatch Flow Fraction",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default minimum dispatch flow fraction (0.0)",
+            ToolTipText="Minimum production flow fraction when dispatchable operation is on.",
+        )
+        self.minimum_dispatch_runtime_fraction = self.ParameterDict["Minimum Dispatch Runtime Fraction"] = floatParameter(
+            "Minimum Dispatch Runtime Fraction",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default minimum dispatch runtime fraction (0.0)",
+            ToolTipText="Minimum on-hour runtime fraction when dispatchable operation is on.",
+        )
+        self.dispatch_analysis_start_year = self.ParameterDict["Dispatch Analysis Start Year"] = intParameter(
+            "Dispatch Analysis Start Year",
+            DefaultValue=1,
+            AllowableRange=list(range(1, 10_001)),
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default dispatch analysis start year (1)",
+            ToolTipText="First operating year included in dispatch analysis output.",
+        )
+        self.dispatch_analysis_end_year = self.ParameterDict["Dispatch Analysis End Year"] = intParameter(
+            "Dispatch Analysis End Year",
+            DefaultValue=2,
+            AllowableRange=list(range(2, 10_002)),
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default dispatch analysis end year (2)",
+            ToolTipText=(
+                "Exclusive operating-year end for dispatch analysis output. "
+                "For example, start year 1 and end year 2 runs one operating year."
+            ),
+        )
+        self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual heat demand profile (none)",
             ToolTipText="Historical annual heating demand profile"
         )
         self.HeatDemand = self.HeatingDemand
-        self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = listParameter(
+        self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = TimeSeriesParameter(
             "Annual Cooling Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual cooling demand profile (none)",
             ToolTipText="Historical annual cooling demand profile",
         )
-        self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = listParameter(
+        self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = TimeSeriesParameter(
             "Annual Electricity Demand",
             DefaultValue=[],
-            Min=-1.8e30,
-            Max=1.8e30,
-            UnitType=Units.NONE,
+            YMin=-1.8e30,
+            YMax=1.8e30,
+            UnitType=Units.ENERGY,
+            PreferredUnits=EnergyUnit.KWH,
+            CurrentUnits=EnergyUnit.KWH,
+            AllowExtendedInput=True,
+            PreferredXUnits="hr",
+            PreferredYUnits="kWh",
+            ResampleToHourlyYear=True,
             ErrMessage="assume default annual electricity demand profile (none)",
             ToolTipText="Historical annual electricity demand profile",
         )
@@ -670,6 +762,15 @@ class SurfacePlant:
         """
         model.logger.info(f'Init {self.__class__.__name__}: {__name__}')
 
+        def warn_once(key, message: str, also_print: bool = False) -> None:
+            if key in model._runtime_warnings_issued:
+                return
+
+            model._runtime_warnings_issued.add(key)
+            model.logger.warning(message)
+            if also_print:
+                print(f'Warning: {message}')
+
         # Deal with all the parameter values that the user has provided.  They should really only provide values that
         # they want to change from the default values, but they can provide a value that is already set because it is a
         # default value set in __init__.  It will ignore those.
@@ -686,7 +787,7 @@ class SurfacePlant:
                 ParameterToModify = item[1]
                 key = ParameterToModify.Name.strip()
                 if key in model.InputParameters:
-                    ParameterReadIn = model.InputParameters[key]
+                    ParameterReadIn = copy.copy(model.InputParameters[key])
 
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, model)
@@ -697,6 +798,12 @@ class SurfacePlant:
                         ParameterToModify.value = end_use_option
                         if end_use_option == EndUseOptions.HEAT:
                             self.plant_type.value = PlantType.INDUSTRIAL
+                    elif ParameterToModify.Name == 'Operating Mode':
+                        ParameterToModify.value = OperatingMode.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'Dispatch Demand Source':
+                        ParameterToModify.value = DispatchDemandSource.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'Dispatch Flow Strategy':
+                        ParameterToModify.value = DispatchFlowStrategy.from_input_string(ParameterReadIn.sValue)
                     elif ParameterToModify.Name == 'Power Plant Type':
                         ParameterToModify.value = PlantType.from_input_string(ParameterReadIn.sValue)
                         if self.enduse_option.value == EndUseOptions.ELECTRICITY:
@@ -753,14 +860,85 @@ class SurfacePlant:
                     self.plant_outlet_pressure.value = 100
                     msg = (f'No valid plant outlet pressure provided. '
                            f'GEOPHIRES will assume default plant outlet pressure ({self.plant_outlet_pressure.value} kPa)')
-                    model.logger.warning(msg)
+                    warn_once(('default_plant_outlet_pressure', self.plant_outlet_pressure.value), msg)
                 else:
                     self.usebuiltinoutletplantcorrelation.value = True
                     msg = (f'No valid plant outlet pressure provided. GEOPHIRES will calculate plant outlet pressure '
                            f'based on production wellhead pressure and surface equipment pressure drop of 10 psi')
-                    model.logger.warning(msg)
+                    warn_once(('calculated_plant_outlet_pressure', 10), msg)
+
         else:
             model.logger.info('No parameters read because no content provided')
+
+        if not isinstance(self.operating_mode.value, OperatingMode):
+            self.operating_mode.value = OperatingMode.from_input_string(self.operating_mode.value)
+        if not isinstance(self.enduse_option.value, EndUseOptions):
+            self.enduse_option.value = EndUseOptions.from_int(int(self.enduse_option.value))
+        if not isinstance(self.plant_type.value, PlantType):
+            self.plant_type.value = PlantType.from_int(int(self.plant_type.value))
+        if not isinstance(self.dispatch_demand_source.value, DispatchDemandSource):
+            self.dispatch_demand_source.value = DispatchDemandSource.from_input_string(self.dispatch_demand_source.value)
+        if not isinstance(self.dispatch_flow_strategy.value, DispatchFlowStrategy):
+            self.dispatch_flow_strategy.value = DispatchFlowStrategy.from_input_string(self.dispatch_flow_strategy.value)
+
+        if self.operating_mode.value == OperatingMode.DISPATCHABLE:
+            if self.enduse_option.value == EndUseOptions.HEAT:
+                if self.plant_type.value == PlantType.ABSORPTION_CHILLER:
+                    allowed_demand_sources = (DispatchDemandSource.ANNUAL_COOLING_DEMAND,)
+                else:
+                    allowed_demand_sources = (DispatchDemandSource.ANNUAL_HEAT_DEMAND,)
+            elif self.enduse_option.value == EndUseOptions.ELECTRICITY:
+                allowed_demand_sources = (DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND,)
+            elif self.enduse_option.value in [
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+            ]:
+                allowed_demand_sources = (
+                    DispatchDemandSource.ANNUAL_HEAT_DEMAND,
+                    DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND,
+                )
+            else:
+                raise ValueError(
+                    'Dispatchable mode currently supports direct-use heat, pure electricity, and CHP cases.'
+                )
+
+            if self.dispatch_demand_source.value not in allowed_demand_sources:
+                allowed_demand_source_labels = ', '.join(
+                    f'`{source.value}`' for source in sorted(allowed_demand_sources, key=lambda item: item.int_value)
+                )
+                raise ValueError(
+                    f'Dispatchable mode for `{self.enduse_option.value.value}` requires '
+                    f'{allowed_demand_source_labels} as the dispatch demand source.'
+                )
+            if self.maximum_dispatch_flow_fraction.value < self.minimum_dispatch_flow_fraction.value:
+                raise ValueError(
+                    'Maximum Dispatch Flow Fraction must be greater than or equal to Minimum Dispatch Flow Fraction.'
+                )
+            if self.dispatch_analysis_start_year.value < 1:
+                raise ValueError('Dispatch Analysis Start Year must be greater than or equal to 1.')
+            if self.dispatch_analysis_end_year.value <= self.dispatch_analysis_start_year.value:
+                raise ValueError(
+                    'Dispatch Analysis End Year must be greater than Dispatch Analysis Start Year.'
+                )
+            if self.dispatch_analysis_end_year.value > self.plant_lifetime.value + 1:
+                adjusted_lifetime = self.dispatch_analysis_end_year.value
+                msg = (
+                    'Dispatch analysis operating-year range extends beyond the current plant lifetime. '
+                    f'Adjusting Plant Lifetime from {self.plant_lifetime.value} to {adjusted_lifetime} years '
+                    f'to accommodate Dispatch Analysis End Year {self.dispatch_analysis_end_year.value}.'
+                )
+                self.plant_lifetime.value = adjusted_lifetime
+                self.plant_lifetime.Provided = True
+                self.plant_lifetime.Valid = True
+                warning_key = (
+                    'dispatch_analysis_end_year_extends_plant_lifetime',
+                    self.dispatch_analysis_end_year.value,
+                )
+                warn_once(warning_key, msg, also_print=True)
 
         coerce_int_params_to_enum_values(self.ParameterDict)
 

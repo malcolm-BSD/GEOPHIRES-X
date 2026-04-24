@@ -298,7 +298,7 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
-                "Transmission pipeline cost",
+                "Transmission/pipeline Cost",
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",
@@ -392,6 +392,30 @@ class GeophiresXResult:
                 "Average Annual Auxiliary Heating Production",
                 "Average Annual Total Heating Production",
                 "Average Annual Electricity Use for Pumping",
+            ],
+            "DISPATCH RESULTS": [
+                "Dispatch analysis start year",
+                "Dispatch analysis end year",
+                "Dispatch analysis duration",
+                "Design heat produced",
+                "Design cooling produced",
+                "Design net electricity produced",
+                "Annual geothermal heat delivered",
+                "Annual geothermal cooling delivered",
+                "Annual geothermal electricity delivered",
+                "Annual unmet thermal demand",
+                "Annual unmet cooling demand",
+                "Annual unmet electricity demand",
+                "Annual heat pump electricity consumed",
+                "Annual peaking boiler heat delivered",
+                "Dispatch capacity factor",
+                "Average runtime fraction",
+                "Peak geothermal contribution",
+                "Peak unmet load",
+                "Peak hourly demand",
+                "Peak peaking boiler demand",
+                "Design flow rate",
+                "Observed peak flow rate",
             ],
             "Simulation Metadata": [
                 _StringValueField("GEOPHIRES Version"),
@@ -595,15 +619,21 @@ class GeophiresXResult:
                     GeophiresXResult.CCUS_PROFILE_LEGACY_NAME,
                     "S-DAC-GT PROFILE",
                 ):
-                    for i in range(len(fields[0][1:])):
-                        field_profile = fields[0][i + 1]
+                    profile_fields = fields
+                    if category == "EXTENDED ECONOMIC PROFILE":
+                        csv_profile = self._get_extended_economic_profile_for_csv()
+                        if csv_profile is not None:
+                            profile_fields = csv_profile
+
+                    for i in range(len(profile_fields[0][1:])):
+                        field_profile = profile_fields[0][i + 1]
                         name_unit_split = field_profile.split(" (")
                         field_display = name_unit_split[0]
                         unit_display = ""
                         if len(name_unit_split) > 1:
                             unit_display = name_unit_split[1].replace(")", "")
-                        for j in range(len(fields[1:])):
-                            year_entry = fields[j + 1]
+                        for j in range(len(profile_fields[1:])):
+                            year_entry = profile_fields[j + 1]
                             year = year_entry[0]
                             profile_year_val = year_entry[i + 1]
                             csv_entries.append([category, field_display, year, profile_year_val, unit_display])
@@ -650,6 +680,15 @@ class GeophiresXResult:
                 return json.loads("".join(jf.readlines()))
         except FileNotFoundError:
             return {}
+
+    @property
+    def json_fields(self) -> MappingProxyType:
+        return self._json_fields
+
+    @property
+    def dispatch_summary_json(self) -> dict[str, Any] | None:
+        dispatch_summary = self._json_fields.get("Dispatch Summary")
+        return dispatch_summary if isinstance(dispatch_summary, dict) else None
 
     def _get_result_field(
         self,
@@ -815,11 +854,88 @@ class GeophiresXResult:
         try:
             lines = self._get_profile_lines("EXTENDED ECONOMIC PROFILE")
             profile = [extract_table_header(lines)]
-            profile.extend(self._extract_addons_style_table_data(lines))
+            parsed_rows = self._extract_addons_style_table_data(lines)
+            if parsed_rows:
+                if self._requires_extended_economic_profile_compatibility(parsed_rows):
+                    first_operating_year = parsed_rows[0]
+                    construction_year_row = [1, 0.0, 0.0, 0.0, 0.0, 0.0, *first_operating_year[6:]]
+                    profile.append(construction_year_row)
+
+                    for previous_row, row in zip(parsed_rows[:-1], parsed_rows[1:]):
+                        normalized_row = [*row]
+                        normalized_row[1] = 0.0
+                        normalized_row[2] = previous_row[2]
+                        normalized_row[3] = 0.0
+                        normalized_row[4] = previous_row[4]
+                        profile.append(normalized_row)
+
+                    final_year = [*parsed_rows[-1]]
+                    final_year[0] = final_year[0] + 1
+                    final_year[1] = 0.0
+                    final_year[3] = 0.0
+                    final_year[7] = round(final_year[7] + final_year[6], 2)
+                    final_year[9] = round(final_year[9] + final_year[8], 2)
+                    profile.append(final_year)
+                else:
+                    profile.extend(parsed_rows)
             return profile
         except BaseException as e:
             self._logger.debug(f"Failed to get extended economic profile: {e}")
             return None
+
+    def _get_extended_economic_profile_for_csv(self):
+        try:
+            lines = self._get_profile_lines("EXTENDED ECONOMIC PROFILE")
+            parsed_rows = self._extract_addons_style_table_data(lines)
+            if not parsed_rows:
+                return None
+
+            profile = [
+                [
+                    "Year Since Start",
+                    "Electricity Price (cents/kWh)",
+                    "Electricity Revenue (MUSD/yr)",
+                    "Heat Price (cents/kWh)",
+                    "Heat Revenue (MUSD/yr)",
+                    "Add-on Revenue (MUSD/yr)",
+                    "Annual AddOn Cash Flow (MUSD/yr)",
+                    "Cumm. AddOn Cash Flow (MUSD)",
+                    "Annual Project Cash Flow (MUSD/yr)",
+                    "Cumm. Project Cash Flow (MUSD)",
+                ]
+            ]
+            if self._requires_extended_economic_profile_compatibility(parsed_rows):
+                first_row = [*parsed_rows[0]]
+                first_row[1] = 0.0
+                first_row[3] = 0.0
+                profile.append(first_row)
+                profile.extend(parsed_rows[1:])
+            else:
+                profile.extend(parsed_rows)
+            return profile
+        except BaseException as e:
+            self._logger.debug(f"Failed to get extended economic profile for CSV: {e}")
+            return None
+
+    @staticmethod
+    def _requires_extended_economic_profile_compatibility(parsed_rows: list[list]) -> bool:
+        if not parsed_rows:
+            return False
+
+        first_row = parsed_rows[0]
+        if len(first_row) < 10:
+            return False
+
+        # Legacy add-ons outputs stored the first operating year as year 1 with zero price columns,
+        # positive revenue, and the construction cash flow embedded in that same row.
+        return (
+            first_row[0] == 1
+            and first_row[1] == 0.0
+            and first_row[3] == 0.0
+            and first_row[2] > 0.0
+            and first_row[5] > 0.0
+            and first_row[6] < 0.0
+        )
 
     def _get_sdacgt_profile(self):
         def extract_table_header(lines: list) -> list:
@@ -1036,26 +1152,54 @@ class GeophiresXResult:
             return None
 
     def _get_end_use_option(self) -> EndUseOption:
-        try:
-            end_use_option_snippet = next(filter(lambda x: "End-Use Option: " in x, self._lines)).split(
-                "End-Use Option: "
-            )[1]
+        def _parse_end_use_option_value(raw_value: str) -> EndUseOption | None:
+            normalized = raw_value.strip()
+            if not normalized:
+                return None
 
-            if "Direct-Use Heat" in end_use_option_snippet:
+            if is_int(normalized):
+                int_value = int(normalized)
+                try:
+                    return EndUseOption(int_value)
+                except ValueError:
+                    self._logger.warning(f"Unknown End-Use Option integer value in result output: {int_value}")
+                    return None
+
+            if "Direct-Use Heat" in normalized:
                 return EndUseOption.DIRECT_USE_HEAT
-            elif "Electricity" in end_use_option_snippet:
+            if normalized == "Electricity":
                 return EndUseOption.ELECTRICITY
-        except StopIteration:
-            # FIXME clean up
+            if "Cogeneration Topping Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_TOPPING_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_TOPPING_EXTRA_HEAT
+            if "Cogeneration Bottoming Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_BOTTOMING_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_BOTTOMING_EXTRA_HEAT
+            if "Cogeneration Parallel Cycle" in normalized:
+                if "Electricity sales considered as extra income" in normalized:
+                    return EndUseOption.COGENERATION_PARALLEL_EXTRA_ELECTRICTY
+                return EndUseOption.COGENERATION_PARALLEL_EXTRA_HEAT
+
+            return None
+
+        for marker in ("End-Use Option: ", "End-Use: "):
             try:
-                end_use_option_snippet = next(filter(lambda x: "End-Use: " in x, self._lines)).split("End-Use: ")[1]
-
-                if "Direct-Use Heat" in end_use_option_snippet:
-                    return EndUseOption.DIRECT_USE_HEAT
-                elif "Electricity" in end_use_option_snippet:
-                    return EndUseOption.ELECTRICITY
+                end_use_option_snippet = next(filter(lambda x: marker in x, self._lines)).split(marker)[1]
+                parsed_option = _parse_end_use_option_value(end_use_option_snippet)
+                if parsed_option is not None:
+                    return parsed_option
             except StopIteration:
-                # FIXME
-                self._logger.error("Failed to parse End-Use Option")
+                continue
 
+        summary_result = self.result.get("SUMMARY OF RESULTS", {})
+        for summary_field in ("End-Use Option", "End-Use", "Surface Application"):
+            summary_value = summary_result.get(summary_field)
+            if isinstance(summary_value, dict):
+                parsed_option = _parse_end_use_option_value(summary_value.get("value", ""))
+                if parsed_option is not None:
+                    return parsed_option
+
+        self._logger.error("Failed to parse End-Use Option")
         return None

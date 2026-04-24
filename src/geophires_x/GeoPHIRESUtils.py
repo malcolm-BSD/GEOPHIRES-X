@@ -1315,7 +1315,7 @@ def get_data_from_file_or_url_as_string(source: str) -> str:
 
     return raw_text
 
-def _try_parse_multiline(lines: list[str],
+def _try_parse_multiline(lines: Union[list[str], str],
                          ParamToModify,
                          model,
                          *,
@@ -1335,15 +1335,8 @@ def _try_parse_multiline(lines: list[str],
     :return type: None | list[tuple[float, float]] | list[float]
     """
 
-    # if it has new lines in it, then convert it into a single line.
-    candidate = ''
-    if len(__import__('re').findall(r'\r\n|\n\r|\r|\n', lines)) > 0:
-        candidate = str([float(x) if __import__('re').fullmatch(r'[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?', x) else x
-                  for x in (l.strip() for l in __import__('re').split(r'\r\n|\n|\r', lines)) if x])
-
-    # If bracket-wrapped, unwrap (still keep single-line semantics)
-    if candidate.startswith('[') and candidate.endswith(']'):
-        candidate = candidate[1:-1].strip()
+    if isinstance(lines, str):
+        lines = lines.splitlines() if any(nl in lines for nl in ("\r", "\n")) else [lines]
 
     first_from = second_from = first_to = second_to = None
     is_two_col = assume_two_column
@@ -1523,6 +1516,17 @@ def _try_parse_multiline_list(lines: list[Any],
                 second_from = get_unit_from_string(units[1]).value
                 if not isTS:
                     first_to = first_from  # hardcode to no conversion for now, we can make this more flexible in the future if needed
+                else:
+                    try:
+                        source_dims = _ureg.Quantity(1, second_from).dimensionality
+                        target_unit = getattr(second_to, "value", second_to)
+                        target_dims = _ureg.Quantity(1, target_unit).dimensionality
+                        if source_dims != target_dims:
+                            second_to = second_from
+                    except Exception:
+                        second_to = second_from
+                ParamToModify.CurrentXUnits = first_from
+                ParamToModify.CurrentYUnits = second_from
                 is_two_col = True
             else:
                 ParamToModify.CurrentUnits = get_unit_from_string(units)

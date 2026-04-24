@@ -250,8 +250,9 @@ class UPPReservoir(Reservoir):
         Returns tuple of (time_points, temperatures).
         """
         try:
-            with open(model.reserv.filenamereservoiroutput.value, encoding='UTF-8') as f:
-                content_prod_temp = f.readlines()
+            content_prod_temp = get_data_from_file_or_url_as_string(
+                model.reserv.filenamereservoiroutput.value
+            ).splitlines()
         except Exception:
             msg = (
                 f'Error: GEOPHIRES could not read reservoir output file '

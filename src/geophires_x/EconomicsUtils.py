@@ -226,6 +226,43 @@ def investment_tax_credit_output_parameter() -> OutputParameter:
     )
 
 
+def _normalize_schedule_dsl_segments(schedule_values) -> list[str]:
+    """
+    Normalize schedule DSL inputs into a flat list of string segments.
+
+    This accepts the intended forms like `['1 * 2', '0.25']` and also the
+    nested/list-literal variants that can arrive from higher-level input
+    serialization paths, such as `[['1*2', '0.25']]` or `"['1*2', '0.25']"`.
+    """
+
+    if schedule_values is None:
+        return []
+
+    if isinstance(schedule_values, (list, tuple)):
+        ret: list[str] = []
+        for value in schedule_values:
+            ret.extend(_normalize_schedule_dsl_segments(value))
+        return ret
+
+    raw = str(schedule_values).strip()
+    if not raw:
+        return []
+
+    if raw.startswith('[') and raw.endswith(']'):
+        try:
+            parsed = ast.literal_eval(raw)
+        except (SyntaxError, ValueError):
+            parsed = None
+
+        if isinstance(parsed, (list, tuple)):
+            return _normalize_schedule_dsl_segments(parsed)
+
+    if ',' in raw:
+        return [segment.strip() for segment in raw.split(',') if segment.strip()]
+
+    return [raw]
+
+
 def expand_schedule_dsl(schedule_strings: list[str | float], total_years: int) -> list[float]:
     """
     Parse a duration-based scheduling DSL and expand it into a fixed-length time-series array.
@@ -256,6 +293,8 @@ def expand_schedule_dsl(schedule_strings: list[str | float], total_years: int) -
 
     if total_years <= 0:
         return []
+
+    schedule_strings = _normalize_schedule_dsl_segments(schedule_strings)
 
     if not schedule_strings:
         return [0.0] * total_years
@@ -315,3 +354,4 @@ def expand_schedule_dsl(schedule_strings: list[str | float], total_years: int) -
         result.extend([terminal_value] * remaining)
 
     return result
+import ast
