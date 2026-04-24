@@ -77,7 +77,7 @@ def print_outputs_rich(
     simulation_metadata.append(
         OutputTableItem('Calculation Time', '{0:10.3f}'.format((time.time() - model.tic)) + ' sec'))
 
-    summary.append(OutputTableItem('End-Use Option', str(model.surfaceplant.enduse_option.value.int_value)))
+    summary.append(OutputTableItem('End-Use Option', model.surfaceplant.enduse_option.value.value))
 
     if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY,
                                                   EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
