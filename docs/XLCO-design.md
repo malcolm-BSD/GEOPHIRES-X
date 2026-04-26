@@ -515,8 +515,6 @@ V1 should add all of the following:
 
 Recommended initial validation assets:
 
-- `tests/examples/example_XLCOE_paper_low.tst`
-- `tests/examples/example_XLCOE_paper_high.tst`
 - `tests/test_xlco.py`
 - `docs/XLCOE.md` or equivalent user-facing document later in Phase 5
 
@@ -1084,7 +1082,7 @@ Completed artifacts:
 
 Validation boundary:
 
-- `XLCOE` is directly locked to the paper's published electricity table via explicit low/high fixtures
+- `XLCOE` is validated through automated regression coverage in `tests/geophires_x_tests/test_xlco.py`
 - `XLCOH` and `XLCOC` are GEOPHIRES-native generalizations of the same method
 - there is no external published paper table for `XLCOH` or `XLCOC` in this design basis, so validation for those
   commodities is based on:

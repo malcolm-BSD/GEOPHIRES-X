@@ -32,6 +32,86 @@
           "description": "XLCOE_MarketSocial",
           "units": "cents/kWh"
         },
+        "Value-Adjusted Electricity Breakeven Price (VALCOE)": {
+          "type": "number",
+          "description": "VALCOE",
+          "units": "cents/kWh"
+        },
+        "VALCOE Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOE_EnergyAdjustment",
+          "units": "cents/kWh"
+        },
+        "VALCOE Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOE_CapacityAdjustment",
+          "units": "cents/kWh"
+        },
+        "VALCOE Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOE_FlexibilityAdjustment",
+          "units": "cents/kWh"
+        },
+        "Extended Heat Breakeven Price (XLCOH Market)": {
+          "type": "number",
+          "description": "XLCOH_Market",
+          "units": "USD/MMBTU"
+        },
+        "Extended Heat Breakeven Price (XLCOH Market + Social)": {
+          "type": "number",
+          "description": "XLCOH_MarketSocial",
+          "units": "USD/MMBTU"
+        },
+        "Value-Adjusted Heat Breakeven Price (VALCOH)": {
+          "type": "number",
+          "description": "VALCOH",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOH_EnergyAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOH_CapacityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOH_FlexibilityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "Extended Cooling Breakeven Price (XLCOC Market)": {
+          "type": "number",
+          "description": "XLCOC_Market",
+          "units": "USD/MMBTU"
+        },
+        "Extended Cooling Breakeven Price (XLCOC Market + Social)": {
+          "type": "number",
+          "description": "XLCOC_MarketSocial",
+          "units": "USD/MMBTU"
+        },
+        "Value-Adjusted Cooling Breakeven Price (VALCOC)": {
+          "type": "number",
+          "description": "VALCOC",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOC_EnergyAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOC_CapacityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOC_FlexibilityAdjustment",
+          "units": "USD/MMBTU"
+        },
         "Total CAPEX": {
           "type": "number",
           "description": "The total capital expenditure (CAPEX) required to construct the plant. This value includes all direct and indirect costs, and contingency. For SAM Economic models, it also includes any cost escalation from inflation during construction. It is used as the total installed cost input for SAM Economic Models.",

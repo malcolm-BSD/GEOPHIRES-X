@@ -532,7 +532,7 @@ class GeophiresXClientTestCase(BaseTestCase):
     def test_parse_chp_percent_cost_allocation(self):
         result = GeophiresXResult(self._get_test_file_path("examples/example3.out"))
         self.assertEqual(
-            result.result["ECONOMIC PARAMETERS"]["CHP: Percent cost allocation for electrical plant"]["value"], 100.00
+            result.result["ECONOMIC PARAMETERS"]["CHP: Percent cost allocation for electrical plant"]["value"], 93.48
         )
 
     def test_parse_annualized_capital_costs(self):

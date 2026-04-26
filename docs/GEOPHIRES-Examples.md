@@ -23,14 +23,10 @@ See documentation: [Case Study: 500 MWe EGS Project Modeled on Fervo Cape Statio
   [`tests/examples/example_XLCOH.txt`](../tests/examples/example_XLCOH.txt)
 - cooling-focused example:
   [`tests/examples/example_XLCOC.txt`](../tests/examples/example_XLCOC.txt)
-- electricity paper-validation fixtures:
-  [`tests/examples/example_XLCOE_paper_low.tst`](../tests/examples/example_XLCOE_paper_low.tst)
-  and
-  [`tests/examples/example_XLCOE_paper_high.tst`](../tests/examples/example_XLCOE_paper_high.tst)
 
 Important validation boundary:
 
-- `XLCOE` is directly regression-locked to the published paper table through explicit validation fixtures
+- `XLCOE` is validated through automated regression coverage in the test suite
 - `XLCOH` and `XLCOC` are GEOPHIRES-native extensions of the same market/social methodology, validated through
   direct-use, cooling, and mixed-output regression tests rather than a published external paper target
 
