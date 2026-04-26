@@ -255,6 +255,46 @@ class ParameterTestCase(BaseTestCase):
         self.assertIn("Number of Production Wells", str(exc.exception))
         self.assertIn("outside of valid range", str(exc.exception))
 
+    def test_parameter_formula_ignores_duplicate_unreferenced_symbols(self):
+        dependent_param = intParameter(
+            "Number of Production Wells",
+            DefaultValue=2,
+            AllowableRange=list(range(1, 201)),
+            UnitType=Units.NONE,
+            AllowFormulaInput=True,
+            FormulaExpression="number_of_injection_wells + 1",
+        )
+        source_param = intParameter(
+            "Number of Injection Wells",
+            value=2,
+            DefaultValue=2,
+            AllowableRange=list(range(201)),
+            UnitType=Units.NONE,
+        )
+        economic_model_1 = intParameter(
+            "Economic Model",
+            value=2,
+            DefaultValue=2,
+            AllowableRange=list(range(10)),
+            UnitType=Units.NONE,
+        )
+        economic_model_2 = intParameter(
+            "Economic Model",
+            value=4,
+            DefaultValue=4,
+            AllowableRange=list(range(10)),
+            UnitType=Units.NONE,
+        )
+
+        model = self._new_model()
+        resolve_parameter_formulas(
+            [dependent_param, source_param, economic_model_1, economic_model_2],
+            model.logger,
+        )
+
+        self.assertEqual(3, dependent_param.value)
+        self.assertTrue(dependent_param.EvaluatedFromFormula)
+
     def test_read_parameter_allows_pair_vector_inline_for_float_parameter(self):
         model = self._new_model()
         param = floatParameter(
