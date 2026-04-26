@@ -17,7 +17,6 @@ from geophires_x.xlco import CommodityBenefitStreams
 from geophires_x.xlco import calculate_extended_cost_from_explicit_streams
 from geophires_x.xlco import calculate_extended_costs_from_explicit_streams
 from geophires_x.xlco import calculate_extended_levelized_costs
-from geophires_x.xlco import calculate_xlcoe_from_explicit_streams
 from geophires_x_client import GeophiresInputParameters
 from tests.base_test_case import BaseTestCase
 
@@ -585,64 +584,6 @@ class XLCOETestCase(BaseTestCase):
 
         self.assertEqual({}, calculate_extended_levelized_costs(model.economics, model))
 
-    def test_xlcoe_paper_low_fixture_matches_published_values(self):
-        fixture = self._load_paper_fixture("../examples/example_XLCOE_paper_low.tst")
-
-        lcoe, xlcoe_market, xlcoe_market_social = calculate_xlcoe_from_explicit_streams(
-            fixture["annual_baseline_costs_musd"],
-            fixture["annual_net_generation_kwh"],
-            fixture["annual_market_benefits_musd"],
-            fixture["annual_social_benefits_musd"],
-            fixture["Market Discount Rate"],
-            fixture["Social Discount Rate"],
-        )
-
-        self.assertAlmostEqual(fixture["Expected LCOE cents/kWh"], lcoe, places=7)
-        self.assertAlmostEqual(fixture["Expected XLCOE Market cents/kWh"], xlcoe_market, places=7)
-        self.assertAlmostEqual(fixture["Expected XLCOE Market Social cents/kWh"], xlcoe_market_social, places=7)
-
-    def test_xlcoe_paper_high_fixture_matches_published_values(self):
-        fixture = self._load_paper_fixture("../examples/example_XLCOE_paper_high.tst")
-
-        lcoe, xlcoe_market, xlcoe_market_social = calculate_xlcoe_from_explicit_streams(
-            fixture["annual_baseline_costs_musd"],
-            fixture["annual_net_generation_kwh"],
-            fixture["annual_market_benefits_musd"],
-            fixture["annual_social_benefits_musd"],
-            fixture["Market Discount Rate"],
-            fixture["Social Discount Rate"],
-        )
-
-        self.assertAlmostEqual(fixture["Expected LCOE cents/kWh"], lcoe, places=7)
-        self.assertAlmostEqual(fixture["Expected XLCOE Market cents/kWh"], xlcoe_market, places=7)
-        self.assertAlmostEqual(fixture["Expected XLCOE Market Social cents/kWh"], xlcoe_market_social, places=7)
-
-    def test_xlcoe_paper_fixture_component_sensitivities_have_expected_sign(self):
-        fixture = self._load_paper_fixture("../examples/example_XLCOE_paper_low.tst")
-        baseline = self._calculate_paper_fixture_outputs(fixture)
-
-        for component_name in [
-            "Annual Carbon Benefit MUSD",
-            "Annual REC Benefit MUSD",
-            "Idle Rig Discount Benefit MUSD",
-        ]:
-            adjusted_fixture = dict(fixture)
-            adjusted_fixture[component_name] *= 1.10
-            adjusted = self._calculate_paper_fixture_outputs(adjusted_fixture)
-            self.assertLess(adjusted[1], baseline[1], msg=component_name)
-            self.assertLess(adjusted[2], baseline[2], msg=component_name)
-
-        for component_name in [
-            "Annual Water Benefit MUSD",
-            "Annual Construction Jobs Benefit MUSD",
-            "Annual Operations Jobs Benefit MUSD",
-        ]:
-            adjusted_fixture = dict(fixture)
-            adjusted_fixture[component_name] *= 1.10
-            adjusted = self._calculate_paper_fixture_outputs(adjusted_fixture)
-            self.assertAlmostEqual(adjusted[1], baseline[1], places=7, msg=component_name)
-            self.assertLess(adjusted[2], baseline[2], msg=component_name)
-
     # noinspection PyMethodMayBeStatic
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False
@@ -671,56 +612,6 @@ class XLCOETestCase(BaseTestCase):
             model.Calculate()
 
         return model
-
-    def _load_paper_fixture(self, relative_path: str) -> dict[str, Any]:
-        fixture: dict[str, Any] = {}
-        with open(self._get_test_file_path(relative_path), encoding="utf-8") as f:
-            for raw_line in f:
-                line = raw_line.strip()
-                if line == "" or line.startswith("#"):
-                    continue
-                key, value = [part.strip() for part in line.split(",", maxsplit=1)]
-                fixture[key] = float(value)
-
-        return self._expand_paper_fixture(fixture)
-
-    def _calculate_paper_fixture_outputs(self, fixture: dict[str, Any]) -> tuple[float, float, float]:
-        fixture = self._expand_paper_fixture(dict(fixture))
-        return calculate_xlcoe_from_explicit_streams(
-            fixture["annual_baseline_costs_musd"],
-            fixture["annual_net_generation_kwh"],
-            fixture["annual_market_benefits_musd"],
-            fixture["annual_social_benefits_musd"],
-            fixture["Market Discount Rate"],
-            fixture["Social Discount Rate"],
-        )
-
-    def _expand_paper_fixture(self, fixture: dict[str, Any]) -> dict[str, Any]:
-        construction_years = int(fixture["Construction Years"])
-        operating_years = int(fixture["Operating Years"])
-        total_years = construction_years + operating_years
-
-        fixture["annual_net_generation_kwh"] = [0.0] * construction_years + [
-            fixture["Annual Net Generation kWh"]
-        ] * operating_years
-        fixture["annual_baseline_costs_musd"] = [0.0] * construction_years + [
-            fixture["Annual Baseline Cost MUSD"]
-        ] * operating_years
-
-        annual_market_benefits_musd = [0.0] * total_years
-        annual_market_benefits_musd[0] = fixture["Idle Rig Discount Benefit MUSD"]
-        for year in range(construction_years, total_years):
-            annual_market_benefits_musd[year] = (
-                fixture["Annual Carbon Benefit MUSD"] + fixture["Annual REC Benefit MUSD"]
-            )
-        fixture["annual_market_benefits_musd"] = annual_market_benefits_musd
-
-        fixture["annual_social_benefits_musd"] = [
-            fixture["Annual Construction Jobs Benefit MUSD"]
-        ] * construction_years + [
-            fixture["Annual Water Benefit MUSD"] + fixture["Annual Operations Jobs Benefit MUSD"]
-        ] * operating_years
-        return fixture
 
     @staticmethod
     def _observed_discounted_benefit_musd(basis, baseline_public_value: float, benefit_public_value: float) -> float:

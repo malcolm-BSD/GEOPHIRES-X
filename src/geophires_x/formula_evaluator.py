@@ -118,12 +118,7 @@ def resolve_parameter_formulas(parameters: Iterable, logger) -> None:
 
     for parameter in numeric_parameters:
         normalized_name = normalize_parameter_name(parameter.Name)
-        existing = normalized_lookup.get(normalized_name)
-        if existing is not None and existing is not parameter:
-            raise ValueError(
-                f'Ambiguous formula symbol "{normalized_name}" for parameters {existing.Name} and {parameter.Name}.'
-            )
-        normalized_lookup[normalized_name] = parameter
+        normalized_lookup.setdefault(normalized_name, []).append(parameter)
 
     resolved_values = {}
     resolving = []
@@ -134,9 +129,14 @@ def resolve_parameter_formulas(parameters: Iterable, logger) -> None:
         if normalized_symbol in resolved_values:
             return resolved_values[normalized_symbol]
 
-        parameter = normalized_lookup.get(normalized_symbol)
-        if parameter is None:
+        parameters_for_symbol = normalized_lookup.get(normalized_symbol)
+        if parameters_for_symbol is None:
             raise ValueError(f'Unknown formula symbol "{symbol_name}".')
+        if len(parameters_for_symbol) > 1:
+            parameter_names = ' and '.join(parameter.Name for parameter in parameters_for_symbol)
+            raise ValueError(f'Ambiguous formula symbol "{normalized_symbol}" for parameters {parameter_names}.')
+
+        parameter = parameters_for_symbol[0]
 
         if normalized_symbol in resolving:
             cycle = ' -> '.join([*resolving, normalized_symbol])
