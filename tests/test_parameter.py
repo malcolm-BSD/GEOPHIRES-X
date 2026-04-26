@@ -193,6 +193,17 @@ class ParameterTestCase(BaseTestCase):
         finally:
             Path(input_file).unlink()
 
+    def test_model_formula_resolution_ignores_duplicate_symbols_from_add_on_component_inheritance(self):
+        model = Model(
+            enable_geophires_logging_config=False,
+            input_file=self._get_test_file_path("geophires_x_tests/egs-sam-em-add-ons.txt"),
+        )
+
+        model.read_parameters()
+
+        self.assertIsNotNone(model.addeconomics)
+        self.assertEqual(5, model.economics.econmodel.value.int_value)
+
     def test_parameter_formula_circular_dependency_raises_clear_error(self):
         nprod = intParameter(
             "Number of Production Wells",

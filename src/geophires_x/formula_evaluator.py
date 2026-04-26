@@ -167,6 +167,8 @@ def resolve_parameter_formulas(parameters: Iterable, logger) -> None:
 
 
 def _iter_model_parameters(model) -> Iterable:
+    yielded_symbols = set()
+
     for attribute_name in (
         'reserv',
         'wellbores',
@@ -186,7 +188,16 @@ def _iter_model_parameters(model) -> Iterable:
         if parameter_dict is None:
             continue
 
-        yield from parameter_dict.values()
+        for parameter in parameter_dict.values():
+            if not hasattr(parameter, 'Name'):
+                continue
+
+            normalized_name = normalize_parameter_name(parameter.Name)
+            if normalized_name in yielded_symbols:
+                continue
+
+            yielded_symbols.add(normalized_name)
+            yield parameter
 
 
 def resolve_model_parameter_formulas(model) -> None:
