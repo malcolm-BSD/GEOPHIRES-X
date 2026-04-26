@@ -1,0 +1,160 @@
+{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern Courier New;}}
+\viewkind4\uc1\pard\f0\fs20
+                               *****************\par
+                               ***CASE REPORT***\par
+                               *****************\par
+\par
+Simulation Metadata\par
+----------------------\par
+GEOPHIRES Version: 3.12.1 \par
+Simulation Date: 2026-04-26 \par
+Simulation Time: 14:45 \par
+Calculation Time:      5.264 sec \par
+\par
+                           ***SUMMARY OF RESULTS***\par
+\par
+      End-Use Option                               : Direct-Use Heat \par
+      Average Direct-Use Heat Production           :       2.21 MW\par
+      Direct-Use heat breakeven price (LCOH)       :      68.85 USD/MMBTU\par
+      Number of production wells                   :          2 \par
+      Number of injection wells                    :          2 \par
+      Flowrate per production well                 :       55.0 kg/sec\par
+      Well depth                                   :        3.0 kilometer\par
+      Geothermal gradient                          :         50 C/km\par
+\par
+                           ***ECONOMIC PARAMETERS***\par
+\par
+      Economic Model                               : Fixed Charge Rate (FCR) \par
+      Fixed Charge Rate (FCR)                      :       5.00 \par
+      Accrued financing during construction        :       0.00 %\par
+      Project lifetime                             :          5 yr\par
+      Capacity factor                              :       17.3 %\par
+      Project NPV                                  :     -57.10 MUSD\par
+      Project IRR                                  :       0.00 %\par
+      Project VIR=PI=PIR                           :      -0.11 \par
+      Project MOIC                                 :      -0.96 \par
+      Project Payback Period                       :    N/A     \par
+\par
+                           ***ENGINEERING PARAMETERS***\par
+\par
+      Number of Production Wells                   :          2 \par
+      Number of Injection Wells                    :          2 \par
+      Well depth                                   :        3.0 kilometer\par
+      Water loss rate                              :      200.0 %\par
+      Pump efficiency                              :     8000.0 %\par
+      Injection temperature                        :       50.0 C\par
+      Production Wellbore heat transmission calculated with Rameys model:            \par
+      Average production well temperature drop     :        3.5 C\par
+      Flowrate per production well                 :       55.0 kg/sec\par
+      Injection well casing ID                     :      7.000 in\par
+      Production well casing ID                    :      7.000 in\par
+      Number of times redrilling                   :          0 \par
+\par
+                           ***RESOURCE CHARACTERISTICS***\par
+\par
+      Maximum reservoir temperature                :      400.0 C\par
+      Number of segments                           :          1 \par
+      Geothermal gradient                          :         50 C/km\par
+\par
+                           ***RESERVOIR PARAMETERS***\par
+\par
+      Reservoir Model                              : Multiple Parallel Fractures (Gringarten) Model \par
+      Bottom-hole temperature                      :     170.00 C\par
+      Fracture model                               :   Square   \par
+      Well separation: fracture height             :     900.00 meter\par
+      Fracture area                                :  810000.00 m\par
+      Reservoir volume                             : 1000000000 m\par
+      Average reservoir pressure                   :   28841.05 kPa\par
+      Plant outlet pressure                        :    1067.94 kPa\par
+      Production wellhead pressure                 :    1136.89 kPa\par
+      Productivity Index                           :       5.00 kg/sec/bar\par
+      Injectivity Index                            :       5.00 kg/sec/bar\par
+      Reservoir density                            :    2700.00 kg/m\par
+      Reservoir thermal conductivity               :       2.70 W/m/K\par
+      Reservoir heat capacity                      :    1000.00 J/kg/K\par
+\par
+                           ***RESERVOIR STIMULATION RESULTS***\par
+\par
+      Maximum Production Temperature               :      166.8 C\par
+      Average Production Temperature               :       33.4 C\par
+      Minimum Production Temperature               :        0.0 C\par
+      Initial Production Temperature               :      165.4 C\par
+      Average Reservoir Heat Extraction            :       2.45 MW\par
+      Production Wellbore Heat Transmission Model  : Ramey Model \par
+      Average Production Well Temperature Drop     :        3.5 C\par
+      Average Injection Well Pump Pressure Drop    :      217.9 kPa\par
+      Average Production Well Pump Pressure Drop   :     1115.8 kPa\par
+\par
+                           ***CAPITAL COSTS***\par
+\par
+      Drilling and completion costs                :      17.38 MUSD\par
+      Drilling and completion costs per well       :       4.35 MUSD\par
+      Stimulation costs                            :       3.02 MUSD\par
+      Surface power plant costs                    :      23.78 MUSD\par
+      Field gathering system costs                 :       2.58 MUSD\par
+      Total surface equipment costs                :      26.36 MUSD\par
+      Exploration costs                            :       4.49 MUSD\par
+      Total capital costs                          :      51.25 MUSD\par
+      Annualized capital costs                     :       2.56 MUSD\par
+\par
+                           ***OPERATING AND MAINTENANCE COSTS***\par
+\par
+      Wellfield maintenance costs                  :       0.55 MUSD/yr\par
+      Power plant maintenance costs                :       1.41 MUSD/yr\par
+      Water costs                                  :       0.01 MUSD/yr\par
+      Average Reservoir Pumping Cost               :       0.00 MUSD/yr\par
+      Total operating and maintenance costs        :       1.98 MUSD/yr\par
+\par
+                           ***SURFACE EQUIPMENT SIMULATION RESULTS***\par
+\par
+      Maximum Net Heat Production                  :      27.26 MW\par
+      Average Net Heat Production                  :       2.21 MW\par
+      Minimum Net Heat Production                  :       0.00 MW\par
+      Initial Net Heat Production                  :      13.19 MW\par
+      Average Annual Heat Production               :      19.33 \par
+      Average Pumping Power                        :       0.00 MW\par
+\par
+                           ***DISPATCH RESULTS***\par
+\par
+      Design heat produced                         :      66.47 MW\par
+      Annual geothermal heat delivered             :      96.65 GWh/year\par
+      Annual unmet thermal demand                  :       0.00 GWh/year\par
+      Dispatch capacity factor                     :      16.60 %\par
+      Average runtime fraction                     :      86.37 %\par
+      Peak geothermal contribution                 :      27.26 MW\par
+      Peak unmet load                              :       0.00 MW\par
+      Peak hourly demand                           :      27.26 MW\par
+      Design flow rate                             :      55.00 kg/s\par
+      Observed peak flow rate                      :      31.17 kg/s\par
+\par
+                            ***************************************************************\par
+                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\par
+                            ***************************************************************\par
+              Year                      Thermal Drawdown (%)            Geofluid Temperature (C)              Pump Power (MW)                    Net Heat (MW)           \par
+                1                               1.0000                            165.36                            0.0043                           13.1882              \par
+                2                               0.0000                              0.00                            0.0000                            0.0000              \par
+                3                               0.0000                              0.00                            0.0000                            0.0000              \par
+                4                               0.0000                              0.00                            0.0000                            0.0000              \par
+                5                               0.0000                              0.00                            0.0000                            0.0000              \par
+\par
+                            ***************************************************************\par
+                            *ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE*\par
+                            ***************************************************************\par
+              Year                      Heating Provided (kW)             Heat Extracted(GW/yr)          Reservoir Heat Content (MW)      Percentage of Total Heat Mined (%)   \par
+                1                                 96.7                            107.39                            323.61                              0.12              \par
+                2                                  0.0                              0.00                            323.61                              0.12              \par
+                3                                  0.0                              0.00                            323.61                              0.12              \par
+                4                                  0.0                              0.00                            323.61                              0.12              \par
+                5                                  0.0                              0.00                            323.61                              0.12              \par
+\par
+                            ***************************************************************\par
+                            *                REVENUE & CASHFLOW PROFILE                *\par
+                            ***************************************************************\par
+              Year                   Electricity:Price (USD/kWh)      Electricity:Ann. Rev. (MUSD/yr)     Electricity:Cumm. Rev. (MUSD)         Heat:Price (USD/kWh)            Heat:Ann. Rev. (MUSD/yr)           Heat:Cumm. Rev. (MUSD)            Cooling:Price (USD/kWh)         Cooling:Ann. Rev. (MUSD/yr)        Cooling:Cumm. Rev. (MUSD)           Carbon:Price (USD/lb)          Carbon:Ann. Rev. (MUSD/yr)         Carbon:Cumm. Rev. (MUSD)           Project:OPEX (MUSD/yr)          Project:Net Rev. (MUSD/yr)        Project:Net Cashflow (MUSD)    \par
+                 1                              0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                              0.00                            -51.25                            -51.25               \par
+                 2                              0.0550                             0.00                              0.00                             0.0250                             2.42                              2.42                             0.0250                             0.00                              0.00                             0.0000                             0.00                              0.00                              1.98                              0.44                            -50.81               \par
+                 3                              0.0550                             0.00                              0.00                             0.0250                             0.00                              2.42                             0.0250                             0.00                              0.00                             0.0000                             0.00                              0.00                              1.98                             -1.98                            -52.79               \par
+                 4                              0.0550                             0.00                              0.00                             0.0250                             0.00                              2.42                             0.0250                             0.00                              0.00                             0.0000                             0.00                              0.00                              1.98                             -1.98                            -54.77               \par
+                 5                              0.0550                             0.00                              0.00                             0.0250                             0.00                              2.42                             0.0250                             0.00                              0.00                             0.0000                             0.00                              0.00                              1.98                             -1.98                            -56.75               \par
+                 6                              0.0550                             0.00                              0.00                             0.0250                             0.00                              2.42                             0.0250                             0.00                              0.00                             0.0000                             0.00                              0.00                              1.98                             -1.98                            -58.72               \par
+}

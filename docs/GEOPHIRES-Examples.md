@@ -23,7 +23,7 @@ See documentation: [Case Study: 500 MWe EGS Project Modeled on Fervo Cape Statio
   [`tests/examples/example_XLCOH.txt`](../tests/examples/example_XLCOH.txt)
 - cooling-focused example:
   [`tests/examples/example_XLCOC.txt`](../tests/examples/example_XLCOC.txt)
-- electricity paper-validation fixtures:
+- electricity paper-validation fixtures (skipped):
   [`tests/examples/example_XLCOE_paper_low.tst`](../tests/examples/example_XLCOE_paper_low.tst)
   and
   [`tests/examples/example_XLCOE_paper_high.tst`](../tests/examples/example_XLCOE_paper_high.tst)

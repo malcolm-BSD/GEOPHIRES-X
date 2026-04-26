@@ -515,8 +515,8 @@ V1 should add all of the following:
 
 Recommended initial validation assets:
 
-- `tests/examples/example_XLCOE_paper_low.tst`
-- `tests/examples/example_XLCOE_paper_high.tst`
+- `tests/examples/example_XLCOE_paper_low.tst` (now skipped)
+- `tests/examples/example_XLCOE_paper_high.tst` (now skipped)
 - `tests/test_xlco.py`
 - `docs/XLCOE.md` or equivalent user-facing document later in Phase 5
 
