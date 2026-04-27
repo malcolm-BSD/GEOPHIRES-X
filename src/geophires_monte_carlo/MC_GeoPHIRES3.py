@@ -47,6 +47,7 @@ from geophires_x.GeoPHIRESUtils import render_default
 logger = logging.getLogger("root")  # TODO should be getting __name__ logger instead of root
 logger.setLevel(logging.INFO)
 pb: Optional[Any] = None
+MC_BASE_SEED = 12345
 
 
 def parse_value(value_str: str) -> Union[None, bool, int, float, str, List[Any]]:
@@ -631,6 +632,9 @@ def work_package(pass_list: list) -> None:
     output_file: str = pass_list[7]
     working_dir: str = pass_list[8]  # noqa: F841
     python_path: str = pass_list[9]
+    run_index: int = pass_list[10]
+
+    rng = np.random.default_rng(np.random.SeedSequence([MC_BASE_SEED, run_index]))
 
     input_file_entries = ""
     randomized_values: List[List[Any]] = []
@@ -656,18 +660,18 @@ def work_package(pass_list: list) -> None:
 
         rando = 0.0
         if distribution.startswith("normal"):
-            rando = np.random.normal(float(f2), float(f3))
+            rando = rng.normal(float(f2), float(f3))
         elif distribution.startswith("uniform"):
-            rando = np.random.uniform(float(f2), float(f3))
+            rando = rng.uniform(float(f2), float(f3))
         elif distribution.startswith("triangular"):
-            rando = np.random.triangular(float(f2), float(f3), float(f4))
+            rando = rng.triangular(float(f2), float(f3), float(f4))
         elif distribution.startswith("lognormal"):
-            rando = np.random.lognormal(float(f2), float(f3))
+            rando = rng.lognormal(float(f2), float(f3))
         elif distribution.startswith("binomial"):
-            rando = np.random.binomial(int(float(f2)), float(f3))
+            rando = rng.binomial(int(float(f2)), float(f3))
         elif distribution.startswith("nominal"):
             values = str(f2).split(":")
-            rando = random.choice(values)  # noqa: S311
+            rando = rng.choice(values)
         else:
             raise ValueError(f"Unsupported distribution: {distribution}")
 
@@ -1043,20 +1047,22 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
     os.chdir(working_dir)
     working_dir = working_dir + os.sep
 
-    pass_list = [
-        inputs,
-        outputs,
-        links_ratio,
-        links_equal,
-        links_reverse,
-        links_math,
-        args,
-        output_file,
-        working_dir,
-        python_path,
+    executor_args = [
+        [
+            inputs,
+            outputs,
+            links_ratio,
+            links_equal,
+            links_reverse,
+            links_math,
+            args,
+            output_file,
+            working_dir,
+            python_path,
+            run_index,
+        ]
+        for run_index in range(iterations)
     ]
-
-    executor_args = [pass_list for _ in range(iterations)]
 
     with tqdm(total=iterations, desc="Finished processes", unit="iteration") as pbar:
         max_workers = max(1, (os.cpu_count() or 1) - 1)
