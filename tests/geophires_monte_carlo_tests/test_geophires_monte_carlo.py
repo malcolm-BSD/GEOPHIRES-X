@@ -1,16 +1,50 @@
 import json
 import os
 import re
+import tempfile
 import unittest
 from pathlib import Path
+
+import pandas as pd
 
 from geophires_monte_carlo import GeophiresMonteCarloClient
 from geophires_monte_carlo import MonteCarloRequest
 from geophires_monte_carlo import MonteCarloResult
 from geophires_monte_carlo import SimulationProgram
+from geophires_monte_carlo.MC_GeoPHIRES3 import add_missing_tornado_input_columns
+from geophires_monte_carlo.MC_GeoPHIRES3 import clean_filename
+from geophires_monte_carlo.MC_GeoPHIRES3 import read_numeric_input_file_values
 
 
 class GeophiresMonteCarloTestCase(unittest.TestCase):
+    def test_clean_filename_removes_unusable_characters(self):
+        self.assertEqual(
+            'Flow Rate - Well 1 - low-high',
+            clean_filename(' Flow Rate / Well 1 : low<high>?* '),
+        )
+        self.assertEqual('_CON', clean_filename('CON'))
+        self.assertEqual('output', clean_filename(':/\\*?'))
+
+    def test_add_missing_tornado_input_columns_from_input_file(self):
+        input_df = pd.DataFrame({'Gradient 1': [45.0, 50.0]})
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as input_file:
+            input_file.write('XLCO(E|H|C) Water Shadow Price,0.50, US$/m3\n')
+            input_file.write('XLCO(E|H|C) Average Monthly Wage,4000, US$/work/month\n')
+            input_file_path = Path(input_file.name)
+
+        try:
+            add_missing_tornado_input_columns(
+                input_df,
+                [['Gradient 1', 'XLCO(E|H|C) Water Shadow Price', 'XLCO(E|H|C) Average Monthly Wage']],
+                read_numeric_input_file_values(input_file_path),
+            )
+        finally:
+            input_file_path.unlink()
+
+        self.assertEqual([0.5, 0.5], input_df['XLCO(E|H|C) Water Shadow Price'].tolist())
+        self.assertEqual([4000.0, 4000.0], input_df['XLCO(E|H|C) Average Monthly Wage'].tolist())
+
     def test_geophires_monte_carlo(self):
         client = GeophiresMonteCarloClient()
 
