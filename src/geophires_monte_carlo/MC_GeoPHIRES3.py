@@ -43,6 +43,93 @@ logger = logging.getLogger('root')  # TODO should be getting __name__ logger ins
 logger.setLevel(logging.INFO)
 pb: Optional[Any] = None
 
+_INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
+_WINDOWS_RESERVED_FILENAMES = {
+    'CON',
+    'PRN',
+    'AUX',
+    'NUL',
+    'COM1',
+    'COM2',
+    'COM3',
+    'COM4',
+    'COM5',
+    'COM6',
+    'COM7',
+    'COM8',
+    'COM9',
+    'LPT1',
+    'LPT2',
+    'LPT3',
+    'LPT4',
+    'LPT5',
+    'LPT6',
+    'LPT7',
+    'LPT8',
+    'LPT9',
+}
+
+
+def clean_filename(filename: str, fallback: str = 'output') -> str:
+    """
+    Removes characters that are not usable in Windows/macOS/Linux filenames.
+    """
+    clean = _INVALID_FILENAME_CHARS.sub('-', str(filename).strip())
+    clean = re.sub(r'\s+', ' ', clean)
+    clean = re.sub(r'-+', '-', clean).strip(' .-')
+
+    if not clean:
+        clean = fallback
+
+    if clean.partition('.')[0].upper() in _WINDOWS_RESERVED_FILENAMES:
+        clean = f'_{clean}'
+
+    return clean
+
+
+def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> dict[str, float]:
+    values: dict[str, float] = {}
+
+    with open(input_file_path) as input_file:
+        for line in input_file:
+            clean = line.strip()
+            if not clean or clean.startswith('#') or ',' not in clean:
+                continue
+
+            name, value = clean.split(',', 1)
+            value = value.split(',', 1)[0].strip()
+            if is_number(value):
+                values[name.strip()] = float(value)
+
+    return values
+
+
+def add_missing_tornado_input_columns(
+    input_df: pd.DataFrame,
+    tornado_inputs: List[List[str]],
+    input_file_values: dict[str, float],
+) -> None:
+    requested_columns = {
+        column.strip()
+        for columns in tornado_inputs
+        for column in columns
+        if column.strip()
+    }
+    available_columns = {column.strip() for column in input_df.columns}
+    missing_columns = requested_columns - available_columns
+    unresolved_columns: list[str] = []
+
+    for column in sorted(missing_columns):
+        if column in input_file_values:
+            input_df[column] = input_file_values[column]
+        else:
+            unresolved_columns.append(column)
+
+    if unresolved_columns:
+        available = ', '.join(sorted(input_df.columns))
+        missing = ', '.join(unresolved_columns)
+        raise ValueError(f'Tornado input column(s) not found: {missing}. Available input columns: {available}')
+
 
 def parse_value(value_str: str) -> Union[None, bool, int, float, str, List[Any]]:
     """
@@ -475,13 +562,14 @@ def make_tornado_plots(
                 plt.title('Sensitivity Analysis (Regression) on ' + tornado_in_clean)
                 plt.grid(True)
                 plt.tight_layout()
-                save_path = Path(Path(output_file).parent, f'{tornado_in_clean}_tornado.png')
+                fname = clean_filename(f'{tornado_in_clean}_tornado')
+                save_path = Path(Path(output_file).parent, f'{fname}.png')
                 if html_path:
-                    save_path = Path(Path(html_path).parent, f'{tornado_in_clean}_tornado.png')
+                    save_path = Path(Path(html_path).parent, f'{fname}.png')
                 plt.savefig(save_path)
                 plt.close()
                 full_names.add(save_path)
-                short_names.add(tornado_in_clean)
+                short_names.add(fname)
 
 
 def parse_random_args(expression: str) -> str:
@@ -998,7 +1086,7 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
 
             plt.figtext(0.11, 0.74, annotations, fontsize=8)
             ret = plt.hist(input_df[input_df.columns[i]].tolist(), bins=50, density=True)
-            fname = input_df.columns[i].strip().replace('/', '-')
+            fname = clean_filename(input_df.columns[i])
             save_path = Path(Path(output_file).parent, f'{fname}.png')
             if html_path:
                 save_path = Path(Path(html_path).parent, f'{fname}.png')
@@ -1033,7 +1121,7 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
             ret = plt.hist(df[df.columns[i]].tolist(), bins=50, density=True)
             f.write(f'bin values (as percentage): {ret[0]!s}\n')
             f.write(f'bin edges: {ret[1]!s}\n')
-            fname = df.columns[i].strip().replace('/', '-')
+            fname = clean_filename(df.columns[i])
             save_path = Path(Path(output_file).parent, f'{fname}.png')
             if html_path:
                 save_path = Path(Path(html_path).parent, f'{fname}.png')
@@ -1044,6 +1132,11 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
             annotations = ''
 
     if tornado1_in:
+        add_missing_tornado_input_columns(
+            input_df,
+            [tornado1_outs, tornado2_outs, tornado3_outs],
+            read_numeric_input_file_values(args.Input_file),
+        )
         make_tornado_plots_stacked(
             df,
             input_df,
