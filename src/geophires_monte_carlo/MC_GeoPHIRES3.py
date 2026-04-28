@@ -23,7 +23,10 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,16 +35,19 @@ import sympy as sp
 from pylocker import Locker
 from rich.console import Console
 from rich.table import Table
-from scipy.stats import binom, norm
+from scipy.stats import binom
+from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
-from geophires_x.GeoPHIRESUtils import InsertImagesIntoHTML, render_default
+from geophires_x.GeoPHIRESUtils import InsertImagesIntoHTML
+from geophires_x.GeoPHIRESUtils import render_default
 
-logger = logging.getLogger('root')  # TODO should be getting __name__ logger instead of root
+logger = logging.getLogger("root")  # TODO should be getting __name__ logger instead of root
 logger.setLevel(logging.INFO)
 pb: Optional[Any] = None
+MC_BASE_SEED = 12345
 
 _INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
 _WINDOWS_RESERVED_FILENAMES = {
@@ -140,8 +146,8 @@ def parse_value(value_str: str) -> Union[None, bool, int, float, str, List[Any]]
     if value_str.lower() in {"none", "null", "nil"}:
         return None
 
-    if ',' in value_str:
-        parts = [v.strip() for v in value_str.split(',')]
+    if "," in value_str:
+        parts = [v.strip() for v in value_str.split(",")]
         return [parse_value(v) for v in parts]
 
     if value_str.lower() in {"true", "false"}:
@@ -172,7 +178,7 @@ def extract_output_value(result_lines: List[str], output: str) -> Union[bool, in
     Returns:
         Parsed value (int, float, bool, etc.), or '' if not found.
     """
-    pattern = rf'^\s*{re.escape(output)}\s*:\s*(.+)$'
+    pattern = rf"^\s*{re.escape(output)}\s*:\s*(.+)$"
 
     for line in result_lines:
         match = re.search(pattern, line, re.IGNORECASE)
@@ -180,7 +186,7 @@ def extract_output_value(result_lines: List[str], output: str) -> Union[bool, in
             raw_value_section = match.group(1).strip()
 
             token_match = re.match(
-                r'^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|true|false|null|none|nil|\w+(?:,\s*\w+)*)',
+                r"^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|true|false|null|none|nil|\w+(?:,\s*\w+)*)",
                 raw_value_section,
                 re.IGNORECASE,
             )
@@ -201,11 +207,12 @@ def wait_for_file_stable(
     for a specified stable period, indicating that the file is no longer being written to.
     """
     start_time = time.time()
+    path = Path(filepath)
 
     while True:
-        if os.path.exists(filepath):
+        if path.exists():
             try:
-                last_mtime = os.path.getmtime(filepath)
+                last_mtime = path.stat().st_mtime
             except OSError:
                 time.sleep(check_interval_sec)
                 continue
@@ -214,7 +221,7 @@ def wait_for_file_stable(
             while True:
                 time.sleep(check_interval_sec)
                 try:
-                    current_mtime = os.path.getmtime(filepath)
+                    current_mtime = path.stat().st_mtime
                 except OSError:
                     break
 
@@ -343,7 +350,7 @@ def calculate_scaled_value_complementary(
     min_v2, max_v2 = v2_range
 
     if v1_value < min_v1 or v1_value > max_v1:
-        raise ValueError('v1_value is out of the specified range for v1.')
+        raise ValueError("v1_value is out of the specified range for v1.")
 
     v1_percentage = ((v1_value - min_v1) / (max_v1 - min_v1)) * 100
     v2_percentage = 100 - v1_percentage
@@ -377,27 +384,27 @@ def Write_HTML_Output(
     Write_HTML_Output - write the results of the Monte Carlo simulation to an HTML file
     """
 
-    results_table = Table(title='GEOPHIRES/HIR-RA Monte Carlo Results')
-    results_table.add_column('Iteration #', no_wrap=True, justify='center')
+    results_table = Table(title="GEOPHIRES/HIR-RA Monte Carlo Results")
+    results_table.add_column("Iteration #", no_wrap=True, justify="center")
     for output in df.axes[1]:
-        results_table.add_column(output.replace(',', ''), no_wrap=True, justify='center')
+        results_table.add_column(output.replace(",", ""), no_wrap=True, justify="center")
 
-    statistics_table = Table(title='GEOPHIRES/HIR-RA Monte Carlo Statistics')
-    statistics_table.add_column('Output Parameter Name', no_wrap=True, justify='center')
-    statistics_table.add_column('minimum', no_wrap=True, justify='center')
-    statistics_table.add_column('maximum', no_wrap=True, justify='center')
-    statistics_table.add_column('median', no_wrap=True, justify='center')
-    statistics_table.add_column('average', no_wrap=True, justify='center')
-    statistics_table.add_column('mean', no_wrap=True, justify='center')
-    statistics_table.add_column('standard deviation', no_wrap=True, justify='center')
+    statistics_table = Table(title="GEOPHIRES/HIR-RA Monte Carlo Statistics")
+    statistics_table.add_column("Output Parameter Name", no_wrap=True, justify="center")
+    statistics_table.add_column("minimum", no_wrap=True, justify="center")
+    statistics_table.add_column("maximum", no_wrap=True, justify="center")
+    statistics_table.add_column("median", no_wrap=True, justify="center")
+    statistics_table.add_column("average", no_wrap=True, justify="center")
+    statistics_table.add_column("mean", no_wrap=True, justify="center")
+    statistics_table.add_column("standard deviation", no_wrap=True, justify="center")
 
     for index, row in df.iterrows():
         data = row.values[0 : len(outputs)]
-        str_to_parse = str(row.values[len(outputs)]).strip().replace('(', '').replace(')', '')
-        fields = str_to_parse.split(';')
+        str_to_parse = str(row.values[len(outputs)]).strip().replace("(", "").replace(")", "")
+        fields = str_to_parse.split(";")
         for field in fields:
             if len(field) > 0:
-                key, value = field.split(':')
+                key, value = field.split(":")
                 data = np.append(data, float(value))
 
         results_table.add_row(str(int(index)), *[render_default(d) for d in data])
@@ -413,9 +420,9 @@ def Write_HTML_Output(
             render_default(std[i]),
         )
 
-    console = Console(style='bold white on black', force_terminal=True, record=True, width=500)
+    console = Console(style="bold white on black", force_terminal=True, record=True, width=500)
     console.print(results_table)
-    console.print(' ')
+    console.print(" ")
     console.print(statistics_table)
     console.save_html(html_path)
 
@@ -427,13 +434,13 @@ def check_and_replace_mean(input_value, args) -> list:
 
     i = 0
     for input_x in input_value:
-        if '#' in input_x:
+        if "#" in input_x:
             vari_name = input_value[0]
             with open(args.Input_file) as f:
                 ss = f.readlines()
             for s in ss:
                 if str(s).startswith(vari_name):
-                    s2 = s.split(',')
+                    s2 = s.split(",")
                     input_value[i] = s2[1]
                     break
             break
@@ -450,9 +457,96 @@ def is_number(s: str) -> bool:
         return False
 
 
+def sanitize_filename(name: str, default: str = "output") -> str:
+    """Convert an arbitrary label into a filesystem-safe filename stem."""
+    sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", name.strip())
+    sanitized = re.sub(r"\s+", " ", sanitized).strip(" .")
+    return sanitized or default
+
+
+def validate_mc_inputs(input_specs: List[tuple[int, List[str]]], settings_file_path: str) -> None:
+    """Validate Monte Carlo INPUT rows before launching worker processes."""
+    distribution_numeric_fields = {
+        "normal": [2, 3],
+        "uniform": [2, 3],
+        "triangular": [2, 3, 4],
+        "lognormal": [2, 3],
+        "binomial": [2, 3],
+    }
+    supported_distributions = set(distribution_numeric_fields) | {"nominal"}
+
+    for line_number, input_value in input_specs:
+        if len(input_value) < 2:
+            raise ValueError(
+                f"Invalid INPUT definition at {settings_file_path}:{line_number}. "
+                'Expected at least "INPUT, <name>, <distribution>".'
+            )
+
+        input_name = input_value[0].strip()
+        distribution = input_value[1].strip().casefold()
+
+        if distribution not in supported_distributions:
+            raise ValueError(
+                f'Unsupported distribution "{distribution}" for INPUT "{input_name}" '
+                f"at {settings_file_path}:{line_number}."
+            )
+
+        if distribution == "nominal":
+            if len(input_value) < 3 or not input_value[2].strip():
+                raise ValueError(
+                    f'INPUT "{input_name}" at {settings_file_path}:{line_number} must provide '
+                    "a non-empty nominal value list."
+                )
+            continue
+
+        for field_index in distribution_numeric_fields[distribution]:
+            if len(input_value) <= field_index:
+                raise ValueError(
+                    f'INPUT "{input_name}" with distribution "{distribution}" at '
+                    f"{settings_file_path}:{line_number} is missing parameter {field_index - 1}."
+                )
+            field_value = input_value[field_index].strip()
+            if not is_number(field_value):
+                raise ValueError(
+                    f'Invalid numeric parameter "{field_value}" for INPUT "{input_name}" '
+                    f"at {settings_file_path}:{line_number}."
+                )
+
+
+def validate_tornado_definitions(
+    tornado_specs: List[tuple[int, str, List[str]]],
+    input_names: List[str],
+    output_names: List[str],
+    settings_file_path: str,
+) -> None:
+    """Validate TORNADO rows against declared INPUT and OUTPUT names."""
+    declared_inputs = {name.strip() for name in input_names}
+    declared_outputs = {name.strip() for name in output_names}
+
+    for line_number, tornado_output, tornado_inputs in tornado_specs:
+        clean_output = tornado_output.strip()
+        if clean_output not in declared_outputs:
+            if clean_output in declared_inputs:
+                raise ValueError(
+                    f"Invalid TORNADO definition at {settings_file_path}:{line_number}. "
+                    f'The first field after TORNADO must be an OUTPUT name, but got INPUT "{clean_output}". '
+                    "Expected format: TORNADO1, <OUTPUT>, <INPUT 1>, <INPUT 2>, ..."
+                )
+            raise ValueError(
+                f'TORNADO output "{clean_output}" at {settings_file_path}:{line_number} is not declared as an OUTPUT.'
+            )
+
+        missing_inputs = [name.strip() for name in tornado_inputs if name.strip() not in declared_inputs]
+        if missing_inputs:
+            raise ValueError(
+                f'TORNADO definition for "{clean_output}" at {settings_file_path}:{line_number} '
+                f"references undeclared INPUT(s): {', '.join(missing_inputs)}."
+            )
+
+
 def evaluate_expression(expression: str, variable_value: float) -> float:
     try:
-        x = sp.symbols('x')
+        x = sp.symbols("x")
         parsed_expr = sp.sympify(expression)
         evaluated_expr = parsed_expr.subs(x, variable_value)
         result = evaluated_expr.evalf()
@@ -466,12 +560,20 @@ def extract_values(data: List[str]) -> List[float]:
     order: List[str] = []
 
     for item in data:
-        name, value = item.split(':')
+        name, value = item.split(":")
         seen[name] = float(value)
         if name not in order:
             order.append(name)
 
     return [seen[name] for name in order]
+
+
+def unwrap_compound_input_row(input_row: str) -> str:
+    """Remove only the outer wrapper used around serialized MC input rows."""
+    cleaned = input_row.strip()
+    if cleaned.startswith("(") and cleaned.endswith(")"):
+        cleaned = cleaned[1:-1]
+    return cleaned.strip().strip(";")
 
 
 def make_tornado_plots_stacked(
@@ -506,20 +608,20 @@ def make_tornado_plots_stacked(
     coef_df = pd.DataFrame(coefficients, index=clean_outs)
     coef_df = coef_df.reindex(coef_df[ins[0]].abs().sort_values().index)
 
-    ax = coef_df.plot(kind='barh', figsize=(10, 6))
-    plt.axvline(0, color='black', linewidth=0.8)
-    plt.title('Standardized Regression Coefficients by Output')
-    plt.xlabel('Standardized Coefficient')
+    coef_df.plot(kind="barh", figsize=(10, 6))
+    plt.axvline(0, color="black", linewidth=0.8)
+    plt.title("Standardized Regression Coefficients by Output")
+    plt.xlabel("Standardized Coefficient")
     plt.tight_layout()
-    plt.grid(True, axis='x', linestyle='--', alpha=0.7)
-    plt.legend(title='Output Metric')
-    save_path = Path(Path(output_file).parent, 'stacked_tornado.png')
+    plt.grid(True, axis="x", linestyle="--", alpha=0.7)
+    plt.legend(title="Output Metric")
+    save_path = Path(Path(output_file).parent, "stacked_tornado.png")
     if html_path:
-        save_path = Path(Path(html_path).parent, 'stacked_tornado.png')
+        save_path = Path(Path(html_path).parent, "stacked_tornado.png")
     plt.savefig(save_path)
     plt.close()
     full_names.add(save_path)
-    short_names.add('stacked_tornado')
+    short_names.add("stacked_tornado")
 
 
 def make_tornado_plots(
@@ -540,6 +642,7 @@ def make_tornado_plots(
                 X = input_df[tornado_outs].values
 
                 tornado_in_clean = tornado_in.strip()
+                tornado_in_filename = sanitize_filename(tornado_in_clean)
                 df.columns = df.columns.str.strip()
                 y = df[tornado_in_clean].values.reshape(-1, 1)
 
@@ -552,14 +655,14 @@ def make_tornado_plots(
                 model = LinearRegression()
                 model.fit(X_scaled, y_scaled)
 
-                regression_df = pd.DataFrame({'Input': tornado_outs, 'Coefficient': model.coef_})
-                regression_df['AbsCoefficient'] = regression_df['Coefficient'].abs()
-                regression_df = regression_df.sort_values('AbsCoefficient', ascending=True)
+                regression_df = pd.DataFrame({"Input": tornado_outs, "Coefficient": model.coef_})
+                regression_df["AbsCoefficient"] = regression_df["Coefficient"].abs()
+                regression_df = regression_df.sort_values("AbsCoefficient", ascending=True)
 
                 plt.figure(figsize=(8, 6))
-                plt.barh(regression_df['Input'], regression_df['Coefficient'])
-                plt.xlabel('Standardized Regression Coefficient')
-                plt.title('Sensitivity Analysis (Regression) on ' + tornado_in_clean)
+                plt.barh(regression_df["Input"], regression_df["Coefficient"])
+                plt.xlabel("Standardized Regression Coefficient")
+                plt.title("Sensitivity Analysis (Regression) on " + tornado_in_clean)
                 plt.grid(True)
                 plt.tight_layout()
                 fname = clean_filename(f'{tornado_in_clean}_tornado')
@@ -574,37 +677,37 @@ def make_tornado_plots(
 
 def parse_random_args(expression: str) -> str:
     patterns = {
-        'choice': r'random\\.choice\\(\\[(.*?)\\]\\)',
-        'random': r'random\\.random\\(\\)',
-        'uniform': r'random\\.uniform\\((.*?),(.*?)\\)',
+        "choice": r"random\\.choice\\(\\[(.*?)\\]\\)",
+        "random": r"random\\.random\\(\\)",
+        "uniform": r"random\\.uniform\\((.*?),(.*?)\\)",
     }
 
     def replace_choice(match: re.Match[str]) -> str:
-        args_str = match.group(1).replace(';', ',')
-        args_list = ast.literal_eval(f'[{args_str}]')
-        return str(random.choice(args_list))
+        args_str = match.group(1).replace(";", ",")
+        args_list = ast.literal_eval(f"[{args_str}]")
+        return str(random.choice(args_list))  # noqa: S311
 
     def replace_random(match: re.Match[str]) -> str:
-        return str(random.random())
+        return str(random.random())  # noqa: S311
 
     def replace_uniform(match: re.Match[str]) -> str:
         a = float(match.group(1).strip())
         b = float(match.group(2).strip())
-        return str(random.uniform(a, b))
+        return str(random.uniform(a, b))  # noqa: S311
 
-    if '.choice' in expression:
-        expression = re.sub(patterns['choice'], replace_choice, expression)
-    elif '.random' in expression:
-        expression = re.sub(patterns['random'], replace_random, expression)
-    elif '.uniform' in expression:
-        expression = re.sub(patterns['uniform'], replace_uniform, expression)
+    if ".choice" in expression:
+        expression = re.sub(patterns["choice"], replace_choice, expression)
+    elif ".random" in expression:
+        expression = re.sub(patterns["random"], replace_random, expression)
+    elif ".uniform" in expression:
+        expression = re.sub(patterns["uniform"], replace_uniform, expression)
     return expression
 
 
 def work_package(pass_list: list) -> None:
     """Function that is called by the executor. It does the work of running the simulation."""
 
-    log = logging.getLogger('root')
+    log = logging.getLogger("root")
     log.setLevel(logging.INFO)
 
     input_values: List[List[Any]] = pass_list[0]
@@ -617,8 +720,11 @@ def work_package(pass_list: list) -> None:
     output_file: str = pass_list[7]
     working_dir: str = pass_list[8]  # noqa: F841
     python_path: str = pass_list[9]
+    run_index: int = pass_list[10]
 
-    input_file_entries = ''
+    rng = np.random.default_rng(np.random.SeedSequence([MC_BASE_SEED, run_index]))
+
+    input_file_entries = ""
     randomized_values: List[List[Any]] = []
 
     for input_value in input_values:
@@ -641,24 +747,24 @@ def work_package(pass_list: list) -> None:
                 f4 = float(f4)
 
         rando = 0.0
-        if distribution.startswith('normal'):
-            rando = np.random.normal(float(f2), float(f3))
-        elif distribution.startswith('uniform'):
-            rando = np.random.uniform(float(f2), float(f3))
-        elif distribution.startswith('triangular'):
-            rando = np.random.triangular(float(f2), float(f3), float(f4))
-        elif distribution.startswith('lognormal'):
-            rando = np.random.lognormal(float(f2), float(f3))
-        elif distribution.startswith('binomial'):
-            rando = np.random.binomial(int(float(f2)), float(f3))
-        elif distribution.startswith('nominal'):
-            values = str(f2).split(':')
-            rando = random.choice(values)
+        if distribution.startswith("normal"):
+            rando = rng.normal(float(f2), float(f3))
+        elif distribution.startswith("uniform"):
+            rando = rng.uniform(float(f2), float(f3))
+        elif distribution.startswith("triangular"):
+            rando = rng.triangular(float(f2), float(f3), float(f4))
+        elif distribution.startswith("lognormal"):
+            rando = rng.lognormal(float(f2), float(f3))
+        elif distribution.startswith("binomial"):
+            rando = rng.binomial(int(float(f2)), float(f3))
+        elif distribution.startswith("nominal"):
+            values = str(f2).split(":")
+            rando = rng.choice(values)
         else:
-            raise ValueError(f'Unsupported distribution: {distribution}')
+            raise ValueError(f"Unsupported distribution: {distribution}")
 
         randomized_values.append([input_name, rando, distribution, f2, f3, f4])
-        input_file_entries += input_name + ', ' + str(rando) + '\n'
+        input_file_entries += input_name + ", " + str(rando) + "\n"
 
     for link in links_equal:
         master_input = str(link[0]).strip()
@@ -669,13 +775,13 @@ def work_package(pass_list: list) -> None:
                 master_value = rv[1]
                 break
         if master_value is not None:
-            input_file_entries += slave_input + ', ' + str(master_value) + '\n'
+            input_file_entries += slave_input + ", " + str(master_value) + "\n"
 
     for link2 in links_ratio:
         master_input = str(link2[0]).strip()
         slave_input = str(link2[1]).strip()
         master_value = None
-        master_distribution = ''
+        master_distribution = ""
         master_params = [0.0, 0.0, 0.0]
         for rv3 in randomized_values:
             if rv3[0] == master_input:
@@ -686,13 +792,13 @@ def work_package(pass_list: list) -> None:
         for rv4 in randomized_values:
             if rv4[0] == slave_input and master_value is not None:
                 slave_params = [rv4[3], rv4[4], rv4[5] if len(rv4) > 5 else 0.0]
-                if master_distribution.startswith('uniform') or master_distribution.startswith('triangular'):
+                if master_distribution.startswith(("uniform", "triangular")):
                     rv4[1] = calculate_scaled_value(
                         master_value,
                         (float(master_params[0]), float(master_params[1])),
                         (float(slave_params[0]), float(slave_params[1])),
                     )
-                elif master_distribution.startswith('normal'):
+                elif master_distribution.startswith("normal"):
                     rv4[1] = calculate_normal_value(
                         master_value,
                         float(master_params[0]),
@@ -700,7 +806,7 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                elif master_distribution.startswith('lognormal'):
+                elif master_distribution.startswith("lognormal"):
                     rv4[1] = calculate_lognormal_value(
                         master_value,
                         float(master_params[0]),
@@ -708,7 +814,7 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                elif master_distribution.startswith('binomial'):
+                elif master_distribution.startswith("binomial"):
                     rv4[1] = calculate_binomial_value(
                         master_value,
                         float(master_params[0]),
@@ -716,14 +822,14 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                input_file_entries += slave_input + ', ' + str(rv4[1]) + '\n'
+                input_file_entries += slave_input + ", " + str(rv4[1]) + "\n"
                 break
 
     for link3 in links_reverse:
         master_input = str(link3[0]).strip()
         slave_input = str(link3[1]).strip()
         master_value = None
-        master_distribution = ''
+        master_distribution = ""
         master_params = [0.0, 0.0, 0.0]
         for rv5 in randomized_values:
             if rv5[0] == master_input:
@@ -734,13 +840,13 @@ def work_package(pass_list: list) -> None:
         for rv6 in randomized_values:
             if rv6[0] == slave_input and master_value is not None:
                 slave_params = [rv6[3], rv6[4], rv6[5] if len(rv6) > 5 else 0.0]
-                if master_distribution.startswith('uniform') or master_distribution.startswith('triangular'):
+                if master_distribution.startswith(("uniform", "triangular")):
                     rv6[1] = calculate_scaled_value_complementary(
                         master_value,
                         (float(master_params[0]), float(master_params[1])),
                         (float(slave_params[0]), float(slave_params[1])),
                     )
-                elif master_distribution.startswith('normal'):
+                elif master_distribution.startswith("normal"):
                     rv6[1] = calculate_normal_complementary(
                         master_value,
                         float(master_params[0]),
@@ -748,7 +854,7 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                elif master_distribution.startswith('lognormal'):
+                elif master_distribution.startswith("lognormal"):
                     rv6[1] = calculate_lognormal_value_complementary(
                         master_value,
                         float(master_params[0]),
@@ -756,7 +862,7 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                elif master_distribution.startswith('binomial'):
+                elif master_distribution.startswith("binomial"):
                     rv6[1] = calculate_binomial_value_complementary(
                         master_value,
                         float(master_params[0]),
@@ -764,48 +870,64 @@ def work_package(pass_list: list) -> None:
                         float(slave_params[0]),
                         float(slave_params[1]),
                     )
-                input_file_entries += slave_input + ', ' + str(rv6[1]) + '\n'
+                input_file_entries += slave_input + ", " + str(rv6[1]) + "\n"
                 break
 
     for link4 in links_math:
         master_input = str(link4[0].strip())
         slave_input = str(link4[1].strip())
-        equation = str(link4[2].strip().replace(';', ',')).casefold()
+        equation = str(link4[2].strip().replace(";", ",")).casefold()
         equation = parse_random_args(equation)
         for rv7 in randomized_values:
             if rv7[0] == master_input:
                 master_value = float(rv7[1])
                 new_val = evaluate_expression(equation, master_value)
-                input_file_entries += slave_input + ', ' + str(new_val) + '\n'
+                input_file_entries += slave_input + ", " + str(new_val) + "\n"
                 break
 
-    tmp_input_file: str = str(Path(tempfile.gettempdir(), f'{uuid.uuid4()!s}.txt'))
-    tmp_output_file: str = tmp_input_file.replace('.txt', '_result.txt')
+    tmp_input_file: str = str(Path(tempfile.gettempdir(), f"{uuid.uuid4()!s}.txt"))
+    tmp_output_file: str = tmp_input_file.replace(".txt", "_result.txt")
+    tmp_stdout_file: str = tmp_input_file.replace(".txt", "_stdout.log")
+    tmp_stderr_file: str = tmp_input_file.replace(".txt", "_stderr.log")
+    trace_file: str = str(Path(output_file).with_suffix(".trace.log"))
+
+    trace_lines = [
+        f"[MC TEMP] input={tmp_input_file}",
+        f"[MC TEMP] output={tmp_output_file}",
+        f"[MC TEMP] stdout_log={tmp_stdout_file}",
+        f"[MC TEMP] stderr_log={tmp_stderr_file}",
+    ]
+    with open(trace_file, "a", encoding="UTF-8") as trace_fd:
+        trace_fd.write("\n".join(trace_lines) + "\n")
 
     shutil.copyfile(args.Input_file, tmp_input_file)
 
-    with open(tmp_input_file, 'a') as f:
+    with open(tmp_input_file, "a") as f:
         f.write(input_file_entries)
 
-    if os.name != 'nt':
+    if os.name != "nt":
         from geophires_monte_carlo.common import _get_logger  # noqa: F401
-        from geophires_x_client import GeophiresInputParameters, GeophiresXClient, GeophiresXResult
-        from hip_ra import HipRaClient, HipRaInputParameters, HipRaResult
+        from geophires_x_client import GeophiresInputParameters
+        from geophires_x_client import GeophiresXClient
+        from geophires_x_client import GeophiresXResult
+        from hip_ra import HipRaClient
+        from hip_ra import HipRaInputParameters
+        from hip_ra import HipRaResult
         from hip_ra_x import HipRaXClient
 
-        if args.Code_File.endswith('GEOPHIRESv3.py'):
+        if args.Code_File.endswith("GEOPHIRESv3.py"):
             geophires_client: GeophiresXClient = GeophiresXClient()
             result: GeophiresXResult = geophires_client.get_geophires_result(
                 GeophiresInputParameters(from_file_path=Path(tmp_input_file))
             )
             shutil.copyfile(result.output_file_path, tmp_output_file)
-        elif args.Code_File.endswith('HIP_RA.py'):
+        elif args.Code_File.endswith("HIP_RA.py"):
             hip_ra_client: HipRaClient = HipRaClient()
             result: HipRaResult = hip_ra_client.get_hip_ra_result(
                 HipRaInputParameters(file_path_or_params_dict=Path(tmp_input_file))
             )
             shutil.copyfile(result.output_file_path, tmp_output_file)
-        elif args.Code_File.endswith('hip_ra_x.py'):
+        elif args.Code_File.endswith("hip_ra_x.py"):
             hip_ra_x_client: HipRaXClient = HipRaXClient()
             result: HipRaResult = hip_ra_x_client.get_hip_ra_result(
                 HipRaInputParameters(file_path_or_params_dict=Path(tmp_input_file))
@@ -814,24 +936,37 @@ def work_package(pass_list: list) -> None:
     else:
         if os.cpu_count() is not None and os.cpu_count() < 4:
             log.info(
-                'Python indicates that we are running on a local laptop/desktop so we will use local processes,'
-                ' but the CPU/thread count is too small'
+                "Python indicates that we are running on a local laptop/desktop so we will use local processes,"
+                " but the CPU/thread count is too small"
             )
             sys.exit(-74385)
 
-        sprocess = subprocess.Popen(
+        sprocess = subprocess.run(  # noqa: S603
             [python_path, args.Code_File, tmp_input_file, tmp_output_file],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
         )
-        sprocess.wait()
+        Path(tmp_stdout_file).write_text(sprocess.stdout or "", encoding="UTF-8")
+        Path(tmp_stderr_file).write_text(sprocess.stderr or "", encoding="UTF-8")
 
-    s1 = ''
-    result_s = ''
+        if sprocess.returncode != 0:
+            logger.error(
+                "Child process failed with return code %s for input file %s",
+                sprocess.returncode,
+                tmp_input_file,
+            )
+            raise RuntimeError(
+                f"{Path(args.Code_File).name} failed for Monte Carlo iteration input "
+                f"{tmp_input_file}. Inspect {tmp_stdout_file} and {tmp_stderr_file}, "
+                "or re-run that temp input directly to inspect the full traceback."
+            )
+
+    s1 = ""
+    result_s = ""
     local_outputs = outputs
 
     if not wait_for_file_stable(tmp_output_file, timeout_sec=10):
-        logger.warning(f'output file does not exist: {tmp_output_file}')
+        logger.warning(f"output file does not exist: {tmp_output_file}")
         sys.exit(-33)
 
     with open(tmp_output_file) as f:
@@ -840,22 +975,22 @@ def work_package(pass_list: list) -> None:
     try:
         for out in local_outputs:
             s1 = extract_output_value(result_lines, out)
-            if s1 in (None, ''):
+            if s1 in (None, ""):
                 raise ValueError(f"No value found for required output key: '{out}'")
-            result_s += str(s1) + ', '
+            result_s += str(s1) + ", "
     except ValueError as exc:
         print(f"[ERROR] {exc}")
         raise
 
-    result_s += '(' + input_file_entries.replace('\n', ';', -1).replace(', ', ':', -1) + ')'
-    result_s = result_s.strip(' ').strip(',')
-    result_s += '\n'
+    result_s += "(" + input_file_entries.replace("\n", ";", -1).replace(", ", ":", -1) + ")"
+    result_s = result_s.strip(" ").strip(",")
+    result_s += "\n"
 
     Path.unlink(Path(tmp_input_file))
     Path.unlink(Path(tmp_output_file))
 
     lock_pass = str(uuid.uuid1())
-    FL = Locker(filePath=output_file, lockPass=lock_pass, timeout=10, mode='a')
+    FL = Locker(filePath=output_file, lockPass=lock_pass, timeout=10, mode="a")
     with FL as r:
         acquired, code, fd = r
         if fd is not None:
@@ -869,145 +1004,164 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    logger = logging.getLogger('root')
+    logger = logging.getLogger("root")
     logger.setLevel(logging.INFO)
-    logger.info(f'Init {__name__!s}')
+    logger.info(f"Init {__name__!s}")
 
     tic = time.time()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('Code_File', help='Code File')
-    parser.add_argument('Input_file', help='Input file')
-    parser.add_argument('MC_Settings_file', help='MC Settings file')
-    parser.add_argument('MC_OUTPUT_FILE', help='Output file', nargs='?')
+    parser.add_argument("Code_File", help="Code File")
+    parser.add_argument("Input_file", help="Input file")
+    parser.add_argument("MC_Settings_file", help="MC Settings file")
+    parser.add_argument("MC_OUTPUT_FILE", help="Output file", nargs="?")
 
     if command_line_args is None:
-        logger.warning('Command line args were not passed explicitly, falling back to sys.argv')
+        logger.warning("Command line args were not passed explicitly, falling back to sys.argv")
         command_line_args = sys.argv[1:]
 
     args = parser.parse_args(command_line_args)
 
-    with open(args.MC_Settings_file, encoding='UTF-8') as f:
+    with open(args.MC_Settings_file, encoding="UTF-8") as f:
         flist = f.readlines()
 
     inputs: List[List[str]] = []
+    input_specs: List[tuple[int, List[str]]] = []
     outputs: List[str] = []
     links_ratio: List[List[str]] = []
     links_reverse: List[List[str]] = []
     links_equal: List[List[str]] = []
     links_math: List[List[str]] = []
+    tornado_specs: List[tuple[int, str, List[str]]] = []
     iterations = 0
     output_file = (
         args.MC_OUTPUT_FILE
-        if 'MC_OUTPUT_FILE' in args and args.MC_OUTPUT_FILE is not None
-        else str(Path(Path(args.Input_file).parent, 'MC_Result.txt').absolute())
+        if "MC_OUTPUT_FILE" in args and args.MC_OUTPUT_FILE is not None
+        else str(Path(Path(args.Input_file).parent, "MC_Result.txt").absolute())
     )
     code_file_name = Path(args.Code_File).name
     python_path = sys.executable
-    html_path = ''
-    tornado1_in = tornado2_in = tornado3_in = ''
+    html_path = ""
+    tornado1_in = tornado2_in = tornado3_in = ""
     tornado1_outs: List[str] = []
     tornado2_outs: List[str] = []
     tornado3_outs: List[str] = []
 
-    for line in flist:
+    for line_number, line in enumerate(flist, start=1):
         clean = line.strip()
-        pair = clean.split(',')
+        pair = clean.split(",")
         if len(pair) < 2:
             continue
         pair[1] = pair[1].strip()
-        if pair[0].startswith('INPUT'):
-            inputs.append(pair[1:])
+        if pair[0].startswith("INPUT"):
+            input_definition = pair[1:]
+            inputs.append(input_definition)
+            input_specs.append((line_number, input_definition))
             continue
-        if pair[0].startswith('OUTPUT'):
+        if pair[0].startswith("OUTPUT"):
             outputs.append(pair[1])
             continue
-        if pair[0].startswith('ITERATIONS'):
+        if pair[0].startswith("ITERATIONS"):
             iterations = int(pair[1])
             continue
-        if pair[0].startswith('MC_OUTPUT_FILE'):
+        if pair[0].startswith("MC_OUTPUT_FILE"):
             output_file = pair[1]
             continue
-        if pair[0].startswith('PYTHON_PATH'):
+        if pair[0].startswith("PYTHON_PATH"):
             python_path = pair[1]
             continue
-        if pair[0].startswith('HTML_PATH'):
+        if pair[0].startswith("HTML_PATH"):
             html_path = pair[1]
             continue
-        if pair[0].casefold() == '=LINK'.casefold():
+        if pair[0].casefold() == "=LINK".casefold():
             links_equal.append(pair[1:])
             continue
-        if pair[0].casefold() == 'RLINK'.casefold():
+        if pair[0].casefold() == "RLINK".casefold():
             links_reverse.append(pair[1:])
             continue
-        if pair[0].casefold() == 'LINK'.casefold():
+        if pair[0].casefold() == "LINK".casefold():
             links_ratio.append(pair[1:])
             continue
-        if pair[0].casefold() == '+LINK'.casefold():
+        if pair[0].casefold() == "+LINK".casefold():
             links_math.append(pair[1:])
             continue
-        if pair[0].casefold() == 'TORNADO1'.casefold():
+
+        if pair[0].casefold() == "TORNADO1".casefold():
             tornado1_in = str(pair[1]).strip()
             tornado1_outs = pair[2:]
+            tornado_specs.append((line_number, tornado1_in, tornado1_outs))
             continue
-        if pair[0].casefold() == 'TORNADO2'.casefold():
+        if pair[0].casefold() == "TORNADO2".casefold():
             tornado2_in = str(pair[1]).strip()
             tornado2_outs = pair[2:]
+            tornado_specs.append((line_number, tornado2_in, tornado2_outs))
             continue
-        if pair[0].casefold() == 'TORNADO3'.casefold():
+        if pair[0].casefold() == "TORNADO3".casefold():
             tornado3_in = str(pair[1]).strip()
             tornado3_outs = pair[2:]
+            tornado_specs.append((line_number, tornado3_in, tornado3_outs))
             continue
 
     for input_value in inputs:
         check_and_replace_mean(input_value, args)
 
-    header = ''
+    validate_mc_inputs(input_specs, args.MC_Settings_file)
+    validate_tornado_definitions(
+        tornado_specs,
+        [input_value[0] for input_value in inputs],
+        outputs,
+        args.MC_Settings_file,
+    )
+
+    header = ""
 
     for output in outputs:
-        header += output + ', '
+        header += output + ", "
 
     for inp in inputs:
-        header += inp[0] + ', '
+        header += inp[0] + ", "
 
     for link in links_math:
-        header += link[1] + ', '
+        header += link[1] + ", "
 
-    header = ''.join(header.rsplit(' ', 1))
-    header = ''.join(header.rsplit(',', 1))
-    header += '\n'
+    header = "".join(header.rsplit(" ", 1))
+    header = "".join(header.rsplit(",", 1))
+    header += "\n"
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(header)
 
     working_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(working_dir)
     working_dir = working_dir + os.sep
 
-    pass_list = [
-        inputs,
-        outputs,
-        links_ratio,
-        links_equal,
-        links_reverse,
-        links_math,
-        args,
-        output_file,
-        working_dir,
-        python_path,
+    executor_args = [
+        [
+            inputs,
+            outputs,
+            links_ratio,
+            links_equal,
+            links_reverse,
+            links_math,
+            args,
+            output_file,
+            working_dir,
+            python_path,
+            run_index,
+        ]
+        for run_index in range(iterations)
     ]
 
-    executor_args = [pass_list for _ in range(iterations)]
-
-    with tqdm(total=iterations, desc='Finished processes', unit='iteration') as pbar:
+    with tqdm(total=iterations, desc="Finished processes", unit="iteration") as pbar:
         max_workers = max(1, (os.cpu_count() or 1) - 1)
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(work_package, arg): arg for arg in executor_args}
-            for _ in concurrent.futures.as_completed(futures):
+            for future in concurrent.futures.as_completed(futures):
                 pbar.update(1)
+                future.result()
 
-    print('\n')
-    logger.info('Done with calculations! Summarizing...')
+    print("\n")
+    logger.info("Done with calculations! Summarizing...")
 
     with open(output_file) as f:
         header_line = f.readline()
@@ -1017,21 +1171,21 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
     results: List[List[float]] = []
     for line in all_results:
         result_count += 1
-        if '-9999.0' not in line and len(header_line) > 1:
+        if "-9999.0" not in line and len(header_line) > 1:
             line = line.strip()
             if len(line) > 10:
-                line, sep, tail = line.partition(', (')
-                line = line.replace('(', '').replace(')', '')
-                results.append([float(y) if is_number(y) else -999.999 for y in line.split(',')])
+                line, sep, tail = line.partition(", (")
+                line = line.replace("(", "").replace(")", "")
+                results.append([float(y) if is_number(y) else -999.999 for y in line.split(",")])
         else:
-            logger.warning(f'-9999.0 or space found in line {result_count!s}')
+            logger.warning(f"-9999.0 or space found in line {result_count!s}")
 
     actual_records_count = len(results)
     if len(results) < 1:
         raise RuntimeError(
-            'No MC results generated, '
-            f'this is likely caused by {code_file_name} throwing an exception '
-            f'when run with your input file.'
+            "No MC results generated, "
+            f"this is likely caused by {code_file_name} throwing an exception "
+            f"when run with your input file."
         )
 
     mins = np.nanmin(results, 0)
@@ -1047,49 +1201,47 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
     input_df = pd.DataFrame()
 
     input_row = df[df.columns[len(outputs)]].tolist()[0]
-    input_row = input_row.replace('(', '').replace(')', '')
-    input_row = input_row.strip().strip(';')
-    input_columns_data = input_row.split(';')
+    input_row = unwrap_compound_input_row(input_row)
+    input_columns_data = input_row.split(";")
     for input_column_data in input_columns_data:
-        input_column_name, _ = input_column_data.split(':')
+        input_column_name, _ = input_column_data.split(":")
         input_df[input_column_name] = []
 
     for i in range(actual_records_count):
         input_row = str(df[df.columns[len(outputs)]].tolist()[i])
         if len(input_row) < 10:
             continue
-        input_row = input_row.replace('(', '').replace(')', '')
-        input_row = input_row.strip().strip(';')
-        input_columns_data = input_row.split(';')
+        input_row = unwrap_compound_input_row(input_row)
+        input_columns_data = input_row.split(";")
         data = extract_values(input_columns_data)
         input_df.loc[i] = data[: input_df.columns.size]
 
-    logger.info(f'Calculation Time: {time.time() - tic:10.3f} sec')
-    logger.info(f'Calculation Time per iteration: {(time.time() - tic) / actual_records_count:10.3f} sec')
+    logger.info(f"Calculation Time: {time.time() - tic:10.3f} sec")
+    logger.info(f"Calculation Time per iteration: {(time.time() - tic) / actual_records_count:10.3f} sec")
     if iterations != actual_records_count:
-        msg = f'NOTE: {actual_records_count!s} iterations finished successfully and were used to calculate the statistics.'
+        msg = f"NOTE: {actual_records_count!s} iterations finished successfully and were used to calculate the statistics."
         logger.warning(msg)
 
-    annotations = ''
+    annotations = ""
     outputs_result: dict[str, dict[str, float]] = {}
 
     full_names: set = set()
     short_names: set = set()
-    with open(output_file, 'a') as f:
+    with open(output_file, "a") as f:
         for i in range(len(inputs)):
             input_name = inputs[i][0]
             plt.figure(figsize=(8, 6))
             ax = plt.subplot()
             ax.set_title(input_name)
-            ax.set_xlabel('Random Values')
-            ax.set_ylabel('Probability')
+            ax.set_xlabel("Random Values")
+            ax.set_ylabel("Probability")
 
             plt.figtext(0.11, 0.74, annotations, fontsize=8)
             ret = plt.hist(input_df[input_df.columns[i]].tolist(), bins=50, density=True)
             fname = clean_filename(input_df.columns[i])
             save_path = Path(Path(output_file).parent, f'{fname}.png')
             if html_path:
-                save_path = Path(Path(html_path).parent, f'{fname}.png')
+                save_path = Path(Path(html_path).parent, f"{fname}.png")
             plt.savefig(save_path)
             plt.close()
             full_names.add(save_path)
@@ -1097,25 +1249,25 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
 
         for i in range(len(outputs)):
             output = outputs[i]
-            f.write(f'{output}:\n')
+            f.write(f"{output}:\n")
             outputs_result[output] = {}
-            outputs_result[output]['minimum'] = mins[i]
-            outputs_result[output]['maximum'] = maxs[i]
-            outputs_result[output]['median'] = medians[i]
-            outputs_result[output]['average'] = averages[i]
-            outputs_result[output]['mean'] = means[i]
-            outputs_result[output]['standard deviation'] = std[i]
+            outputs_result[output]["minimum"] = mins[i]
+            outputs_result[output]["maximum"] = maxs[i]
+            outputs_result[output]["median"] = medians[i]
+            outputs_result[output]["average"] = averages[i]
+            outputs_result[output]["mean"] = means[i]
+            outputs_result[output]["standard deviation"] = std[i]
 
             for k, v in outputs_result[output].items():
-                display = f'     {k}: {v:,.2f}\n'
+                display = f"     {k}: {v:,.2f}\n"
                 f.write(display)
                 annotations += display
 
             plt.figure(figsize=(8, 6))
             ax = plt.subplot()
             ax.set_title(output)
-            ax.set_xlabel('Output units')
-            ax.set_ylabel('Probability')
+            ax.set_xlabel("Output units")
+            ax.set_ylabel("Probability")
 
             plt.figtext(0.11, 0.74, annotations, fontsize=8)
             ret = plt.hist(df[df.columns[i]].tolist(), bins=50, density=True)
@@ -1124,12 +1276,12 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
             fname = clean_filename(df.columns[i])
             save_path = Path(Path(output_file).parent, f'{fname}.png')
             if html_path:
-                save_path = Path(Path(html_path).parent, f'{fname}.png')
+                save_path = Path(Path(html_path).parent, f"{fname}.png")
             plt.savefig(save_path)
             plt.close()
             full_names.add(save_path)
             short_names.add(fname)
-            annotations = ''
+            annotations = ""
 
     if tornado1_in:
         add_missing_tornado_input_columns(
@@ -1173,14 +1325,14 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
                 short_names,
             )
 
-    with open(Path(output_file).with_suffix('.json'), 'w') as json_output_file:
+    with open(Path(output_file).with_suffix(".json"), "w") as json_output_file:
         json_output_file.write(json.dumps(outputs_result))
-        logger.info(f'Wrote JSON results to {json_output_file.name}')
+        logger.info(f"Wrote JSON results to {json_output_file.name}")
 
-    logger.info(f'Complete {__name__!s}: {sys._getframe().f_code.co_name}')
+    logger.info(f"Complete {__name__!s}: {sys._getframe().f_code.co_name}")
 
 
-if __name__ == '__main__':
-    logger.info(f'Init {__name__!s}')
+if __name__ == "__main__":
+    logger.info(f"Init {__name__!s}")
 
     main(command_line_args=sys.argv[1:])
