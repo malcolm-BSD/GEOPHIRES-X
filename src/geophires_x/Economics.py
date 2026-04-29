@@ -391,6 +391,11 @@ class Economics:
 
         return float(np.max(array))
 
+    @staticmethod
+    def _tess_enabled(model: Model) -> bool:
+        """Return whether TESS economics should be applied for this model run."""
+        return bool(getattr(getattr(model.surfaceplant, 'tess_enabled', None), 'value', False))
+
     def __init__(self, model: Model):
         """
         The __init__ function is called automatically when a class is instantiated.
@@ -2577,6 +2582,22 @@ class Economics:
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS
         )
+        self.tess_capital_cost = self.OutputParameterDict[self.tess_capital_cost.Name] = OutputParameter(
+            Name="TESS Capital Cost",
+            display_name='TESS capital costs',
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText='Complete installed TESS capital cost calculated from TESS volume and cost per cubic meter.'
+        )
+        self.tess_o_and_m_cost = self.OutputParameterDict[self.tess_o_and_m_cost.Name] = OutputParameter(
+            Name="TESS O&M Cost",
+            display_name='TESS annual O&M costs',
+            UnitType=Units.CURRENCYFREQUENCY,
+            PreferredUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
+            CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
+            ToolTipText='Annual TESS fixed O&M cost calculated as a fraction of TESS capital cost.'
+        )
         self.Coamwater = self.OutputParameterDict[self.Coamwater.Name] = OutputParameter(
             Name="O&M Make-up Water costs",
             display_name='Water costs',
@@ -3262,6 +3283,7 @@ class Economics:
         self.Cstim.value = self.calculate_stimulation_costs(model).to(self.Cstim.CurrentUnits).magnitude
         self.calculate_field_gathering_costs(model)
         self.calculate_plant_costs(model)
+        self.calculate_tess_costs(model)
         self.calculate_total_capital_costs(model)
         self.calculate_operating_and_maintenance_costs(model)
 
@@ -3776,6 +3798,27 @@ class Economics:
             self.CPipelineCost.quantity().to('MUSD/km').magnitude * model.surfaceplant.piping_length.value
         )
 
+    def calculate_tess_costs(self, model: Model) -> None:
+        """Calculate TESS capital and fixed O&M costs for economic totals."""
+        if not Economics._tess_enabled(model):
+            self.tess_capital_cost.value = 0.0
+            self.tess_o_and_m_cost.value = 0.0
+            return
+
+        volume_m3 = model.surfaceplant.tess_volume.quantity().to(VolumeUnit.METERS3.value).magnitude
+        cost_usd_per_m3 = (
+            model.surfaceplant.tess_cost_per_cubic_meter.quantity()
+            .to(CostPerVolumeUnit.DOLLARSPERMETERS3.value)
+            .magnitude
+        )
+        self.tess_capital_cost.value = quantity(
+            volume_m3 * cost_usd_per_m3,
+            'USD',
+        ).to(self.tess_capital_cost.CurrentUnits).magnitude
+
+        fixed_om_fraction = float(model.surfaceplant.tess_fixed_om_fraction.value)
+        self.tess_o_and_m_cost.value = self.tess_capital_cost.value * fixed_om_fraction
+
     def calculate_total_capital_costs(self, model: Model) -> None:
         if not self.totalcapcost.Valid:
             # exploration costs (same as in Geophires v1.2) (M$)
@@ -3819,7 +3862,16 @@ class Economics:
             else:
                 self.dhdistrictcost.value = 0
 
-            self.CCap.value = self.Cexpl.value + self.Cwell.value + self.Cstim.value + self.Cgath.value + self.Cplant.value + self.Cpiping.value + self.dhdistrictcost.value
+            self.CCap.value = (
+                self.Cexpl.value
+                + self.Cwell.value
+                + self.Cstim.value
+                + self.Cgath.value
+                + self.Cplant.value
+                + self.Cpiping.value
+                + self.dhdistrictcost.value
+                + self.tess_capital_cost.value
+            )
         else:
             self.CCap.value = self.totalcapcost.value
 
@@ -3929,7 +3981,14 @@ class Economics:
             else:
                 self.dhdistrictoandmcost.value = 0
 
-            self.Coam.value = self.Coamwell.value + self.Coamplant.value + self.Coamwater.value + self.chilleropex.value + self.dhdistrictoandmcost.value  # total O&M cost (M$/year)
+            self.Coam.value = (
+                self.Coamwell.value
+                + self.Coamplant.value
+                + self.Coamwater.value
+                + self.chilleropex.value
+                + self.dhdistrictoandmcost.value
+                + self.tess_o_and_m_cost.value
+            )  # total O&M cost (M$/year)
 
         else:
             self.Coam.value = self.oamtotalfixed.value  # total O&M cost (M$/year)

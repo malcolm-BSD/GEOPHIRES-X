@@ -531,8 +531,9 @@ Add new economics output parameters:
 For non-SAM economics:
 
 - add TESS CAPEX to total capital cost when `TESS Enabled = True`;
-- add TESS O&M to total annual O&M;
-- preserve `Total Capital Cost` override behavior if a user provides total capital cost.
+- add TESS O&M to computed total annual O&M when `TESS Enabled = True`;
+- preserve `Total Capital Cost` override behavior if a user provides total capital cost;
+- preserve `Total O&M Cost` override behavior if a user provides total O&M cost.
 
 For SAM economics:
 
@@ -695,8 +696,8 @@ which would require final stored energy to equal initial stored energy over the 
 
 1. Add TESS CAPEX and O&M output parameters.
 2. Add TESS CAPEX to total capital cost when enabled.
-3. Add TESS O&M to annual O&M when enabled.
-4. Preserve total-capital-cost override semantics.
+3. Add TESS O&M to computed annual O&M when enabled.
+4. Preserve total-capital-cost and total-O&M override semantics.
 5. Add tests for:
    - no cost impact when disabled;
    - correct CAPEX from volume and cost per cubic meter;

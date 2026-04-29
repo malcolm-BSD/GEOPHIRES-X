@@ -318,9 +318,66 @@ class DispatchFrameworkTestCase(BaseTestCase):
             legacy_model.surfaceplant.PumpingkWh.value,
             disabled_tess_model.surfaceplant.PumpingkWh.value,
         )
+        self.assertEqual(legacy_model.economics.CCap.value, disabled_tess_model.economics.CCap.value)
+        self.assertEqual(legacy_model.economics.Coam.value, disabled_tess_model.economics.Coam.value)
         self.assertEqual(legacy_model.economics.LCOH.value, disabled_tess_model.economics.LCOH.value)
+        self.assertEqual(0.0, disabled_tess_model.economics.tess_capital_cost.value)
+        self.assertEqual(0.0, disabled_tess_model.economics.tess_o_and_m_cost.value)
         self.assertEqual(0.0, float(np.sum(disabled_tess_model.dispatch_results.hourly_tess_discharge_to_load)))
         self.assertNotIn("tess_enabled", disabled_tess_model.dispatch_results.summary_metrics)
+
+    def test_dispatchable_tess_costs_feed_economics_when_enabled(self):
+        volume_m3 = 2000.0
+        cost_per_m3 = 750.0
+        fixed_om_fraction = 0.02
+        no_cost_model = self._run_direct_use_cylindrical_dispatch(
+            {
+                "TESS Enabled": "True",
+                "TESS Volume": f"{volume_m3}",
+                "TESS Cost per Cubic Meter": "0",
+                "TESS Fixed O&M Fraction": "0",
+            }
+        )
+        costed_model = self._run_direct_use_cylindrical_dispatch(
+            {
+                "TESS Enabled": "True",
+                "TESS Volume": f"{volume_m3}",
+                "TESS Cost per Cubic Meter": f"{cost_per_m3}",
+                "TESS Fixed O&M Fraction": f"{fixed_om_fraction}",
+            }
+        )
+
+        expected_capex_musd = volume_m3 * cost_per_m3 / 1.0e6
+        expected_om_musd_per_year = expected_capex_musd * fixed_om_fraction
+
+        self.assertAlmostEqual(expected_capex_musd, costed_model.economics.tess_capital_cost.value)
+        self.assertAlmostEqual(expected_om_musd_per_year, costed_model.economics.tess_o_and_m_cost.value)
+        self.assertAlmostEqual(
+            expected_capex_musd,
+            costed_model.economics.CCap.value - no_cost_model.economics.CCap.value,
+        )
+        self.assertAlmostEqual(
+            expected_om_musd_per_year,
+            costed_model.economics.Coam.value - no_cost_model.economics.Coam.value,
+        )
+        self.assertGreater(costed_model.economics.LCOH.value, no_cost_model.economics.LCOH.value)
+
+    def test_dispatchable_tess_costs_respect_total_cost_overrides(self):
+        model = self._run_direct_use_cylindrical_dispatch(
+            {
+                "TESS Enabled": "True",
+                "TESS Volume": "2000",
+                "TESS Cost per Cubic Meter": "750",
+                "TESS Fixed O&M Fraction": "0.02",
+                "Total Capital Cost": "123",
+                "Total O&M Cost": "7",
+            }
+        )
+
+        self.assertAlmostEqual(1.5, model.economics.tess_capital_cost.value)
+        self.assertAlmostEqual(0.03, model.economics.tess_o_and_m_cost.value)
+        self.assertAlmostEqual(123.0, model.economics.CCap.value)
+        self.assertAlmostEqual(7.0, model.economics.Coam.value)
 
     def test_dispatchable_tess_serves_demand_from_initial_storage(self):
         model = self._run_direct_use_cylindrical_dispatch(
