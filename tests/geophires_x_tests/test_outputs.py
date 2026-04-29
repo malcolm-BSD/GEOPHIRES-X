@@ -916,6 +916,64 @@ class OutputsTestCase(BaseTestCase):
         self.assertEqual("1", rows[0]["Year"])
         self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
 
+    def test_tess_dispatch_example_input_runs(self) -> None:
+        """Verify the TESS dispatch example generates expected TESS outputs."""
+        input_path = Path(__file__).resolve().parent / "example1_dispatchable_tess.txt"
+        text_output_path = input_path.parent / "example1_dispatchable_tess_text.out"
+        html_output_path = input_path.parent / "example1_dispatchable_tess.html"
+        dispatch_profile_path = input_path.parent / "example1_dispatchable_tess_dispatch_profile.csv"
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
+            "DISPATCH PROFILE: TESS Temperature and SOC",
+            "DISPATCH PROFILE: Demand, TESS Discharge, and Geothermal Charge",
+            "DISPATCH PROFILE: TESS Losses and Curtailment",
+        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
+
+        for artifact_path in [text_output_path, html_output_path, dispatch_profile_path, *graph_paths]:
+            if artifact_path.exists():
+                artifact_path.unlink()
+
+        try:
+            result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+        except RuntimeError as e:
+            has_expected_error_msg = (
+                "cannot unpack non-iterable NoneType object" in str(e)
+                or "Can't find a usable tk.tcl" in str(e)
+                or 'invalid command name "tcl_findLibrary"' in str(e)
+            )
+            if has_expected_error_msg and os.name == "nt" and "TOXPYTHON" in os.environ:
+                _log.warning(
+                    f"Ignoring error while testing TESS dispatch example HTML output "
+                    f"since we appear to be running on Windows in GitHub Actions ({e!s})"
+                )
+                return
+            raise e
+
+        self.assertTrue(Path(result.output_file_path).exists())
+        self.assertTrue(text_output_path.exists())
+        self.assertTrue(html_output_path.exists())
+        self.assertTrue(dispatch_profile_path.exists())
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
+
+        parsed_results = result.result["DISPATCH RESULTS"]
+        self.assertEqual(10000.0, parsed_results["TESS volume"]["value"])
+        self.assertAlmostEqual(7.5, parsed_results["TESS capital cost"]["value"])
+        self.assertGreater(parsed_results["TESS annual discharge"]["value"], 0.0)
+        self.assertGreater(parsed_results["Peak geothermal charge"]["value"], 0.0)
+
+        with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+        self.assertEqual(8760, len(rows))
+        self.assertEqual("1", rows[0]["Year"])
+        self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
+        self.assertIn("TESS Temperature (degC)", rows[0])
+        self.assertIn("TESS State of Charge (-)", rows[0])
+        self.assertIn("TESS Charge from Geothermal (MW)", rows[0])
+
     # noinspection PyMethodMayBeStatic
     def _strip_drive(self, p: str) -> str:
         return p.replace("D:", "").replace("C:", "")
