@@ -750,6 +750,17 @@ Implemented Phase 6 example contract:
 3. Add smoothing metrics to output.
 4. Document tradeoffs between thermostat and moving-average control.
 
+Implemented Phase 7 control contract:
+
+- `TESS Charge Control Strategy = Moving Average` now charges the tank from a trailing moving average of the heat demand profile;
+- `TESS Moving Average Window` controls the smoothing horizon in hours;
+- `TESS SOC Control Gain` adds an optional state-of-charge correction around the configured target tank temperature;
+- moving-average control still serves customer demand before charging during each timestep;
+- smoothing output metrics include customer demand standard deviation, geothermal output standard deviation, geothermal output smoothing ratio, and geothermal variability reduction;
+- the moving-average regression test confirms geothermal output is smoother than both the legacy demand-following geothermal output and the unsmoothed customer demand profile.
+
+Moving-average control is better for moderating short-term demand swings and approximating the low-pass-filter behavior expected from a large tank. Temperature-band control is simpler and more thermostat-like, but it can create blocky geothermal charging cycles with higher charge-power peaks. Moving-average control can run geothermal more steadily, but poor choices of window length or SOC gain can overcharge, undercharge, or curtail heat when the tank reaches its bounds.
+
 ## Acceptance Criteria
 
 The initial feature should be considered complete when:

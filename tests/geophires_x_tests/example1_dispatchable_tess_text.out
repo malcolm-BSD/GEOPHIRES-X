@@ -8,8 +8,8 @@ Simulation Metadata\par
 ----------------------\par
 GEOPHIRES Version: 3.12.1 \par
 Simulation Date: 2026-04-29 \par
-Simulation Time: 18:40 \par
-Calculation Time:     15.226 sec \par
+Simulation Time: 18:50 \par
+Calculation Time:     17.694 sec \par
 \par
                            ***SUMMARY OF RESULTS***\par
 \par
@@ -140,6 +140,9 @@ Calculation Time:     15.226 sec \par
       TESS equivalent full cycles                  :      97.27 cycles/year\par
       Peak customer demand                         :      27.26 MW\par
       Peak geothermal charge                       :      57.71 MW\par
+      Customer demand standard deviation           :       2.65 MW\par
+      Geothermal output standard deviation         :      23.09 MW\par
+      Geothermal output smoothing ratio            :       8.70 -\par
       Geothermal peak reduction                    :    -111.72 %\par
       Geothermal variability reduction             :    -769.75 %\par
 \par

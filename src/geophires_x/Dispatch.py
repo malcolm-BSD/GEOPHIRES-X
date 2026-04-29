@@ -1175,6 +1175,66 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             model.surfaceplant.maximum_dispatch_flow_fraction.value,
         )
 
+    @staticmethod
+    def _moving_average_profile(values: np.ndarray, window: int) -> np.ndarray:
+        """Return a trailing moving-average profile with partial initial windows."""
+        bounded_window = max(int(window), 1)
+        cumulative_values = np.cumsum(np.insert(values.astype(float), 0, 0.0))
+        averaged_values = np.zeros_like(values, dtype=float)
+        for timestep_index in range(values.size):
+            start_index = max(0, timestep_index + 1 - bounded_window)
+            sample_count = timestep_index + 1 - start_index
+            averaged_values[timestep_index] = (
+                cumulative_values[timestep_index + 1] - cumulative_values[start_index]
+            ) / sample_count
+        return averaged_values
+
+    @staticmethod
+    def _target_storage_energy_mwh(model: "Model", storage: ThermalStorageModel) -> float:
+        """Return the storage energy target implied by the configured target temperature."""
+        temperature_span = storage.maximum_temperature_c - storage.minimum_temperature_c
+        if temperature_span <= 0.0:
+            return 0.0
+
+        target_soc = (
+            model.surfaceplant.tess_target_temperature.value - storage.minimum_temperature_c
+        ) / temperature_span
+        return max(0.0, min(target_soc, 1.0)) * storage.usable_capacity_mwh
+
+    def _moving_average_charge_target_mw(
+        self,
+        model: "Model",
+        storage: ThermalStorageModel,
+        moving_average_demand_mw: float,
+        time_step_hours: float,
+    ) -> float:
+        """Return the moving-average geothermal charge target with SOC correction."""
+        window_hours = max(model.surfaceplant.tess_moving_average_window.value * time_step_hours, time_step_hours)
+        energy_error_mwh = self._target_storage_energy_mwh(model, storage) - storage.stored_energy_mwh
+        soc_correction_mw = model.surfaceplant.tess_soc_control_gain.value * energy_error_mwh / window_hours
+        return max(float(moving_average_demand_mw) + soc_correction_mw, 0.0)
+
+    def _demand_following_charge_command(self, model: "Model", target_charge_mw: float) -> DispatchCommand:
+        """Build a geothermal charge command using the normal demand-following strategy."""
+        if target_charge_mw <= 0.0:
+            return DispatchCommand(
+                target_flow_fraction=0.0,
+                runtime_fraction=0.0,
+                is_shut_in=True,
+                target_demand_mw=0.0,
+            )
+
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+        timestep_state = {
+            "nominal_output_mw": nominal_state["dispatch_output_mw"],
+            "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
+            "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
+            "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
+        }
+        dispatch_command = self._dispatch_strategy.dispatch(timestep_state, target_charge_mw)
+        dispatch_command.target_demand_mw = target_charge_mw
+        return dispatch_command
+
     def _run_tess_dispatch(self, model: "Model", dispatch_demand_mw: np.ndarray, time_step_hours: float) -> None:
         if model.dispatch_results.demand_type != "thermal":
             raise ValueError("TESS dispatch currently supports thermal demand only.")
@@ -1182,42 +1242,54 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         control_strategy = model.surfaceplant.tess_charge_control_strategy.value
         if not isinstance(control_strategy, TESSChargeControlStrategy):
             control_strategy = TESSChargeControlStrategy.from_input_string(control_strategy)
-        if control_strategy != TESSChargeControlStrategy.TEMPERATURE_BAND:
-            raise NotImplementedError("TESS dispatch currently supports Temperature Band charge control only.")
+        if control_strategy not in [TESSChargeControlStrategy.TEMPERATURE_BAND, TESSChargeControlStrategy.MOVING_AVERAGE]:
+            raise NotImplementedError("TESS dispatch currently supports Temperature Band and Moving Average charge control.")
 
         storage = self._build_thermal_storage(model)
         initial_temperature_c = storage.temperature_c
         lower_threshold, upper_threshold = self._temperature_band_thresholds(model)
         charge_active = storage.temperature_c <= lower_threshold
         charge_flow_fraction = self._tess_charge_flow_fraction(model)
+        moving_average_demand_mw = self._moving_average_profile(
+            dispatch_demand_mw,
+            model.surfaceplant.tess_moving_average_window.value,
+        )
 
         for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
             discharge_result = storage.discharge(timestep_demand_mw, dt_hours=time_step_hours)
-            charge_active = self._temperature_band_charge_active(
-                storage,
-                charge_active,
-                lower_threshold,
-                upper_threshold,
-            )
 
-            if charge_active and charge_flow_fraction > 0.0:
-                dispatch_command = DispatchCommand(
-                    target_flow_fraction=charge_flow_fraction,
-                    runtime_fraction=1.0,
-                    is_shut_in=False,
-                    target_demand_mw=0.0,
+            if control_strategy == TESSChargeControlStrategy.TEMPERATURE_BAND:
+                charge_active = self._temperature_band_charge_active(
+                    storage,
+                    charge_active,
+                    lower_threshold,
+                    upper_threshold,
                 )
-                geothermal_charge_command = charge_flow_fraction
+                if charge_active and charge_flow_fraction > 0.0:
+                    dispatch_command = DispatchCommand(
+                        target_flow_fraction=charge_flow_fraction,
+                        runtime_fraction=1.0,
+                        is_shut_in=False,
+                        target_demand_mw=0.0,
+                    )
+                else:
+                    dispatch_command = DispatchCommand(
+                        target_flow_fraction=0.0,
+                        runtime_fraction=0.0,
+                        is_shut_in=True,
+                        target_demand_mw=0.0,
+                    )
             else:
-                dispatch_command = DispatchCommand(
-                    target_flow_fraction=0.0,
-                    runtime_fraction=0.0,
-                    is_shut_in=True,
-                    target_demand_mw=0.0,
+                target_charge_mw = self._moving_average_charge_target_mw(
+                    model,
+                    storage,
+                    moving_average_demand_mw[timestep_index],
+                    time_step_hours,
                 )
-                geothermal_charge_command = 0.0
+                dispatch_command = self._demand_following_charge_command(model, target_charge_mw)
 
             timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
+            geothermal_charge_command_mw = timestep_result.plant_outlet_thermal_power
             charge_result = storage.charge(
                 timestep_result.plant_outlet_thermal_power,
                 dt_hours=time_step_hours,
@@ -1272,7 +1344,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             model.dispatch_results.hourly_tess_efficiency_loss[timestep_index] = (
                 charge_result.charge_efficiency_loss_mw + discharge_result.discharge_efficiency_loss_mw
             )
-            model.dispatch_results.hourly_geothermal_charge_command[timestep_index] = geothermal_charge_command
+            model.dispatch_results.hourly_geothermal_charge_command[timestep_index] = geothermal_charge_command_mw
 
         annual_discharge_kwh = float(np.sum(model.dispatch_results.hourly_tess_discharge_to_load) * 1000.0 * time_step_hours)
         annual_charge_kwh = float(np.sum(model.dispatch_results.hourly_tess_charge_from_geothermal) * 1000.0 * time_step_hours)
@@ -1295,6 +1367,12 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         model.dispatch_results.summary_metrics.update(
             {
                 "tess_enabled": 1.0,
+                "tess_charge_control_strategy": float(control_strategy.int_value),
+                "tess_moving_average_window_hours": (
+                    float(model.surfaceplant.tess_moving_average_window.value)
+                    if control_strategy == TESSChargeControlStrategy.MOVING_AVERAGE
+                    else 0.0
+                ),
                 "tess_volume_m3": float(model.surfaceplant.tess_volume.value),
                 "tess_usable_capacity_mwh": float(storage.usable_capacity_mwh),
                 "tess_initial_temperature_c": float(initial_temperature_c),
@@ -1312,6 +1390,9 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 "tess_equivalent_full_cycles": annual_discharge_kwh / max(storage.usable_capacity_mwh * 1000.0, 1.0e-12),
                 "peak_customer_demand_mw": peak_customer_demand_mw,
                 "peak_geothermal_charge_mw": peak_geothermal_charge_mw,
+                "customer_demand_standard_deviation_mw": customer_std,
+                "geothermal_output_standard_deviation_mw": geothermal_std,
+                "geothermal_output_smoothing_ratio": geothermal_std / customer_std if customer_std > 0.0 else 0.0,
                 "geothermal_peak_reduction_fraction": (
                     1.0 - peak_geothermal_charge_mw / peak_customer_demand_mw
                     if peak_customer_demand_mw > 0.0

@@ -459,6 +459,12 @@ def print_outputs_rich(
                     dispatch_metrics.get('peak_customer_demand_mw', 0.0)), 'MW'),
                 OutputTableItem('Peak geothermal charge', '{0:10.2f}'.format(
                     dispatch_metrics.get('peak_geothermal_charge_mw', 0.0)), 'MW'),
+                OutputTableItem('Customer demand standard deviation', '{0:10.2f}'.format(
+                    dispatch_metrics.get('customer_demand_standard_deviation_mw', 0.0)), 'MW'),
+                OutputTableItem('Geothermal output standard deviation', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_output_standard_deviation_mw', 0.0)), 'MW'),
+                OutputTableItem('Geothermal output smoothing ratio', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_output_smoothing_ratio', 0.0)), '-'),
                 OutputTableItem('Geothermal peak reduction', '{0:10.2f}'.format(
                     dispatch_metrics.get('geothermal_peak_reduction_fraction', 0.0) * 100.0), '%'),
                 OutputTableItem('Geothermal variability reduction', '{0:10.2f}'.format(

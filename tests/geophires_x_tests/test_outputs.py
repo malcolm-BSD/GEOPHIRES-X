@@ -269,6 +269,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertAlmostEqual(7.5, dispatch_results["TESS capital cost"]["value"])
         self.assertGreater(dispatch_results["TESS annual discharge"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak geothermal charge"]["value"], 0.0)
+        self.assertIsNotNone(dispatch_results["Geothermal output smoothing ratio"])
 
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))

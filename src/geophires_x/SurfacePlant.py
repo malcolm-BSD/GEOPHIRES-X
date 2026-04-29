@@ -740,7 +740,7 @@ class SurfacePlant:
             PreferredUnits=TimeUnit.HOUR,
             CurrentUnits=TimeUnit.HOUR,
             ErrMessage="assume default TESS moving average window (24 hours)",
-            ToolTipText="Moving-average window for future TESS moving-average charge control.",
+            ToolTipText="Moving-average window for TESS moving-average charge control.",
         )
         self.tess_soc_control_gain = self.ParameterDict["TESS SOC Control Gain"] = floatParameter(
             "TESS SOC Control Gain",
@@ -750,7 +750,7 @@ class SurfacePlant:
             Required=False,
             UnitType=Units.NONE,
             ErrMessage="assume default TESS SOC control gain (0.25)",
-            ToolTipText="State-of-charge correction gain for future TESS moving-average charge control.",
+            ToolTipText="State-of-charge correction gain for TESS moving-average charge control.",
         )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",

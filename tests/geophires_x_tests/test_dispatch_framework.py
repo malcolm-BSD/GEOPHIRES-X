@@ -423,6 +423,41 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertGreater(model.dispatch_results.summary_metrics["tess_annual_charge_kwh"], 0.0)
         self.assertGreater(model.dispatch_results.summary_metrics["peak_geothermal_charge_mw"], 0.0)
 
+    def test_dispatchable_tess_moving_average_reduces_geothermal_variability(self) -> None:
+        """Verify moving-average TESS control smooths geothermal output."""
+        legacy_model = self._run_direct_use_cylindrical_dispatch()
+        moving_average_model = self._run_direct_use_cylindrical_dispatch(
+            {
+                "TESS Enabled": "True",
+                "TESS Volume": "3000000",
+                "TESS Initial Temperature": "160",
+                "TESS Daily Heat Loss Fraction": "0",
+                "TESS Charge Control Strategy": "Moving Average",
+                "TESS Moving Average Window": "168",
+                "TESS SOC Control Gain": "0",
+            }
+        )
+
+        legacy_geothermal_std = float(np.std(legacy_model.dispatch_results.hourly_geothermal_thermal_output))
+        moving_average_geothermal_std = float(
+            np.std(moving_average_model.dispatch_results.hourly_geothermal_thermal_output)
+        )
+        customer_demand_std = float(np.std(moving_average_model.dispatch_results.hourly_thermal_demand))
+
+        self.assertLess(moving_average_geothermal_std, legacy_geothermal_std)
+        self.assertLess(moving_average_geothermal_std, customer_demand_std)
+        self.assertEqual(
+            168.0, moving_average_model.dispatch_results.summary_metrics["tess_moving_average_window_hours"]
+        )
+        self.assertGreater(
+            moving_average_model.dispatch_results.summary_metrics["geothermal_output_variability_reduction_fraction"],
+            0.0,
+        )
+        self.assertLess(
+            moving_average_model.dispatch_results.summary_metrics["geothermal_output_smoothing_ratio"],
+            1.0,
+        )
+
     def test_dispatchable_tess_reports_unmet_demand_when_discharge_limited(self):
         model = self._run_direct_use_cylindrical_dispatch(
             {
