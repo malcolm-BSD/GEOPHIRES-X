@@ -596,7 +596,7 @@ Recommended shape:
 
 ## Backward Compatibility
 
-The default behavior must be unchanged:
+The default behavior must be unchanged. This is a hard design criterion, not a convenience:
 
 ```text
 TESS Enabled = False
@@ -604,10 +604,13 @@ TESS Enabled = False
 
 When disabled:
 
+- the dispatch model must use the same demand-following geothermal path as before TESS was added;
+- customer load must be served directly from the geothermal system, subject to the same geothermal capacity, flow, runtime, and unmet-demand logic as the legacy dispatch model;
+- `hourly_demand_served`, `hourly_unmet_demand`, `hourly_geothermal_thermal_output`, `hourly_flow`, pumping power, reservoir depletion, and economics must match the legacy non-TESS run for the same inputs;
 - no TESS parameters affect dispatch;
 - no TESS costs are added;
 - no dispatch CSV columns are added unless the implementation chooses a fixed schema with zero-filled TESS columns;
-- existing dispatch regression tests should continue to pass;
+- existing dispatch regression tests should continue to pass, and at least one regression test should compare `TESS Enabled = False` against an equivalent run with TESS omitted;
 - existing input files should not require modification.
 
 ## Numerical Considerations
@@ -677,12 +680,12 @@ which would require final stored energy to equal initial stored energy over the 
 ### Phase 3: Dispatch Integration
 
 1. Add TESS branch inside `DispatchableOperatingModeStrategy.run`.
-2. Preserve the current dispatch path when `TESS Enabled = False`.
+2. Preserve the current dispatch path when `TESS Enabled = False`, with load served directly from geothermal output exactly as in the legacy dispatch model.
 3. Implement temperature-band control.
 4. Record TESS hourly arrays.
 5. Ensure geothermal adapter still handles reservoir depletion/recovery.
 6. Add dispatch integration tests for:
-   - disabled TESS exact legacy behavior;
+   - disabled TESS exact legacy behavior, including direct geothermal load service and matching served/unmet demand, flow, and geothermal output arrays;
    - enabled TESS serves demand from initial stored energy;
    - enabled TESS charges when below lower threshold;
    - enabled TESS shuts off geothermal charging above upper threshold;
@@ -734,7 +737,7 @@ which would require final stored energy to equal initial stored energy over the 
 
 The initial feature should be considered complete when:
 
-- `TESS Enabled = False` preserves existing dispatch behavior and tests.
+- `TESS Enabled = False` preserves existing dispatch behavior and tests: load is served directly from the geothermal system, and served demand, unmet demand, geothermal output, flow, pumping, depletion, and economics match the legacy non-TESS path.
 - `TESS Enabled = True` works for direct-use thermal dispatch.
 - TESS volume creates finite, auditable storage capacity.
 - `TESS Deadband Range` controls charge cycling.
