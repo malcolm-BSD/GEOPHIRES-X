@@ -566,7 +566,7 @@ Add dispatch result rows when TESS is enabled:
 Extend dispatch CSV with TESS columns when enabled:
 
 - `TESS Temperature (degC)`
-- `TESS SOC (-)`
+- `TESS State of Charge (-)`
 - `TESS Stored Energy (MWh)`
 - `TESS Discharge to Load (MW)`
 - `TESS Charge from Geothermal (MW)`
@@ -714,6 +714,14 @@ which would require final stored energy to equal initial stored energy over the 
    - demand vs TESS discharge vs geothermal charge;
    - losses and curtailment.
 5. Add tests for CSV/JSON schema stability.
+
+Implemented Phase 5 output contract:
+
+- disabled TESS keeps the legacy dispatch summary fields and dispatch profile CSV schema;
+- enabled TESS adds TESS summary rows to plain text and rich output;
+- enabled TESS adds TESS hourly columns to the dispatch profile CSV;
+- the `geophires_x_result` parsed dispatch summary schema includes the TESS fields;
+- optional dispatch HTML graphs include TESS temperature/SOC, demand/discharge/charge, and losses/curtailment when TESS is enabled.
 
 ### Phase 6: Example Case
 

@@ -214,6 +214,73 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
         self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
 
+    def test_tess_dispatch_outputs_are_written_and_parseable(self) -> None:
+        """Verify enabled TESS dispatch text rows and CSV columns are emitted."""
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+
+        output_path = Path(tempfile.gettempdir(), "dispatch_results_tess_test.out").absolute()
+        dispatch_profile_path = Path(tempfile.gettempdir(), "dispatch_results_tess_profile.csv").absolute()
+        html_output_path = Path(tempfile.gettempdir(), "dispatch_results_tess_test.html").absolute()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        graph_titles = [
+            "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
+            "DISPATCH PROFILE: Produced Temperature and Flow Rate",
+            "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
+            "DISPATCH PROFILE: TESS Temperature and SOC",
+            "DISPATCH PROFILE: Demand, TESS Discharge, and Geothermal Charge",
+            "DISPATCH PROFILE: TESS Losses and Curtailment",
+        ]
+        graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
+        for artifact_path in [output_path, dispatch_profile_path, html_output_path, *graph_paths]:
+            if artifact_path.exists():
+                artifact_path.unlink()
+
+        model = self._new_model()
+        model.reserv = CylindricalReservoir(model)
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            "Reservoir Model": ParameterEntry(Name="Reservoir Model", sValue="0"),
+            "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="9"),
+            "Number of Multilateral Sections": ParameterEntry(Name="Number of Multilateral Sections", sValue="1"),
+            "Maximum Dispatch Flow Fraction": ParameterEntry(Name="Maximum Dispatch Flow Fraction", sValue="1.2"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+            "TESS Volume": ParameterEntry(Name="TESS Volume", sValue="10000"),
+            "TESS Cost per Cubic Meter": ParameterEntry(Name="TESS Cost per Cubic Meter", sValue="750"),
+            "TESS Daily Heat Loss Fraction": ParameterEntry(Name="TESS Daily Heat Loss Fraction", sValue="0"),
+            "Dispatch Profile Output File": ParameterEntry(
+                Name="Dispatch Profile Output File", sValue=str(dispatch_profile_path)
+            ),
+            "HTML Output File": ParameterEntry(Name="HTML Output File", sValue=str(html_output_path)),
+            "Generate Dispatch HTML Graphs": ParameterEntry(Name="Generate Dispatch HTML Graphs", sValue="1"),
+        }
+
+        model.read_parameters()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertEqual(10000.0, dispatch_results["TESS volume"]["value"])
+        self.assertEqual("m3", dispatch_results["TESS volume"]["unit"])
+        self.assertAlmostEqual(7.5, dispatch_results["TESS capital cost"]["value"])
+        self.assertGreater(dispatch_results["TESS annual discharge"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Peak geothermal charge"]["value"], 0.0)
+
+        with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+        self.assertEqual(8760, len(rows))
+        self.assertIn("TESS Temperature (degC)", rows[0])
+        self.assertIn("TESS State of Charge (-)", rows[0])
+        self.assertIn("TESS Discharge to Load (MW)", rows[0])
+        self.assertIn("TESS Charge from Geothermal (MW)", rows[0])
+        self.assertGreater(float(rows[0]["TESS Stored Energy (MWh)"]), 0.0)
+        for graph_path in graph_paths:
+            self.assertTrue(graph_path.exists())
+
     def test_electric_dispatch_results_are_written_and_parseable(self):
         output_path = Path(tempfile.gettempdir(), "dispatch_results_electric_test.out").absolute()
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")

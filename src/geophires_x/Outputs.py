@@ -7,6 +7,7 @@ import time
 import sys
 from io import TextIOWrapper
 from pathlib import Path
+from typing import Any
 
 # noinspection PyPackageRequirements
 import numpy as np
@@ -1154,8 +1155,41 @@ class Outputs:
                     ('Annual peaking boiler heat delivered', metrics.get('annual_district_heating_boiler_kwh', 0.0) / 1.0e6, 'GWh/year'),
                     ('Peak peaking boiler demand', metrics.get('peak_district_heating_boiler_mw', 0.0), 'MW'),
                 ])
-        rows[3:3] = summary_rows
+        rows[3:3] = summary_rows + Outputs._tess_output_rows(model, metrics)
         return rows
+
+    @staticmethod
+    def _tess_output_rows(model: Model, metrics: dict[str, float]) -> list[tuple[str, float, str]]:
+        """Return TESS summary rows for dispatch text and parsed output."""
+        if metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            ('TESS enabled', metrics.get('tess_enabled', 0.0), 'flag'),
+            ('TESS volume', metrics.get('tess_volume_m3', 0.0), 'm3'),
+            ('TESS usable capacity', metrics.get('tess_usable_capacity_mwh', 0.0), 'MWh'),
+            ('TESS capital cost', model.economics.tess_capital_cost.value,
+             model.economics.tess_capital_cost.CurrentUnits.value),
+            ('TESS fixed O&M cost', model.economics.tess_o_and_m_cost.value,
+             model.economics.tess_o_and_m_cost.CurrentUnits.value),
+            ('TESS average SOC', metrics.get('tess_average_soc', 0.0) * 100.0, '%'),
+            ('TESS minimum SOC', metrics.get('tess_min_soc', 0.0) * 100.0, '%'),
+            ('TESS maximum SOC', metrics.get('tess_max_soc', 0.0) * 100.0, '%'),
+            ('TESS final temperature', metrics.get('tess_final_temperature_c', 0.0), 'degC'),
+            ('TESS annual charge', metrics.get('tess_annual_charge_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual discharge', metrics.get('tess_annual_discharge_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual standby loss', metrics.get('tess_annual_standby_loss_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual efficiency loss', metrics.get('tess_annual_efficiency_loss_kwh', 0.0) / 1.0e6,
+             'GWh/year'),
+            ('TESS curtailed geothermal heat', metrics.get('tess_annual_curtailed_heat_kwh', 0.0) / 1.0e6,
+             'GWh/year'),
+            ('TESS equivalent full cycles', metrics.get('tess_equivalent_full_cycles', 0.0), 'cycles/year'),
+            ('Peak customer demand', metrics.get('peak_customer_demand_mw', 0.0), 'MW'),
+            ('Peak geothermal charge', metrics.get('peak_geothermal_charge_mw', 0.0), 'MW'),
+            ('Geothermal peak reduction', metrics.get('geothermal_peak_reduction_fraction', 0.0) * 100.0, '%'),
+            ('Geothermal variability reduction',
+             metrics.get('geothermal_output_variability_reduction_fraction', 0.0) * 100.0, '%'),
+        ]
 
     def _write_dispatch_results(self, model: Model, f) -> None:
         dispatch_rows = self._dispatch_output_rows(model)
@@ -1168,6 +1202,42 @@ class Outputs:
         f.write(NL)
         for field_name, value, units in dispatch_rows:
             f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+
+    @staticmethod
+    def _dispatch_profile_tess_columns(dispatch_results: Any) -> list[str]:
+        """Return TESS profile CSV columns when storage is active."""
+        if dispatch_results.summary_metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            'TESS Temperature (degC)',
+            'TESS State of Charge (-)',
+            'TESS Stored Energy (MWh)',
+            'TESS Discharge to Load (MW)',
+            'TESS Charge from Geothermal (MW)',
+            'TESS Charge Curtailed (MW)',
+            'TESS Standby Loss (MW)',
+            'TESS Efficiency Loss (MW)',
+            'Geothermal Charge Command (MW)',
+        ]
+
+    @staticmethod
+    def _dispatch_profile_tess_row(dispatch_results: Any, timestep_index: int) -> list[float]:
+        """Return one timestep of TESS profile CSV data when storage is active."""
+        if dispatch_results.summary_metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            float(dispatch_results.hourly_tess_temperature[timestep_index]),
+            float(dispatch_results.hourly_tess_soc[timestep_index]),
+            float(dispatch_results.hourly_tess_stored_energy[timestep_index]),
+            float(dispatch_results.hourly_tess_discharge_to_load[timestep_index]),
+            float(dispatch_results.hourly_tess_charge_from_geothermal[timestep_index]),
+            float(dispatch_results.hourly_tess_charge_curtailed[timestep_index]),
+            float(dispatch_results.hourly_tess_standby_loss[timestep_index]),
+            float(dispatch_results.hourly_tess_efficiency_loss[timestep_index]),
+            float(dispatch_results.hourly_geothermal_charge_command[timestep_index]),
+        ]
 
     def _write_dispatch_profile_output(self, model: Model) -> None:
         dispatch_results = getattr(model, 'dispatch_results', None)
@@ -1186,6 +1256,7 @@ class Outputs:
             demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
             demand_column = 'Electricity Demand (MW)' if demand_type == 'electric' else 'Thermal Demand (MW)'
             output_column = 'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Geothermal Thermal Output (MW)'
+            tess_columns = self._dispatch_profile_tess_columns(dispatch_results)
             writer.writerow(
                 [
                     'Year',
@@ -1199,6 +1270,7 @@ class Outputs:
                     'Flow Rate (kg/s)',
                     'Runtime Fraction',
                     'Pumping Power (MW)',
+                    *tess_columns,
                 ]
             )
 
@@ -1220,6 +1292,7 @@ class Outputs:
                         float(dispatch_results.hourly_flow[timestep_index]),
                         float(dispatch_results.hourly_runtime_fraction[timestep_index]),
                         float(dispatch_results.hourly_pumping_power[timestep_index]),
+                        *self._dispatch_profile_tess_row(dispatch_results, timestep_index),
                     ]
                 )
 
