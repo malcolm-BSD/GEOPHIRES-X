@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
+
 from geophires_x.Dispatch import CylindricalDispatchPlantAdapter
 from geophires_x.Dispatch import DemandFollowingDispatchStrategy
 from geophires_x.Dispatch import DemandProfileFactory
@@ -12,6 +14,9 @@ from geophires_x.Model import Model
 from geophires_x.OptionList import DispatchDemandSource
 from geophires_x.OptionList import DispatchFlowStrategy
 from geophires_x.OptionList import OperatingMode
+from geophires_x.OptionList import TESSChargeControlStrategy
+from geophires_x.OptionList import TESSPressureMode
+from geophires_x.OptionList import TESSWorkingFluid
 from geophires_x.Parameter import ParameterEntry
 from tests.base_test_case import BaseTestCase
 
@@ -45,6 +50,101 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(DispatchFlowStrategy.DEMAND_FOLLOWING, model.surfaceplant.dispatch_flow_strategy.value)
         self.assertEqual(1, model.surfaceplant.dispatch_analysis_start_year.value)
         self.assertEqual(2, model.surfaceplant.dispatch_analysis_end_year.value)
+
+    def test_tess_defaults_to_disabled(self):
+        model = self._new_model()
+
+        model.surfaceplant.read_parameters(model)
+
+        self.assertFalse(model.surfaceplant.tess_enabled.value)
+        self.assertEqual(TESSWorkingFluid.WATER, model.surfaceplant.tess_working_fluid.value)
+        self.assertEqual(TESSPressureMode.AUTO, model.surfaceplant.tess_pressure_mode.value)
+        self.assertEqual(
+            TESSChargeControlStrategy.TEMPERATURE_BAND,
+            model.surfaceplant.tess_charge_control_strategy.value,
+        )
+
+    def test_tess_parameter_parsing(self):
+        model = self._new_model()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+            "TESS Volume": ParameterEntry(Name="TESS Volume", sValue="5000"),
+            "TESS Cost per Cubic Meter": ParameterEntry(Name="TESS Cost per Cubic Meter", sValue="750"),
+            "TESS Deadband Range": ParameterEntry(Name="TESS Deadband Range", sValue="12"),
+            "TESS Charge Control Strategy": ParameterEntry(
+                Name="TESS Charge Control Strategy", sValue="Moving Average"
+            ),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        model.surfaceplant.read_parameters(model)
+
+        self.assertTrue(model.surfaceplant.tess_enabled.value)
+        self.assertEqual(5000.0, model.surfaceplant.tess_volume.value)
+        self.assertEqual(750.0, model.surfaceplant.tess_cost_per_cubic_meter.value)
+        self.assertEqual(12.0, model.surfaceplant.tess_deadband_range.value)
+        self.assertEqual(
+            TESSChargeControlStrategy.MOVING_AVERAGE,
+            model.surfaceplant.tess_charge_control_strategy.value,
+        )
+
+    def test_tess_default_maximum_discharge_power_autosizes_from_peak_heat_demand(self):
+        model = self._new_model()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+            "TESS Subhourly Demand Peak Multiplier": ParameterEntry(
+                Name="TESS Subhourly Demand Peak Multiplier", sValue="1.5"
+            ),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        model.surfaceplant.read_parameters(model)
+
+        demand_profile = np.asarray(model.surfaceplant.HeatingDemand.value, dtype=float)
+        heat_demand_kwh = demand_profile[:, 1] if demand_profile.ndim == 2 else demand_profile
+        expected_maximum_discharge_power_mw = float(np.max(heat_demand_kwh) / 1000.0 * 1.5)
+        self.assertAlmostEqual(
+            expected_maximum_discharge_power_mw,
+            model.surfaceplant.tess_maximum_discharge_power.value,
+            places=6,
+        )
+
+    def test_tess_rejects_invalid_temperature_bounds(self):
+        model = self._new_model()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+            "TESS Minimum Useful Temperature": ParameterEntry(Name="TESS Minimum Useful Temperature", sValue="150"),
+            "TESS Maximum Temperature": ParameterEntry(Name="TESS Maximum Temperature", sValue="140"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        with self.assertRaisesRegex(ValueError, "TESS Maximum Temperature"):
+            model.surfaceplant.read_parameters(model)
+
+    def test_tess_rejects_user_pressure_below_liquid_requirement(self):
+        model = self._new_model()
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model.InputParameters = {
+            "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+            "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+            "TESS Pressure Mode": ParameterEntry(Name="TESS Pressure Mode", sValue="User Specified"),
+            "TESS Pressure": ParameterEntry(Name="TESS Pressure", sValue="0.1"),
+            "TESS Maximum Temperature": ParameterEntry(Name="TESS Maximum Temperature", sValue="180"),
+            "Annual Heat Demand": ParameterEntry(Name="Annual Heat Demand", sValue=csv_file),
+        }
+
+        with self.assertRaisesRegex(ValueError, "TESS Pressure"):
+            model.surfaceplant.read_parameters(model)
 
     def test_dispatch_parameter_parsing_for_electricity(self):
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))

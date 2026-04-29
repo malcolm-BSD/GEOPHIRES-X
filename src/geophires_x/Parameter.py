@@ -1369,6 +1369,8 @@ def LookupUnits(sUnitText: str):
             MyEnum = MassPerTimeUnit
         elif uType == Units.COSTPERDISTANCE:
             MyEnum = CostPerDistanceUnit
+        elif uType == Units.COSTPERVOLUME:
+            MyEnum = CostPerVolumeUnit
         elif uType == Units.POWER:
             MyEnum = PowerUnit
         elif uType == Units.CO2PRODUCTION:

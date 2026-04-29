@@ -84,6 +84,7 @@ class Units(IntEnum):
     DECAY_RATE = auto()
     INFLATION_RATE = auto()
     DYNAMIC_VISCOSITY = auto()
+    COSTPERVOLUME = auto()
 
 
 class AngleUnit(str, Enum):
@@ -242,6 +243,10 @@ class CostPerMassUnit(str, Enum):
 class CostPerDistanceUnit(str, Enum):
     DOLLARSPERM = "USD/m"
     KDOLLARSPERKM = "KUSD/km"
+
+
+class CostPerVolumeUnit(str, Enum):
+    DOLLARSPERMETERS3 = "USD/m**3"
 
 
 class PressureUnit(str, Enum):

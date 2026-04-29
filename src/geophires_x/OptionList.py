@@ -160,6 +160,71 @@ class DispatchFlowStrategy(GeophiresInputEnum):
         raise ValueError(f'Unknown Dispatch Flow Strategy input value: {input_string}')
 
 
+class TESSWorkingFluid(GeophiresInputEnum):
+    WATER = 1, "Water"
+
+    @staticmethod
+    def from_int(int_val):
+        for member in __class__:
+            if member.int_value == int_val:
+                return member
+
+        raise ValueError(f'Unknown TESS Working Fluid integer input value: {int_val}')
+
+    @staticmethod
+    def from_input_string(input_string: str) -> 'TESSWorkingFluid':
+        normalized = input_string.strip().lower()
+        for member in __class__:
+            if normalized in [str(member.int_value), member.value.lower()]:
+                return member
+
+        raise ValueError(f'Unknown TESS Working Fluid input value: {input_string}')
+
+
+class TESSPressureMode(GeophiresInputEnum):
+    AUTO = 1, "Auto"
+    USER_SPECIFIED = 2, "User Specified"
+
+    @staticmethod
+    def from_int(int_val):
+        for member in __class__:
+            if member.int_value == int_val:
+                return member
+
+        raise ValueError(f'Unknown TESS Pressure Mode integer input value: {int_val}')
+
+    @staticmethod
+    def from_input_string(input_string: str) -> 'TESSPressureMode':
+        normalized = input_string.strip().lower()
+        for member in __class__:
+            if normalized in [str(member.int_value), member.value.lower()]:
+                return member
+
+        raise ValueError(f'Unknown TESS Pressure Mode input value: {input_string}')
+
+
+class TESSChargeControlStrategy(GeophiresInputEnum):
+    TEMPERATURE_BAND = 1, "Temperature Band"
+    MOVING_AVERAGE = 2, "Moving Average"
+
+    @staticmethod
+    def from_int(int_val):
+        for member in __class__:
+            if member.int_value == int_val:
+                return member
+
+        raise ValueError(f'Unknown TESS Charge Control Strategy integer input value: {int_val}')
+
+    @staticmethod
+    def from_input_string(input_string: str) -> 'TESSChargeControlStrategy':
+        normalized = input_string.strip().lower()
+        for member in __class__:
+            if normalized in [str(member.int_value), member.value.lower()]:
+                return member
+
+        raise ValueError(f'Unknown TESS Charge Control Strategy input value: {input_string}')
+
+
 class EconomicModel(GeophiresInputEnum):
     FCR = 1, "Fixed Charge Rate (FCR)"
     STANDARDIZED_LEVELIZED_COST = 2, "Standard Levelized Cost"

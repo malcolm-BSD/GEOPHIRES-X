@@ -1410,6 +1410,213 @@
       "minimum": 2,
       "maximum": 10001
     },
+    "TESS Enabled": {
+      "description": "Enable the thermal energy storage system dispatch layer.",
+      "type": "boolean",
+      "units": null,
+      "category": "Surface Plant",
+      "default": false,
+      "minimum": null,
+      "maximum": null
+    },
+    "TESS Volume": {
+      "description": "Usable thermal energy storage tank fluid volume.",
+      "type": "number",
+      "units": "m**3",
+      "category": "Surface Plant",
+      "default": 1000.0,
+      "minimum": 1.0,
+      "maximum": 10000000.0
+    },
+    "TESS Cost per Cubic Meter": {
+      "description": "Complete installed thermal energy storage system cost per cubic meter, including tank, foundations, insulation, heat exchangers, controls, and balance-of-plant items included in the user's estimate.",
+      "type": "number",
+      "units": "USD/m**3",
+      "category": "Surface Plant",
+      "default": 500.0,
+      "minimum": 0.0,
+      "maximum": 100000.0
+    },
+    "TESS Fixed O&M Fraction": {
+      "description": "Annual TESS fixed O&M cost as a fraction of TESS capital cost.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.01,
+      "minimum": 0.0,
+      "maximum": 0.2
+    },
+    "TESS Working Fluid": {
+      "description": "Working fluid used in the TESS tank. The initial implementation supports water only.",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Water",
+      "minimum": null,
+      "maximum": null
+    },
+    "TESS Pressure Mode": {
+      "description": "Select whether TESS pressure is computed automatically or supplied by the user.",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Auto",
+      "minimum": null,
+      "maximum": null
+    },
+    "TESS Pressure": {
+      "description": "TESS tank pressure. Used directly when TESS Pressure Mode is User Specified.",
+      "type": "number",
+      "units": "MPa",
+      "category": "Surface Plant",
+      "default": 1.0,
+      "minimum": 0.1,
+      "maximum": 25.0
+    },
+    "TESS Pressure Safety Factor": {
+      "description": "Multiplier applied to water saturation pressure for TESS pressure validation.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 1.1,
+      "minimum": 1.0,
+      "maximum": 3.0
+    },
+    "TESS Minimum Useful Temperature": {
+      "description": "Lower tank temperature bound for usable stored thermal energy.",
+      "type": "number",
+      "units": "degC",
+      "category": "Surface Plant",
+      "default": 120.0,
+      "minimum": 0.0,
+      "maximum": 370.0
+    },
+    "TESS Maximum Temperature": {
+      "description": "Upper tank operating temperature.",
+      "type": "number",
+      "units": "degC",
+      "category": "Surface Plant",
+      "default": 160.0,
+      "minimum": 1.0,
+      "maximum": 370.0
+    },
+    "TESS Target Temperature": {
+      "description": "Preferred tank control temperature.",
+      "type": "number",
+      "units": "degC",
+      "category": "Surface Plant",
+      "default": 150.0,
+      "minimum": 0.0,
+      "maximum": 370.0
+    },
+    "TESS Initial Temperature": {
+      "description": "Initial tank temperature at the start of dispatch analysis.",
+      "type": "number",
+      "units": "degC",
+      "category": "Surface Plant",
+      "default": 150.0,
+      "minimum": 0.0,
+      "maximum": 370.0
+    },
+    "TESS Deadband Range": {
+      "description": "Total thermostat hysteresis range around the TESS target temperature.",
+      "type": "number",
+      "units": "degC",
+      "category": "Surface Plant",
+      "default": 10.0,
+      "minimum": 0.0,
+      "maximum": 100.0
+    },
+    "TESS Charge Efficiency": {
+      "description": "Fraction of geothermal heat accepted into useful TESS stored energy.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.98,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "TESS Discharge Efficiency": {
+      "description": "Fractional efficiency from useful TESS stored energy to delivered thermal demand.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.98,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "TESS Daily Heat Loss Fraction": {
+      "description": "Fraction of useful stored TESS energy lost per day.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.005,
+      "minimum": 0.0,
+      "maximum": 0.1
+    },
+    "TESS Maximum Charge Power": {
+      "description": "Maximum tank-side charging power. -1 means no TESS-side limit beyond geothermal production and available storage capacity.",
+      "type": "number",
+      "units": "MW",
+      "category": "Surface Plant",
+      "default": -1.0,
+      "minimum": -1.0,
+      "maximum": 100000.0
+    },
+    "TESS Maximum Discharge Power": {
+      "description": "Maximum tank-side discharge power. -1 means auto-size to peak hourly thermal demand times TESS Subhourly Demand Peak Multiplier.",
+      "type": "number",
+      "units": "MW",
+      "category": "Surface Plant",
+      "default": -1.0,
+      "minimum": -1.0,
+      "maximum": 100000.0
+    },
+    "TESS Subhourly Demand Peak Multiplier": {
+      "description": "Multiplier used by TESS automatic discharge-power sizing and subhourly peak checks.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 1.0,
+      "minimum": 1.0,
+      "maximum": 10.0
+    },
+    "TESS Charge Control Strategy": {
+      "description": "Control strategy used to charge TESS from geothermal output.",
+      "type": "string",
+      "units": null,
+      "category": "Surface Plant",
+      "default": "Temperature Band",
+      "minimum": null,
+      "maximum": null
+    },
+    "TESS Charge Flow Fraction": {
+      "description": "Geothermal production flow fraction used while temperature-band TESS charging is active.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 1.0,
+      "minimum": 0.0,
+      "maximum": 100.0
+    },
+    "TESS Moving Average Window": {
+      "description": "Moving-average window for future TESS moving-average charge control.",
+      "type": "integer",
+      "units": "hr",
+      "category": "Surface Plant",
+      "default": 24,
+      "minimum": 1,
+      "maximum": 8760
+    },
+    "TESS SOC Control Gain": {
+      "description": "State-of-charge correction gain for future TESS moving-average charge control.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.25,
+      "minimum": 0.0,
+      "maximum": 10.0
+    },
     "Annual Heat Demand": {
       "description": "Historical annual heating demand profile",
       "type": "array",

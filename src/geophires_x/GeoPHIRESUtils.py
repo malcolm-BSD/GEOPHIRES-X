@@ -384,6 +384,35 @@ def heat_capacity_water_J_per_kg_per_K(
 
 
 @lru_cache
+def saturation_pressure_water_MPa(Twater_degC: float) -> float:
+    """
+    Calculate water saturation pressure as a function of temperature.
+
+    Args:
+        Twater_degC: The temperature of water in degrees C.
+    Returns:
+        Saturation pressure in MPa.
+    Raises:
+        ValueError: If Twater_degC is not valid for water saturation-pressure calculation.
+    """
+    max_allowed_temp_degC = 373.946
+    if not isinstance(Twater_degC, numbers.Real) or Twater_degC < 0 or Twater_degC > max_allowed_temp_degC:
+        raise ValueError(
+            f'Invalid input for Twater_degC. '
+            f'Twater_degC must be a non-negative number and must be below the critical temperature '
+            f'of water ({max_allowed_temp_degC} degrees Celsius). The input value was: {Twater_degC}'
+        )
+
+    try:
+        return cp.PropsSI('P', 'T', celsius_to_kelvin(Twater_degC), 'Q', 0, 'Water') / 1.0e6
+    except (NotImplementedError, ValueError) as e:
+        raise ValueError(
+            f'Input temperature ({Twater_degC}) is out of range or otherwise could not be used '
+            f'to calculate water saturation pressure.'
+        ) from e
+
+
+@lru_cache
 def RecoverableHeat(Twater_degC: float) -> float:
     """
     the RecoverableHeat function is used to calculate the recoverable heat fraction as a function of temperature
