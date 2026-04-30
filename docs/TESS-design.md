@@ -737,7 +737,8 @@ Implemented Phase 5 output contract:
 
 Implemented Phase 6 example contract:
 
-- added `tests/geophires_x_tests/example1_dispatchable_tess.txt`;
+- added the tracked regression input `tests/geophires_x_tests/example1_dispatchable_tess.txt`;
+- added the runnable example input `tests/examples/example1_dispatchable_tess.txt`;
 - the example uses the canonical variable `annual_heat_demand.csv` profile;
 - the example enables `TESS Enabled` and sets tank volume, installed cost per cubic meter, target temperature, initial temperature, useful temperature bounds, deadband range, charge flow fraction, and heat loss;
 - the regression test generates and verifies text, HTML, dispatch profile CSV, and all standard plus TESS dispatch graph artifacts;
