@@ -698,6 +698,31 @@
         "Average Annual Electricity Use for Pumping": {}
       }
     },
+    "THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS": {
+      "type": "object",
+      "properties": {
+        "TESS volume": {},
+        "TESS usable capacity": {},
+        "TESS capital cost": {},
+        "TESS fixed O&M cost": {},
+        "TESS average SOC": {},
+        "TESS minimum SOC": {},
+        "TESS maximum SOC": {},
+        "TESS annual charge": {},
+        "TESS annual discharge": {},
+        "TESS annual standby loss": {},
+        "TESS annual efficiency loss": {},
+        "TESS curtailed geothermal heat": {},
+        "TESS equivalent full cycles": {},
+        "Peak customer demand": {},
+        "Peak geothermal charge": {},
+        "Customer demand standard deviation": {},
+        "Geothermal output standard deviation": {},
+        "Geothermal output smoothing ratio": {},
+        "Geothermal peak reduction ratio": {},
+        "Geothermal variability reduction ratio": {}
+      }
+    },
     "DISPATCH RESULTS": {
       "type": "object",
       "properties": {

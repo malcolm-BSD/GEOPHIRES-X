@@ -1,118 +1,137 @@
 # Thermal Energy Storage System Dispatch Design
 
-## Objective
+## Purpose
 
-Extend GEOPHIRES-X dispatchable operating mode with an optional thermal energy storage system, abbreviated `TESS`.
+GEOPHIRES-X includes an optional thermal energy storage system, abbreviated
+`TESS`, for dispatchable direct-use heat simulations. TESS is modeled as a
+large pressurized liquid-water tank placed after the geothermal production
+system and before the customer heat demand.
 
-The first implementation models TESS as a large pressurized liquid tank placed after the underground geothermal system and before the demand center.
-
-The intended system topology is:
+The implemented topology is:
 
 ```text
 reservoir/wellbores -> surface heat delivery -> TESS -> demand center
 ```
 
-With TESS disabled, GEOPHIRES-X must preserve the current dispatchable behavior:
+With TESS disabled, GEOPHIRES-X uses the legacy dispatchable behavior:
 
 ```text
 demand -> geothermal dispatch -> demand served/unmet
 ```
 
-With TESS enabled, demand no longer drives geothermal flow directly. Demand is served from the tank, while the geothermal system charges the tank according to a user-selected control strategy:
+With TESS enabled, the customer demand is served from storage while geothermal
+production charges the tank:
 
 ```text
 demand -> TESS discharge -> demand served/unmet
 TESS state -> geothermal charge dispatch -> TESS charge
 ```
 
-The first on/off parameter must be:
+The master switch is:
 
 ```text
 TESS Enabled
 ```
 
-Its default value must be `False`.
+Its default value is `False`, so existing models do not change unless storage
+is explicitly enabled.
+
+## Operating Mode
+
+TESS is supported only in the dispatchable operating path: `Operating Mode =
+Dispatchable`. In the TESS work this is the "Discharge" mode of operation: the
+tank discharges to meet customer demand and geothermal output is dispatched to
+recharge the tank.
+
+TESS is not supported in `Operating Mode = Baseload`. Storage in the baseload
+case is not physically or operationally meaningful for this implementation
+because baseload operation already assumes steady plant operation rather than a
+variable customer-demand profile that storage can buffer. If `TESS Enabled =
+True` is used outside dispatchable mode, the model raises a validation error.
+
+The current implementation also limits TESS to direct-use industrial heat with
+`Annual Heat Demand`. Electric, cooling, CHP, and district-heating boiler
+interaction cases are not part of the completed TESS feature.
 
 ## Design Intent
 
-TESS is meant to decouple short-timescale demand variability from geothermal production.
+TESS decouples short-timescale customer demand variability from geothermal
+production. In practical terms, the tank behaves like a thermal buffer:
 
-In practical terms, the tank behaves like a low-pass filter on the thermal demand seen by the geothermal system:
+- hourly demand spikes can be served by storage discharge;
+- geothermal production can recharge storage using a selected charge-control
+  strategy;
+- geothermal flow and runtime respond to tank state and control settings, not
+  only to instantaneous customer demand;
+- seasonal energy still has to come from geothermal production or another heat
+  source.
 
-- second-by-second and hourly demand spikes are served by storage discharge;
-- tank recharge is controlled over longer intervals;
-- geothermal flow and runtime respond primarily to tank state, not instantaneous demand;
-- total seasonal energy still has to come from geothermal production or another heat source.
+This is a power-smoothing and energy-buffering model. It does not create
+energy. A realistic tank can smooth intraday and potentially multi-day
+variability; true seasonal shifting requires very large storage volumes.
 
-This is a power-smoothing and energy-buffering model. It does not create energy. If winter heat demand is high for weeks or months, geothermal supply must still cover that energy over time. A realistic water tank can smooth intraday and possibly multi-day variability; true summer-to-winter seasonal shifting would require very large storage volumes.
+## Implemented Scope
 
-## Initial Scope
+TESS includes:
 
-### In Scope
+- dispatchable direct-use industrial heat demand;
+- hourly tank energy balance on the existing dispatch hourly timebase;
+- pressurized liquid water as the storage fluid;
+- user-controlled tank volume and installed cost per cubic meter;
+- user-controlled minimum useful, target, maximum, and initial temperatures;
+- user-controlled `TESS Deadband Range`;
+- geothermal charge into storage;
+- storage discharge to customer demand;
+- tank standby heat losses;
+- charge and discharge efficiency losses;
+- optional tank-side maximum charge and discharge power limits;
+- TESS CAPEX and fixed O&M integration;
+- hourly dispatch profile CSV columns for TESS state and heat flows;
+- plain text, rich text, HTML, parsed-result, and schema output integration;
+- optional dispatch HTML graphs for TESS state, charge/discharge, losses, and
+  curtailment;
+- temperature-band and moving-average charge control.
 
-- Dispatchable direct-use thermal demand.
-- Hourly tank energy balance using the existing dispatch hourly timebase.
-- Pressurized liquid water as the initial TESS fluid.
-- User-controlled tank volume and cost per cubic meter.
-- User-controlled operating temperature bounds and target temperature.
-- User-controlled `TESS Deadband Range`.
-- Tank charge from geothermal output.
-- Tank discharge to thermal demand.
-- Tank heat losses.
-- Tank charge/discharge efficiency.
-- Optional tank-side charge and discharge power limits.
-- TESS CAPEX and optional fixed O&M integration.
-- Hourly TESS profile output.
-- Summary metrics showing demand smoothing and storage utilization.
+Out of scope:
 
-### Out of Scope for the First Implementation
+- stratified or multi-node tank physics;
+- detailed heat exchanger sizing;
+- two-phase or boiling tank operation;
+- non-water storage media;
+- explicit pressure-vessel code compliance;
+- subhourly numerical simulation;
+- multi-tank storage networks;
+- seasonal storage optimization;
+- co-optimization against electricity price or heat price;
+- district-heating peaking boiler interaction logic;
+- electric, cooling, and CHP TESS integration.
 
-- Stratified multi-node tank physics.
-- Detailed heat exchanger sizing.
-- Two-phase or boiling tank operation.
-- Non-water storage media.
-- Explicit pressure-vessel code compliance.
-- Subhourly numerical simulation.
-- Multi-tank storage networks.
-- Seasonal storage optimization.
-- Co-optimization against electricity price or heat price.
-- District-heating peaking boiler interaction logic.
-- Electric, cooling, and CHP TESS integration.
+## Code Integration
 
-These should remain future extensions after the one-node thermal model is stable and tested.
+The feature is implemented primarily in:
 
-## Current Code Integration Points
+- `src/geophires_x/SurfacePlant.py`: TESS parameters, validation, and default
+  discharge-power resolution.
+- `src/geophires_x/ThermalStorage.py`: one-node tank state, charge, discharge,
+  loss, curtailment, and control helper classes.
+- `src/geophires_x/Dispatch.py`: dispatchable operation loop integration,
+  hourly arrays, and summary metrics.
+- `src/geophires_x/Economics.py`: TESS capital and fixed O&M cost integration.
+- `src/geophires_x/Outputs.py`: plain text report and dispatch profile CSV.
+- `src/geophires_x/OutputsRich.py`: rich text, HTML, and graph output.
+- `src/geophires_x_client/geophires_x_result.py`: parsed report categories.
+- `src/geophires_x_schema_generator/geophires-result.json`: result schema.
 
-The existing dispatch implementation is concentrated in `src/geophires_x/Dispatch.py`.
-
-Relevant current components:
-
-- `DemandProfileFactory`
-  - reads annual heat/cooling/electricity demand profiles;
-  - normalizes dispatch demand to hourly `MW`;
-  - currently requires 8760 hourly timesteps.
-
-- `DispatchableOperatingModeStrategy`
-  - runs the hourly dispatch loop;
-  - currently sends hourly demand directly to `DemandFollowingDispatchStrategy`;
-  - writes hourly results into `DispatchResults`;
-  - finalizes annual production and economics-compatible outputs.
-
-- `DispatchPlantAdapter`
-  - abstracts reservoir-specific geothermal production behavior;
-  - evaluates a `DispatchCommand`;
-  - returns `DispatchTimestepResult`.
-
-- `DispatchResults`
-  - stores hourly dispatch outputs and summary metrics.
-
-TESS should be added as a layer in `DispatchableOperatingModeStrategy`, not as a replacement reservoir adapter. The reservoir adapter should continue to answer: "what does the geothermal system produce under this flow/runtime command?" The TESS layer should answer: "how much demand is served by storage, and how should geothermal charge the tank?"
+The reservoir adapter remains responsible for answering what geothermal output
+is available for a flow/runtime command. TESS sits above that layer and decides
+how much customer demand storage can serve and how geothermal production should
+charge the tank.
 
 ## Physical Model
 
-### One-Node Tank State
+### One-Node Tank
 
-The first implementation should use a single well-mixed tank state:
+TESS is a single well-mixed water tank represented by:
 
 ```text
 T_tank[t]
@@ -120,14 +139,14 @@ E_stored[t]
 SOC[t]
 ```
 
-where `SOC` is normalized between 0 and 1 over the usable storage range:
+`SOC` is normalized over the usable storage range:
 
 ```text
 SOC = (T_tank - TESS Minimum Useful Temperature)
       / (TESS Maximum Temperature - TESS Minimum Useful Temperature)
 ```
 
-clipped to `[0, 1]`.
+The value is clipped to `[0, 1]`.
 
 ### Energy Capacity
 
@@ -138,13 +157,12 @@ mass = density * volume
 E_max = mass * cp * (TESS Maximum Temperature - TESS Minimum Useful Temperature)
 ```
 
-In convenient approximate units:
+The implementation uses water property calculations through the existing
+CoolProp-backed utilities. For intuition, a useful approximation is:
 
 ```text
 E_max_kWh ~= 1.16 * volume_m3 * delta_T_C
 ```
-
-This approximation is useful for explaining the model, but implementation should use the existing CoolProp-backed water property helpers where possible.
 
 ### Hourly Energy Balance
 
@@ -163,197 +181,145 @@ where:
 - `Q_charge_accepted` is geothermal heat accepted by the tank;
 - `Q_discharge_to_load` is heat delivered from TESS to the demand center;
 - `Q_loss` is standby thermal loss;
-- `dt` is one hour in the first implementation.
+- `dt` is one hour.
 
-The tank cannot exceed `E_max`. Excess geothermal heat should be reported as curtailed or rejected heat.
+The tank cannot exceed usable capacity. Excess geothermal heat is reported as
+curtailed charge. The tank cannot discharge below zero usable energy. Any
+remaining customer demand after stored-energy and discharge-power limits is
+reported as unmet demand.
 
-The tank cannot fall below zero usable energy. Any remaining demand after discharge limits and stored energy constraints should be reported as unmet demand.
+### Charge Acceptance
 
-### Charge Temperature Acceptance
+TESS accepts geothermal charge subject to tank capacity, maximum charge power,
+charge efficiency, and source-temperature feasibility. Geothermal heat can
+charge the tank only when the produced fluid is hotter than the current tank
+temperature. If the produced fluid is cooler than or equal to the tank, the
+model does not count that heat as useful charge because it cannot raise the
+tank temperature without an external heat pump or other temperature-lifting
+device.
 
-The tank can only be charged usefully when geothermal output is hotter than the tank or above a minimum useful charging temperature. The initial implementation may use a conservative energy-only approximation:
+### Discharge Constraint
 
-```text
-charge_accepted_mw = min(geothermal_useful_heat_mw, remaining_storage_capacity_mwh / dt)
-```
-
-A better first-pass thermal check is:
-
-```text
-if produced_temperature <= T_tank:
-    accepted charge = 0
-```
-
-This avoids creating heat at a higher tank temperature from a lower-temperature geothermal source. Later work can model heat exchanger approach temperature explicitly.
-
-### Discharge Temperature Constraint
-
-Demand can only be served if tank temperature is at or above `TESS Minimum Useful Temperature`.
-
-The first implementation should treat all energy above the minimum useful temperature as deliverable. Direct-use heat demand should not require a customer supply-temperature profile. A future optional output or advanced mode can report supply-temperature adequacy, but a required demand-side temperature profile is intentionally out of scope.
+Demand can be served only from usable stored energy above `TESS Minimum Useful
+Temperature`. The model treats all energy above that temperature as deliverable
+to the direct-use heat demand. A customer-side supply-temperature profile is not
+required.
 
 ### Heat Loss
 
-The first implementation should use a fractional daily loss model:
+The implemented standby loss model is fractional daily loss:
 
 ```text
 Q_loss_mwh = E_stored_mwh * TESS Daily Heat Loss Fraction / 24
 ```
 
-This is simple, stable, and easy to calibrate. A future model can support UA-based losses:
-
-```text
-Q_loss = UA * (T_tank - ambient_temperature)
-```
-
 ## Pressure Handling
 
-The first TESS fluid should be water.
-
-The tank must remain liquid at operating temperature. For water, the model should validate pressure against saturation pressure:
+The current TESS working fluid is water. The tank must remain liquid at its
+operating temperature. Water pressure is validated against saturation pressure:
 
 ```text
 TESS pressure >= Psat(TESS Maximum Temperature) * TESS Pressure Safety Factor
 ```
 
-The repo already depends on CoolProp and has water property helpers in `GeoPHIRESUtils.py`. Saturation pressure can be computed through CoolProp without adding a dependency.
+`TESS Pressure Mode = Auto` computes the required pressure from saturation
+pressure and the safety factor. `TESS Pressure Mode = User Specified` validates
+the user-provided pressure against the same requirement. Pressure is a
+feasibility/reporting feature, not a detailed pressure-vessel cost model.
 
-Pressure should initially be a feasibility/reporting feature, not a detailed pressure-vessel cost model.
+## Parameters
 
-## Proposed Parameters
-
-All parameters are optional unless `TESS Enabled` is `True`. With `TESS Enabled = False`, these values must not affect model behavior or economics.
+All TESS parameters are optional unless `TESS Enabled = True`. With `TESS
+Enabled = False`, TESS parameters do not affect model behavior or economics.
 
 ### Core Switch
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Enabled` | bool | `False` | `True`, `False` | none | Master switch. Must be false by default for backward compatibility. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Enabled` | `False` | none | Master switch. |
 
 ### Tank Size and Cost
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Volume` | float | `1000.0` | `1.0` to `10000000.0` | m3 | Usable tank fluid volume. Default gives meaningful intraday buffering without implying seasonal storage. |
-| `TESS Cost per Cubic Meter` | float | `500.0` | `0.0` to `100000.0` | USD/m3 | Complete installed TESS cost, including tank, foundations, insulation, heat exchangers, controls, and balance-of-plant items included in the user's estimate. Wide range reflects atmospheric vs pressurized and site-specific costs. |
-| `TESS Fixed O&M Fraction` | float | `0.01` | `0.0` to `0.20` | 1/year | Annual fixed O&M as a fraction of TESS CAPEX. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Volume` | `1000.0` | m3 | Usable tank fluid volume. |
+| `TESS Cost per Cubic Meter` | `500.0` | USD/m3 | Complete installed TESS cost estimate. |
+| `TESS Fixed O&M Fraction` | `0.01` | 1/year | Annual fixed O&M as a fraction of TESS CAPEX. |
 
 ### Fluid and Pressure
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Working Fluid` | string/enum | `Water` | `Water` initially | none | Future extension point for other fluids. |
-| `TESS Pressure Mode` | string/enum | `Auto` | `Auto`, `User Specified` | none | Auto computes pressure from saturation pressure and safety factor. |
-| `TESS Pressure` | float | `1.0` | `0.1` to `25.0` | MPa | Used only when pressure mode is user specified. Must exceed saturation requirement. |
-| `TESS Pressure Safety Factor` | float | `1.10` | `1.0` to `3.0` | none | Multiplier on saturation pressure in auto mode and validation. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Working Fluid` | `Water` | none | Current implementation supports water. |
+| `TESS Pressure Mode` | `Auto` | none | `Auto` or `User Specified`. |
+| `TESS Pressure` | `1.0` | MPa | Used when pressure mode is user specified. |
+| `TESS Pressure Safety Factor` | `1.10` | none | Multiplier on saturation pressure. |
 
 ### Temperature and State
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Minimum Useful Temperature` | float | `120.0` | `0.0` to `370.0` | degC | Lower bound for usable stored heat. |
-| `TESS Maximum Temperature` | float | `160.0` | `1.0` to `370.0` | degC | Upper tank operating temperature. Must exceed minimum useful temperature. |
-| `TESS Target Temperature` | float | `150.0` | `0.0` to `370.0` | degC | Preferred tank control temperature. Must be between minimum and maximum. |
-| `TESS Initial Temperature` | float | `150.0` | `0.0` to `370.0` | degC | Initial tank temperature. Must be between minimum and maximum. |
-| `TESS Deadband Range` | float | `10.0` | `0.0` to `100.0` | degC | Total thermostat hysteresis band around target. Example: target 150 C and range 10 C gives lower/upper thresholds of 145 C and 155 C. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Minimum Useful Temperature` | `120.0` | degC | Lower bound for usable stored heat. |
+| `TESS Maximum Temperature` | `160.0` | degC | Upper tank operating temperature. |
+| `TESS Target Temperature` | `150.0` | degC | Preferred control temperature. |
+| `TESS Initial Temperature` | `150.0` | degC | Initial tank temperature. |
+| `TESS Deadband Range` | `10.0` | degC | Total thermostat hysteresis band around target. |
 
 ### Charge and Discharge
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Charge Efficiency` | float | `0.98` | `0.0` to `1.0` | none | Fraction of geothermal heat accepted into useful tank energy. |
-| `TESS Discharge Efficiency` | float | `0.98` | `0.0` to `1.0` | none | Fractional efficiency from tank usable energy to delivered heat. |
-| `TESS Daily Heat Loss Fraction` | float | `0.005` | `0.0` to `0.10` | 1/day | Fraction of stored usable energy lost per day. |
-| `TESS Maximum Charge Power` | float | `-1.0` | `-1.0`, or `0.0` to `100000.0` | MWth | `-1.0` means no tank-side limit beyond geothermal production and available tank capacity. |
-| `TESS Maximum Discharge Power` | float | `-1.0` | `-1.0`, or `0.0` to `100000.0` | MWth | `-1.0` means auto-size to `peak hourly thermal demand * TESS Subhourly Demand Peak Multiplier`. Explicit nonnegative values override the demand-derived default. |
-| `TESS Subhourly Demand Peak Multiplier` | float | `1.0` | `1.0` to `10.0` | none | Multiplier used by the automatic discharge-power default and for checking discharge power against within-hour peaks while preserving hourly energy demand. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Charge Efficiency` | `0.98` | none | Fraction of accepted geothermal heat stored as useful tank energy. |
+| `TESS Discharge Efficiency` | `0.98` | none | Fractional efficiency from tank usable energy to delivered heat. |
+| `TESS Daily Heat Loss Fraction` | `0.005` | 1/day | Fraction of stored usable energy lost per day. |
+| `TESS Maximum Charge Power` | `-1.0` | MWth | `-1.0` means no tank-side limit beyond geothermal production and tank capacity. |
+| `TESS Maximum Discharge Power` | `-1.0` | MWth | `-1.0` resolves to peak hourly thermal demand times `TESS Subhourly Demand Peak Multiplier`. |
+| `TESS Subhourly Demand Peak Multiplier` | `1.0` | none | Used by automatic discharge-power sizing. |
 
 ### Control Strategy
 
-| Parameter | Type | Default | Range / Options | Units | Notes |
-|---|---:|---:|---|---|---|
-| `TESS Charge Control Strategy` | string/enum | `Temperature Band` | `Temperature Band`, `Moving Average` | none | First implementation should support `Temperature Band`; `Moving Average` can follow in phase 2. |
-| `TESS Charge Flow Fraction` | float | `1.0` | `0.0` to `100.0` | none | Geothermal flow fraction used while the tank is actively charging under temperature-band control. Existing max dispatch flow validation should also apply. |
-| `TESS Moving Average Window` | int | `24` | `1` to `8760` | hours | Used only by moving-average control. |
-| `TESS SOC Control Gain` | float | `0.25` | `0.0` to `10.0` | none | Used only by moving-average control to bias charging toward the target tank state. |
+| Parameter | Default | Units | Notes |
+|---|---:|---|---|
+| `TESS Charge Control Strategy` | `Temperature Band` | none | `Temperature Band` or `Moving Average`. |
+| `TESS Charge Flow Fraction` | `1.0` | none | Geothermal flow fraction while charging under temperature-band control. |
+| `TESS Moving Average Window` | `24` | hours | Moving-average smoothing horizon. |
+| `TESS SOC Control Gain` | `0.25` | none | State-of-charge correction for moving-average control. |
 
-## Parameter Validation
+## Validation
 
-Validation should run during surface plant parameter validation.
+When `TESS Enabled = True`, the model validates:
 
-Required checks when `TESS Enabled = True`:
-
-- `TESS Volume > 0`.
-- `TESS Maximum Temperature > TESS Minimum Useful Temperature`.
-- `TESS Target Temperature` is within `[TESS Minimum Useful Temperature, TESS Maximum Temperature]`.
-- `TESS Initial Temperature` is within `[TESS Minimum Useful Temperature, TESS Maximum Temperature]`.
-- `TESS Deadband Range >= 0`.
-- deadband lower threshold is not below `TESS Minimum Useful Temperature` unless clipped with a warning.
-- deadband upper threshold is not above `TESS Maximum Temperature` unless clipped with a warning.
-- `TESS Charge Efficiency > 0` if charging is expected.
-- `TESS Discharge Efficiency > 0` if demand is expected.
-- `TESS Maximum Discharge Power = -1.0` is converted to the demand-derived automatic value before dispatch.
-- `TESS Pressure >= Psat(TESS Maximum Temperature) * TESS Pressure Safety Factor` when pressure mode is user specified.
-- TESS initially supports only thermal dispatch demand.
-
-If TESS is enabled with unsupported demand mode, fail explicitly:
-
-```text
-TESS dispatch initially supports Annual Heat Demand only.
-```
+- operating mode is `Dispatchable`;
+- demand source is `Annual Heat Demand`;
+- end-use is direct-use industrial heat;
+- `TESS Volume > 0`;
+- maximum temperature is greater than minimum useful temperature;
+- target and initial temperatures are inside the usable temperature range;
+- deadband range is nonnegative;
+- charge and discharge efficiencies are positive and no greater than 1;
+- maximum charge and discharge powers are either `-1.0` or nonnegative;
+- user-specified pressure satisfies the saturation-pressure requirement.
 
 ## Control Behavior
 
-### Temperature Band Control
+### Temperature-Band Control
 
-This is the first recommended implementation.
-
-Definitions:
+Temperature-band control uses thermostat-style hysteresis:
 
 ```text
 lower_threshold = TESS Target Temperature - TESS Deadband Range / 2
 upper_threshold = TESS Target Temperature + TESS Deadband Range / 2
 ```
 
-Thresholds should be clipped to the minimum/maximum tank temperatures after validation warnings.
+When tank temperature is at or below the lower threshold, geothermal charging
+turns on. When tank temperature is at or above the upper threshold, geothermal
+charging turns off. While charging, geothermal flow uses `TESS Charge Flow
+Fraction`, limited by the dispatch maximum flow settings.
 
-Control logic:
+### Moving-Average Control
 
-```text
-if T_tank <= lower_threshold:
-    charging_state = on
-
-if T_tank >= upper_threshold:
-    charging_state = off
-```
-
-When charging is on:
-
-```text
-target_flow_fraction = min(TESS Charge Flow Fraction, Maximum Dispatch Flow Fraction)
-runtime_fraction = 1.0
-```
-
-When charging is off:
-
-```text
-target_flow_fraction = 0.0
-runtime_fraction = 0.0
-```
-
-This deliberately turns geothermal into a tank-maintenance resource rather than a demand-following resource.
-
-### Moving Average Control
-
-This can be a second-phase strategy.
-
-Purpose:
-
-- compute a smoothed geothermal target from recent or forecast demand;
-- add correction for tank SOC deviation from target;
-- reduce cycling relative to simple thermostat control.
-
-Example:
+Moving-average control computes a smoothed geothermal charge target from the
+heat demand profile and applies an optional SOC correction:
 
 ```text
 smoothed_demand_mw = moving_average(demand, TESS Moving Average Window)
@@ -361,270 +327,238 @@ soc_error = target_soc - current_soc
 charge_target_mw = smoothed_demand_mw + TESS SOC Control Gain * soc_error * E_capacity_mwh
 ```
 
-The first implementation should not attempt optimization. It should stay deterministic and explainable.
+This control mode is better for moderating short-term demand swings and
+approximating low-pass-filter behavior. Poor choices of window length or SOC
+gain can overcharge, undercharge, or curtail heat when the tank reaches its
+bounds.
 
-## Dispatch Loop Design
+## Dispatch Loop
 
-Current dispatch loop:
-
-```text
-for each hour:
-    nominal_state = geothermal_adapter.thermal_state_for_flow_fraction(1.0)
-    dispatch_command = demand_following_strategy.dispatch(nominal_state, demand)
-    timestep_result = geothermal_adapter.evaluate_timestep(dispatch_command)
-    record served/unmet demand from geothermal output
-```
-
-TESS dispatch loop:
+The TESS dispatch loop runs once per hour:
 
 ```text
 for each hour:
     demand_mw = demand_profile[hour]
 
     # 1. Serve demand from tank.
-    tess_discharge = tess.discharge(demand_mw, dt_hours=1.0)
+    tess_discharge = storage.discharge(demand_mw, dt_hours=1.0)
 
-    # 2. Decide whether/how to charge tank from geothermal.
-    charge_command = tess_controller.dispatch(tess_state, demand_mw, geothermal_adapter)
+    # 2. Decide geothermal charge command from tank state and control strategy.
+    charge_command = controller.dispatch(tess_state, demand_mw, geothermal_adapter)
 
     # 3. Evaluate geothermal production.
     geothermal_result = geothermal_adapter.evaluate_timestep(charge_command, hour)
 
-    # 4. Accept geothermal heat into tank subject to capacity, temperature, and charge power.
-    tess_charge = tess.charge(geothermal_result, dt_hours=1.0)
+    # 4. Accept geothermal heat into tank.
+    tess_charge = storage.charge(geothermal_result, dt_hours=1.0)
 
     # 5. Apply standby loss.
-    tess.apply_losses(dt_hours=1.0)
+    storage.apply_losses(dt_hours=1.0)
 
-    # 6. Record geothermal output, tank output, tank state, unmet demand, losses, and curtailment.
+    # 6. Record geothermal output, tank output, tank state, unmet demand,
+    #    losses, and curtailment.
 ```
 
-The order above serves demand before charging in each hour. That is conservative for short-term demand service because the model does not let simultaneous charging mask an empty tank at the start of the hour. A simultaneous formulation can be considered later, but the first implementation should be simple and reproducible.
+Demand is served before charging in each hour. This is conservative because
+same-hour charging cannot hide an empty tank at the start of the hour.
 
-## New Internal Data Structures
+## Dispatch Results
 
-The implementation can either add these to `Dispatch.py` or create a new `ThermalStorage.py`. A new file is cleaner because `Dispatch.py` is already large.
+When TESS is enabled, `DispatchResults` includes hourly arrays for:
 
-Recommended classes:
+- `hourly_tess_temperature`;
+- `hourly_tess_soc`;
+- `hourly_tess_stored_energy`;
+- `hourly_tess_discharge_to_load`;
+- `hourly_tess_charge_from_geothermal`;
+- `hourly_tess_charge_curtailed`;
+- `hourly_tess_standby_loss`;
+- `hourly_tess_efficiency_loss`;
+- `hourly_geothermal_charge_command`.
 
-```text
-ThermalStorageModel
-ThermalStorageState
-ThermalStorageTimestepResult
-ThermalStorageController
-TemperatureBandThermalStorageController
-MovingAverageThermalStorageController
-```
-
-### ThermalStorageState
-
-Fields:
-
-- `temperature_c`
-- `stored_energy_mwh`
-- `usable_capacity_mwh`
-- `soc_fraction`
-- `available_discharge_mwh`
-- `remaining_charge_capacity_mwh`
-
-### ThermalStorageTimestepResult
-
-Fields:
-
-- `starting_temperature_c`
-- `ending_temperature_c`
-- `starting_soc_fraction`
-- `ending_soc_fraction`
-- `stored_energy_mwh`
-- `demand_mw`
-- `discharged_to_load_mw`
-- `unmet_demand_mw`
-- `geothermal_charge_available_mw`
-- `geothermal_charge_accepted_mw`
-- `curtailed_charge_mw`
-- `standby_loss_mw`
-- `charge_efficiency_loss_mw`
-- `discharge_efficiency_loss_mw`
-
-## DispatchResults Extensions
-
-Add hourly arrays to `DispatchResults`:
-
-- `hourly_tess_temperature`
-- `hourly_tess_soc`
-- `hourly_tess_stored_energy`
-- `hourly_tess_discharge_to_load`
-- `hourly_tess_charge_from_geothermal`
-- `hourly_tess_charge_curtailed`
-- `hourly_tess_standby_loss`
-- `hourly_tess_efficiency_loss`
-- `hourly_geothermal_charge_command`
-
-Existing fields should keep their current meaning as much as possible:
+Existing fields keep their dispatch meaning:
 
 - `hourly_thermal_demand`: customer demand.
-- `hourly_demand_served`: heat delivered to demand, now from TESS when TESS is enabled.
+- `hourly_demand_served`: heat delivered to demand, from TESS when TESS is
+  enabled.
 - `hourly_unmet_demand`: customer demand not served.
-- `hourly_geothermal_thermal_output`: geothermal heat produced upstream of TESS.
+- `hourly_geothermal_thermal_output`: geothermal heat produced upstream of
+  TESS.
 - `hourly_heat_extracted`: reservoir heat extracted.
 - `hourly_flow`: geothermal production flow, not tank discharge flow.
 
-This distinction matters because with TESS enabled, geothermal output and served demand are no longer the same hourly profile.
+With TESS enabled, geothermal output and served demand are no longer expected
+to have the same hourly profile.
 
 ## Summary Metrics
 
-Add summary metrics when TESS is enabled:
+TESS summary metrics include:
 
-- `tess_enabled`
-- `tess_volume_m3`
-- `tess_usable_capacity_mwh`
-- `tess_initial_temperature_c`
-- `tess_final_temperature_c`
-- `tess_min_temperature_c`
-- `tess_max_temperature_c`
-- `tess_average_soc`
-- `tess_min_soc`
-- `tess_max_soc`
-- `tess_annual_charge_kwh`
-- `tess_annual_discharge_kwh`
-- `tess_annual_standby_loss_kwh`
-- `tess_annual_efficiency_loss_kwh`
-- `tess_annual_curtailed_heat_kwh`
-- `tess_equivalent_full_cycles`
-- `peak_customer_demand_mw`
-- `peak_geothermal_charge_mw`
-- `geothermal_peak_reduction_fraction`
-- `geothermal_output_variability_reduction_fraction`
-- `annual_tess_served_heat_kwh`
+- `tess_volume_m3`;
+- `tess_usable_capacity_mwh`;
+- `tess_initial_temperature_c`;
+- `tess_final_temperature_c`;
+- `tess_min_temperature_c`;
+- `tess_max_temperature_c`;
+- `tess_average_soc`;
+- `tess_min_soc`;
+- `tess_max_soc`;
+- `tess_annual_charge_kwh`;
+- `tess_annual_discharge_kwh`;
+- `tess_annual_standby_loss_kwh`;
+- `tess_annual_efficiency_loss_kwh`;
+- `tess_annual_curtailed_heat_kwh`;
+- `tess_equivalent_full_cycles`;
+- `peak_customer_demand_mw`;
+- `peak_geothermal_charge_mw`;
+- `customer_demand_standard_deviation_mw`;
+- `geothermal_output_standard_deviation_mw`;
+- `geothermal_output_smoothing_ratio`;
+- `geothermal_peak_reduction_fraction`;
+- `geothermal_output_variability_reduction_fraction`;
+- `annual_tess_served_heat_kwh`.
 
-The smoothing metrics should compare customer demand against upstream geothermal charge:
+### Reported TESS Metrics
+
+`Peak geothermal charge` is the maximum hourly geothermal thermal output during
+the dispatch analysis window. With TESS enabled, this can include geothermal
+production used to charge storage, not just heat served directly to the
+customer.
+
+`Customer demand standard deviation` is the standard deviation of hourly
+customer demand in MW. Higher values mean the customer heat load is more
+variable.
+
+`Geothermal output standard deviation` is the standard deviation of hourly
+geothermal thermal output in MW after dispatch and TESS controls. Higher values
+mean geothermal production is more variable.
+
+`Geothermal peak reduction ratio` is calculated as:
 
 ```text
-geothermal_peak_reduction_fraction =
-    1 - peak_geothermal_charge_mw / peak_customer_demand_mw
+1 - peak_geothermal_charge_mw / peak_customer_demand_mw
 ```
 
-Variability reduction can use standard deviation:
+It can be negative. A negative value means geothermal output peaked above the
+customer demand peak. That is expected when the plant produces extra heat to
+charge TESS. For example, if peak customer demand is 25 MW and peak geothermal
+charge is 50 MW, the metric is `1 - 50 / 25 = -1`.
+
+`Geothermal variability reduction ratio` is calculated as:
 
 ```text
-1 - std(geothermal_charge_mw) / std(customer_demand_mw)
+1 - geothermal_output_standard_deviation_mw
+    / customer_demand_standard_deviation_mw
 ```
 
-Report zero or omit the metric when the denominator is zero.
+A positive value means geothermal output is smoother than customer demand. A
+negative value means geothermal output is more variable than customer demand,
+often because the selected charge-control strategy creates high-output charging
+periods.
 
-## Economics Integration
+`Geothermal output smoothing ratio` is:
 
-TESS should be represented as a distinct storage cost, not only as a generic add-on.
+```text
+geothermal_output_standard_deviation_mw
+/ customer_demand_standard_deviation_mw
+```
 
-Recommended calculations:
+Values below 1 indicate geothermal output is smoother than customer demand.
+Values above 1 indicate geothermal output is more variable than customer demand.
+
+## Economics
+
+TESS costs are represented as distinct storage costs:
 
 ```text
 TESS_CAPEX_MUSD = TESS Volume * TESS Cost per Cubic Meter / 1e6
 TESS_OPEX_MUSD_per_year = TESS_CAPEX_MUSD * TESS Fixed O&M Fraction
 ```
 
-Add new economics output parameters:
-
-- `TESS Capital Cost`
-- `TESS O&M Cost`
-
 For non-SAM economics:
 
-- add TESS CAPEX to total capital cost when `TESS Enabled = True`;
-- add TESS O&M to computed total annual O&M when `TESS Enabled = True`;
-- preserve `Total Capital Cost` override behavior if a user provides total capital cost;
-- preserve `Total O&M Cost` override behavior if a user provides total O&M cost.
+- TESS CAPEX is added to total capital cost when enabled;
+- TESS fixed O&M is added to computed annual O&M when enabled;
+- user-provided `Total Capital Cost` and `Total O&M Cost` overrides retain
+  their override behavior.
 
-For SAM economics:
-
-- include TESS CAPEX in overnight capital cost;
-- include TESS O&M in fixed annual operating cost if supported by the existing SAM bridge.
-
-The implementation should avoid treating TESS as "free flexibility." If it smooths demand and reduces wellfield cycling, that benefit should be visible only through changed operations and costs, not through an implicit credit.
+TESS is not treated as free flexibility. If it changes cycling, flow, pumping,
+or unmet demand, those effects appear through dispatch behavior and costs.
 
 ## Output Integration
 
-### Text Output
+### Text, Rich Text, HTML, and Parsed Results
 
-Add dispatch result rows when TESS is enabled:
+When TESS is enabled, TESS values are reported in their own section:
 
-- TESS enabled
-- TESS volume
-- TESS usable capacity
-- TESS capital cost
-- TESS fixed O&M
-- TESS average SOC
-- TESS annual discharge
-- TESS annual losses
-- TESS curtailed geothermal heat
-- peak customer demand
-- peak geothermal charge
-- geothermal peak reduction
+```text
+***THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS***
+```
+
+This section appears before:
+
+```text
+***DISPATCH RESULTS***
+```
+
+The TESS report section includes storage size, cost, SOC, annual charge and
+discharge, losses, curtailment, cycles, peak customer demand, peak geothermal
+charge, and geothermal smoothing metrics.
+
+The report intentionally does not include `TESS enabled` or `TESS final
+temperature` as display rows. The enabled state is implied by the presence of
+the TESS section, and final temperature remains available internally through
+summary metrics.
 
 ### Dispatch Profile CSV
 
-Extend dispatch CSV with TESS columns when enabled:
+The dispatch profile CSV adds these columns when TESS is enabled:
 
-- `TESS Temperature (degC)`
-- `TESS State of Charge (-)`
-- `TESS Stored Energy (MWh)`
-- `TESS Discharge to Load (MW)`
-- `TESS Charge from Geothermal (MW)`
-- `TESS Curtailed Charge (MW)`
-- `TESS Standby Loss (MW)`
-- `TESS Efficiency Loss (MW)`
+- `TESS Temperature (degC)`;
+- `TESS State of Charge (-)`;
+- `TESS Stored Energy (MWh)`;
+- `TESS Discharge to Load (MW)`;
+- `TESS Charge from Geothermal (MW)`;
+- `TESS Curtailed Charge (MW)`;
+- `TESS Standby Loss (MW)`;
+- `TESS Efficiency Loss (MW)`;
+- `Geothermal Charge Command (MW)`.
 
-### JSON Summary
+### JSON Dispatch Summary
 
-Include TESS settings and TESS summary metrics in `build_dispatch_summary_json`.
+`build_dispatch_summary_json` includes TESS settings, TESS hourly data, annual
+aggregates, and summary metrics when TESS is enabled. Parsed text results place
+displayed TESS rows under `THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS`.
 
-Recommended shape:
+### HTML Graphs
 
-```json
-{
-  "tess_settings": {
-    "enabled": true,
-    "volume_m3": 1000.0,
-    "target_temperature_c": 150.0,
-    "deadband_range_c": 10.0,
-    "charge_control_strategy": "Temperature Band"
-  },
-  "summary_metrics": {
-    "tess_usable_capacity_mwh": 46.0
-  }
-}
-```
+When dispatch HTML graph generation is enabled, TESS cases include graphs for:
+
+- TESS temperature and SOC;
+- demand, TESS discharge, and geothermal charge;
+- TESS losses and curtailment.
 
 ## Backward Compatibility
 
-The default behavior must be unchanged. This is a hard design criterion, not a convenience:
+`TESS Enabled = False` preserves the existing dispatchable behavior:
 
-```text
-TESS Enabled = False
-```
-
-When disabled:
-
-- the dispatch model must use the same demand-following geothermal path as before TESS was added;
-- customer load must be served directly from the geothermal system, subject to the same geothermal capacity, flow, runtime, and unmet-demand logic as the legacy dispatch model;
-- `hourly_demand_served`, `hourly_unmet_demand`, `hourly_geothermal_thermal_output`, `hourly_flow`, pumping power, reservoir depletion, and economics must match the legacy non-TESS run for the same inputs;
-- no TESS parameters affect dispatch;
+- customer load is served directly from geothermal output;
 - no TESS costs are added;
-- no dispatch CSV columns are added unless the implementation chooses a fixed schema with zero-filled TESS columns;
-- existing dispatch regression tests should continue to pass, and at least one regression test should compare `TESS Enabled = False` against an equivalent run with TESS omitted;
-- existing input files should not require modification.
+- no TESS report section is emitted;
+- no TESS dispatch CSV columns are added;
+- TESS parameters do not affect dispatch;
+- dispatch regression tests compare disabled TESS against equivalent legacy
+  dispatch behavior.
+
+Existing input files do not require modification.
 
 ## Numerical Considerations
 
-### Hourly Timebase
+The dispatchable path uses an hourly timebase. TESS uses the same hourly
+timebase. Subhourly demand variability is not simulated directly; `TESS
+Subhourly Demand Peak Multiplier` is used for automatic discharge-power sizing.
 
-Current dispatch mode is hourly, regardless of the standard GEOPHIRES `Time steps per year` setting. The first TESS implementation should use the same hourly timebase.
-
-Second-by-second variability should not be modeled directly in the first implementation. Instead, `TESS Subhourly Demand Peak Multiplier` should allow users to check whether the tank discharge power limit can meet subhourly peaks while preserving hourly energy demand.
-
-### Energy Accounting
-
-All hourly energy accounting should be internally consistent:
+Energy accounting is maintained across the tank:
 
 ```text
 demand = served + unmet
@@ -632,157 +566,40 @@ geothermal_output = tank_charge_accepted + curtailed_charge + charge_losses
 tank_energy_delta = charge_accepted - discharge_draw - standby_losses
 ```
 
-Tests should verify these balances within numerical tolerance.
+The implementation reports final tank state but does not enforce cyclic annual
+operation. Final stored energy is not required to equal initial stored energy.
 
-### Initial and Terminal Storage State
+## Example Case
 
-The first implementation should report final tank state but should not force cyclic operation.
-
-A later option can add:
+The tracked regression input is:
 
 ```text
-TESS Require Cyclic State
+tests/geophires_x_tests/example1_dispatchable_tess.txt
 ```
 
-which would require final stored energy to equal initial stored energy over the analysis window. That is useful for fair annual economics but requires either iteration or an end-condition penalty.
+The runnable example input is:
 
-## Development Steps
+```text
+tests/examples/example1_dispatchable_tess.txt
+```
 
-### Phase 1: Design and Parameter Plumbing
-
-1. Add `TESS-design.md`.
-2. Add TESS parameter definitions to `SurfacePlant`.
-3. Add enums for:
-   - `TESS Pressure Mode`
-   - `TESS Charge Control Strategy`
-   - `TESS Working Fluid`
-4. Add parameter parsing and validation.
-5. Add unit tests verifying:
-   - `TESS Enabled` defaults to `False`;
-   - TESS parameter parsing works;
-   - `TESS Deadband Range` is parsed under the correct name;
-   - default `TESS Maximum Discharge Power` resolves from peak demand and `TESS Subhourly Demand Peak Multiplier`;
-   - invalid temperature and pressure combinations fail clearly.
-
-### Phase 2: Storage Physics
-
-1. Add `ThermalStorageModel`.
-2. Add water property calculations for tank capacity.
-3. Add pressure saturation validation using CoolProp.
-4. Implement charge, discharge, loss, and curtailment behavior.
-5. Add unit tests for:
-   - capacity calculation;
-   - SOC conversion;
-   - discharge-limited demand service;
-   - charge-limited storage fill;
-   - standby losses;
-   - energy balance.
-
-### Phase 3: Dispatch Integration
-
-1. Add TESS branch inside `DispatchableOperatingModeStrategy.run`.
-2. Preserve the current dispatch path when `TESS Enabled = False`, with load served directly from geothermal output exactly as in the legacy dispatch model.
-3. Implement temperature-band control.
-4. Record TESS hourly arrays.
-5. Ensure geothermal adapter still handles reservoir depletion/recovery.
-6. Add dispatch integration tests for:
-   - disabled TESS exact legacy behavior, including direct geothermal load service and matching served/unmet demand, flow, and geothermal output arrays;
-   - enabled TESS serves demand from initial stored energy;
-   - enabled TESS charges when below lower threshold;
-   - enabled TESS shuts off geothermal charging above upper threshold;
-   - unmet demand appears when storage is empty or discharge-limited.
-
-### Phase 4: Economics
-
-1. Add TESS CAPEX and O&M output parameters.
-2. Add TESS CAPEX to total capital cost when enabled.
-3. Add TESS O&M to computed annual O&M when enabled.
-4. Preserve total-capital-cost and total-O&M override semantics.
-5. Add tests for:
-   - no cost impact when disabled;
-   - correct CAPEX from volume and cost per cubic meter;
-   - correct O&M from fixed O&M fraction;
-   - LCOH changes when TESS cost is enabled.
-
-### Phase 5: Outputs
-
-1. Add TESS summary rows to text output.
-2. Add TESS columns to dispatch profile CSV.
-3. Add TESS fields to dispatch summary JSON.
-4. Add optional HTML graph support:
-   - tank temperature and SOC;
-   - demand vs TESS discharge vs geothermal charge;
-   - losses and curtailment.
-5. Add tests for CSV/JSON schema stability.
-
-Implemented Phase 5 output contract:
-
-- disabled TESS keeps the legacy dispatch summary fields and dispatch profile CSV schema;
-- enabled TESS adds TESS summary rows to plain text and rich output;
-- enabled TESS adds TESS hourly columns to the dispatch profile CSV;
-- the `geophires_x_result` parsed dispatch summary schema includes the TESS fields;
-- optional dispatch HTML graphs include TESS temperature/SOC, demand/discharge/charge, and losses/curtailment when TESS is enabled.
-
-### Phase 6: Example Case
-
-1. Add a TESS dispatch example input file.
-2. Use `Annual Heat Demand` with a variable hourly profile.
-3. Set:
-   - `TESS Enabled, True`
-   - `TESS Volume`
-   - `TESS Cost per Cubic Meter`
-   - `TESS Target Temperature`
-   - `TESS Deadband Range`
-4. Include expected output files for regression testing.
-
-Implemented Phase 6 example contract:
-
-- added the tracked regression input `tests/geophires_x_tests/example1_dispatchable_tess.txt`;
-- added the runnable example input `tests/examples/example1_dispatchable_tess.txt`;
-- the example uses the canonical variable `annual_heat_demand.csv` profile;
-- the example enables `TESS Enabled` and sets tank volume, installed cost per cubic meter, target temperature, initial temperature, useful temperature bounds, deadband range, charge flow fraction, and heat loss;
-- the regression test generates and verifies text, HTML, dispatch profile CSV, and all standard plus TESS dispatch graph artifacts;
-- the regression test checks parsed TESS summary values and TESS CSV columns.
-
-### Phase 7: Moving-Average Control
-
-1. Implement `Moving Average` charge control.
-2. Add tests comparing reduced geothermal variability against demand-following operation.
-3. Add smoothing metrics to output.
-4. Document tradeoffs between thermostat and moving-average control.
-
-Implemented Phase 7 control contract:
-
-- `TESS Charge Control Strategy = Moving Average` now charges the tank from a trailing moving average of the heat demand profile;
-- `TESS Moving Average Window` controls the smoothing horizon in hours;
-- `TESS SOC Control Gain` adds an optional state-of-charge correction around the configured target tank temperature;
-- moving-average control still serves customer demand before charging during each timestep;
-- smoothing output metrics include customer demand standard deviation, geothermal output standard deviation, geothermal output smoothing ratio, and geothermal variability reduction;
-- the moving-average regression test confirms geothermal output is smoother than both the legacy demand-following geothermal output and the unsmoothed customer demand profile.
-
-Moving-average control is better for moderating short-term demand swings and approximating the low-pass-filter behavior expected from a large tank. Temperature-band control is simpler and more thermostat-like, but it can create blocky geothermal charging cycles with higher charge-power peaks. Moving-average control can run geothermal more steadily, but poor choices of window length or SOC gain can overcharge, undercharge, or curtail heat when the tank reaches its bounds.
-
-## Acceptance Criteria
-
-The initial feature should be considered complete when:
-
-- `TESS Enabled = False` preserves existing dispatch behavior and tests: load is served directly from the geothermal system, and served demand, unmet demand, geothermal output, flow, pumping, depletion, and economics match the legacy non-TESS path.
-- `TESS Enabled = True` works for direct-use thermal dispatch.
-- TESS volume creates finite, auditable storage capacity.
-- `TESS Deadband Range` controls charge cycling.
-- tank energy balance closes over every timestep.
-- geothermal output is decoupled from hourly demand when TESS is active.
-- unmet demand is reported when tank energy or discharge power is insufficient.
-- default TESS discharge power is demand-derived, not unlimited.
-- TESS CAPEX and O&M are included in economics.
-- hourly TESS profile output is available.
-- clear errors are raised for unsupported modes and physically invalid pressure/temperature inputs.
+The example uses the canonical variable `annual_heat_demand.csv` profile,
+enables TESS, and sets tank volume, installed cost per cubic meter, target
+temperature, initial temperature, useful temperature bounds, deadband range,
+charge flow fraction, and heat loss. Regression coverage verifies text output,
+HTML output, dispatch profile CSV output, TESS graph artifacts, parsed TESS
+summary values, and TESS CSV columns.
 
 ## Resolved Design Decisions
 
-- The first implementation should not require final tank state to match initial tank state for annual analysis.
-- `TESS Maximum Discharge Power` should default to a demand-derived automatic value, not unlimited discharge.
-- `TESS Cost per Cubic Meter` should represent complete installed TESS cost, not tank-only cost.
-- Temperature-band control should serve demand before charging in each hourly timestep.
-- Direct-use heat demand should not require a customer supply-temperature profile.
-- District-heating peaking boiler interactions should be handled in a follow-up release, not the first TESS release.
+- TESS is available only in dispatchable direct-use industrial heat mode.
+- TESS is not available in baseload mode because storage does not add useful
+  dispatch behavior to a steady baseload case.
+- The model does not require final tank state to equal initial tank state.
+- `TESS Maximum Discharge Power` defaults to a demand-derived automatic value.
+- `TESS Cost per Cubic Meter` represents complete installed TESS cost.
+- Temperature-band control serves demand before charging in each hourly
+  timestep.
+- Direct-use heat demand does not require a customer supply-temperature profile.
+- District-heating peaking boiler interactions are outside the completed TESS
+  feature.

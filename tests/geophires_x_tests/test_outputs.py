@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import tempfile
 from csv import DictReader
 from pathlib import Path
 
@@ -18,6 +17,22 @@ _log = logging.getLogger(__name__)
 
 class OutputsTestCase(BaseTestCase):
     @staticmethod
+    def _output_artifact_path(filename: str) -> Path:
+        return Path(__file__).resolve().parent / filename
+
+    def _geophires_input_parameters(
+        self,
+        output_filename: str,
+        params=None,
+        from_file_path=None,
+    ) -> GeophiresInputParameters:
+        return GeophiresInputParameters(
+            params=params,
+            from_file_path=from_file_path,
+            output_file_path=self._output_artifact_path(output_filename),
+        )
+
+    @staticmethod
     def _dispatch_graph_path(html_output_path: Path, title: str) -> Path:
         file_stem = (
             f"{removeDisallowedFilenameChars(html_output_path.stem)}_"
@@ -26,10 +41,11 @@ class OutputsTestCase(BaseTestCase):
         return Path(html_output_path.parent, f"{file_stem}.png")
 
     def test_html_output_file(self):
-        html_path = Path(tempfile.gettempdir(), "example12_DH.html").absolute()
+        html_path = self._output_artifact_path("example12_DH.html")
         try:
             GeophiresXClient().get_geophires_result(
-                GeophiresInputParameters(
+                self._geophires_input_parameters(
+                    "example12_DH.out",
                     from_file_path=self._get_test_file_path("../examples/example12_DH.txt"),
                     params={"HTML Output File": str(html_path)},
                 )
@@ -57,7 +73,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_xlcoe_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example1_xlcoe.out",
                 from_file_path=self._get_test_file_path("../examples/example1.txt"),
                 params={
                     "Do XLCO(E|H|C) Calculations": True,
@@ -75,7 +92,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_xlcoh_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example2_xlcoh.out",
                 from_file_path=self._get_test_file_path("../examples/example2.txt"),
                 params={
                     "Do XLCO(E|H|C) Calculations": True,
@@ -93,7 +111,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_xlcoc_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example11_xlcoc.out",
                 from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
                 params={
                     "Do XLCO(E|H|C) Calculations": True,
@@ -111,7 +130,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_valcoe_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example1_valcoe.out",
                 from_file_path=self._get_test_file_path("../examples/example1.txt"),
                 params={"Do VALCO(E|H|C) Calculations": True},
             )
@@ -127,7 +147,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_valcoh_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example2_valcoh.out",
                 from_file_path=self._get_test_file_path("../examples/example2.txt"),
                 params={"Do VALCO(E|H|C) Calculations": True},
             )
@@ -143,7 +164,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_text_output_file_contains_valcoc_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(
+            self._geophires_input_parameters(
+                "example11_valcoc.out",
                 from_file_path=self._get_test_file_path("../examples/example11_AC.txt"),
                 params={"Do VALCO(E|H|C) Calculations": True},
             )
@@ -180,7 +202,7 @@ class OutputsTestCase(BaseTestCase):
     def test_dispatch_results_are_written_and_parseable(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_test.out")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model()
@@ -218,9 +240,9 @@ class OutputsTestCase(BaseTestCase):
         """Verify enabled TESS dispatch text rows and CSV columns are emitted."""
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_tess_test.out").absolute()
-        dispatch_profile_path = Path(tempfile.gettempdir(), "dispatch_results_tess_profile.csv").absolute()
-        html_output_path = Path(tempfile.gettempdir(), "dispatch_results_tess_test.html").absolute()
+        output_path = self._output_artifact_path("dispatch_results_tess_test.out")
+        dispatch_profile_path = self._output_artifact_path("dispatch_results_tess_profile.csv")
+        html_output_path = self._output_artifact_path("dispatch_results_tess_test.html")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
         graph_titles = [
             "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
@@ -263,13 +285,13 @@ class OutputsTestCase(BaseTestCase):
         model.outputs.PrintOutputs(model)
 
         result = GeophiresXResult(str(output_path))
-        dispatch_results = result.result["DISPATCH RESULTS"]
-        self.assertEqual(10000.0, dispatch_results["TESS volume"]["value"])
-        self.assertEqual("m3", dispatch_results["TESS volume"]["unit"])
-        self.assertAlmostEqual(7.5, dispatch_results["TESS capital cost"]["value"])
-        self.assertGreater(dispatch_results["TESS annual discharge"]["value"], 0.0)
-        self.assertGreater(dispatch_results["Peak geothermal charge"]["value"], 0.0)
-        self.assertIsNotNone(dispatch_results["Geothermal output smoothing ratio"])
+        tess_results = result.result["THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS"]
+        self.assertEqual(10000.0, tess_results["TESS volume"]["value"])
+        self.assertEqual("m3", tess_results["TESS volume"]["unit"])
+        self.assertAlmostEqual(7.5, tess_results["TESS capital cost"]["value"])
+        self.assertGreater(tess_results["TESS annual discharge"]["value"], 0.0)
+        self.assertGreater(tess_results["Peak geothermal charge"]["value"], 0.0)
+        self.assertIsNotNone(tess_results["Geothermal output smoothing ratio"])
 
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
@@ -283,7 +305,7 @@ class OutputsTestCase(BaseTestCase):
             self.assertTrue(graph_path.exists())
 
     def test_electric_dispatch_results_are_written_and_parseable(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_electric_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_electric_test.out")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
@@ -316,9 +338,7 @@ class OutputsTestCase(BaseTestCase):
 
         for plant_type in ["3", "4"]:
             with self.subTest(plant_type=plant_type):
-                output_path = Path(
-                    tempfile.gettempdir(), f"dispatch_results_flash_{plant_type}_electric_test.out"
-                ).absolute()
+                output_path = self._output_artifact_path(f"dispatch_results_flash_{plant_type}_electric_test.out")
                 model = self._new_model(
                     input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt")
                 )
@@ -352,7 +372,7 @@ class OutputsTestCase(BaseTestCase):
 
     def test_heat_pump_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_heat_pump_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_heat_pump_test.out")
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
         model.InputParameters.update(
             {
@@ -380,7 +400,7 @@ class OutputsTestCase(BaseTestCase):
 
     def test_absorption_chiller_dispatch_results_are_written_and_parseable(self):
         cooling_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_cooling_demand.csv")
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_absorption_chiller_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_absorption_chiller_test.out")
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
         model.InputParameters.update(
             {
@@ -409,7 +429,7 @@ class OutputsTestCase(BaseTestCase):
 
     def test_district_heating_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_district_heating_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_district_heating_test.out")
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
         model.InputParameters.update(
             {
@@ -436,7 +456,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
 
     def test_chp_heat_following_dispatch_results_are_written_and_parseable(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_heat_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_chp_heat_test.out")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
@@ -475,8 +495,8 @@ class OutputsTestCase(BaseTestCase):
     def test_dispatch_profile_csv_is_written(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
-        output_path = Path(tempfile.gettempdir(), "dispatch_profile_results_test.out").absolute()
-        csv_output_path = Path(tempfile.gettempdir(), "dispatch_profile_results_test.csv").absolute()
+        output_path = self._output_artifact_path("dispatch_profile_results_test.out")
+        csv_output_path = self._output_artifact_path("dispatch_profile_results_test.csv")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model()
@@ -515,8 +535,8 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreaterEqual(float(rows[0]["Produced Temperature (degC)"]), 0.0)
 
     def test_electric_dispatch_profile_csv_is_written(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_profile_electric_results_test.out").absolute()
-        csv_output_path = Path(tempfile.gettempdir(), "dispatch_profile_electric_results_test.csv").absolute()
+        output_path = self._output_artifact_path("dispatch_profile_electric_results_test.out")
+        csv_output_path = self._output_artifact_path("dispatch_profile_electric_results_test.csv")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
@@ -552,8 +572,8 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
 
     def test_chp_electric_dispatch_profile_csv_is_written(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_profile_chp_electric_results_test.out").absolute()
-        csv_output_path = Path(tempfile.gettempdir(), "dispatch_profile_chp_electric_results_test.csv").absolute()
+        output_path = self._output_artifact_path("dispatch_profile_chp_electric_results_test.out")
+        csv_output_path = self._output_artifact_path("dispatch_profile_chp_electric_results_test.csv")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
@@ -591,7 +611,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
 
     def test_chp_electric_dispatch_results_are_written_and_parseable(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_results_chp_electric_test.out").absolute()
+        output_path = self._output_artifact_path("dispatch_results_chp_electric_test.out")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
@@ -625,7 +645,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_chp_dispatch_summary_is_written_to_json_output(self):
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        input_file = GeophiresInputParameters(
+        input_file = self._geophires_input_parameters(
+            "dispatch_summary_chp_test.out",
             from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
             params={
                 "Operating Mode": "Dispatchable",
@@ -649,7 +670,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_heat_pump_dispatch_summary_is_written_to_json_output(self):
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        input_file = GeophiresInputParameters(
+        input_file = self._geophires_input_parameters(
+            "dispatch_summary_heat_pump_test.out",
             from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
             params={
                 "Operating Mode": "Dispatchable",
@@ -670,7 +692,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_absorption_chiller_dispatch_summary_is_written_to_json_output(self):
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_cooling_demand.csv")
-        input_file = GeophiresInputParameters(
+        input_file = self._geophires_input_parameters(
+            "dispatch_summary_absorption_chiller_test.out",
             from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
             params={
                 "Operating Mode": "Dispatchable",
@@ -691,7 +714,8 @@ class OutputsTestCase(BaseTestCase):
 
     def test_district_heating_dispatch_summary_is_written_to_json_output(self):
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
-        input_file = GeophiresInputParameters(
+        input_file = self._geophires_input_parameters(
+            "dispatch_summary_district_heating_test.out",
             from_file_path=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"),
             params={
                 "Operating Mode": "Dispatchable",
@@ -712,8 +736,8 @@ class OutputsTestCase(BaseTestCase):
     def test_dispatch_html_graphs_are_generated_when_enabled(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
-        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_results_test.out").absolute()
-        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_results_test.html").absolute()
+        output_path = self._output_artifact_path("dispatch_graphs_results_test.out")
+        html_output_path = self._output_artifact_path("dispatch_graphs_results_test.html")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         graph_titles = [
@@ -751,8 +775,8 @@ class OutputsTestCase(BaseTestCase):
             self.assertTrue(graph_path.exists())
 
     def test_electric_dispatch_html_graphs_are_generated_when_enabled(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_electric_results_test.out").absolute()
-        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_electric_results_test.html").absolute()
+        output_path = self._output_artifact_path("dispatch_graphs_electric_results_test.out")
+        html_output_path = self._output_artifact_path("dispatch_graphs_electric_results_test.html")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         graph_titles = [
@@ -790,8 +814,8 @@ class OutputsTestCase(BaseTestCase):
             self.assertTrue(graph_path.exists())
 
     def test_chp_heat_dispatch_html_graphs_are_generated_when_enabled(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_heat_results_test.out").absolute()
-        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_heat_results_test.html").absolute()
+        output_path = self._output_artifact_path("dispatch_graphs_chp_heat_results_test.out")
+        html_output_path = self._output_artifact_path("dispatch_graphs_chp_heat_results_test.html")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         graph_titles = [
@@ -828,8 +852,8 @@ class OutputsTestCase(BaseTestCase):
             self.assertTrue(graph_path.exists())
 
     def test_chp_electric_dispatch_html_graphs_are_generated_when_enabled(self):
-        output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_electric_results_test.out").absolute()
-        html_output_path = Path(tempfile.gettempdir(), "dispatch_graphs_chp_electric_results_test.html").absolute()
+        output_path = self._output_artifact_path("dispatch_graphs_chp_electric_results_test.out")
+        html_output_path = self._output_artifact_path("dispatch_graphs_chp_electric_results_test.html")
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
         graph_titles = [
@@ -885,7 +909,12 @@ class OutputsTestCase(BaseTestCase):
                 artifact_path.unlink()
 
         try:
-            result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+            result = GeophiresXClient().get_geophires_result(
+                self._geophires_input_parameters(
+                    "example1_dispatchable_full_scale.out",
+                    from_file_path=str(input_path),
+                )
+            )
         except RuntimeError as e:
             has_expected_error_msg = (
                 "cannot unpack non-iterable NoneType object" in str(e)
@@ -938,7 +967,12 @@ class OutputsTestCase(BaseTestCase):
                 artifact_path.unlink()
 
         try:
-            result = GeophiresXClient().get_geophires_result(GeophiresInputParameters(from_file_path=str(input_path)))
+            result = GeophiresXClient().get_geophires_result(
+                self._geophires_input_parameters(
+                    "example1_dispatchable_tess.out",
+                    from_file_path=str(input_path),
+                )
+            )
         except RuntimeError as e:
             has_expected_error_msg = (
                 "cannot unpack non-iterable NoneType object" in str(e)
@@ -960,7 +994,7 @@ class OutputsTestCase(BaseTestCase):
         for graph_path in graph_paths:
             self.assertTrue(graph_path.exists())
 
-        parsed_results = result.result["DISPATCH RESULTS"]
+        parsed_results = result.result["THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS"]
         self.assertEqual(10000.0, parsed_results["TESS volume"]["value"])
         self.assertAlmostEqual(7.5, parsed_results["TESS capital cost"]["value"])
         self.assertGreater(parsed_results["TESS annual discharge"]["value"], 0.0)

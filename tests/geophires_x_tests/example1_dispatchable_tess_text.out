@@ -7,9 +7,9 @@
 Simulation Metadata\par
 ----------------------\par
 GEOPHIRES Version: 3.12.1 \par
-Simulation Date: 2026-04-29 \par
-Simulation Time: 18:50 \par
-Calculation Time:     17.694 sec \par
+Simulation Date: 2026-04-30 \par
+Simulation Time: 10:04 \par
+Calculation Time:     12.309 sec \par
 \par
                            ***SUMMARY OF RESULTS***\par
 \par
@@ -114,6 +114,29 @@ Calculation Time:     17.694 sec \par
       Average Annual Heat Production               :      19.33 \par
       Average Pumping Power                        :       0.01 MW\par
 \par
+                           ***THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS***\par
+\par
+      TESS volume                                  :   10000.00 m3\par
+      TESS usable capacity                         :     993.65 MWh\par
+      TESS capital cost                            :       7.50 MUSD\par
+      TESS fixed O&M cost                          :       0.07 MUSD/yr\par
+      TESS average SOC                             :      67.60 %\par
+      TESS minimum SOC                             :      60.00 %\par
+      TESS maximum SOC                             :      77.87 %\par
+      TESS annual charge                           :     101.21 GWh/year\par
+      TESS annual discharge                        :      96.65 GWh/year\par
+      TESS annual standby loss                     :       0.49 GWh/year\par
+      TESS annual efficiency loss                  :       4.00 GWh/year\par
+      TESS curtailed geothermal heat               :       0.00 GWh/year\par
+      TESS equivalent full cycles                  :      97.27 cycles/year\par
+      Peak customer demand                         :      27.26 MW\par
+      Peak geothermal charge                       :      57.71 MW\par
+      Customer demand standard deviation           :       2.65 MW\par
+      Geothermal output standard deviation         :      23.09 MW\par
+      Geothermal output smoothing ratio            :       8.70 -\par
+      Geothermal peak reduction ratio              :      -1.12 -\par
+      Geothermal variability reduction ratio       :      -7.70 -\par
+\par
                            ***DISPATCH RESULTS***\par
 \par
       Design heat produced                         :      66.47 MW\par
@@ -126,25 +149,6 @@ Calculation Time:     17.694 sec \par
       Peak hourly demand                           :      27.26 MW\par
       Design flow rate                             :      55.00 kg/s\par
       Observed peak flow rate                      :      66.00 kg/s\par
-      TESS enabled                                 :       1.00 flag\par
-      TESS volume                                  :   10000.00 m3\par
-      TESS usable capacity                         :     993.65 MWh\par
-      TESS capital cost                            :       7.50 MUSD\par
-      TESS fixed O&M cost                          :       0.07 MUSD/yr\par
-      TESS average SOC                             :      67.60 %\par
-      TESS annual charge                           :     101.21 GWh/year\par
-      TESS annual discharge                        :      96.65 GWh/year\par
-      TESS annual standby loss                     :       0.49 GWh/year\par
-      TESS annual efficiency loss                  :       4.00 GWh/year\par
-      TESS curtailed geothermal heat               :       0.00 GWh/year\par
-      TESS equivalent full cycles                  :      97.27 cycles/year\par
-      Peak customer demand                         :      27.26 MW\par
-      Peak geothermal charge                       :      57.71 MW\par
-      Customer demand standard deviation           :       2.65 MW\par
-      Geothermal output standard deviation         :      23.09 MW\par
-      Geothermal output smoothing ratio            :       8.70 -\par
-      Geothermal peak reduction                    :    -111.72 %\par
-      Geothermal variability reduction             :    -769.75 %\par
 \par
                             ***************************************************************\par
                             *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\par

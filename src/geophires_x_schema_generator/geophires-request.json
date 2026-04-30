@@ -1600,7 +1600,7 @@
       "maximum": 100.0
     },
     "TESS Moving Average Window": {
-      "description": "Moving-average window for future TESS moving-average charge control.",
+      "description": "Moving-average window for TESS moving-average charge control.",
       "type": "integer",
       "units": "hr",
       "category": "Surface Plant",
@@ -1609,7 +1609,7 @@
       "maximum": 8760
     },
     "TESS SOC Control Gain": {
-      "description": "State-of-charge correction gain for future TESS moving-average charge control.",
+      "description": "State-of-charge correction gain for TESS moving-average charge control.",
       "type": "number",
       "units": null,
       "category": "Surface Plant",

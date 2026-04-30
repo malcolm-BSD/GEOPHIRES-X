@@ -33,6 +33,7 @@ class Outputs:
     """
 
     VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
+    TESS_RESULTS_CATEGORY_NAME = 'THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS'
     DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
 
     def __init__(self, model: Model, output_file: str = 'HDR.out'):
@@ -323,6 +324,7 @@ class Outputs:
                             f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
                             f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
 
+                self._write_tess_results(model, f)
                 self._write_dispatch_results(model, f)
 
                 f.write(NL)
@@ -1155,7 +1157,7 @@ class Outputs:
                     ('Annual peaking boiler heat delivered', metrics.get('annual_district_heating_boiler_kwh', 0.0) / 1.0e6, 'GWh/year'),
                     ('Peak peaking boiler demand', metrics.get('peak_district_heating_boiler_mw', 0.0), 'MW'),
                 ])
-        rows[3:3] = summary_rows + Outputs._tess_output_rows(model, metrics)
+        rows[3:3] = summary_rows
         return rows
 
     @staticmethod
@@ -1165,7 +1167,6 @@ class Outputs:
             return []
 
         return [
-            ('TESS enabled', metrics.get('tess_enabled', 0.0), 'flag'),
             ('TESS volume', metrics.get('tess_volume_m3', 0.0), 'm3'),
             ('TESS usable capacity', metrics.get('tess_usable_capacity_mwh', 0.0), 'MWh'),
             ('TESS capital cost', model.economics.tess_capital_cost.value,
@@ -1175,7 +1176,6 @@ class Outputs:
             ('TESS average SOC', metrics.get('tess_average_soc', 0.0) * 100.0, '%'),
             ('TESS minimum SOC', metrics.get('tess_min_soc', 0.0) * 100.0, '%'),
             ('TESS maximum SOC', metrics.get('tess_max_soc', 0.0) * 100.0, '%'),
-            ('TESS final temperature', metrics.get('tess_final_temperature_c', 0.0), 'degC'),
             ('TESS annual charge', metrics.get('tess_annual_charge_kwh', 0.0) / 1.0e6, 'GWh/year'),
             ('TESS annual discharge', metrics.get('tess_annual_discharge_kwh', 0.0) / 1.0e6, 'GWh/year'),
             ('TESS annual standby loss', metrics.get('tess_annual_standby_loss_kwh', 0.0) / 1.0e6, 'GWh/year'),
@@ -1189,10 +1189,26 @@ class Outputs:
             ('Customer demand standard deviation', metrics.get('customer_demand_standard_deviation_mw', 0.0), 'MW'),
             ('Geothermal output standard deviation', metrics.get('geothermal_output_standard_deviation_mw', 0.0), 'MW'),
             ('Geothermal output smoothing ratio', metrics.get('geothermal_output_smoothing_ratio', 0.0), '-'),
-            ('Geothermal peak reduction', metrics.get('geothermal_peak_reduction_fraction', 0.0) * 100.0, '%'),
-            ('Geothermal variability reduction',
-             metrics.get('geothermal_output_variability_reduction_fraction', 0.0) * 100.0, '%'),
+            ('Geothermal peak reduction ratio', metrics.get('geothermal_peak_reduction_fraction', 0.0), '-'),
+            ('Geothermal variability reduction ratio',
+             metrics.get('geothermal_output_variability_reduction_fraction', 0.0), '-'),
         ]
+
+    def _write_tess_results(self, model: Model, f) -> None:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None:
+            return
+
+        tess_rows = self._tess_output_rows(model, dispatch_results.summary_metrics)
+        if len(tess_rows) == 0:
+            return
+
+        f.write(NL)
+        f.write(NL)
+        f.write(f'                           ***{self.TESS_RESULTS_CATEGORY_NAME}***\n')
+        f.write(NL)
+        for field_name, value, units in tess_rows:
+            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
 
     def _write_dispatch_results(self, model: Model, f) -> None:
         dispatch_rows = self._dispatch_output_rows(model)
