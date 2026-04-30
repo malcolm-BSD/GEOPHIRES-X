@@ -26,7 +26,7 @@ from geophires_x.Economics import Economics
 from geophires_x.Dispatch import create_operating_mode_strategy
 from geophires_x.Outputs import Outputs
 from geophires_x.OptionList import EndUseOptions, OperatingMode, PlantType
-from geophires_x.WeatherData import fetch_open_meteo_weather
+from geophires_x.WeatherData import OpenMeteoNetworkError, fetch_open_meteo_weather
 from geophires_x.CylindricalReservoir import CylindricalReservoir
 from geophires_x.MPFReservoir import MPFReservoir
 from geophires_x.LHSReservoir import LHSReservoir
@@ -291,11 +291,20 @@ class Model(object):
         if latitude_provided != longitude_provided:
             raise ValueError("Project Latitude and Project Longitude must both be provided to use weather data.")
 
-        self.weather_data = fetch_open_meteo_weather(
-            latitude.value,
-            longitude.value,
-            year=self.surfaceplant.weather_data_year.value,
-        )
+        try:
+            self.weather_data = fetch_open_meteo_weather(
+                latitude.value,
+                longitude.value,
+                year=self.surfaceplant.weather_data_year.value,
+            )
+        except OpenMeteoNetworkError as error:
+            self.weather_data = None
+            self.logger.warning(
+                "Weather data was requested but Open-Meteo could not be reached; continuing without weather data. "
+                "Project Latitude and Project Longitude will be ignored for this run. %s",
+                error,
+            )
+            return
 
         annual_average_temperature = float(self.weather_data.annual_average()["temperature_2m"])
         if not self.surfaceplant.ambient_temperature.Provided:

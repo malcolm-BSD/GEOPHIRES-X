@@ -10,6 +10,7 @@ from geophires_x.WeatherData import EXPECTED_HOURLY_ROWS
 from geophires_x.WeatherData import LEAP_YEAR_HOURLY_ROWS
 from geophires_x.WeatherData import OPTIONAL_HOURLY_VARIABLES
 from geophires_x.WeatherData import REQUIRED_HOURLY_VARIABLES
+from geophires_x.WeatherData import OpenMeteoNetworkError
 from geophires_x.WeatherData import OpenMeteoWeatherError
 from geophires_x.WeatherData import fetch_open_meteo_weather
 
@@ -153,6 +154,18 @@ class WeatherDataTestCase(unittest.TestCase):
 
         self.assertEqual(3, len(session.calls))
         self.assertEqual([0.5, 1.0], sleeps)
+
+    def test_request_failures_raise_network_error_after_retries(self):
+        session = FakeSession([requests.exceptions.ConnectionError("offline")])
+
+        with self.assertRaises(OpenMeteoNetworkError):
+            fetch_open_meteo_weather(39.0, -105.0, year=2024, max_retries=0, session=session, sleep=lambda _: None)
+
+    def test_transient_failures_raise_network_error_after_retries(self):
+        session = FakeSession([FakeResponse(503, {"reason": "temporarily unavailable"})])
+
+        with self.assertRaises(OpenMeteoNetworkError):
+            fetch_open_meteo_weather(39.0, -105.0, year=2024, max_retries=0, session=session, sleep=lambda _: None)
 
     def test_permanent_errors_are_not_retried(self):
         session = FakeSession([FakeResponse(400, {"reason": "Latitude must be in range"})])

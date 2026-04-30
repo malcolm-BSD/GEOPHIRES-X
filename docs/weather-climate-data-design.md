@@ -267,6 +267,24 @@ Do not overwrite user-provided values. Use existing parameter `Provided` flags
 or direct membership in `model.InputParameters` to distinguish explicit user
 inputs from defaults.
 
+If `Project Latitude` and `Project Longitude` are provided but Open-Meteo
+cannot be reached because the machine has no network access, the request times
+out, or the service returns only transient failures, the model should continue
+as if project coordinates had not been provided. In that fallback case:
+
+- `model.weather_data` remains `None`;
+- missing `Ambient Temperature` and `Surface Temperature` keep their normal
+  GEOPHIRES defaults instead of being filled from weather data;
+- Dispatchable, TESS, and Baseload calculations use their existing scalar
+  temperature behavior;
+- the run should log a warning explaining that weather data was requested but
+  unavailable.
+
+This offline fallback applies only to connectivity and transient service
+failures. Invalid coordinates, invalid years, or malformed weather responses
+should still raise errors because those indicate bad input or incompatible API
+data rather than an offline run.
+
 ## Dispatchable Mode Integration
 
 Dispatchable mode should use hourly weather where it affects plant physics.
@@ -437,6 +455,10 @@ After parameters are read and before calculations:
 - fill missing `Surface Temperature`.
 
 The fetch should occur only once per model run.
+
+If the fetch fails because Open-Meteo is unreachable or returns only transient
+failures after retry exhaustion, log a warning, set `model.weather_data = None`,
+and continue as if project coordinates were absent.
 
 ### Step 4: Dispatchable Integration
 

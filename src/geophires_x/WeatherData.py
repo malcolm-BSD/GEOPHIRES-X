@@ -43,6 +43,10 @@ class OpenMeteoWeatherError(ValueError):
     """Raised when Open-Meteo weather data cannot be fetched or validated."""
 
 
+class OpenMeteoNetworkError(OpenMeteoWeatherError):
+    """Raised when Open-Meteo cannot be reached or returns only transient failures."""
+
+
 @dataclass
 class WeatherData:
     latitude: float
@@ -192,12 +196,17 @@ def _request_open_meteo_json(
             if status_code not in TRANSIENT_STATUS_CODES:
                 raise OpenMeteoWeatherError(message)
 
-            last_error = OpenMeteoWeatherError(message)
+            last_error = OpenMeteoNetworkError(message)
         except requests.exceptions.RequestException as error:
             last_error = error
 
         if attempt_index < attempt_count - 1:
             sleep(backoff_seconds * (2 ** attempt_index))
+
+    if isinstance(last_error, (requests.exceptions.RequestException, OpenMeteoNetworkError)):
+        raise OpenMeteoNetworkError(
+            f"Open-Meteo request failed after {attempt_count} attempts: {last_error}"
+        ) from last_error
 
     raise OpenMeteoWeatherError(f"Open-Meteo request failed after {attempt_count} attempts: {last_error}") from last_error
 

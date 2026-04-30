@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from geophires_x.Model import Model
 from geophires_x.Parameter import ParameterEntry
+from geophires_x.WeatherData import OpenMeteoNetworkError
 from tests.base_test_case import BaseTestCase
 
 
@@ -125,3 +126,22 @@ class WeatherParametersTestCase(BaseTestCase):
 
         fetch_weather.assert_not_called()
         self.assertIsNone(model.weather_data)
+
+    def test_weather_fetch_network_failure_continues_without_weather_data(self) -> None:
+        model = self._new_model()
+        model.InputParameters = {
+            "Project Latitude": ParameterEntry(Name="Project Latitude", sValue="39.7392"),
+            "Project Longitude": ParameterEntry(Name="Project Longitude", sValue="-104.9903"),
+        }
+        default_ambient_temperature = model.surfaceplant.ambient_temperature.value
+        default_surface_temperature = model.reserv.Tsurf.value
+
+        with patch(
+            "geophires_x.Model.fetch_open_meteo_weather",
+            side_effect=OpenMeteoNetworkError("Open-Meteo request failed after 4 attempts"),
+        ):
+            model.read_parameters()
+
+        self.assertIsNone(model.weather_data)
+        self.assertEqual(default_ambient_temperature, model.surfaceplant.ambient_temperature.value)
+        self.assertEqual(default_surface_temperature, model.reserv.Tsurf.value)
