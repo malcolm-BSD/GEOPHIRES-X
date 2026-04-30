@@ -26,6 +26,7 @@ from geophires_x.Economics import Economics
 from geophires_x.Dispatch import create_operating_mode_strategy
 from geophires_x.Outputs import Outputs
 from geophires_x.OptionList import EndUseOptions, OperatingMode, PlantType
+from geophires_x.WeatherData import fetch_open_meteo_weather
 from geophires_x.CylindricalReservoir import CylindricalReservoir
 from geophires_x.MPFReservoir import MPFReservoir
 from geophires_x.LHSReservoir import LHSReservoir
@@ -100,6 +101,7 @@ class Model(object):
         self.addeconomics = None
         self.dispatch_results = None
         self.dispatch_adapter = None
+        self.weather_data = None
         self.operating_mode_strategy = create_operating_mode_strategy(OperatingMode.BASELOAD)
 
         # initialize the default objects
@@ -263,6 +265,7 @@ class Model(object):
         # re-read the parameters for the newly instantiated surface plant
         self.surfaceplant.read_parameters(self)
         resolve_model_parameter_formulas(self)
+        self._apply_weather_data_if_requested()
         self.wellbores._set_well_counts_from_parameters(self)
         self.operating_mode_strategy = create_operating_mode_strategy(self.surfaceplant.operating_mode.value)
 
@@ -274,6 +277,33 @@ class Model(object):
             self.surfaceplant.CalculateDHDemand(self)  # calculate district heating demand
 
         self.logger.info(f'complete {str(__class__)}: {__name__}')
+
+    def _apply_weather_data_if_requested(self) -> None:
+        latitude = getattr(self.surfaceplant, "project_latitude", None)
+        longitude = getattr(self.surfaceplant, "project_longitude", None)
+        latitude_provided = bool(getattr(latitude, "Provided", False))
+        longitude_provided = bool(getattr(longitude, "Provided", False))
+
+        if not latitude_provided and not longitude_provided:
+            self.weather_data = None
+            return
+
+        if latitude_provided != longitude_provided:
+            raise ValueError("Project Latitude and Project Longitude must both be provided to use weather data.")
+
+        self.weather_data = fetch_open_meteo_weather(
+            latitude.value,
+            longitude.value,
+            year=self.surfaceplant.weather_data_year.value,
+        )
+
+        annual_average_temperature = float(self.weather_data.annual_average()["temperature_2m"])
+        if not self.surfaceplant.ambient_temperature.Provided:
+            self.surfaceplant.ambient_temperature.value = annual_average_temperature
+            self.surfaceplant.ambient_temperature.Valid = True
+        if not self.reserv.Tsurf.Provided:
+            self.reserv.Tsurf.value = annual_average_temperature
+            self.reserv.Tsurf.Valid = True
 
     def Calculate(self):
         """
