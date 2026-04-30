@@ -115,25 +115,39 @@ def InsertImagesIntoHTML(html_path: str, short_names=None, full_names: set = Non
     if not full_names:
         return
 
-    # Write a reference to the image(s) into the HTML file by inserting before the "</body>" tag
-    insert_string = ''
-    for _ in range(len(full_names)):
-        full_name = full_names.pop()
-        name_to_use = full_name.name.replace('_', ' ').replace('.png', '')
-        insert_string = insert_string + f'<img src="{full_name.name}" alt="{name_to_use}">\n<br>'
+    image_filenames = set()
+    for image_names in [short_names, full_names]:
+        if not image_names:
+            continue
+        for image_name in image_names:
+            image_path = Path(image_name)
+            filename = image_path.name
+            if image_path.suffix.lower() != '.png':
+                filename = f'{filename}.png'
+            image_filenames.add(filename)
 
     match_string = '</body>'
     with open(html_path, 'r+', encoding='UTF-8') as html_file:
-        contents = html_file.readlines()
-        if match_string in contents[-1]:  # Handle last line to prevent IndexError
-            pass
+        contents = html_file.read()
+        missing_insert_lines = []
+        for image_filename in sorted(image_filenames):
+            name_to_use = image_filename.replace('_', ' ').replace('.png', '')
+            image_tag = f'<img src="{image_filename}" alt="{name_to_use}">'
+            if image_tag not in contents:
+                missing_insert_lines.extend([image_tag, '<br>'])
+
+        if len(missing_insert_lines) == 0:
+            return
+
+        insert_string = '\n'.join(missing_insert_lines) + '\n'
+        if match_string in contents:
+            contents = contents.replace(match_string, insert_string + match_string, 1)
         else:
-            for index, line in enumerate(contents):
-                if match_string in line and insert_string not in contents[index + 1]:
-                    contents.insert(index, insert_string)
-                    break
+            contents += '\n' + insert_string
+
         html_file.seek(0)
-        html_file.writelines(contents)
+        html_file.write(contents)
+        html_file.truncate()
 
 
 def UpgradeSymbologyOfUnits(unit: str) -> str:

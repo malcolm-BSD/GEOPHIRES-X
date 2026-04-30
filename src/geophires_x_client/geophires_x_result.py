@@ -428,7 +428,6 @@ class GeophiresXResult:
             "DISPATCH RESULTS": [
                 "Dispatch analysis start year",
                 "Dispatch analysis end year",
-                "Dispatch analysis duration",
                 "Design heat produced",
                 "Design cooling produced",
                 "Design net electricity produced",

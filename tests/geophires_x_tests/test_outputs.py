@@ -328,6 +328,10 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(float(rows[0]["TESS Stored Energy (MWh)"]), 0.0)
         for graph_path in graph_paths:
             self.assertTrue(graph_path.exists())
+        with open(html_output_path, encoding="UTF-8") as f:
+            html_content = f.read()
+        for graph_path in graph_paths:
+            self.assertIn(f'<img src="{graph_path.name}"', html_content)
 
     def test_electric_dispatch_results_are_written_and_parseable(self):
         output_path = self._output_artifact_path("dispatch_results_electric_test.out")

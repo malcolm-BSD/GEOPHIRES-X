@@ -64,6 +64,15 @@ class DispatchFrameworkTestCase(BaseTestCase):
             model.surfaceplant.tess_charge_control_strategy.value,
         )
 
+    def test_tess_enabled_requires_dispatchable_operating_mode(self):
+        model = self._new_model()
+        model.InputParameters = {
+            "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+        }
+
+        with self.assertRaisesRegex(ValueError, "TESS Enabled requires Operating Mode to be Dispatchable"):
+            model.read_parameters()
+
     def test_tess_parameter_parsing(self):
         model = self._new_model()
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
@@ -275,7 +284,6 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(8760, len(model.surfaceplant.HeatProduced.value))
         self.assertEqual(1.0, model.dispatch_results.summary_metrics["dispatch_analysis_start_year"])
         self.assertEqual(2.0, model.dispatch_results.summary_metrics["dispatch_analysis_end_year"])
-        self.assertEqual(1.0, model.dispatch_results.summary_metrics["dispatch_analysis_year_count"])
         self.assertGreater(model.dispatch_results.summary_metrics["design_heat_extracted_mw"], 0.0)
         self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
         self.assertGreater(model.dispatch_results.summary_metrics["peak_hourly_demand_mw"], 0.0)
@@ -600,7 +608,6 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual([3, 4], model.dispatch_results.annual_aggregates["analysis_years"])
         self.assertEqual(3.0, model.dispatch_results.summary_metrics["dispatch_analysis_start_year"])
         self.assertEqual(5.0, model.dispatch_results.summary_metrics["dispatch_analysis_end_year"])
-        self.assertEqual(2.0, model.dispatch_results.summary_metrics["dispatch_analysis_year_count"])
 
     def test_cylindrical_recovery_restores_state_during_shut_in_period(self):
         model, recovering_adapter = self._new_cylindrical_dispatch_adapter()

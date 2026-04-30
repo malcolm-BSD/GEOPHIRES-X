@@ -1758,7 +1758,6 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             {
                 "dispatch_analysis_start_year": float(analysis_start_year),
                 "dispatch_analysis_end_year": float(analysis_end_year),
-                "dispatch_analysis_year_count": float(analysis_end_year - analysis_start_year),
                 "peak_hourly_demand_mw": float(np.max(analysis_hourly_demand_mw)),
                 "average_runtime_fraction": average_runtime_fraction,
                 "dispatch_capacity_factor": average_capacity_factor,

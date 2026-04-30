@@ -1098,7 +1098,6 @@ class Outputs:
         rows = [
             ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
             ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
-            ('Dispatch analysis duration', metrics.get('dispatch_analysis_year_count', 1.0), 'years'),
             ('Dispatch capacity factor', metrics.get('dispatch_capacity_factor', 0.0) * 100.0, '%'),
             ('Average runtime fraction', metrics.get('average_runtime_fraction', 0.0) * 100.0, '%'),
             ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
