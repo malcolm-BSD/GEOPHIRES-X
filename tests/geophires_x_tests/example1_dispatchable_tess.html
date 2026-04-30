@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+.r1 {color: #000000; text-decoration-color: #000000; background-color: #c0c0c0; font-weight: bold}
+.r2 {color: #008080; text-decoration-color: #008080; background-color: #c0c0c0; font-weight: bold}
+.r3 {color: #00ff00; text-decoration-color: #00ff00; background-color: #c0c0c0; font-weight: bold}
+.r4 {color: #000000; text-decoration-color: #000000; background-color: #c0c0c0; font-weight: bold; font-style: italic}
+body {
+    color: #000000;
+    background-color: #ffffff;
+}
+</style>
+</head>
+<body>
+    <pre style="font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><code style="font-family:inherit"><span class="r1">*****************</span>
+<span class="r1">***CASE REPORT***</span>
+<span class="r1">*****************</span>
+<span class="r1">Simulation Metadata</span>
+<span class="r1">----------------------</span>
+<span class="r1">GEOPHIRES Version: </span><span class="r2">3.12</span><span class="r1">.</span><span class="r2">1</span><span class="r1"> </span>
+<span class="r1">Simulation Date: </span><span class="r2">2026</span><span class="r1">-</span><span class="r2">04</span><span class="r1">-</span><span class="r2">30</span><span class="r1"> </span>
+<span class="r1">Simulation Time: </span><span class="r3">10:04</span><span class="r1"> </span>
+<span class="r1">Calculation Time:     </span><span class="r2">12.309</span><span class="r1"> sec </span>
+<span class="r4">                           SUMMARY OF RESULTS                           </span>
+<span class="r1">┌────────────────────────────────────────┬─────────────────┬───────────┐</span>
+<span class="r1">│               Parameter                │      Value      │   Units   │</span>
+<span class="r1">├────────────────────────────────────────┼─────────────────┼───────────┤</span>
+<span class="r1">│             End-Use Option             │ Direct-Use Heat │           │</span>
+<span class="r1">│   Average Direct-Use Heat Production   │         2.21    │    MW     │</span>
+<span class="r1">│ Direct-Use heat breakeven price (LCOH) │        75.66    │ USD/MMBTU │</span>
+<span class="r1">│       Number of production wells       │            2    │           │</span>
+<span class="r1">│       Number of injection wells        │            2    │           │</span>
+<span class="r1">│      Flowrate per production well      │         55.0    │  kg/sec   │</span>
+<span class="r1">│               Well depth               │          3.0    │ kilometer │</span>
+<span class="r1">│          Geothermal gradient           │           50    │   °C/km   │</span>
+<span class="r1">└────────────────────────────────────────┴─────────────────┴───────────┘</span>
+<span class="r4">                            ECONOMIC PARAMETERS                            </span>
+<span class="r1">┌───────────────────────────────────────┬─────────────────────────┬───────┐</span>
+<span class="r1">│               Parameter               │          Value          │ Units │</span>
+<span class="r1">├───────────────────────────────────────┼─────────────────────────┼───────┤</span>
+<span class="r1">│            Economic Model             │ Fixed Charge Rate (FCR) │       │</span>
+<span class="r1">│        Fixed Charge Rate (FCR)        │             5.00        │       │</span>
+<span class="r1">│ Accrued financing during construction │             0.00        │   %   │</span>
+<span class="r1">│           Project lifetime            │                5        │  yr   │</span>
+<span class="r1">│            Capacity factor            │              4.0        │   %   │</span>
+<span class="r1">│              Project NPV              │           -64.87        │ MUSD  │</span>
+<span class="r1">│              Project IRR              │             0.00        │   %   │</span>
+<span class="r1">│          Project VIR=PI=PIR           │            -0.10        │       │</span>
+<span class="r1">│             Project MOIC              │            -0.96        │       │</span>
+<span class="r1">│        Project Payback Period         │           N/A           │       │</span>
+<span class="r1">└───────────────────────────────────────┴─────────────────────────┴───────┘</span>
+<span class="r4">                                    ENGINEERING PARAMETERS                                     </span>
+<span class="r1">┌────────────────────────────────────────────────────────────────────┬────────────┬───────────┐</span>
+<span class="r1">│                             Parameter                              │   Value    │   Units   │</span>
+<span class="r1">├────────────────────────────────────────────────────────────────────┼────────────┼───────────┤</span>
+<span class="r1">│                     Number of Production Wells                     │          2 │           │</span>
+<span class="r1">│                     Number of Injection Wells                      │          2 │           │</span>
+<span class="r1">│                             Well depth                             │        3.0 │ kilometer │</span>
+<span class="r1">│                          Water loss rate                           │      200.0 │     %     │</span>
+<span class="r1">│                          Pump efficiency                           │     8000.0 │     %     │</span>
+<span class="r1">│                       Injection temperature                        │       50.0 │    °C     │</span>
+<span class="r1">│ Production Wellbore heat transmission calculated with Rameys model │            │           │</span>
+<span class="r1">│              Average production well temperature drop              │        3.5 │    °C     │</span>
+<span class="r1">│                    Flowrate per production well                    │       55.0 │  kg/sec   │</span>
+<span class="r1">│                      Injection well casing ID                      │      7.000 │    in     │</span>
+<span class="r1">│                     Production well casing ID                      │      7.000 │    in     │</span>
+<span class="r1">│                     Number of times redrilling                     │          0 │           │</span>
+<span class="r1">└────────────────────────────────────────────────────────────────────┴────────────┴───────────┘</span>
+<span class="r4">               RESOURCE CHARACTERISTICS               </span>
+<span class="r1">┌───────────────────────────────┬────────────┬───────┐</span>
+<span class="r1">│           Parameter           │   Value    │ Units │</span>
+<span class="r1">├───────────────────────────────┼────────────┼───────┤</span>
+<span class="r1">│ Maximum reservoir temperature │      400.0 │  °C   │</span>
+<span class="r1">│      Number of segments       │          1 │       │</span>
+<span class="r1">│      Geothermal gradient      │         50 │ °C/km │</span>
+<span class="r1">└───────────────────────────────┴────────────┴───────┘</span>
+<span class="r4">                                       RESERVOIR PARAMETERS                                       </span>
+<span class="r1">┌──────────────────────────────────┬────────────────────────────────────────────────┬────────────┐</span>
+<span class="r1">│            Parameter             │                     Value                      │   Units    │</span>
+<span class="r1">├──────────────────────────────────┼────────────────────────────────────────────────┼────────────┤</span>
+<span class="r1">│         Reservoir Model          │ Multiple Parallel Fractures (Gringarten) Model │            │</span>
+<span class="r1">│     Bottom-hole temperature      │                       170.00                   │     °C     │</span>
+<span class="r1">│          Fracture model          │                     Square                     │            │</span>
+<span class="r1">│ Well separation: fracture height │                       900.00                   │   meter    │</span>
+<span class="r1">│          Fracture area           │                    810000.00                   │     m²     │</span>
+<span class="r1">│         Reservoir volume         │                   1000000000                   │     m³     │</span>
+<span class="r1">│    Average reservoir pressure    │                     28841.05                   │    kPa     │</span>
+<span class="r1">│      Plant outlet pressure       │                      1067.94                   │    kPa     │</span>
+<span class="r1">│   Production wellhead pressure   │                      1136.89                   │    kPa     │</span>
+<span class="r1">│        Productivity Index        │                         5.00                   │ kg/sec/bar │</span>
+<span class="r1">│        Injectivity Index         │                         5.00                   │ kg/sec/bar │</span>
+<span class="r1">│        Reservoir density         │                      2700.00                   │   kg/m³    │</span>
+<span class="r1">│  Reservoir thermal conductivity  │                         2.70                   │   W/m/K    │</span>
+<span class="r1">│     Reservoir heat capacity      │                      1000.00                   │   J/kg/K   │</span>
+<span class="r1">└──────────────────────────────────┴────────────────────────────────────────────────┴────────────┘</span>
+<span class="r4">                    RESERVOIR STIMULATION RESULTS                    </span>
+<span class="r1">┌─────────────────────────────────────────────┬─────────────┬───────┐</span>
+<span class="r1">│                  Parameter                  │    Value    │ Units │</span>
+<span class="r1">├─────────────────────────────────────────────┼─────────────┼───────┤</span>
+<span class="r1">│       Maximum Production Temperature        │      166.8  │  °C   │</span>
+<span class="r1">│       Average Production Temperature        │       33.4  │  °C   │</span>
+<span class="r1">│       Minimum Production Temperature        │        0.0  │  °C   │</span>
+<span class="r1">│       Initial Production Temperature        │      165.4  │  °C   │</span>
+<span class="r1">│      Average Reservoir Heat Extraction      │       2.57  │  MW   │</span>
+<span class="r1">│ Production Wellbore Heat Transmission Model │ Ramey Model │       │</span>
+<span class="r1">│  Average Production Well Temperature Drop   │        3.5  │  °C   │</span>
+<span class="r1">│  Average Injection Well Pump Pressure Drop  │      217.9  │  kPa  │</span>
+<span class="r1">│ Average Production Well Pump Pressure Drop  │     1115.8  │  kPa  │</span>
+<span class="r1">└─────────────────────────────────────────────┴─────────────┴───────┘</span>
+<span class="r4">                         CAPITAL COSTS                         </span>
+<span class="r1">┌────────────────────────────────────────┬────────────┬───────┐</span>
+<span class="r1">│               Parameter                │   Value    │ Units │</span>
+<span class="r1">├────────────────────────────────────────┼────────────┼───────┤</span>
+<span class="r1">│     Drilling and completion costs      │      17.38 │ MUSD  │</span>
+<span class="r1">│ Drilling and completion costs per well │       4.35 │ MUSD  │</span>
+<span class="r1">│           Stimulation costs            │       3.02 │ MUSD  │</span>
+<span class="r1">│       Surface power plant costs        │      23.78 │ MUSD  │</span>
+<span class="r1">│      Field gathering system costs      │       2.58 │ MUSD  │</span>
+<span class="r1">│     Total surface equipment costs      │      26.36 │ MUSD  │</span>
+<span class="r1">│           Exploration costs            │       4.49 │ MUSD  │</span>
+<span class="r1">│          Total capital costs           │      58.75 │ MUSD  │</span>
+<span class="r1">│        Annualized capital costs        │       2.94 │ MUSD  │</span>
+<span class="r1">└────────────────────────────────────────┴────────────┴───────┘</span>
+<span class="r4">                OPERATING AND MAINTENANCE COSTS                 </span>
+<span class="r1">┌───────────────────────────────────────┬────────────┬─────────┐</span>
+<span class="r1">│               Parameter               │   Value    │  Units  │</span>
+<span class="r1">├───────────────────────────────────────┼────────────┼─────────┤</span>
+<span class="r1">│      Wellfield maintenance costs      │       0.55 │ MUSD/yr │</span>
+<span class="r1">│     Power plant maintenance costs     │       1.41 │ MUSD/yr │</span>
+<span class="r1">│              Water costs              │       0.00 │ MUSD/yr │</span>
+<span class="r1">│    Average Reservoir Pumping Cost     │       0.01 │ MUSD/yr │</span>
+<span class="r1">│ Total operating and maintenance costs │       2.05 │ MUSD/yr │</span>
+<span class="r1">└───────────────────────────────────────┴────────────┴─────────┘</span>
+<span class="r4">         SURFACE EQUIPMENT SIMULATION RESULTS          </span>
+<span class="r1">┌────────────────────────────────┬────────────┬───────┐</span>
+<span class="r1">│           Parameter            │   Value    │ Units │</span>
+<span class="r1">├────────────────────────────────┼────────────┼───────┤</span>
+<span class="r1">│  Maximum Net Heat Production   │      27.26 │  MW   │</span>
+<span class="r1">│  Average Net Heat Production   │       2.21 │  MW   │</span>
+<span class="r1">│  Minimum Net Heat Production   │       0.00 │  MW   │</span>
+<span class="r1">│  Initial Net Heat Production   │      13.19 │  MW   │</span>
+<span class="r1">│ Average Annual Heat Production │      19.33 │       │</span>
+<span class="r1">│     Average Pumping Power      │       0.01 │  MW   │</span>
+<span class="r1">└────────────────────────────────┴────────────┴───────┘</span>
+<span class="r4">            THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS             </span>
+<span class="r1">┌────────────────────────────────────────┬────────────┬─────────────┐</span>
+<span class="r1">│               Parameter                │   Value    │    Units    │</span>
+<span class="r1">├────────────────────────────────────────┼────────────┼─────────────┤</span>
+<span class="r1">│              TESS volume               │   10000.00 │     m3      │</span>
+<span class="r1">│          TESS usable capacity          │     993.65 │     MWh     │</span>
+<span class="r1">│           TESS capital cost            │       7.50 │    MUSD     │</span>
+<span class="r1">│          TESS fixed O&amp;M cost           │       0.07 │   MUSD/yr   │</span>
+<span class="r1">│            TESS average SOC            │      67.60 │      %      │</span>
+<span class="r1">│            TESS minimum SOC            │      60.00 │      %      │</span>
+<span class="r1">│            TESS maximum SOC            │      77.87 │      %      │</span>
+<span class="r1">│           TESS annual charge           │     101.21 │  GWh/year   │</span>
+<span class="r1">│         TESS annual discharge          │      96.65 │  GWh/year   │</span>
+<span class="r1">│        TESS annual standby loss        │       0.49 │  GWh/year   │</span>
+<span class="r1">│      TESS annual efficiency loss       │       4.00 │  GWh/year   │</span>
+<span class="r1">│     TESS curtailed geothermal heat     │       0.00 │  GWh/year   │</span>
+<span class="r1">│      TESS equivalent full cycles       │      97.27 │ cycles/year │</span>
+<span class="r1">│          Peak customer demand          │      27.26 │     MW      │</span>
+<span class="r1">│         Peak geothermal charge         │      57.71 │     MW      │</span>
+<span class="r1">│   Customer demand standard deviation   │       2.65 │     MW      │</span>
+<span class="r1">│  Geothermal output standard deviation  │      23.09 │     MW      │</span>
+<span class="r1">│   Geothermal output smoothing ratio    │       8.70 │      -      │</span>
+<span class="r1">│    Geothermal peak reduction ratio     │      -1.12 │      -      │</span>
+<span class="r1">│ Geothermal variability reduction ratio │      -7.70 │      -      │</span>
+<span class="r1">└────────────────────────────────────────┴────────────┴─────────────┘</span>
+<span class="r4">                      DISPATCH RESULTS                      </span>
+<span class="r1">┌──────────────────────────────────┬────────────┬──────────┐</span>
+<span class="r1">│            Parameter             │   Value    │  Units   │</span>
+<span class="r1">├──────────────────────────────────┼────────────┼──────────┤</span>
+<span class="r1">│       Design heat produced       │      66.47 │    MW    │</span>
+<span class="r1">│ Annual geothermal heat delivered │      96.65 │ GWh/year │</span>
+<span class="r1">│   Annual unmet thermal demand    │       0.00 │ GWh/year │</span>
+<span class="r1">│     Dispatch capacity factor     │      16.60 │    %     │</span>
+<span class="r1">│     Average runtime fraction     │      20.02 │    %     │</span>
+<span class="r1">│   Peak geothermal contribution   │      27.26 │    MW    │</span>
+<span class="r1">│         Peak unmet load          │       0.00 │    MW    │</span>
+<span class="r1">│        Peak hourly demand        │      27.26 │    MW    │</span>
+<span class="r1">│         Design flow rate         │      55.00 │   kg/s   │</span>
+<span class="r1">│     Observed peak flow rate      │      66.00 │   kg/s   │</span>
+<span class="r1">└──────────────────────────────────┴────────────┴──────────┘</span>
+<span class="r4">                   HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE                    </span>
+<span class="r1">┌──────┬──────────────────────┬───────────────────────────┬─────────────────┬───────────────┐</span>
+<span class="r1">│ Year │ Thermal Drawdown (%) │ Geofluid Temperature (°C) │ Pump Power (MW) │ Net Heat (MW) │</span>
+<span class="r1">├──────┼──────────────────────┼───────────────────────────┼─────────────────┼───────────────┤</span>
+<span class="r1">│   1  │         1.0000       │           165.36          │      0.0000     │    13.1882    │</span>
+<span class="r1">│   2  │         0.0000       │             0.00          │      0.0000     │     0.0000    │</span>
+<span class="r1">│   3  │         0.0000       │             0.00          │      0.0000     │     0.0000    │</span>
+<span class="r1">│   4  │         0.0000       │             0.00          │      0.0000     │     0.0000    │</span>
+<span class="r1">│   5  │         0.0000       │             0.00          │      0.0000     │     0.0000    │</span>
+<span class="r1">└──────┴──────────────────────┴───────────────────────────┴─────────────────┴───────────────┘</span>
+<span class="r4">                               ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE                               </span>
+<span class="r1">┌──────┬───────────────────────┬───────────────────────┬─────────────────────────────┬────────────────────────────────────┐</span>
+<span class="r1">│ Year │ Heating Provided (kW) │ Heat Extracted(GW/yr) │ Reservoir Heat Content (MW) │ Percentage of Total Heat Mined (%) │</span>
+<span class="r1">├──────┼───────────────────────┼───────────────────────┼─────────────────────────────┼────────────────────────────────────┤</span>
+<span class="r1">│   1  │           96.7        │         112.45        │            323.60           │                  0.12              │</span>
+<span class="r1">│   2  │            0.0        │           0.00        │            323.60           │                  0.12              │</span>
+<span class="r1">│   3  │            0.0        │           0.00        │            323.60           │                  0.12              │</span>
+<span class="r1">│   4  │            0.0        │           0.00        │            323.60           │                  0.12              │</span>
+<span class="r1">│   5  │            0.0        │           0.00        │            323.60           │                  0.12              │</span>
+<span class="r1">└──────┴───────────────────────┴───────────────────────┴─────────────────────────────┴────────────────────────────────────┘</span>
+<span class="r4">                                                                                                                                                                                                        REVENUE &amp; CASHFLOW PROFILE                                                                                                                                                                                                         </span>
+<span class="r1">┌──────┬─────────────────────────────┬─────────────────────────────────┬───────────────────────────────┬──────────────────────┬──────────────────────────┬────────────────────────┬─────────────────────────┬─────────────────────────────┬───────────────────────────┬───────────────────────┬────────────────────────────┬──────────────────────────┬────────────────────────┬────────────────────────────┬─────────────────────────────┐</span>
+<span class="r1">│ Year │ Electricity:Price (USD/kWh) │ Electricity:Ann. Rev. (MUSD/yr) │ Electricity:Cumm. Rev. (MUSD) │ Heat:Price (USD/kWh) │ Heat:Ann. Rev. (MUSD/yr) │ Heat:Cumm. Rev. (MUSD) │ Cooling:Price (USD/kWh) │ Cooling:Ann. Rev. (MUSD/yr) │ Cooling:Cumm. Rev. (MUSD) │ Carbon:Price (USD/lb) │ Carbon:Ann. Rev. (MUSD/yr) │ Carbon:Cumm. Rev. (MUSD) │ Project:OPEX (MUSD/yr) │ Project:Net Rev. (MUSD/yr) │ Project:Net Cashflow (MUSD) │</span>
+<span class="r1">├──────┼─────────────────────────────┼─────────────────────────────────┼───────────────────────────────┼──────────────────────┼──────────────────────────┼────────────────────────┼─────────────────────────┼─────────────────────────────┼───────────────────────────┼───────────────────────┼────────────────────────────┼──────────────────────────┼────────────────────────┼────────────────────────────┼─────────────────────────────┤</span>
+<span class="r1">│   1  │            0.0000           │               0.00              │              0.00             │        0.0000        │           0.00           │          0.00          │          0.0000         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          0.00          │           -58.75           │           -58.75            │</span>
+<span class="r1">│   2  │            0.0550           │               0.00              │              0.00             │        0.0250        │           2.42           │          2.42          │          0.0250         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          2.04          │            0.37            │           -58.38            │</span>
+<span class="r1">│   3  │            0.0550           │               0.00              │              0.00             │        0.0250        │           0.00           │          2.42          │          0.0250         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          2.04          │           -2.04            │           -60.42            │</span>
+<span class="r1">│   4  │            0.0550           │               0.00              │              0.00             │        0.0250        │           0.00           │          2.42          │          0.0250         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          2.04          │           -2.04            │           -62.47            │</span>
+<span class="r1">│   5  │            0.0550           │               0.00              │              0.00             │        0.0250        │           0.00           │          2.42          │          0.0250         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          2.04          │           -2.04            │           -64.51            │</span>
+<span class="r1">│   6  │            0.0550           │               0.00              │              0.00             │        0.0250        │           0.00           │          2.42          │          0.0250         │             0.00            │            0.00           │         0.0000        │            0.00            │           0.00           │          2.04          │           -2.04            │           -66.56            │</span>
+<span class="r1">└──────┴─────────────────────────────┴─────────────────────────────────┴───────────────────────────────┴──────────────────────┴──────────────────────────┴────────────────────────┴─────────────────────────┴─────────────────────────────┴───────────────────────────┴───────────────────────┴────────────────────────────┴──────────────────────────┴────────────────────────┴────────────────────────────┴─────────────────────────────┘</span>
+</code></pre>
+<img src="HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILES_Thermal_Drawdown.png" alt="HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILES Thermal Drawdown">
+<img src="HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILES_Geofluid_Temperature.png" alt="HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILES Geofluid Temperature">
+<img src="HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILES_Pump_Power.png" alt="HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILES Pump Power">
+<img src="HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILES_Net_Heat.png" alt="HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILES Net Heat">
+<img src="ANNUAL_HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILE_Heat_Extracted__Reservoir_Heat_Content.png" alt="ANNUAL HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILE Heat Extracted  Reservoir Heat Content">
+<img src="ANNUAL_HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILE_Percentage_of_Total_Heat_Mined.png" alt="ANNUAL HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILE Percentage of Total Heat Mined">
+<img src="ANNUAL_HEATING_COOLING_ANDOR_ELECTRICITY_PRODUCTION_PROFILE_Heat_Provided.png" alt="ANNUAL HEATING COOLING ANDOR ELECTRICITY PRODUCTION PROFILE Heat Provided">
+<img src="REVENUE__CASHFLOW_PROFILE_Electricity_Price__Cumulative_Revenue.png" alt="REVENUE  CASHFLOW PROFILE Electricity Price  Cumulative Revenue">
+<img src="REVENUE__CASHFLOW_PROFILE_Heat_Price__Cumulative_Revenue.png" alt="REVENUE  CASHFLOW PROFILE Heat Price  Cumulative Revenue">
+<img src="REVENUE__CASHFLOW_PROFILE_Cooling_Price__Cumulative_Revenue.png" alt="REVENUE  CASHFLOW PROFILE Cooling Price  Cumulative Revenue">
+<img src="REVENUE__CASHFLOW_PROFILE_Carbon_Price__Cumulative_Revenue.png" alt="REVENUE  CASHFLOW PROFILE Carbon Price  Cumulative Revenue">
+<img src="REVENUE__CASHFLOW_PROFILE_Project_Net_Revenue_and_cashflow.png" alt="REVENUE  CASHFLOW PROFILE Project Net Revenue and cashflow">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_Demand_Served_and_Unmet_Heat.png" alt="example1 dispatchable tess DISPATCH PROFILE Demand Served and Unmet Heat">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_Produced_Temperature_and_Flow_Rate.png" alt="example1 dispatchable tess DISPATCH PROFILE Produced Temperature and Flow Rate">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_Runtime_Fraction_and_Pumping_Power.png" alt="example1 dispatchable tess DISPATCH PROFILE Runtime Fraction and Pumping Power">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_TESS_Temperature_and_SOC.png" alt="example1 dispatchable tess DISPATCH PROFILE TESS Temperature and SOC">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_Demand_TESS_Discharge_and_Geothermal_Charge.png" alt="example1 dispatchable tess DISPATCH PROFILE Demand TESS Discharge and Geothermal Charge">
+<img src="example1_dispatchable_tess_DISPATCH_PROFILE_TESS_Losses_and_Curtailment.png" alt="example1 dispatchable tess DISPATCH PROFILE TESS Losses and Curtailment">
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></body>
+</html>

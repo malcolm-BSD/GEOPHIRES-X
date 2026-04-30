@@ -2,10 +2,11 @@ import copy
 import numpy as np
 
 from .EconomicsUtils import CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME
-from .GeoPHIRESUtils import quantity
+from .GeoPHIRESUtils import quantity, saturation_pressure_water_MPa
 from .NumpyUtils import np_trapz
-from .OptionList import DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode, PlantType
-from .Parameter import floatParameter, intParameter, OutputParameter, ReadParameter, \
+from .OptionList import DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode, PlantType, \
+    TESSChargeControlStrategy, TESSPressureMode, TESSWorkingFluid
+from .Parameter import boolParameter, floatParameter, intParameter, OutputParameter, ReadParameter, \
     TimeSeriesParameter, strParameter, \
     coerce_int_params_to_enum_values
 from .SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
@@ -503,6 +504,254 @@ class SurfacePlant:
                 "For example, start year 1 and end year 2 runs one operating year."
             ),
         )
+        self.tess_enabled = self.ParameterDict["TESS Enabled"] = boolParameter(
+            "TESS Enabled",
+            DefaultValue=False,
+            Required=False,
+            ErrMessage="assume default TESS Enabled (False)",
+            ToolTipText="Enable the thermal energy storage system dispatch layer.",
+        )
+        self.tess_volume = self.ParameterDict["TESS Volume"] = floatParameter(
+            "TESS Volume",
+            DefaultValue=1000.0,
+            Min=1.0,
+            Max=10_000_000.0,
+            Required=False,
+            UnitType=Units.VOLUME,
+            PreferredUnits=VolumeUnit.METERS3,
+            CurrentUnits=VolumeUnit.METERS3,
+            ErrMessage="assume default TESS volume (1000 m3)",
+            ToolTipText="Usable thermal energy storage tank fluid volume.",
+        )
+        self.tess_cost_per_cubic_meter = self.ParameterDict["TESS Cost per Cubic Meter"] = floatParameter(
+            "TESS Cost per Cubic Meter",
+            DefaultValue=500.0,
+            Min=0.0,
+            Max=100_000.0,
+            Required=False,
+            UnitType=Units.COSTPERVOLUME,
+            PreferredUnits=CostPerVolumeUnit.DOLLARSPERMETERS3,
+            CurrentUnits=CostPerVolumeUnit.DOLLARSPERMETERS3,
+            ErrMessage="assume default TESS installed cost (500 USD/m3)",
+            ToolTipText=(
+                "Complete installed thermal energy storage system cost per cubic meter, including tank, "
+                "foundations, insulation, heat exchangers, controls, and balance-of-plant items included "
+                "in the user's estimate."
+            ),
+        )
+        self.tess_fixed_om_fraction = self.ParameterDict["TESS Fixed O&M Fraction"] = floatParameter(
+            "TESS Fixed O&M Fraction",
+            DefaultValue=0.01,
+            Min=0.0,
+            Max=0.20,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS fixed O&M fraction (0.01)",
+            ToolTipText="Annual TESS fixed O&M cost as a fraction of TESS capital cost.",
+        )
+        self.tess_working_fluid = self.ParameterDict["TESS Working Fluid"] = strParameter(
+            "TESS Working Fluid",
+            DefaultValue=TESSWorkingFluid.WATER.value,
+            Required=False,
+            ErrMessage="assume default TESS working fluid (Water)",
+            ToolTipText="Working fluid used in the TESS tank. The initial implementation supports water only.",
+        )
+        self.tess_pressure_mode = self.ParameterDict["TESS Pressure Mode"] = strParameter(
+            "TESS Pressure Mode",
+            DefaultValue=TESSPressureMode.AUTO.value,
+            Required=False,
+            ErrMessage="assume default TESS pressure mode (Auto)",
+            ToolTipText="Select whether TESS pressure is computed automatically or supplied by the user.",
+        )
+        self.tess_pressure = self.ParameterDict["TESS Pressure"] = floatParameter(
+            "TESS Pressure",
+            DefaultValue=1.0,
+            Min=0.1,
+            Max=25.0,
+            Required=False,
+            UnitType=Units.PRESSURE,
+            PreferredUnits=PressureUnit.MPASCAL,
+            CurrentUnits=PressureUnit.MPASCAL,
+            ErrMessage="assume default TESS pressure (1.0 MPa)",
+            ToolTipText="TESS tank pressure. Used directly when TESS Pressure Mode is User Specified.",
+        )
+        self.tess_pressure_safety_factor = self.ParameterDict["TESS Pressure Safety Factor"] = floatParameter(
+            "TESS Pressure Safety Factor",
+            DefaultValue=1.10,
+            Min=1.0,
+            Max=3.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS pressure safety factor (1.10)",
+            ToolTipText="Multiplier applied to water saturation pressure for TESS pressure validation.",
+        )
+        self.tess_minimum_useful_temperature = self.ParameterDict["TESS Minimum Useful Temperature"] = floatParameter(
+            "TESS Minimum Useful Temperature",
+            DefaultValue=120.0,
+            Min=0.0,
+            Max=370.0,
+            Required=False,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            ErrMessage="assume default TESS minimum useful temperature (120 degC)",
+            ToolTipText="Lower tank temperature bound for usable stored thermal energy.",
+        )
+        self.tess_maximum_temperature = self.ParameterDict["TESS Maximum Temperature"] = floatParameter(
+            "TESS Maximum Temperature",
+            DefaultValue=160.0,
+            Min=1.0,
+            Max=370.0,
+            Required=False,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            ErrMessage="assume default TESS maximum temperature (160 degC)",
+            ToolTipText="Upper tank operating temperature.",
+        )
+        self.tess_target_temperature = self.ParameterDict["TESS Target Temperature"] = floatParameter(
+            "TESS Target Temperature",
+            DefaultValue=150.0,
+            Min=0.0,
+            Max=370.0,
+            Required=False,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            ErrMessage="assume default TESS target temperature (150 degC)",
+            ToolTipText="Preferred tank control temperature.",
+        )
+        self.tess_initial_temperature = self.ParameterDict["TESS Initial Temperature"] = floatParameter(
+            "TESS Initial Temperature",
+            DefaultValue=150.0,
+            Min=0.0,
+            Max=370.0,
+            Required=False,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            ErrMessage="assume default TESS initial temperature (150 degC)",
+            ToolTipText="Initial tank temperature at the start of dispatch analysis.",
+        )
+        self.tess_deadband_range = self.ParameterDict["TESS Deadband Range"] = floatParameter(
+            "TESS Deadband Range",
+            DefaultValue=10.0,
+            Min=0.0,
+            Max=100.0,
+            Required=False,
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            ErrMessage="assume default TESS deadband range (10 degC)",
+            ToolTipText="Total thermostat hysteresis range around the TESS target temperature.",
+        )
+        self.tess_charge_efficiency = self.ParameterDict["TESS Charge Efficiency"] = floatParameter(
+            "TESS Charge Efficiency",
+            DefaultValue=0.98,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS charge efficiency (0.98)",
+            ToolTipText="Fraction of geothermal heat accepted into useful TESS stored energy.",
+        )
+        self.tess_discharge_efficiency = self.ParameterDict["TESS Discharge Efficiency"] = floatParameter(
+            "TESS Discharge Efficiency",
+            DefaultValue=0.98,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS discharge efficiency (0.98)",
+            ToolTipText="Fractional efficiency from useful TESS stored energy to delivered thermal demand.",
+        )
+        self.tess_daily_heat_loss_fraction = self.ParameterDict["TESS Daily Heat Loss Fraction"] = floatParameter(
+            "TESS Daily Heat Loss Fraction",
+            DefaultValue=0.005,
+            Min=0.0,
+            Max=0.10,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS daily heat loss fraction (0.005)",
+            ToolTipText="Fraction of useful stored TESS energy lost per day.",
+        )
+        self.tess_maximum_charge_power = self.ParameterDict["TESS Maximum Charge Power"] = floatParameter(
+            "TESS Maximum Charge Power",
+            DefaultValue=-1.0,
+            Min=-1.0,
+            Max=100_000.0,
+            Required=False,
+            UnitType=Units.POWER,
+            PreferredUnits=PowerUnit.MW,
+            CurrentUnits=PowerUnit.MW,
+            ErrMessage="assume default TESS maximum charge power (-1 means unlimited by TESS)",
+            ToolTipText="Maximum tank-side charging power. -1 means no TESS-side limit beyond geothermal production and available storage capacity.",
+        )
+        self.tess_maximum_discharge_power = self.ParameterDict["TESS Maximum Discharge Power"] = floatParameter(
+            "TESS Maximum Discharge Power",
+            DefaultValue=-1.0,
+            Min=-1.0,
+            Max=100_000.0,
+            Required=False,
+            UnitType=Units.POWER,
+            PreferredUnits=PowerUnit.MW,
+            CurrentUnits=PowerUnit.MW,
+            ErrMessage="assume default TESS maximum discharge power (-1 means demand-derived)",
+            ToolTipText=(
+                "Maximum tank-side discharge power. -1 means auto-size to peak hourly thermal demand times "
+                "TESS Subhourly Demand Peak Multiplier."
+            ),
+        )
+        self.tess_subhourly_demand_peak_multiplier = self.ParameterDict[
+            "TESS Subhourly Demand Peak Multiplier"
+        ] = floatParameter(
+            "TESS Subhourly Demand Peak Multiplier",
+            DefaultValue=1.0,
+            Min=1.0,
+            Max=10.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS subhourly demand peak multiplier (1.0)",
+            ToolTipText="Multiplier used by TESS automatic discharge-power sizing and subhourly peak checks.",
+        )
+        self.tess_charge_control_strategy = self.ParameterDict["TESS Charge Control Strategy"] = strParameter(
+            "TESS Charge Control Strategy",
+            DefaultValue=TESSChargeControlStrategy.TEMPERATURE_BAND.value,
+            Required=False,
+            ErrMessage="assume default TESS charge control strategy (Temperature Band)",
+            ToolTipText="Control strategy used to charge TESS from geothermal output.",
+        )
+        self.tess_charge_flow_fraction = self.ParameterDict["TESS Charge Flow Fraction"] = floatParameter(
+            "TESS Charge Flow Fraction",
+            DefaultValue=1.0,
+            Min=0.0,
+            Max=100.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS charge flow fraction (1.0)",
+            ToolTipText="Geothermal production flow fraction used while temperature-band TESS charging is active.",
+        )
+        self.tess_moving_average_window = self.ParameterDict["TESS Moving Average Window"] = intParameter(
+            "TESS Moving Average Window",
+            DefaultValue=24,
+            AllowableRange=list(range(1, 8761)),
+            Required=False,
+            UnitType=Units.TIME,
+            PreferredUnits=TimeUnit.HOUR,
+            CurrentUnits=TimeUnit.HOUR,
+            ErrMessage="assume default TESS moving average window (24 hours)",
+            ToolTipText="Moving-average window for TESS moving-average charge control.",
+        )
+        self.tess_soc_control_gain = self.ParameterDict["TESS SOC Control Gain"] = floatParameter(
+            "TESS SOC Control Gain",
+            DefaultValue=0.25,
+            Min=0.0,
+            Max=10.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default TESS SOC control gain (0.25)",
+            ToolTipText="State-of-charge correction gain for TESS moving-average charge control.",
+        )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",
             DefaultValue=[],
@@ -749,6 +998,150 @@ class SurfacePlant:
 
         model.logger.info(f'Complete {self.__class__.__name__}: {__name__}')
 
+    @staticmethod
+    def _series_to_mw(series: np.ndarray, units, time_step_hours: float = 1.0) -> np.ndarray:
+        units_value = getattr(units, "value", units)
+
+        if units in [PowerUnit.W, PowerUnit.KW, PowerUnit.MW, PowerUnit.GW] or units_value in [
+            it.value for it in PowerUnit
+        ]:
+            return np.array([quantity(value, units_value).to("MW").magnitude for value in series], dtype=float)
+
+        if units in [EnergyUnit.WH, EnergyUnit.KWH, EnergyUnit.MWH, EnergyUnit.GWH, EnergyUnit.MMBTU] or units_value in [
+            it.value for it in EnergyUnit
+        ]:
+            converted_energy_mwh = np.array(
+                [quantity(value, units_value).to("MWh").magnitude for value in series],
+                dtype=float,
+            )
+            return converted_energy_mwh / time_step_hours
+
+        raise ValueError(f"Unsupported TESS demand units `{units_value}`.")
+
+    def _dispatch_demand_mw_series(self) -> np.ndarray:
+        source = self.dispatch_demand_source.value
+        if not isinstance(source, DispatchDemandSource):
+            source = DispatchDemandSource.from_input_string(source)
+
+        if source == DispatchDemandSource.ANNUAL_HEAT_DEMAND:
+            parameter = self.HeatingDemand
+            parameter_name = "Annual Heat Demand"
+        elif source == DispatchDemandSource.ANNUAL_COOLING_DEMAND:
+            parameter = self.CoolingDemand
+            parameter_name = "Annual Cooling Demand"
+        elif source == DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND:
+            parameter = self.ElectricityDemand
+            parameter_name = "Annual Electricity Demand"
+        else:
+            raise ValueError(
+                f"`TESS Maximum Discharge Power` auto-sizing does not support dispatch demand source `{source}`."
+            )
+
+        series = np.asarray(parameter.value, dtype=float)
+        if series.size == 0:
+            raise ValueError(
+                f"`TESS Maximum Discharge Power` auto-sizing requires `{parameter_name}` to be provided."
+            )
+
+        if series.ndim == 2:
+            if series.shape[1] < 2:
+                raise ValueError(
+                    f"`TESS Maximum Discharge Power` auto-sizing requires {parameter_name} time-value pairs."
+                )
+            series = series[:, 1]
+        elif series.ndim != 1:
+            raise ValueError(
+                f"`TESS Maximum Discharge Power` auto-sizing requires a one-dimensional {parameter_name} profile "
+                "or time-value pairs."
+            )
+
+        if len(series) != 8760:
+            raise ValueError(
+                f"`TESS Maximum Discharge Power` auto-sizing requires an hourly one-year {parameter_name} profile "
+                f"with 8760 timesteps; received {len(series)}."
+            )
+
+        units = getattr(parameter, "CurrentYUnits", EnergyUnit.KWH)
+        return self._series_to_mw(series, units, time_step_hours=1.0)
+
+    def _resolve_tess_maximum_discharge_power(self) -> None:
+        self._tess_maximum_discharge_power_auto_sized = False
+        if self.tess_maximum_discharge_power.value != -1.0:
+            return
+
+        demand_mw = self._dispatch_demand_mw_series()
+        peak_hourly_demand_mw = float(np.max(demand_mw)) if demand_mw.size > 0 else 0.0
+        self.tess_maximum_discharge_power.value = (
+            peak_hourly_demand_mw * self.tess_subhourly_demand_peak_multiplier.value
+        )
+        self.tess_maximum_discharge_power.Valid = True
+        self._tess_maximum_discharge_power_auto_sized = True
+
+    def _validate_tess_parameters(self, model: Model) -> None:
+        if self.operating_mode.value != OperatingMode.DISPATCHABLE:
+            raise ValueError("TESS Enabled requires Operating Mode to be Dispatchable.")
+
+        if self.tess_working_fluid.value != TESSWorkingFluid.WATER:
+            raise ValueError("TESS dispatch initially supports water as the TESS working fluid only.")
+
+        minimum_temperature = self.tess_minimum_useful_temperature.value
+        maximum_temperature = self.tess_maximum_temperature.value
+        target_temperature = self.tess_target_temperature.value
+        initial_temperature = self.tess_initial_temperature.value
+
+        if maximum_temperature <= minimum_temperature:
+            raise ValueError(
+                "TESS Maximum Temperature must be greater than TESS Minimum Useful Temperature."
+            )
+
+        if not minimum_temperature <= target_temperature <= maximum_temperature:
+            raise ValueError(
+                "TESS Target Temperature must be between TESS Minimum Useful Temperature and TESS Maximum Temperature."
+            )
+
+        if not minimum_temperature <= initial_temperature <= maximum_temperature:
+            raise ValueError(
+                "TESS Initial Temperature must be between TESS Minimum Useful Temperature and TESS Maximum Temperature."
+            )
+
+        lower_threshold = target_temperature - (self.tess_deadband_range.value / 2.0)
+        upper_threshold = target_temperature + (self.tess_deadband_range.value / 2.0)
+        if lower_threshold < minimum_temperature:
+            model.logger.warning(
+                "TESS Deadband Range extends below TESS Minimum Useful Temperature; "
+                "the lower charge threshold will be clipped during dispatch."
+            )
+        if upper_threshold > maximum_temperature:
+            model.logger.warning(
+                "TESS Deadband Range extends above TESS Maximum Temperature; "
+                "the upper charge threshold will be clipped during dispatch."
+            )
+
+        if self.tess_charge_efficiency.value <= 0.0:
+            raise ValueError("TESS Charge Efficiency must be greater than zero when TESS is enabled.")
+        if self.tess_discharge_efficiency.value <= 0.0:
+            raise ValueError("TESS Discharge Efficiency must be greater than zero when TESS is enabled.")
+
+        self._resolve_tess_maximum_discharge_power()
+
+        required_pressure_mpa = (
+            saturation_pressure_water_MPa(maximum_temperature) * self.tess_pressure_safety_factor.value
+        )
+        if required_pressure_mpa > self.tess_pressure.Max:
+            raise ValueError(
+                f"TESS Maximum Temperature and TESS Pressure Safety Factor require {required_pressure_mpa:.3f} MPa, "
+                f"which exceeds the supported TESS Pressure maximum of {self.tess_pressure.Max:.3f} MPa."
+            )
+
+        if self.tess_pressure_mode.value == TESSPressureMode.AUTO:
+            self.tess_pressure.value = max(self.tess_pressure.value, required_pressure_mpa)
+            self.tess_pressure.Valid = True
+        elif self.tess_pressure.value < required_pressure_mpa:
+            raise ValueError(
+                f"TESS Pressure ({self.tess_pressure.value:.3f} MPa) must be at least "
+                f"{required_pressure_mpa:.3f} MPa to keep water liquid at TESS Maximum Temperature."
+            )
+
     def __str__(self):
         return 'SurfacePlant'
 
@@ -804,6 +1197,12 @@ class SurfacePlant:
                         ParameterToModify.value = DispatchDemandSource.from_input_string(ParameterReadIn.sValue)
                     elif ParameterToModify.Name == 'Dispatch Flow Strategy':
                         ParameterToModify.value = DispatchFlowStrategy.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'TESS Working Fluid':
+                        ParameterToModify.value = TESSWorkingFluid.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'TESS Pressure Mode':
+                        ParameterToModify.value = TESSPressureMode.from_input_string(ParameterReadIn.sValue)
+                    elif ParameterToModify.Name == 'TESS Charge Control Strategy':
+                        ParameterToModify.value = TESSChargeControlStrategy.from_input_string(ParameterReadIn.sValue)
                     elif ParameterToModify.Name == 'Power Plant Type':
                         ParameterToModify.value = PlantType.from_input_string(ParameterReadIn.sValue)
                         if self.enduse_option.value == EndUseOptions.ELECTRICITY:
@@ -880,6 +1279,14 @@ class SurfacePlant:
             self.dispatch_demand_source.value = DispatchDemandSource.from_input_string(self.dispatch_demand_source.value)
         if not isinstance(self.dispatch_flow_strategy.value, DispatchFlowStrategy):
             self.dispatch_flow_strategy.value = DispatchFlowStrategy.from_input_string(self.dispatch_flow_strategy.value)
+        if not isinstance(self.tess_working_fluid.value, TESSWorkingFluid):
+            self.tess_working_fluid.value = TESSWorkingFluid.from_input_string(self.tess_working_fluid.value)
+        if not isinstance(self.tess_pressure_mode.value, TESSPressureMode):
+            self.tess_pressure_mode.value = TESSPressureMode.from_input_string(self.tess_pressure_mode.value)
+        if not isinstance(self.tess_charge_control_strategy.value, TESSChargeControlStrategy):
+            self.tess_charge_control_strategy.value = TESSChargeControlStrategy.from_input_string(
+                self.tess_charge_control_strategy.value
+            )
 
         if self.operating_mode.value == OperatingMode.DISPATCHABLE:
             if self.enduse_option.value == EndUseOptions.HEAT:
@@ -939,6 +1346,9 @@ class SurfacePlant:
                     self.dispatch_analysis_end_year.value,
                 )
                 warn_once(warning_key, msg, also_print=True)
+
+        if self.tess_enabled.value:
+            self._validate_tess_parameters(model)
 
         coerce_int_params_to_enum_values(self.ParameterDict)
 

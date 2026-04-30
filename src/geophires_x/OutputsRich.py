@@ -72,6 +72,7 @@ def print_outputs_rich(
     CAPEX = []
     OPEX = []
     surface_equipment_results = []
+    tess_results = []
     dispatch_results = []
     # addon_results = []
 
@@ -429,6 +430,49 @@ def print_outputs_rich(
                     OutputTableItem('Peak peaking boiler demand', '{0:10.2f}'.format(
                         dispatch_metrics.get('peak_district_heating_boiler_mw', 0.0)), 'MW'),
                 ])
+        if dispatch_metrics.get('tess_enabled', 0.0) > 0.0:
+            tess_results.extend([
+                OutputTableItem('TESS volume', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_volume_m3', 0.0)), 'm3'),
+                OutputTableItem('TESS usable capacity', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_usable_capacity_mwh', 0.0)), 'MWh'),
+                OutputTableItem('TESS capital cost', '{0:10.2f}'.format(
+                    model.economics.tess_capital_cost.value), model.economics.tess_capital_cost.CurrentUnits.value),
+                OutputTableItem('TESS fixed O&M cost', '{0:10.2f}'.format(
+                    model.economics.tess_o_and_m_cost.value), model.economics.tess_o_and_m_cost.CurrentUnits.value),
+                OutputTableItem('TESS average SOC', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_average_soc', 0.0) * 100.0), '%'),
+                OutputTableItem('TESS minimum SOC', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_min_soc', 0.0) * 100.0), '%'),
+                OutputTableItem('TESS maximum SOC', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_max_soc', 0.0) * 100.0), '%'),
+                OutputTableItem('TESS annual charge', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_annual_charge_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('TESS annual discharge', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_annual_discharge_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('TESS annual standby loss', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_annual_standby_loss_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('TESS annual efficiency loss', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_annual_efficiency_loss_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('TESS curtailed geothermal heat', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_annual_curtailed_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
+                OutputTableItem('TESS equivalent full cycles', '{0:10.2f}'.format(
+                    dispatch_metrics.get('tess_equivalent_full_cycles', 0.0)), 'cycles/year'),
+                OutputTableItem('Peak customer demand', '{0:10.2f}'.format(
+                    dispatch_metrics.get('peak_customer_demand_mw', 0.0)), 'MW'),
+                OutputTableItem('Peak geothermal charge', '{0:10.2f}'.format(
+                    dispatch_metrics.get('peak_geothermal_charge_mw', 0.0)), 'MW'),
+                OutputTableItem('Customer demand standard deviation', '{0:10.2f}'.format(
+                    dispatch_metrics.get('customer_demand_standard_deviation_mw', 0.0)), 'MW'),
+                OutputTableItem('Geothermal output standard deviation', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_output_standard_deviation_mw', 0.0)), 'MW'),
+                OutputTableItem('Geothermal output smoothing ratio', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_output_smoothing_ratio', 0.0)), '-'),
+                OutputTableItem('Geothermal peak reduction ratio', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_peak_reduction_fraction', 0.0)), '-'),
+                OutputTableItem('Geothermal variability reduction ratio', '{0:10.2f}'.format(
+                    dispatch_metrics.get('geothermal_output_variability_reduction_fraction', 0.0)), '-'),
+            ])
         dispatch_results.extend(dispatch_summary_items)
 
     if model.economics.econmodel.value == EconomicModel.FCR:
@@ -1169,13 +1213,13 @@ def print_outputs_rich(
     if text_output_file.Provided:
         Write_RTF_Output(text_output_file.value, simulation_metadata, summary, economic_parameters,
                          engineering_parameters, resource_characteristics, reservoir_parameters,
-                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results,
+                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, tess_results, dispatch_results,
                          sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
     if html_output_file.Provided:
         Write_HTML_Output(html_output_file.value, simulation_metadata, summary, economic_parameters,
                           engineering_parameters, resource_characteristics, reservoir_parameters,
-                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, dispatch_results,
+                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, tess_results, dispatch_results,
                           sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
         Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
@@ -1279,7 +1323,7 @@ def Write_Complex_Text_table(title: str, df_table: pd.DataFrame, time_steps_per_
 def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
+                      tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
                       ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
                       sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
@@ -1324,7 +1368,7 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
         f.write(Build_Text_Output(
             simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
             reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
-            dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
+            tess_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
             addon_df
         ))
 
@@ -1332,7 +1376,7 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
 def Build_Text_Output(simulation_metadata: list, summary: list, economic_parameters: list, engineering_parameters: list,
                       resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list,
-                      surface_equipment_results: list, dispatch_results: list, sdac_results: list,
+                      surface_equipment_results: list, tess_results: list, dispatch_results: list, sdac_results: list,
                       addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
                       pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> str:
     buffer = io.StringIO()
@@ -1355,6 +1399,8 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
     Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, buffer)
     Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, buffer)
     Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, buffer)
+    if len(tess_results) > 0:
+        Write_Simple_Text_Table('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, buffer)
     if len(dispatch_results) > 0:
         Write_Simple_Text_Table('DISPATCH RESULTS', dispatch_results, buffer)
     if len(addon_results) > 0:
@@ -1382,13 +1428,13 @@ def _escape_rtf(text: str) -> str:
 def Write_RTF_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                      engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                     dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
+                     tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
                      ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
                      sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     plain_text = Build_Text_Output(
         simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
         reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
-        dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
+        tess_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
         addon_df
     )
 
@@ -1449,7 +1495,7 @@ def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_
 def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
+                      tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
                       cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
                       sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
@@ -1524,6 +1570,8 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
     Write_Simple_HTML_Table('CAPITAL COSTS', CAPEX, console)
     Write_Simple_HTML_Table('OPERATING AND MAINTENANCE COSTS', OPEX, console)
     Write_Simple_HTML_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, console)
+    if len(tess_results) > 0:
+        Write_Simple_HTML_Table('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, console)
     if len(dispatch_results) > 0:
         Write_Simple_HTML_Table('DISPATCH RESULTS', dispatch_results, console)
     if len(addon_results) > 0:
@@ -1749,6 +1797,46 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         else ('Cooling Output (MW)' if demand_type == 'cooling' else 'Pumping Power (MW)'),
         filename_prefix=filename_prefix,
     )
+    if dispatch_results.summary_metrics.get('tess_enabled', 0.0) > 0.0:
+        Plot_Twin_Graph(
+            'DISPATCH PROFILE: TESS Temperature and SOC',
+            html_path,
+            hours,
+            dispatch_results.hourly_tess_temperature,
+            dispatch_results.hourly_tess_soc * 100.0,
+            'Simulation Hour',
+            'TESS Temperature (degC)',
+            'TESS State of Charge (%)',
+            filename_prefix=filename_prefix,
+        )
+        Plot_Multi_Graph(
+            'DISPATCH PROFILE: Demand, TESS Discharge, and Geothermal Charge',
+            html_path,
+            hours,
+            [
+                dispatch_results.hourly_thermal_demand,
+                dispatch_results.hourly_tess_discharge_to_load,
+                dispatch_results.hourly_tess_charge_from_geothermal,
+            ],
+            'Simulation Hour',
+            'Thermal Power (MW)',
+            ['Customer Demand (MW)', 'TESS Discharge (MW)', 'Geothermal Charge (MW)'],
+            filename_prefix=filename_prefix,
+        )
+        Plot_Multi_Graph(
+            'DISPATCH PROFILE: TESS Losses and Curtailment',
+            html_path,
+            hours,
+            [
+                dispatch_results.hourly_tess_standby_loss,
+                dispatch_results.hourly_tess_efficiency_loss,
+                dispatch_results.hourly_tess_charge_curtailed,
+            ],
+            'Simulation Hour',
+            'Thermal Power (MW)',
+            ['Standby Loss (MW)', 'Efficiency Loss (MW)', 'Curtailed Heat (MW)'],
+            filename_prefix=filename_prefix,
+        )
 
 
 def Plot_Tables_Into_HTML(enduse_option: intParameter, plant_type: intParameter, html_path: str,

@@ -115,25 +115,39 @@ def InsertImagesIntoHTML(html_path: str, short_names=None, full_names: set = Non
     if not full_names:
         return
 
-    # Write a reference to the image(s) into the HTML file by inserting before the "</body>" tag
-    insert_string = ''
-    for _ in range(len(full_names)):
-        full_name = full_names.pop()
-        name_to_use = full_name.name.replace('_', ' ').replace('.png', '')
-        insert_string = insert_string + f'<img src="{full_name.name}" alt="{name_to_use}">\n<br>'
+    image_filenames = set()
+    for image_names in [short_names, full_names]:
+        if not image_names:
+            continue
+        for image_name in image_names:
+            image_path = Path(image_name)
+            filename = image_path.name
+            if image_path.suffix.lower() != '.png':
+                filename = f'{filename}.png'
+            image_filenames.add(filename)
 
     match_string = '</body>'
     with open(html_path, 'r+', encoding='UTF-8') as html_file:
-        contents = html_file.readlines()
-        if match_string in contents[-1]:  # Handle last line to prevent IndexError
-            pass
+        contents = html_file.read()
+        missing_insert_lines = []
+        for image_filename in sorted(image_filenames):
+            name_to_use = image_filename.replace('_', ' ').replace('.png', '')
+            image_tag = f'<img src="{image_filename}" alt="{name_to_use}">'
+            if image_tag not in contents:
+                missing_insert_lines.extend([image_tag, '<br>'])
+
+        if len(missing_insert_lines) == 0:
+            return
+
+        insert_string = '\n'.join(missing_insert_lines) + '\n'
+        if match_string in contents:
+            contents = contents.replace(match_string, insert_string + match_string, 1)
         else:
-            for index, line in enumerate(contents):
-                if match_string in line and insert_string not in contents[index + 1]:
-                    contents.insert(index, insert_string)
-                    break
+            contents += '\n' + insert_string
+
         html_file.seek(0)
-        html_file.writelines(contents)
+        html_file.write(contents)
+        html_file.truncate()
 
 
 def UpgradeSymbologyOfUnits(unit: str) -> str:
@@ -381,6 +395,35 @@ def heat_capacity_water_J_per_kg_per_K(
     except (NotImplementedError, ValueError) as e:
         raise ValueError(f'Input temperature & pressure ({Twater_degC}, {pressure}) '
                          f'are out of range or otherwise could not be used to calculate heat capacity of water.') from e
+
+
+@lru_cache
+def saturation_pressure_water_MPa(Twater_degC: float) -> float:
+    """
+    Calculate water saturation pressure as a function of temperature.
+
+    Args:
+        Twater_degC: The temperature of water in degrees C.
+    Returns:
+        Saturation pressure in MPa.
+    Raises:
+        ValueError: If Twater_degC is not valid for water saturation-pressure calculation.
+    """
+    max_allowed_temp_degC = 373.946
+    if not isinstance(Twater_degC, numbers.Real) or Twater_degC < 0 or Twater_degC > max_allowed_temp_degC:
+        raise ValueError(
+            f'Invalid input for Twater_degC. '
+            f'Twater_degC must be a non-negative number and must be below the critical temperature '
+            f'of water ({max_allowed_temp_degC} degrees Celsius). The input value was: {Twater_degC}'
+        )
+
+    try:
+        return cp.PropsSI('P', 'T', celsius_to_kelvin(Twater_degC), 'Q', 0, 'Water') / 1.0e6
+    except (NotImplementedError, ValueError) as e:
+        raise ValueError(
+            f'Input temperature ({Twater_degC}) is out of range or otherwise could not be used '
+            f'to calculate water saturation pressure.'
+        ) from e
 
 
 @lru_cache

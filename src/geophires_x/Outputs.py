@@ -7,6 +7,7 @@ import time
 import sys
 from io import TextIOWrapper
 from pathlib import Path
+from typing import Any
 
 # noinspection PyPackageRequirements
 import numpy as np
@@ -32,6 +33,7 @@ class Outputs:
     """
 
     VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
+    TESS_RESULTS_CATEGORY_NAME = 'THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS'
     DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
 
     def __init__(self, model: Model, output_file: str = 'HDR.out'):
@@ -322,6 +324,7 @@ class Outputs:
                             f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
                             f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
 
+                self._write_tess_results(model, f)
                 self._write_dispatch_results(model, f)
 
                 f.write(NL)
@@ -1095,7 +1098,6 @@ class Outputs:
         rows = [
             ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
             ('Dispatch analysis end year', metrics.get('dispatch_analysis_end_year', 2.0), 'year'),
-            ('Dispatch analysis duration', metrics.get('dispatch_analysis_year_count', 1.0), 'years'),
             ('Dispatch capacity factor', metrics.get('dispatch_capacity_factor', 0.0) * 100.0, '%'),
             ('Average runtime fraction', metrics.get('average_runtime_fraction', 0.0) * 100.0, '%'),
             ('Peak hourly demand', metrics.get('peak_hourly_demand_mw', 0.0), 'MW'),
@@ -1157,6 +1159,56 @@ class Outputs:
         rows[3:3] = summary_rows
         return rows
 
+    @staticmethod
+    def _tess_output_rows(model: Model, metrics: dict[str, float]) -> list[tuple[str, float, str]]:
+        """Return TESS summary rows for dispatch text and parsed output."""
+        if metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            ('TESS volume', metrics.get('tess_volume_m3', 0.0), 'm3'),
+            ('TESS usable capacity', metrics.get('tess_usable_capacity_mwh', 0.0), 'MWh'),
+            ('TESS capital cost', model.economics.tess_capital_cost.value,
+             model.economics.tess_capital_cost.CurrentUnits.value),
+            ('TESS fixed O&M cost', model.economics.tess_o_and_m_cost.value,
+             model.economics.tess_o_and_m_cost.CurrentUnits.value),
+            ('TESS average SOC', metrics.get('tess_average_soc', 0.0) * 100.0, '%'),
+            ('TESS minimum SOC', metrics.get('tess_min_soc', 0.0) * 100.0, '%'),
+            ('TESS maximum SOC', metrics.get('tess_max_soc', 0.0) * 100.0, '%'),
+            ('TESS annual charge', metrics.get('tess_annual_charge_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual discharge', metrics.get('tess_annual_discharge_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual standby loss', metrics.get('tess_annual_standby_loss_kwh', 0.0) / 1.0e6, 'GWh/year'),
+            ('TESS annual efficiency loss', metrics.get('tess_annual_efficiency_loss_kwh', 0.0) / 1.0e6,
+             'GWh/year'),
+            ('TESS curtailed geothermal heat', metrics.get('tess_annual_curtailed_heat_kwh', 0.0) / 1.0e6,
+             'GWh/year'),
+            ('TESS equivalent full cycles', metrics.get('tess_equivalent_full_cycles', 0.0), 'cycles/year'),
+            ('Peak customer demand', metrics.get('peak_customer_demand_mw', 0.0), 'MW'),
+            ('Peak geothermal charge', metrics.get('peak_geothermal_charge_mw', 0.0), 'MW'),
+            ('Customer demand standard deviation', metrics.get('customer_demand_standard_deviation_mw', 0.0), 'MW'),
+            ('Geothermal output standard deviation', metrics.get('geothermal_output_standard_deviation_mw', 0.0), 'MW'),
+            ('Geothermal output smoothing ratio', metrics.get('geothermal_output_smoothing_ratio', 0.0), '-'),
+            ('Geothermal peak reduction ratio', metrics.get('geothermal_peak_reduction_fraction', 0.0), '-'),
+            ('Geothermal variability reduction ratio',
+             metrics.get('geothermal_output_variability_reduction_fraction', 0.0), '-'),
+        ]
+
+    def _write_tess_results(self, model: Model, f) -> None:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None:
+            return
+
+        tess_rows = self._tess_output_rows(model, dispatch_results.summary_metrics)
+        if len(tess_rows) == 0:
+            return
+
+        f.write(NL)
+        f.write(NL)
+        f.write(f'                           ***{self.TESS_RESULTS_CATEGORY_NAME}***\n')
+        f.write(NL)
+        for field_name, value, units in tess_rows:
+            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+
     def _write_dispatch_results(self, model: Model, f) -> None:
         dispatch_rows = self._dispatch_output_rows(model)
         if len(dispatch_rows) == 0:
@@ -1168,6 +1220,42 @@ class Outputs:
         f.write(NL)
         for field_name, value, units in dispatch_rows:
             f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+
+    @staticmethod
+    def _dispatch_profile_tess_columns(dispatch_results: Any) -> list[str]:
+        """Return TESS profile CSV columns when storage is active."""
+        if dispatch_results.summary_metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            'TESS Temperature (degC)',
+            'TESS State of Charge (-)',
+            'TESS Stored Energy (MWh)',
+            'TESS Discharge to Load (MW)',
+            'TESS Charge from Geothermal (MW)',
+            'TESS Charge Curtailed (MW)',
+            'TESS Standby Loss (MW)',
+            'TESS Efficiency Loss (MW)',
+            'Geothermal Charge Command (MW)',
+        ]
+
+    @staticmethod
+    def _dispatch_profile_tess_row(dispatch_results: Any, timestep_index: int) -> list[float]:
+        """Return one timestep of TESS profile CSV data when storage is active."""
+        if dispatch_results.summary_metrics.get('tess_enabled', 0.0) <= 0.0:
+            return []
+
+        return [
+            float(dispatch_results.hourly_tess_temperature[timestep_index]),
+            float(dispatch_results.hourly_tess_soc[timestep_index]),
+            float(dispatch_results.hourly_tess_stored_energy[timestep_index]),
+            float(dispatch_results.hourly_tess_discharge_to_load[timestep_index]),
+            float(dispatch_results.hourly_tess_charge_from_geothermal[timestep_index]),
+            float(dispatch_results.hourly_tess_charge_curtailed[timestep_index]),
+            float(dispatch_results.hourly_tess_standby_loss[timestep_index]),
+            float(dispatch_results.hourly_tess_efficiency_loss[timestep_index]),
+            float(dispatch_results.hourly_geothermal_charge_command[timestep_index]),
+        ]
 
     def _write_dispatch_profile_output(self, model: Model) -> None:
         dispatch_results = getattr(model, 'dispatch_results', None)
@@ -1186,6 +1274,7 @@ class Outputs:
             demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
             demand_column = 'Electricity Demand (MW)' if demand_type == 'electric' else 'Thermal Demand (MW)'
             output_column = 'Geothermal Electric Output (MW)' if demand_type == 'electric' else 'Geothermal Thermal Output (MW)'
+            tess_columns = self._dispatch_profile_tess_columns(dispatch_results)
             writer.writerow(
                 [
                     'Year',
@@ -1199,6 +1288,7 @@ class Outputs:
                     'Flow Rate (kg/s)',
                     'Runtime Fraction',
                     'Pumping Power (MW)',
+                    *tess_columns,
                 ]
             )
 
@@ -1220,6 +1310,7 @@ class Outputs:
                         float(dispatch_results.hourly_flow[timestep_index]),
                         float(dispatch_results.hourly_runtime_fraction[timestep_index]),
                         float(dispatch_results.hourly_pumping_power[timestep_index]),
+                        *self._dispatch_profile_tess_row(dispatch_results, timestep_index),
                     ]
                 )
 

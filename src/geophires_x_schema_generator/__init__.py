@@ -92,7 +92,6 @@ class GeophiresXSchemaGenerator:
                     "properties": {
                         "dispatch_analysis_start_year": {"type": "number"},
                         "dispatch_analysis_end_year": {"type": "number"},
-                        "dispatch_analysis_year_count": {"type": "number"},
                         "peak_hourly_demand_mw": {"type": "number"},
                         "average_runtime_fraction": {"type": "number"},
                         "dispatch_capacity_factor": {"type": "number"},

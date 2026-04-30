@@ -9,6 +9,8 @@ import numpy as np
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, DispatchDemandSource, DispatchFlowStrategy, EndUseOptions, OperatingMode
 from geophires_x.OptionList import PlantType
+from geophires_x.OptionList import TESSChargeControlStrategy, TESSPressureMode
+from geophires_x.ThermalStorage import ThermalStorageModel
 from geophires_x.Units import EnergyUnit, PowerUnit
 
 if TYPE_CHECKING:
@@ -448,6 +450,15 @@ class DispatchResults:
     annual_aggregates: dict[str, float] = field(default_factory=dict)
     summary_metrics: dict[str, float] = field(default_factory=dict)
     hourly_thermal_demand: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_temperature: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_soc: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_stored_energy: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_discharge_to_load: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_charge_from_geothermal: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_charge_curtailed: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_standby_loss: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_tess_efficiency_loss: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_geothermal_charge_command: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     analysis_start_year: int = 1
     analysis_end_year: int = 2
     simulation_start_hour: int = 1
@@ -481,6 +492,15 @@ class DispatchResults:
             hourly_availability=zeros.copy(),
             hourly_first_law_efficiency=zeros.copy(),
             hourly_thermal_demand=zeros.copy(),
+            hourly_tess_temperature=zeros.copy(),
+            hourly_tess_soc=zeros.copy(),
+            hourly_tess_stored_energy=zeros.copy(),
+            hourly_tess_discharge_to_load=zeros.copy(),
+            hourly_tess_charge_from_geothermal=zeros.copy(),
+            hourly_tess_charge_curtailed=zeros.copy(),
+            hourly_tess_standby_loss=zeros.copy(),
+            hourly_tess_efficiency_loss=zeros.copy(),
+            hourly_geothermal_charge_command=zeros.copy(),
             analysis_start_year=analysis_start_year,
             analysis_end_year=analysis_end_year,
             simulation_start_hour=simulation_start_hour,
@@ -1028,34 +1048,10 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 0,
             )
 
-        for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
-            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
-            timestep_state = {
-                "nominal_output_mw": nominal_state["dispatch_output_mw"],
-                "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
-                "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
-                "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
-            }
-            dispatch_command = self._dispatch_strategy.dispatch(timestep_state, timestep_demand_mw)
-            timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
-
-            model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
-            model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
-            model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
-            model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
-            model.dispatch_results.hourly_demand_served[timestep_index] = timestep_result.served_demand * 1000.0
-            model.dispatch_results.hourly_unmet_demand[timestep_index] = timestep_result.unmet_demand * 1000.0
-            model.dispatch_results.hourly_pumping_power[timestep_index] = timestep_result.pumping_power
-            model.dispatch_results.hourly_geothermal_thermal_output[timestep_index] = timestep_result.plant_outlet_thermal_power
-            model.dispatch_results.hourly_geothermal_electric_output[timestep_index] = timestep_result.plant_outlet_electric_power
-            model.dispatch_results.hourly_gross_electric_output[timestep_index] = timestep_result.gross_electric_power
-            model.dispatch_results.hourly_cooling_output[timestep_index] = timestep_result.cooling_power
-            model.dispatch_results.hourly_heat_pump_electricity_use[timestep_index] = timestep_result.heat_pump_electricity
-            model.dispatch_results.hourly_heat_extracted[timestep_index] = timestep_result.extracted_heat_power
-            model.dispatch_results.hourly_tentering_powerplant[timestep_index] = timestep_result.plant_entering_temperature
-            model.dispatch_results.hourly_reinjection_temperature[timestep_index] = timestep_result.reinjection_temperature
-            model.dispatch_results.hourly_availability[timestep_index] = timestep_result.availability
-            model.dispatch_results.hourly_first_law_efficiency[timestep_index] = timestep_result.first_law_efficiency
+        if self._tess_enabled(model):
+            self._run_tess_dispatch(model, dispatch_demand_mw, demand_profile.time_step_hours)
+        else:
+            self._run_demand_following_dispatch(model, dispatch_demand_mw)
 
         model.dispatch_adapter.finalize()
         model.dispatch_results.summary_metrics.update(design_metrics)
@@ -1068,6 +1064,380 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             analysis_end_year=analysis_end_year,
         )
         model.economics.Calculate(model)
+
+    @staticmethod
+    def _tess_enabled(model: "Model") -> bool:
+        return bool(getattr(model.surfaceplant.tess_enabled, "value", False))
+
+    def _run_demand_following_dispatch(self, model: "Model", dispatch_demand_mw: np.ndarray) -> None:
+        for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
+            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+            timestep_state = {
+                "nominal_output_mw": nominal_state["dispatch_output_mw"],
+                "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
+                "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
+                "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
+            }
+            dispatch_command = self._dispatch_strategy.dispatch(timestep_state, timestep_demand_mw)
+            timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
+
+            self._record_geothermal_timestep(model, timestep_index, timestep_demand_mw, timestep_result)
+
+    @staticmethod
+    def _record_geothermal_timestep(
+        model: "Model",
+        timestep_index: int,
+        timestep_demand_mw: float,
+        timestep_result: DispatchTimestepResult,
+    ) -> None:
+        model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
+        model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
+        model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
+        model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
+        model.dispatch_results.hourly_demand_served[timestep_index] = timestep_result.served_demand * 1000.0
+        model.dispatch_results.hourly_unmet_demand[timestep_index] = timestep_result.unmet_demand * 1000.0
+        model.dispatch_results.hourly_pumping_power[timestep_index] = timestep_result.pumping_power
+        model.dispatch_results.hourly_geothermal_thermal_output[timestep_index] = timestep_result.plant_outlet_thermal_power
+        model.dispatch_results.hourly_geothermal_electric_output[
+            timestep_index
+        ] = timestep_result.plant_outlet_electric_power
+        model.dispatch_results.hourly_gross_electric_output[timestep_index] = timestep_result.gross_electric_power
+        model.dispatch_results.hourly_cooling_output[timestep_index] = timestep_result.cooling_power
+        model.dispatch_results.hourly_heat_pump_electricity_use[timestep_index] = timestep_result.heat_pump_electricity
+        model.dispatch_results.hourly_heat_extracted[timestep_index] = timestep_result.extracted_heat_power
+        model.dispatch_results.hourly_tentering_powerplant[timestep_index] = timestep_result.plant_entering_temperature
+        model.dispatch_results.hourly_reinjection_temperature[timestep_index] = timestep_result.reinjection_temperature
+        model.dispatch_results.hourly_availability[timestep_index] = timestep_result.availability
+        model.dispatch_results.hourly_first_law_efficiency[timestep_index] = timestep_result.first_law_efficiency
+
+    @staticmethod
+    def _optional_tess_power_limit(value: float) -> float | None:
+        return None if float(value) < 0.0 else float(value)
+
+    @staticmethod
+    def _build_thermal_storage(
+        model: "Model",
+        maximum_discharge_power_mw: float | None = None,
+    ) -> ThermalStorageModel:
+        pressure_mode = model.surfaceplant.tess_pressure_mode.value
+        if not isinstance(pressure_mode, TESSPressureMode):
+            pressure_mode = TESSPressureMode.from_input_string(pressure_mode)
+
+        pressure_mpa = None if pressure_mode == TESSPressureMode.AUTO else model.surfaceplant.tess_pressure.value
+        return ThermalStorageModel(
+            volume_m3=model.surfaceplant.tess_volume.value,
+            minimum_temperature_c=model.surfaceplant.tess_minimum_useful_temperature.value,
+            maximum_temperature_c=model.surfaceplant.tess_maximum_temperature.value,
+            initial_temperature_c=model.surfaceplant.tess_initial_temperature.value,
+            pressure_mpa=pressure_mpa,
+            pressure_safety_factor=model.surfaceplant.tess_pressure_safety_factor.value,
+            charge_efficiency=model.surfaceplant.tess_charge_efficiency.value,
+            discharge_efficiency=model.surfaceplant.tess_discharge_efficiency.value,
+            daily_heat_loss_fraction=model.surfaceplant.tess_daily_heat_loss_fraction.value,
+            maximum_charge_power_mw=DispatchableOperatingModeStrategy._optional_tess_power_limit(
+                model.surfaceplant.tess_maximum_charge_power.value
+            ),
+            maximum_discharge_power_mw=DispatchableOperatingModeStrategy._optional_tess_power_limit(
+                model.surfaceplant.tess_maximum_discharge_power.value
+                if maximum_discharge_power_mw is None
+                else maximum_discharge_power_mw
+            ),
+        )
+
+    @staticmethod
+    def _temperature_band_thresholds(model: "Model") -> tuple[float, float]:
+        target_temperature = model.surfaceplant.tess_target_temperature.value
+        half_deadband = model.surfaceplant.tess_deadband_range.value / 2.0
+        lower_threshold = max(
+            model.surfaceplant.tess_minimum_useful_temperature.value,
+            target_temperature - half_deadband,
+        )
+        upper_threshold = min(
+            model.surfaceplant.tess_maximum_temperature.value,
+            target_temperature + half_deadband,
+        )
+        return lower_threshold, upper_threshold
+
+    @staticmethod
+    def _temperature_band_charge_active(
+        storage: ThermalStorageModel,
+        currently_active: bool,
+        lower_threshold_c: float,
+        upper_threshold_c: float,
+    ) -> bool:
+        if storage.state.remaining_charge_capacity_mwh <= 1.0e-12:
+            return False
+        if storage.temperature_c <= lower_threshold_c:
+            return True
+        if storage.temperature_c >= upper_threshold_c:
+            return False
+        return currently_active
+
+    @staticmethod
+    def _tess_charge_flow_fraction(model: "Model") -> float:
+        return min(
+            max(model.surfaceplant.tess_charge_flow_fraction.value, 0.0),
+            model.surfaceplant.maximum_dispatch_flow_fraction.value,
+        )
+
+    @staticmethod
+    def _moving_average_profile(values: np.ndarray, window: int) -> np.ndarray:
+        """Return a trailing moving-average profile with partial initial windows."""
+        bounded_window = max(int(window), 1)
+        cumulative_values = np.cumsum(np.insert(values.astype(float), 0, 0.0))
+        averaged_values = np.zeros_like(values, dtype=float)
+        for timestep_index in range(values.size):
+            start_index = max(0, timestep_index + 1 - bounded_window)
+            sample_count = timestep_index + 1 - start_index
+            averaged_values[timestep_index] = (
+                cumulative_values[timestep_index + 1] - cumulative_values[start_index]
+            ) / sample_count
+        return averaged_values
+
+    @staticmethod
+    def _target_storage_energy_mwh(model: "Model", storage: ThermalStorageModel) -> float:
+        """Return the storage energy target implied by the configured target temperature."""
+        temperature_span = storage.maximum_temperature_c - storage.minimum_temperature_c
+        if temperature_span <= 0.0:
+            return 0.0
+
+        target_soc = (
+            model.surfaceplant.tess_target_temperature.value - storage.minimum_temperature_c
+        ) / temperature_span
+        return max(0.0, min(target_soc, 1.0)) * storage.usable_capacity_mwh
+
+    def _moving_average_charge_target_mw(
+        self,
+        model: "Model",
+        storage: ThermalStorageModel,
+        moving_average_demand_mw: float,
+        time_step_hours: float,
+    ) -> float:
+        """Return the moving-average geothermal charge target with SOC correction."""
+        window_hours = max(model.surfaceplant.tess_moving_average_window.value * time_step_hours, time_step_hours)
+        energy_error_mwh = self._target_storage_energy_mwh(model, storage) - storage.stored_energy_mwh
+        soc_correction_mw = model.surfaceplant.tess_soc_control_gain.value * energy_error_mwh / window_hours
+        return max(float(moving_average_demand_mw) + soc_correction_mw, 0.0)
+
+    @staticmethod
+    def _tess_storage_basis_mw(model: "Model", thermal_state: dict[str, float]) -> float:
+        target_mode = _dispatch_target_mode(model)
+        if target_mode == "electric":
+            return max(thermal_state.get("extracted_heat_mw", 0.0), 0.0)
+        return max(thermal_state.get("useful_heat_mw", 0.0), 0.0)
+
+    @staticmethod
+    def _tess_demand_to_storage_ratio(model: "Model") -> float:
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+        storage_basis_mw = DispatchableOperatingModeStrategy._tess_storage_basis_mw(model, nominal_state)
+        if storage_basis_mw <= 0.0:
+            return 0.0
+        return max(nominal_state.get("dispatch_output_mw", 0.0), 0.0) / storage_basis_mw
+
+    def _demand_following_charge_command(self, model: "Model", target_charge_mw: float) -> DispatchCommand:
+        """Build a geothermal charge command using the normal demand-following strategy."""
+        if target_charge_mw <= 0.0:
+            return DispatchCommand(
+                target_flow_fraction=0.0,
+                runtime_fraction=0.0,
+                is_shut_in=True,
+                target_demand_mw=0.0,
+            )
+
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+        timestep_state = {
+            "nominal_output_mw": self._tess_storage_basis_mw(model, nominal_state),
+            "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
+            "minimum_dispatch_flow_fraction": model.surfaceplant.minimum_dispatch_flow_fraction.value,
+            "minimum_dispatch_runtime_fraction": model.surfaceplant.minimum_dispatch_runtime_fraction.value,
+        }
+        dispatch_command = self._dispatch_strategy.dispatch(timestep_state, target_charge_mw)
+        dispatch_command.target_demand_mw = target_charge_mw
+        return dispatch_command
+
+    def _run_tess_dispatch(self, model: "Model", dispatch_demand_mw: np.ndarray, time_step_hours: float) -> None:
+        control_strategy = model.surfaceplant.tess_charge_control_strategy.value
+        if not isinstance(control_strategy, TESSChargeControlStrategy):
+            control_strategy = TESSChargeControlStrategy.from_input_string(control_strategy)
+        if control_strategy not in [TESSChargeControlStrategy.TEMPERATURE_BAND, TESSChargeControlStrategy.MOVING_AVERAGE]:
+            raise NotImplementedError("TESS dispatch currently supports Temperature Band and Moving Average charge control.")
+
+        demand_to_storage_ratio = self._tess_demand_to_storage_ratio(model)
+        if demand_to_storage_ratio <= 0.0:
+            raise ValueError("TESS dispatch requires a positive conversion from stored heat to dispatch demand.")
+        maximum_discharge_power_mw = model.surfaceplant.tess_maximum_discharge_power.value
+        if getattr(model.surfaceplant, "_tess_maximum_discharge_power_auto_sized", False):
+            maximum_discharge_power_mw /= demand_to_storage_ratio
+        storage = self._build_thermal_storage(model, maximum_discharge_power_mw=maximum_discharge_power_mw)
+        initial_temperature_c = storage.temperature_c
+        lower_threshold, upper_threshold = self._temperature_band_thresholds(model)
+        charge_active = storage.temperature_c <= lower_threshold
+        charge_flow_fraction = self._tess_charge_flow_fraction(model)
+        storage_equivalent_demand_mw = dispatch_demand_mw / demand_to_storage_ratio
+        moving_average_demand_mw = self._moving_average_profile(
+            storage_equivalent_demand_mw,
+            model.surfaceplant.tess_moving_average_window.value,
+        )
+
+        for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
+            storage_demand_mw = timestep_demand_mw / demand_to_storage_ratio
+            discharge_result = storage.discharge(storage_demand_mw, dt_hours=time_step_hours)
+            served_demand_mw = min(
+                timestep_demand_mw,
+                discharge_result.discharged_to_load_mw * demand_to_storage_ratio,
+            )
+            unmet_demand_mw = max(timestep_demand_mw - served_demand_mw, 0.0)
+
+            if control_strategy == TESSChargeControlStrategy.TEMPERATURE_BAND:
+                charge_active = self._temperature_band_charge_active(
+                    storage,
+                    charge_active,
+                    lower_threshold,
+                    upper_threshold,
+                )
+                if charge_active and charge_flow_fraction > 0.0:
+                    dispatch_command = DispatchCommand(
+                        target_flow_fraction=charge_flow_fraction,
+                        runtime_fraction=1.0,
+                        is_shut_in=False,
+                        target_demand_mw=0.0,
+                    )
+                else:
+                    dispatch_command = DispatchCommand(
+                        target_flow_fraction=0.0,
+                        runtime_fraction=0.0,
+                        is_shut_in=True,
+                        target_demand_mw=0.0,
+                    )
+            else:
+                target_charge_mw = self._moving_average_charge_target_mw(
+                    model,
+                    storage,
+                    moving_average_demand_mw[timestep_index],
+                    time_step_hours,
+                )
+                dispatch_command = self._demand_following_charge_command(model, target_charge_mw)
+
+            timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
+            geothermal_charge_command_mw = (
+                timestep_result.extracted_heat_power
+                if _dispatch_target_mode(model) == "electric"
+                else timestep_result.plant_outlet_thermal_power
+            )
+            charge_result = storage.charge(
+                geothermal_charge_command_mw,
+                dt_hours=time_step_hours,
+                source_temperature_c=timestep_result.produced_temperature,
+            )
+            loss_result = storage.apply_losses(dt_hours=time_step_hours)
+            charge_active = self._temperature_band_charge_active(
+                storage,
+                charge_active,
+                lower_threshold,
+                upper_threshold,
+            )
+
+            model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
+            model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
+            model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
+            model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
+            model.dispatch_results.hourly_demand_served[
+                timestep_index
+            ] = served_demand_mw * 1000.0 * time_step_hours
+            model.dispatch_results.hourly_unmet_demand[
+                timestep_index
+            ] = unmet_demand_mw * 1000.0 * time_step_hours
+            model.dispatch_results.hourly_pumping_power[timestep_index] = timestep_result.pumping_power
+            model.dispatch_results.hourly_geothermal_thermal_output[
+                timestep_index
+            ] = timestep_result.plant_outlet_thermal_power
+            model.dispatch_results.hourly_geothermal_electric_output[
+                timestep_index
+            ] = timestep_result.plant_outlet_electric_power
+            model.dispatch_results.hourly_gross_electric_output[timestep_index] = timestep_result.gross_electric_power
+            model.dispatch_results.hourly_cooling_output[timestep_index] = timestep_result.cooling_power
+            model.dispatch_results.hourly_heat_pump_electricity_use[timestep_index] = timestep_result.heat_pump_electricity
+            model.dispatch_results.hourly_heat_extracted[timestep_index] = timestep_result.extracted_heat_power
+            model.dispatch_results.hourly_tentering_powerplant[timestep_index] = timestep_result.plant_entering_temperature
+            model.dispatch_results.hourly_reinjection_temperature[
+                timestep_index
+            ] = timestep_result.reinjection_temperature
+            model.dispatch_results.hourly_availability[timestep_index] = timestep_result.availability
+            model.dispatch_results.hourly_first_law_efficiency[timestep_index] = timestep_result.first_law_efficiency
+            model.dispatch_results.hourly_tess_temperature[timestep_index] = storage.temperature_c
+            model.dispatch_results.hourly_tess_soc[timestep_index] = storage.soc_fraction
+            model.dispatch_results.hourly_tess_stored_energy[timestep_index] = storage.stored_energy_mwh
+            model.dispatch_results.hourly_tess_discharge_to_load[
+                timestep_index
+            ] = discharge_result.discharged_to_load_mw
+            model.dispatch_results.hourly_tess_charge_from_geothermal[
+                timestep_index
+            ] = charge_result.geothermal_charge_accepted_mw
+            model.dispatch_results.hourly_tess_charge_curtailed[timestep_index] = charge_result.curtailed_charge_mw
+            model.dispatch_results.hourly_tess_standby_loss[timestep_index] = loss_result.standby_loss_mw
+            model.dispatch_results.hourly_tess_efficiency_loss[timestep_index] = (
+                charge_result.charge_efficiency_loss_mw + discharge_result.discharge_efficiency_loss_mw
+            )
+            model.dispatch_results.hourly_geothermal_charge_command[timestep_index] = geothermal_charge_command_mw
+
+        annual_discharge_kwh = float(np.sum(model.dispatch_results.hourly_tess_discharge_to_load) * 1000.0 * time_step_hours)
+        annual_charge_kwh = float(np.sum(model.dispatch_results.hourly_tess_charge_from_geothermal) * 1000.0 * time_step_hours)
+        annual_standby_loss_kwh = float(np.sum(model.dispatch_results.hourly_tess_standby_loss) * 1000.0 * time_step_hours)
+        annual_efficiency_loss_kwh = float(np.sum(model.dispatch_results.hourly_tess_efficiency_loss) * 1000.0 * time_step_hours)
+        annual_curtailed_heat_kwh = float(np.sum(model.dispatch_results.hourly_tess_charge_curtailed) * 1000.0 * time_step_hours)
+        peak_customer_demand_mw = float(np.max(dispatch_demand_mw)) if dispatch_demand_mw.size > 0 else 0.0
+        peak_geothermal_charge_mw = (
+            float(np.max(model.dispatch_results.hourly_geothermal_charge_command))
+            if model.dispatch_results.hourly_geothermal_charge_command.size > 0
+            else 0.0
+        )
+        customer_std = float(np.std(dispatch_demand_mw)) if dispatch_demand_mw.size > 0 else 0.0
+        geothermal_std = (
+            float(np.std(model.dispatch_results.hourly_geothermal_charge_command))
+            if model.dispatch_results.hourly_geothermal_charge_command.size > 0
+            else 0.0
+        )
+
+        model.dispatch_results.summary_metrics.update(
+            {
+                "tess_enabled": 1.0,
+                "tess_charge_control_strategy": float(control_strategy.int_value),
+                "tess_moving_average_window_hours": (
+                    float(model.surfaceplant.tess_moving_average_window.value)
+                    if control_strategy == TESSChargeControlStrategy.MOVING_AVERAGE
+                    else 0.0
+                ),
+                "tess_volume_m3": float(model.surfaceplant.tess_volume.value),
+                "tess_usable_capacity_mwh": float(storage.usable_capacity_mwh),
+                "tess_initial_temperature_c": float(initial_temperature_c),
+                "tess_final_temperature_c": float(storage.temperature_c),
+                "tess_min_temperature_c": float(np.min(model.dispatch_results.hourly_tess_temperature)),
+                "tess_max_temperature_c": float(np.max(model.dispatch_results.hourly_tess_temperature)),
+                "tess_average_soc": float(np.average(model.dispatch_results.hourly_tess_soc)),
+                "tess_min_soc": float(np.min(model.dispatch_results.hourly_tess_soc)),
+                "tess_max_soc": float(np.max(model.dispatch_results.hourly_tess_soc)),
+                "tess_annual_charge_kwh": annual_charge_kwh,
+                "tess_annual_discharge_kwh": annual_discharge_kwh,
+                "tess_annual_standby_loss_kwh": annual_standby_loss_kwh,
+                "tess_annual_efficiency_loss_kwh": annual_efficiency_loss_kwh,
+                "tess_annual_curtailed_heat_kwh": annual_curtailed_heat_kwh,
+                "tess_equivalent_full_cycles": annual_discharge_kwh / max(storage.usable_capacity_mwh * 1000.0, 1.0e-12),
+                "peak_customer_demand_mw": peak_customer_demand_mw,
+                "peak_geothermal_charge_mw": peak_geothermal_charge_mw,
+                "customer_demand_standard_deviation_mw": customer_std,
+                "geothermal_output_standard_deviation_mw": geothermal_std,
+                "geothermal_output_smoothing_ratio": geothermal_std / customer_std if customer_std > 0.0 else 0.0,
+                "geothermal_peak_reduction_fraction": (
+                    1.0 - peak_geothermal_charge_mw / peak_customer_demand_mw
+                    if peak_customer_demand_mw > 0.0
+                    else 0.0
+                ),
+                "geothermal_output_variability_reduction_fraction": (
+                    1.0 - geothermal_std / customer_std if customer_std > 0.0 else 0.0
+                ),
+                "annual_tess_served_heat_kwh": annual_discharge_kwh,
+            }
+        )
 
     @staticmethod
     def _finalize_dispatch_results(
@@ -1110,10 +1480,24 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         full_hourly_availability = _full_timeline(model.dispatch_results.hourly_availability)
         full_hourly_first_law_efficiency = _full_timeline(model.dispatch_results.hourly_first_law_efficiency)
         full_dispatch_demand_mw = _full_timeline(model.dispatch_results.hourly_thermal_demand)
+        full_hourly_tess_temperature = _full_timeline(model.dispatch_results.hourly_tess_temperature)
+        full_hourly_tess_soc = _full_timeline(model.dispatch_results.hourly_tess_soc)
+        full_hourly_tess_stored_energy = _full_timeline(model.dispatch_results.hourly_tess_stored_energy)
+        full_hourly_tess_discharge_to_load = _full_timeline(model.dispatch_results.hourly_tess_discharge_to_load)
+        full_hourly_tess_charge_from_geothermal = _full_timeline(
+            model.dispatch_results.hourly_tess_charge_from_geothermal
+        )
+        full_hourly_tess_charge_curtailed = _full_timeline(model.dispatch_results.hourly_tess_charge_curtailed)
+        full_hourly_tess_standby_loss = _full_timeline(model.dispatch_results.hourly_tess_standby_loss)
+        full_hourly_tess_efficiency_loss = _full_timeline(model.dispatch_results.hourly_tess_efficiency_loss)
+        full_hourly_geothermal_charge_command = _full_timeline(
+            model.dispatch_results.hourly_geothermal_charge_command
+        )
         full_dispatch_demand_kwh = full_dispatch_demand_mw * 1000.0 * time_step_hours
 
         pumping_power_mw = full_pumping_power_mw
         plant_type = model.surfaceplant.plant_type.value
+        tess_enabled = DispatchableOperatingModeStrategy._tess_enabled(model)
 
         model.economics.timestepsperyear.value = timesteps_per_year
         model.surfaceplant.utilization_factor.value = float(np.average(full_hourly_runtime_fraction))
@@ -1127,7 +1511,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         served_heat_kwh = full_served_demand_kwh
         unmet_demand_kwh = full_unmet_demand_kwh
         model.surfaceplant.HeatProduced.value = (
-            full_hourly_geothermal_thermal_output.copy() if has_heat_component else np.zeros(total_timesteps)
+            full_served_demand_kwh / (1000.0 * time_step_hours)
+            if tess_enabled and demand_type == "thermal" and has_heat_component
+            else full_hourly_geothermal_thermal_output.copy()
+            if has_heat_component
+            else np.zeros(total_timesteps)
         )
         if has_heat_component or has_electric_component:
             model.surfaceplant.HeatExtracted.value = full_hourly_heat_extracted.copy()
@@ -1136,10 +1524,18 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 model.surfaceplant.HeatProduced.value / efficiency if efficiency > 0 else np.zeros_like(served_heat_kwh)
             )
         model.surfaceplant.ElectricityProduced.value = (
-            full_hourly_gross_electric_output.copy() if has_electric_component else np.zeros(total_timesteps)
+            full_served_demand_kwh / (1000.0 * time_step_hours)
+            if tess_enabled and demand_type == "electric" and has_electric_component
+            else full_hourly_gross_electric_output.copy()
+            if has_electric_component
+            else np.zeros(total_timesteps)
         )
         model.surfaceplant.NetElectricityProduced.value = (
-            full_hourly_geothermal_electric_output.copy() if has_electric_component else np.zeros(total_timesteps)
+            full_served_demand_kwh / (1000.0 * time_step_hours)
+            if tess_enabled and demand_type == "electric" and has_electric_component
+            else full_hourly_geothermal_electric_output.copy()
+            if has_electric_component
+            else np.zeros(total_timesteps)
         )
         model.surfaceplant.TenteringPP.value = (
             full_hourly_tentering_powerplant.copy() if has_electric_component else np.zeros(total_timesteps)
@@ -1154,7 +1550,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         if plant_type == PlantType.HEAT_PUMP:
             model.surfaceplant.heat_pump_electricity_used.value = full_hourly_heat_pump_electricity_use.copy()
         if plant_type == PlantType.ABSORPTION_CHILLER:
-            model.surfaceplant.cooling_produced.value = full_hourly_cooling_output.copy()
+            model.surfaceplant.cooling_produced.value = (
+                full_served_demand_kwh / (1000.0 * time_step_hours)
+                if tess_enabled and demand_type == "cooling"
+                else full_hourly_cooling_output.copy()
+            )
 
         model.surfaceplant.PumpingkWh.value = np.zeros(plant_lifetime_years)
         model.surfaceplant.HeatkWhExtracted.value = np.zeros(plant_lifetime_years)
@@ -1295,6 +1695,31 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             analysis_start_index:analysis_end_index
         ].copy()
         model.dispatch_results.hourly_thermal_demand = full_dispatch_demand_mw[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_tess_temperature = full_hourly_tess_temperature[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_soc = full_hourly_tess_soc[analysis_start_index:analysis_end_index].copy()
+        model.dispatch_results.hourly_tess_stored_energy = full_hourly_tess_stored_energy[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_discharge_to_load = full_hourly_tess_discharge_to_load[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_charge_from_geothermal = full_hourly_tess_charge_from_geothermal[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_charge_curtailed = full_hourly_tess_charge_curtailed[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_standby_loss = full_hourly_tess_standby_loss[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_tess_efficiency_loss = full_hourly_tess_efficiency_loss[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_geothermal_charge_command = full_hourly_geothermal_charge_command[
+            analysis_start_index:analysis_end_index
+        ].copy()
 
         analysis_served_kwh = annual_served_kwh[analysis_year_slice]
         analysis_heat_delivered_kwh = annual_heat_delivered_kwh[analysis_year_slice]
@@ -1306,10 +1731,13 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         analysis_hourly_unmet_kwh = model.dispatch_results.hourly_unmet_demand
         analysis_hourly_demand_mw = model.dispatch_results.hourly_thermal_demand
 
-        design_output_mw = model.dispatch_results.summary_metrics.get(
-            "design_heat_produced_mw" if demand_type == "thermal" else "design_net_electricity_produced_mw",
-            0.0,
-        )
+        if demand_type == "thermal":
+            design_output_metric = "design_heat_produced_mw"
+        elif demand_type == "cooling":
+            design_output_metric = "design_cooling_produced_mw"
+        else:
+            design_output_metric = "design_net_electricity_produced_mw"
+        design_output_mw = model.dispatch_results.summary_metrics.get(design_output_metric, 0.0)
         observed_peak_output_mw = float(np.max(analysis_hourly_served_kwh) / 1000.0) if analysis_hourly_served_kwh.size > 0 else 0.0
         capacity_basis_mw = max(design_output_mw, observed_peak_output_mw)
         average_runtime_fraction = float(np.average(model.dispatch_results.hourly_runtime_fraction))
@@ -1330,7 +1758,6 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             {
                 "dispatch_analysis_start_year": float(analysis_start_year),
                 "dispatch_analysis_end_year": float(analysis_end_year),
-                "dispatch_analysis_year_count": float(analysis_end_year - analysis_start_year),
                 "peak_hourly_demand_mw": float(np.max(analysis_hourly_demand_mw)),
                 "average_runtime_fraction": average_runtime_fraction,
                 "dispatch_capacity_factor": average_capacity_factor,
