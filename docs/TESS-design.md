@@ -3,14 +3,14 @@
 ## Purpose
 
 GEOPHIRES-X includes an optional thermal energy storage system, abbreviated
-`TESS`, for dispatchable direct-use heat simulations. TESS is modeled as a
-large pressurized liquid-water tank placed after the geothermal production
-system and before the customer heat demand.
+`TESS`, for dispatchable simulations. TESS is modeled as a large pressurized
+liquid-water tank placed after the geothermal production system and before the
+customer demand.
 
 The implemented topology is:
 
 ```text
-reservoir/wellbores -> surface heat delivery -> TESS -> demand center
+reservoir/wellbores -> surface plant output -> TESS -> demand center
 ```
 
 With TESS disabled, GEOPHIRES-X uses the legacy dispatchable behavior:
@@ -49,9 +49,12 @@ because baseload operation already assumes steady plant operation rather than a
 variable customer-demand profile that storage can buffer. If `TESS Enabled =
 True` is used outside dispatchable mode, the model raises a validation error.
 
-The current implementation also limits TESS to direct-use industrial heat with
-`Annual Heat Demand`. Electric, cooling, CHP, and district-heating boiler
-interaction cases are not part of the completed TESS feature.
+Within dispatchable operation, TESS uses the same output-operation modes as the
+dispatchable path: direct heat, electric generation, absorption-chiller cooling,
+CHP, heat-pump heat, and district heating with peaking-boiler interaction. The
+tank stores thermal energy in all cases; when the dispatch demand is electric or
+cooling, the dispatch loop converts between stored heat and the active delivered
+demand unit using the current plant output relationship.
 
 ## Design Intent
 
@@ -74,7 +77,8 @@ variability; true seasonal shifting requires very large storage volumes.
 
 TESS includes:
 
-- dispatchable direct-use industrial heat demand;
+- dispatchable heat, electricity, cooling, CHP, heat-pump, and district-heating
+  demand cases;
 - hourly tank energy balance on the existing dispatch hourly timebase;
 - pressurized liquid water as the storage fluid;
 - user-controlled tank volume and installed cost per cubic meter;
@@ -103,8 +107,6 @@ Out of scope:
 - multi-tank storage networks;
 - seasonal storage optimization;
 - co-optimization against electricity price or heat price;
-- district-heating peaking boiler interaction logic;
-- electric, cooling, and CHP TESS integration.
 
 ## Code Integration
 
@@ -201,8 +203,10 @@ device.
 ### Discharge Constraint
 
 Demand can be served only from usable stored energy above `TESS Minimum Useful
-Temperature`. The model treats all energy above that temperature as deliverable
-to the direct-use heat demand. A customer-side supply-temperature profile is not
+Temperature`. For heat demand, that usable stored energy is reported as
+delivered heat. For cooling and electricity demand, stored heat is converted to
+the active dispatch output using the same plant-output relationship used by the
+dispatchable plant adapter. A customer-side supply-temperature profile is not
 required.
 
 ### Heat Loss
@@ -273,7 +277,7 @@ Enabled = False`, TESS parameters do not affect model behavior or economics.
 | `TESS Discharge Efficiency` | `0.98` | none | Fractional efficiency from tank usable energy to delivered heat. |
 | `TESS Daily Heat Loss Fraction` | `0.005` | 1/day | Fraction of stored usable energy lost per day. |
 | `TESS Maximum Charge Power` | `-1.0` | MWth | `-1.0` means no tank-side limit beyond geothermal production and tank capacity. |
-| `TESS Maximum Discharge Power` | `-1.0` | MWth | `-1.0` resolves to peak hourly thermal demand times `TESS Subhourly Demand Peak Multiplier`. |
+| `TESS Maximum Discharge Power` | `-1.0` | MWth | `-1.0` resolves from the active dispatch demand profile times `TESS Subhourly Demand Peak Multiplier`. |
 | `TESS Subhourly Demand Peak Multiplier` | `1.0` | none | Used by automatic discharge-power sizing. |
 
 ### Control Strategy
@@ -290,8 +294,6 @@ Enabled = False`, TESS parameters do not affect model behavior or economics.
 When `TESS Enabled = True`, the model validates:
 
 - operating mode is `Dispatchable`;
-- demand source is `Annual Heat Demand`;
-- end-use is direct-use industrial heat;
 - `TESS Volume > 0`;
 - maximum temperature is greater than minimum useful temperature;
 - target and initial temperatures are inside the usable temperature range;
@@ -319,7 +321,8 @@ Fraction`, limited by the dispatch maximum flow settings.
 ### Moving-Average Control
 
 Moving-average control computes a smoothed geothermal charge target from the
-heat demand profile and applies an optional SOC correction:
+active dispatch demand profile, converted to an equivalent storage heat basis,
+and applies an optional SOC correction:
 
 ```text
 smoothed_demand_mw = moving_average(demand, TESS Moving Average Window)
@@ -592,7 +595,10 @@ summary values, and TESS CSV columns.
 
 ## Resolved Design Decisions
 
-- TESS is available only in dispatchable direct-use industrial heat mode.
+- TESS is available only in dispatchable mode.
+- Within dispatchable mode, TESS supports the same heat, electric, cooling,
+  CHP, heat-pump, and district-heating boiler interaction cases as dispatchable
+  operation.
 - TESS is not available in baseload mode because storage does not add useful
   dispatch behavior to a steady baseload case.
 - The model does not require final tank state to equal initial tank state.
@@ -601,5 +607,3 @@ summary values, and TESS CSV columns.
 - Temperature-band control serves demand before charging in each hourly
   timestep.
 - Direct-use heat demand does not require a customer supply-temperature profile.
-- District-heating peaking boiler interactions are outside the completed TESS
-  feature.

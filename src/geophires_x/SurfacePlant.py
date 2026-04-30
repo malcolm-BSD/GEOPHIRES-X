@@ -1016,56 +1016,70 @@ class SurfacePlant:
             )
             return converted_energy_mwh / time_step_hours
 
-        raise ValueError(f"Unsupported TESS heat demand units `{units_value}`.")
+        raise ValueError(f"Unsupported TESS demand units `{units_value}`.")
 
-    def _annual_heat_demand_mw_series(self) -> np.ndarray:
-        series = np.asarray(self.HeatingDemand.value, dtype=float)
+    def _dispatch_demand_mw_series(self) -> np.ndarray:
+        source = self.dispatch_demand_source.value
+        if not isinstance(source, DispatchDemandSource):
+            source = DispatchDemandSource.from_input_string(source)
+
+        if source == DispatchDemandSource.ANNUAL_HEAT_DEMAND:
+            parameter = self.HeatingDemand
+            parameter_name = "Annual Heat Demand"
+        elif source == DispatchDemandSource.ANNUAL_COOLING_DEMAND:
+            parameter = self.CoolingDemand
+            parameter_name = "Annual Cooling Demand"
+        elif source == DispatchDemandSource.ANNUAL_ELECTRICITY_DEMAND:
+            parameter = self.ElectricityDemand
+            parameter_name = "Annual Electricity Demand"
+        else:
+            raise ValueError(
+                f"`TESS Maximum Discharge Power` auto-sizing does not support dispatch demand source `{source}`."
+            )
+
+        series = np.asarray(parameter.value, dtype=float)
         if series.size == 0:
             raise ValueError(
-                "`TESS Maximum Discharge Power` auto-sizing requires `Annual Heat Demand` to be provided."
+                f"`TESS Maximum Discharge Power` auto-sizing requires `{parameter_name}` to be provided."
             )
 
         if series.ndim == 2:
             if series.shape[1] < 2:
                 raise ValueError(
-                    "`TESS Maximum Discharge Power` auto-sizing requires Annual Heat Demand time-value pairs."
+                    f"`TESS Maximum Discharge Power` auto-sizing requires {parameter_name} time-value pairs."
                 )
             series = series[:, 1]
         elif series.ndim != 1:
             raise ValueError(
-                "`TESS Maximum Discharge Power` auto-sizing requires a one-dimensional Annual Heat Demand profile "
+                f"`TESS Maximum Discharge Power` auto-sizing requires a one-dimensional {parameter_name} profile "
                 "or time-value pairs."
             )
 
         if len(series) != 8760:
             raise ValueError(
-                f"`TESS Maximum Discharge Power` auto-sizing requires an hourly one-year Annual Heat Demand profile "
+                f"`TESS Maximum Discharge Power` auto-sizing requires an hourly one-year {parameter_name} profile "
                 f"with 8760 timesteps; received {len(series)}."
             )
 
-        units = getattr(self.HeatingDemand, "CurrentYUnits", EnergyUnit.KWH)
+        units = getattr(parameter, "CurrentYUnits", EnergyUnit.KWH)
         return self._series_to_mw(series, units, time_step_hours=1.0)
 
     def _resolve_tess_maximum_discharge_power(self) -> None:
+        self._tess_maximum_discharge_power_auto_sized = False
         if self.tess_maximum_discharge_power.value != -1.0:
             return
 
-        heat_demand_mw = self._annual_heat_demand_mw_series()
-        peak_hourly_thermal_demand_mw = float(np.max(heat_demand_mw)) if heat_demand_mw.size > 0 else 0.0
+        demand_mw = self._dispatch_demand_mw_series()
+        peak_hourly_demand_mw = float(np.max(demand_mw)) if demand_mw.size > 0 else 0.0
         self.tess_maximum_discharge_power.value = (
-            peak_hourly_thermal_demand_mw * self.tess_subhourly_demand_peak_multiplier.value
+            peak_hourly_demand_mw * self.tess_subhourly_demand_peak_multiplier.value
         )
         self.tess_maximum_discharge_power.Valid = True
+        self._tess_maximum_discharge_power_auto_sized = True
 
     def _validate_tess_parameters(self, model: Model) -> None:
         if self.operating_mode.value != OperatingMode.DISPATCHABLE:
             raise ValueError("TESS Enabled requires Operating Mode to be Dispatchable.")
-
-        if self.dispatch_demand_source.value != DispatchDemandSource.ANNUAL_HEAT_DEMAND:
-            raise ValueError("TESS dispatch initially supports Annual Heat Demand only.")
-
-        if self.enduse_option.value != EndUseOptions.HEAT or self.plant_type.value != PlantType.INDUSTRIAL:
-            raise ValueError("TESS dispatch initially supports direct-use industrial heat only.")
 
         if self.tess_working_fluid.value != TESSWorkingFluid.WATER:
             raise ValueError("TESS dispatch initially supports water as the TESS working fluid only.")

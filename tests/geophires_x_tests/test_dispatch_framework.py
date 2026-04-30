@@ -474,6 +474,103 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertAlmostEqual(1000.0, float(np.max(model.dispatch_results.hourly_demand_served)))
         self.assertGreater(model.dispatch_results.summary_metrics["peak_unmet_heat_kwh"], 0.0)
 
+    def test_dispatchable_tess_supports_electricity_demand(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+                "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+                "TESS Volume": ParameterEntry(Name="TESS Volume", sValue="3000000"),
+                "TESS Initial Temperature": ParameterEntry(Name="TESS Initial Temperature", sValue="160"),
+                "TESS Daily Heat Loss Fraction": ParameterEntry(Name="TESS Daily Heat Loss Fraction", sValue="0"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("electric", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["tess_annual_discharge_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(model.surfaceplant.NetkWhProduced.value[0], 0.0)
+
+    def test_dispatchable_tess_supports_cooling_demand(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_cooling_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="2"),
+                "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="5"),
+                "Dispatch Demand Source": ParameterEntry(Name="Dispatch Demand Source", sValue="Annual Cooling Demand"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Cooling Demand": ParameterEntry(Name="Annual Cooling Demand", sValue=csv_file),
+                "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+                "TESS Volume": ParameterEntry(Name="TESS Volume", sValue="3000000"),
+                "TESS Initial Temperature": ParameterEntry(Name="TESS Initial Temperature", sValue="160"),
+                "TESS Daily Heat Loss Fraction": ParameterEntry(Name="TESS Daily Heat Loss Fraction", sValue="0"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("cooling", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["tess_annual_discharge_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_cooling_kwh"], 0.0)
+        self.assertGreater(model.surfaceplant.cooling_kWh_Produced.value[0], 0.0)
+
+    def test_dispatchable_tess_supports_chp_electricity_demand(self):
+        csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "End-Use Option": ParameterEntry(Name="End-Use Option", sValue="52"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=csv_file),
+                "CHP Fraction": ParameterEntry(Name="CHP Fraction", sValue="0.4"),
+                "TESS Enabled": ParameterEntry(Name="TESS Enabled", sValue="True"),
+                "TESS Volume": ParameterEntry(Name="TESS Volume", sValue="3000000"),
+                "TESS Initial Temperature": ParameterEntry(Name="TESS Initial Temperature", sValue="160"),
+                "TESS Daily Heat Loss Fraction": ParameterEntry(Name="TESS Daily Heat Loss Fraction", sValue="0"),
+            }
+        )
+
+        model.read_parameters()
+        model.Calculate()
+
+        self.assertEqual("electric", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["tess_annual_discharge_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_electricity_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_served_heat_kwh"], 0.0)
+
+    def test_dispatchable_tess_supports_district_heating_boiler_interaction(self):
+        model = self._run_direct_use_cylindrical_dispatch(
+            {
+                "Power Plant Type": "7",
+                "TESS Enabled": "True",
+                "TESS Volume": "3000000",
+                "TESS Initial Temperature": "160",
+                "TESS Daily Heat Loss Fraction": "0",
+                "TESS Maximum Discharge Power": "1",
+            }
+        )
+
+        self.assertEqual("thermal", model.dispatch_results.demand_type)
+        self.assertGreater(model.dispatch_results.summary_metrics["tess_annual_discharge_kwh"], 0.0)
+        self.assertGreater(model.dispatch_results.summary_metrics["annual_district_heating_boiler_kwh"], 0.0)
+        self.assertGreater(model.surfaceplant.annual_ng_demand.value[0], 0.0)
+
     def test_dispatchable_analysis_window_can_target_later_operating_years(self):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
