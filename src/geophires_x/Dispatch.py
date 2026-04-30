@@ -205,8 +205,25 @@ def _dispatch_surfaceplant_mode(model: "Model") -> str:
     raise ValueError("Dispatchable mode currently supports direct-use heat, pure electricity, and ORC CHP cases.")
 
 
-def _get_orc_coefficients(model: "Model") -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
-    ambient_temperature = model.surfaceplant.ambient_temperature.value
+def dispatch_ambient_temperature(model: "Model", timestep_index: int | None = None) -> float:
+    weather_data = getattr(model, "weather_data", None)
+    fallback_temperature = float(model.surfaceplant.ambient_temperature.value)
+    if weather_data is None:
+        return fallback_temperature
+
+    hourly_data = getattr(weather_data, "hourly_data", None)
+    if hourly_data is None or "temperature_2m" not in hourly_data or len(hourly_data) == 0:
+        return fallback_temperature
+
+    index = 0 if timestep_index is None else int(timestep_index) % len(hourly_data)
+    return float(hourly_data["temperature_2m"].iloc[index])
+
+
+def _get_orc_coefficients(
+    model: "Model",
+    ambient_temperature: float | None = None,
+) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
+    ambient_temperature = dispatch_ambient_temperature(model) if ambient_temperature is None else ambient_temperature
     plant_type = model.surfaceplant.plant_type.value
 
     if plant_type == PlantType.SUB_CRITICAL_ORC:
@@ -224,8 +241,11 @@ def _get_orc_coefficients(model: "Model") -> tuple[float, float, float, float, f
     )
 
 
-def _get_flash_coefficients(model: "Model") -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
-    ambient_temperature = model.surfaceplant.ambient_temperature.value
+def _get_flash_coefficients(
+    model: "Model",
+    ambient_temperature: float | None = None,
+) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
+    ambient_temperature = dispatch_ambient_temperature(model) if ambient_temperature is None else ambient_temperature
     plant_type = model.surfaceplant.plant_type.value
 
     if plant_type == PlantType.SINGLE_FLASH:
@@ -265,12 +285,13 @@ def _get_flash_coefficients(model: "Model") -> tuple[float, float, float, float,
 
 def _get_reinjection_coefficients(
     model: "Model",
+    ambient_temperature: float | None = None,
 ) -> tuple[float, float, float, float, float, float, float, float, float, float, float, float]:
     plant_type = model.surfaceplant.plant_type.value
     if plant_type in [PlantType.SUB_CRITICAL_ORC, PlantType.SUPER_CRITICAL_ORC]:
-        return _get_orc_coefficients(model)
+        return _get_orc_coefficients(model, ambient_temperature)
     if plant_type in [PlantType.SINGLE_FLASH, PlantType.DOUBLE_FLASH]:
-        return _get_flash_coefficients(model)
+        return _get_flash_coefficients(model, ambient_temperature)
 
     raise ValueError(
         "Dispatchable electricity mode currently supports subcritical ORC, supercritical ORC, "
@@ -283,8 +304,10 @@ def _electricity_dispatch_state(
     produced_temperature_c: float,
     actual_flow_kg_per_sec: float,
     pumping_power_mw: float,
+    timestep_index: int | None = None,
 ) -> dict[str, float]:
     surfaceplant = model.surfaceplant
+    ambient_temperature = dispatch_ambient_temperature(model, timestep_index)
     produced_temperature = np.array([produced_temperature_c], dtype=float)
     plant_entering_temperature = surfaceplant.power_plant_entering_temperature(
         surfaceplant.enduse_option.value,
@@ -293,16 +316,16 @@ def _electricity_dispatch_state(
         produced_temperature,
     )
     availability = surfaceplant.availability_water(
-        surfaceplant.ambient_temperature.value,
+        ambient_temperature,
         plant_entering_temperature,
-        surfaceplant.ambient_temperature.value,
+        ambient_temperature,
     )
     adjusted_tinj, reinjection_temperature, etau = surfaceplant.reinjection_temperature(
         model,
-        surfaceplant.ambient_temperature.value,
+        ambient_temperature,
         plant_entering_temperature,
         model.wellbores.Tinj.value,
-        *_get_reinjection_coefficients(model),
+        *_get_reinjection_coefficients(model, ambient_temperature),
     )
     electricity_produced, heat_extracted, heat_produced, heat_towards_electricity = surfaceplant.electricity_heat_production(
         surfaceplant.enduse_option.value,
@@ -330,6 +353,7 @@ def _electricity_dispatch_state(
         "heat_extracted_mw": heat_extracted_mw,
         "heat_produced_mw": float(np.atleast_1d(heat_produced)[0]) if np.size(heat_produced) > 0 else 0.0,
         "plant_entering_temperature_c": float(np.atleast_1d(plant_entering_temperature)[0]),
+        "ambient_temperature_c": ambient_temperature,
         "availability_mj_per_kg": float(np.atleast_1d(availability)[0]),
         "reinjection_temperature_c": float(np.atleast_1d(reinjection_temperature)[0]),
         "first_law_efficiency": (
@@ -343,6 +367,7 @@ def _dispatch_output_state(
     produced_temperature_c: float,
     actual_flow_kg_per_sec: float,
     pumping_power_mw: float,
+    timestep_index: int | None = None,
 ) -> dict[str, float]:
     enduse_option = model.surfaceplant.enduse_option.value
     target_mode = _dispatch_target_mode(model)
@@ -387,12 +412,19 @@ def _dispatch_output_state(
             "cooling_produced_mw": cooling_produced_mw,
             "heat_pump_electricity_mw": heat_pump_electricity_mw,
             "plant_entering_temperature_c": 0.0,
+            "ambient_temperature_c": dispatch_ambient_temperature(model, timestep_index),
             "availability_mj_per_kg": 0.0,
             "reinjection_temperature_c": 0.0,
             "first_law_efficiency": 0.0,
         }
 
-    power_state = _electricity_dispatch_state(model, produced_temperature_c, actual_flow_kg_per_sec, pumping_power_mw)
+    power_state = _electricity_dispatch_state(
+        model,
+        produced_temperature_c,
+        actual_flow_kg_per_sec,
+        pumping_power_mw,
+        timestep_index,
+    )
     power_state["extracted_heat_mw"] = power_state["heat_extracted_mw"]
     power_state["useful_heat_mw"] = power_state["heat_produced_mw"]
     power_state["dispatch_output_mw"] = (
@@ -412,6 +444,7 @@ class DispatchCommand:
 @dataclass
 class DispatchTimestepResult:
     produced_temperature: float = 0.0
+    ambient_temperature: float = 0.0
     plant_outlet_thermal_power: float = 0.0
     plant_outlet_electric_power: float = 0.0
     gross_electric_power: float = 0.0
@@ -432,6 +465,7 @@ class DispatchTimestepResult:
 @dataclass
 class DispatchResults:
     hourly_produced_temperature: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    hourly_ambient_temperature: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     hourly_flow: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     hourly_runtime_fraction: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     hourly_demand_served: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
@@ -476,6 +510,7 @@ class DispatchResults:
         zeros = np.zeros(num_timesteps, dtype=float)
         return cls(
             hourly_produced_temperature=zeros.copy(),
+            hourly_ambient_temperature=zeros.copy(),
             hourly_flow=zeros.copy(),
             hourly_runtime_fraction=zeros.copy(),
             hourly_demand_served=zeros.copy(),
@@ -673,10 +708,10 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         scaled_temp_drop = self._base_temp_drop_c / max(flow_fraction, 0.25)
         return min(max(scaled_temp_drop, 0.0), max(current_reservoir_temperature_c - self._tinj, 0.0))
 
-    def thermal_state_for_flow_fraction(self, flow_fraction: float) -> dict[str, float]:
+    def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
         if flow_fraction <= 0:
             current_reservoir_temperature_c = self._current_reservoir_temperature()
-            state = _dispatch_output_state(self._model, current_reservoir_temperature_c, 0.0, 0.0)
+            state = _dispatch_output_state(self._model, current_reservoir_temperature_c, 0.0, 0.0, timestep_index)
             state.update({
                 "produced_temperature_c": current_reservoir_temperature_c,
                 "pumping_power_mw": 0.0,
@@ -695,7 +730,13 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         injection_pumping_power_mw = self._base_injection_pumping_power_mw * flow_scale
         pumping_power_mw = self._base_pumping_power_mw * flow_scale
 
-        state = _dispatch_output_state(self._model, produced_temperature_c, actual_flow_kg_per_sec, pumping_power_mw)
+        state = _dispatch_output_state(
+            self._model,
+            produced_temperature_c,
+            actual_flow_kg_per_sec,
+            pumping_power_mw,
+            timestep_index,
+        )
         state.update({
             "produced_temperature_c": produced_temperature_c,
             "pumping_power_mw": pumping_power_mw,
@@ -714,10 +755,11 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
             )
             return DispatchTimestepResult(
                 produced_temperature=self._current_reservoir_temperature(),
+                ambient_temperature=dispatch_ambient_temperature(self._model, timestep_index),
                 runtime_fraction=0.0,
             )
 
-        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction)
+        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction, timestep_index)
         potential_output_mw = thermal_state["dispatch_output_mw"] * dispatch_command.runtime_fraction
         served_demand_mw = min(dispatch_command.target_demand_mw, potential_output_mw)
         unmet_demand_mw = max(dispatch_command.target_demand_mw - served_demand_mw, 0.0)
@@ -736,6 +778,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
 
         return DispatchTimestepResult(
             produced_temperature=thermal_state["produced_temperature_c"],
+            ambient_temperature=thermal_state.get("ambient_temperature_c", 0.0),
             plant_outlet_thermal_power=thermal_state["useful_heat_mw"] * dispatch_command.runtime_fraction,
             plant_outlet_electric_power=thermal_state.get("net_electricity_mw", 0.0) * dispatch_command.runtime_fraction,
             gross_electric_power=thermal_state.get("gross_electricity_mw", 0.0) * dispatch_command.runtime_fraction,
@@ -840,7 +883,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         depletion_fraction = min(max(self._cumulative_extracted_kwh / self._baseline_total_extracted_kwh, 0.0), 1.0)
         return min(int(round(depletion_fraction * (len(self._baseline_produced_temperature) - 1))), len(self._baseline_produced_temperature) - 1)
 
-    def thermal_state_for_flow_fraction(self, flow_fraction: float) -> dict[str, float]:
+    def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
         baseline_index = self._baseline_index_for_depletion()
         baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
         baseline_heat_extracted_mw = self._baseline_heat_extracted_mw[baseline_index]
@@ -849,7 +892,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         baseline_pumping_power_inj_mw = self._baseline_pumping_power_inj_mw[baseline_index]
 
         if flow_fraction <= 0:
-            state = _dispatch_output_state(self._model, baseline_temperature_c, 0.0, 0.0)
+            state = _dispatch_output_state(self._model, baseline_temperature_c, 0.0, 0.0, timestep_index)
             state.update({
                 "produced_temperature_c": baseline_temperature_c,
                 "pumping_power_mw": 0.0,
@@ -867,6 +910,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             baseline_temperature_c,
             actual_flow_kg_per_sec,
             baseline_pumping_power_mw * flow_scale,
+            timestep_index,
         )
         state.update({
             "produced_temperature_c": baseline_temperature_c,
@@ -889,10 +933,11 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             )
             return DispatchTimestepResult(
                 produced_temperature=self._baseline_produced_temperature[self._baseline_index_for_depletion()],
+                ambient_temperature=dispatch_ambient_temperature(self._model, timestep_index),
                 runtime_fraction=0.0,
             )
 
-        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction)
+        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction, timestep_index)
         potential_output_mw = thermal_state["dispatch_output_mw"] * dispatch_command.runtime_fraction
         served_demand_mw = min(dispatch_command.target_demand_mw, potential_output_mw)
         unmet_demand_mw = max(dispatch_command.target_demand_mw - served_demand_mw, 0.0)
@@ -907,6 +952,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
 
         return DispatchTimestepResult(
             produced_temperature=thermal_state["produced_temperature_c"],
+            ambient_temperature=thermal_state.get("ambient_temperature_c", 0.0),
             plant_outlet_thermal_power=thermal_state["useful_heat_mw"] * dispatch_command.runtime_fraction,
             plant_outlet_electric_power=thermal_state.get("net_electricity_mw", 0.0) * dispatch_command.runtime_fraction,
             gross_electric_power=thermal_state.get("gross_electricity_mw", 0.0) * dispatch_command.runtime_fraction,
@@ -1092,6 +1138,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
     ) -> None:
         model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
         model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
+        model.dispatch_results.hourly_ambient_temperature[timestep_index] = timestep_result.ambient_temperature
         model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
         model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
         model.dispatch_results.hourly_demand_served[timestep_index] = timestep_result.served_demand * 1000.0
@@ -1339,6 +1386,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
             model.dispatch_results.hourly_thermal_demand[timestep_index] = timestep_demand_mw
             model.dispatch_results.hourly_produced_temperature[timestep_index] = timestep_result.produced_temperature
+            model.dispatch_results.hourly_ambient_temperature[timestep_index] = timestep_result.ambient_temperature
             model.dispatch_results.hourly_flow[timestep_index] = timestep_result.actual_flow
             model.dispatch_results.hourly_runtime_fraction[timestep_index] = timestep_result.runtime_fraction
             model.dispatch_results.hourly_demand_served[
@@ -1464,6 +1512,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
             return full_values
 
         full_hourly_produced_temperature = _full_timeline(model.dispatch_results.hourly_produced_temperature)
+        full_hourly_ambient_temperature = _full_timeline(model.dispatch_results.hourly_ambient_temperature)
         full_hourly_flow = _full_timeline(model.dispatch_results.hourly_flow)
         full_hourly_runtime_fraction = _full_timeline(model.dispatch_results.hourly_runtime_fraction)
         full_served_demand_kwh = _full_timeline(model.dispatch_results.hourly_demand_served)
@@ -1661,6 +1710,9 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         analysis_year_slice = slice(analysis_start_year - 1, analysis_end_year - 1)
 
         model.dispatch_results.hourly_produced_temperature = full_hourly_produced_temperature[
+            analysis_start_index:analysis_end_index
+        ].copy()
+        model.dispatch_results.hourly_ambient_temperature = full_hourly_ambient_temperature[
             analysis_start_index:analysis_end_index
         ].copy()
         model.dispatch_results.hourly_flow = full_hourly_flow[analysis_start_index:analysis_end_index].copy()

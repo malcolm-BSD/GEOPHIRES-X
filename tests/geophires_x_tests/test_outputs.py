@@ -562,6 +562,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertAlmostEqual(13.1882, float(rows[0]["Thermal Demand (MW)"]), places=4)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Produced Temperature (degC)"]), 0.0)
+        self.assertIn("Ambient Temperature (degC)", rows[0])
 
     def test_electric_dispatch_profile_csv_is_written(self):
         output_path = self._output_artifact_path("dispatch_profile_electric_results_test.out")
@@ -599,6 +600,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertAlmostEqual(13.1882, float(rows[0]["Electricity Demand (MW)"]), places=4)
         self.assertGreaterEqual(float(rows[0]["Geothermal Electric Output (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+        self.assertIn("Ambient Temperature (degC)", rows[0])
 
     def test_chp_electric_dispatch_profile_csv_is_written(self):
         output_path = self._output_artifact_path("dispatch_profile_chp_electric_results_test.out")
@@ -638,6 +640,7 @@ class OutputsTestCase(BaseTestCase):
         self.assertAlmostEqual(13.1882, float(rows[0]["Electricity Demand (MW)"]), places=4)
         self.assertGreaterEqual(float(rows[0]["Geothermal Electric Output (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+        self.assertIn("Ambient Temperature (degC)", rows[0])
 
     def test_chp_electric_dispatch_results_are_written_and_parseable(self):
         output_path = self._output_artifact_path("dispatch_results_chp_electric_test.out")

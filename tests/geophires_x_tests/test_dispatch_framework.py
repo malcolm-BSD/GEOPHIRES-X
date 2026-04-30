@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 
 from geophires_x.Dispatch import CylindricalDispatchPlantAdapter
 from geophires_x.Dispatch import DemandFollowingDispatchStrategy
@@ -18,6 +19,7 @@ from geophires_x.OptionList import TESSChargeControlStrategy
 from geophires_x.OptionList import TESSPressureMode
 from geophires_x.OptionList import TESSWorkingFluid
 from geophires_x.Parameter import ParameterEntry
+from geophires_x.WeatherData import WeatherData
 from tests.base_test_case import BaseTestCase
 
 
@@ -30,6 +32,21 @@ class DispatchFrameworkTestCase(BaseTestCase):
         sys.argv = stash_sys_argv
         os.chdir(stash_cwd)
         return model
+
+    @staticmethod
+    def _weather_data_with_temperature(temperature_c: float) -> WeatherData:
+        return WeatherData(
+            latitude=39.7392,
+            longitude=-104.9903,
+            year=2024,
+            hourly_data=pd.DataFrame(
+                {
+                    "time": pd.date_range("2024-01-01", periods=8760, freq="h"),
+                    "temperature_2m": np.full(8760, temperature_c, dtype=float),
+                }
+            ),
+            hourly_units={"temperature_2m": "degC"},
+        )
 
     def test_operating_mode_from_input_string(self):
         self.assertEqual(OperatingMode.from_input_string("Baseload"), OperatingMode.BASELOAD)
@@ -50,6 +67,56 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual(DispatchFlowStrategy.DEMAND_FOLLOWING, model.surfaceplant.dispatch_flow_strategy.value)
         self.assertEqual(1, model.surfaceplant.dispatch_analysis_start_year.value)
         self.assertEqual(2, model.surfaceplant.dispatch_analysis_end_year.value)
+
+    def test_dispatchable_electricity_uses_hourly_weather_temperature(self):
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                "Dispatch Demand Source": ParameterEntry(
+                    Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                ),
+                "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                "Annual Electricity Demand": ParameterEntry(Name="Annual Electricity Demand", sValue=demand_csv_file),
+            }
+        )
+
+        model.read_parameters()
+        model.weather_data = self._weather_data_with_temperature(5.0)
+        model.Calculate()
+
+        self.assertEqual(8760, len(model.dispatch_results.hourly_ambient_temperature))
+        self.assertAlmostEqual(5.0, model.dispatch_results.hourly_ambient_temperature[0])
+
+    def test_dispatchable_electricity_output_changes_with_weather_temperature(self):
+        demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
+
+        def _annual_electricity_output(temperature_c: float) -> float:
+            model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+            model.InputParameters.update(
+                {
+                    "Operating Mode": ParameterEntry(Name="Operating Mode", sValue="Dispatchable"),
+                    "Dispatch Demand Source": ParameterEntry(
+                        Name="Dispatch Demand Source", sValue="Annual Electricity Demand"
+                    ),
+                    "Dispatch Flow Strategy": ParameterEntry(Name="Dispatch Flow Strategy", sValue="Demand Following"),
+                    "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                    "Annual Electricity Demand": ParameterEntry(
+                        Name="Annual Electricity Demand", sValue=demand_csv_file
+                    ),
+                }
+            )
+            model.read_parameters()
+            model.weather_data = self._weather_data_with_temperature(temperature_c)
+            model.Calculate()
+            return float(np.sum(model.dispatch_results.hourly_geothermal_electric_output))
+
+        cool_weather_output = _annual_electricity_output(5.0)
+        hot_weather_output = _annual_electricity_output(25.0)
+
+        self.assertNotAlmostEqual(cool_weather_output, hot_weather_output)
 
     def test_tess_defaults_to_disabled(self):
         model = self._new_model()
