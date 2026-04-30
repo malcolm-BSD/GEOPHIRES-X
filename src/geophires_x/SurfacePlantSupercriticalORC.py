@@ -71,40 +71,23 @@ class SurfacePlantSupercriticalOrc(SurfacePlant):
         # calculate power plant entering temperature
         self.TenteringPP.value = SurfacePlant.power_plant_entering_temperature(self, self.enduse_option.value,
                                 model.reserv.timevector.value, self.T_chp_bottom.value, model.wellbores.ProducedTemperature.value)
+        ambient_temperature = SurfacePlant.ambient_temperature_profile(self, model, len(self.TenteringPP.value))
 
         # Availability water
-        self.Availability.value = SurfacePlant.availability_water(self, self.ambient_temperature.value, self.TenteringPP.value, self.ambient_temperature.value)
+        self.Availability.value = SurfacePlant.availability_water(self, ambient_temperature, self.TenteringPP.value, ambient_temperature)
 
         # Supercritical ORC-specific values
-        if self.ambient_temperature.value < 15.:
-            C21 = -1.55E-5
-            C11 = 7.604E-3
-            C01 = -3.78E-1
-            D21 = -1.499E-5
-            D11 = 7.4268E-3
-            D01 = -3.7915E-1
-            C22 = 0.0
-            C12= 0.02
-            C02 = 49.26
-            D22 = 0.0
-            D12 = 0.02
-            D02 = 56.26
-        else:
-            C21 = -1.499E-5
-            C11 = 7.4268E-3
-            C01 = -3.7915E-1
-            D21 = -1.55E-5
-            D11 = 7.55136E-3
-            D01 = -4.041E-1
-            C22 = 0.0
-            C12 = 0.02
-            C02 = 56.26
-            D22 = 0.0
-            D12 = 0.02
-            D02 = 63.26
+        C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22 = (
+            SurfacePlant.electricity_temperature_coefficients(
+                self,
+                ambient_temperature,
+                (-3.78E-1, 7.604E-3, -1.55E-5, -3.7915E-1, 7.4268E-3, -1.499E-5, 49.26, 0.02, 0.0, 56.26, 0.02, 0.0),
+                (-3.7915E-1, 7.4268E-3, -1.499E-5, -4.041E-1, 7.55136E-3, -1.55E-5, 56.26, 0.02, 0.0, 63.26, 0.02, 0.0),
+            )
+        )
 
         model.wellbores.Tinj.value, ReinjTemp, etau = SurfacePlant.reinjection_temperature(self, model,
-                                                    self.ambient_temperature.value, self.TenteringPP.value, model.wellbores.Tinj.value,
+                                                    ambient_temperature, self.TenteringPP.value, model.wellbores.Tinj.value,
                                                     C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22)
 
         # calculate electricity & heat production

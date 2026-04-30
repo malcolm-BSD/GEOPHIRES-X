@@ -92,6 +92,39 @@ class SurfacePlant:
 
         return availability
 
+    def ambient_temperature_profile(self, model: Model, target_length: int):
+        weather_data = getattr(model, "weather_data", None)
+        if weather_data is None:
+            return self.ambient_temperature.value
+
+        hourly_data = getattr(weather_data, "hourly_data", None)
+        if hourly_data is None or "temperature_2m" not in hourly_data or len(hourly_data) == 0:
+            return self.ambient_temperature.value
+
+        hourly_temperature = np.asarray(hourly_data["temperature_2m"], dtype=float)
+        if target_length <= 0:
+            return np.array([], dtype=float)
+        if len(hourly_temperature) == target_length:
+            return hourly_temperature.copy()
+
+        return hourly_temperature[np.arange(target_length) % len(hourly_temperature)]
+
+    def electricity_temperature_coefficients(
+        self,
+        ambient_temperature,
+        low_temperature_coefficients: tuple[float, ...],
+        high_temperature_coefficients: tuple[float, ...],
+    ):
+        ambient = np.asarray(ambient_temperature, dtype=float)
+        if ambient.ndim == 0:
+            return low_temperature_coefficients if float(ambient) < 15.0 else high_temperature_coefficients
+
+        low_temperature_mask = ambient < 15.0
+        return tuple(
+            np.where(low_temperature_mask, low_coefficient, high_coefficient)
+            for low_coefficient, high_coefficient in zip(low_temperature_coefficients, high_temperature_coefficients)
+        )
+
     def reinjection_temperature(self, model: Model, ambient_temperature: float, TenteringPP: np.ndarray, Tinj: float,
                                 C01: float, C11: float, C21: float, D01: float, D11: float, D21: float,
                                 C02: float, C12: float, C22: float, D02: float, D12: float, D22: float) -> tuple:
@@ -110,10 +143,12 @@ class SurfacePlant:
         :param D22: D22
         :return: injection temperature, reinjection temperature, and etau
         """
-        if ambient_temperature < 15.:
-            Tfraction = (ambient_temperature - 5.) / 10.
-        else:
-            Tfraction = (ambient_temperature - 15.) / 10.
+        ambient_temperature = np.asarray(ambient_temperature, dtype=float)
+        Tfraction = np.where(
+            ambient_temperature < 15.,
+            (ambient_temperature - 5.) / 10.,
+            (ambient_temperature - 15.) / 10.,
+        )
         etaull = C21*TenteringPP**2 + C11*TenteringPP + C01
         etauul = D21*TenteringPP**2 + D11*TenteringPP + D01
         etau = (1.-Tfraction)*etaull + Tfraction*etauul

@@ -118,6 +118,46 @@ class DispatchFrameworkTestCase(BaseTestCase):
 
         self.assertNotAlmostEqual(cool_weather_output, hot_weather_output)
 
+    def test_baseload_electricity_output_changes_with_weather_temperature_for_supported_plant_types(self):
+        def _annual_electricity_output(plant_type: str, temperature_c: float) -> float:
+            model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+            model.InputParameters.update(
+                {
+                    "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue=plant_type),
+                    "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                }
+            )
+            model.read_parameters()
+            model.weather_data = self._weather_data_with_temperature(temperature_c)
+            model.Calculate()
+            self.assertGreater(len(model.surfaceplant.NetElectricityProduced.value), 0)
+            return float(np.sum(model.surfaceplant.NetElectricityProduced.value))
+
+        for plant_type in ["1", "2", "3", "4"]:
+            with self.subTest(plant_type=plant_type):
+                cool_weather_output = _annual_electricity_output(plant_type, 5.0)
+                hot_weather_output = _annual_electricity_output(plant_type, 25.0)
+
+                self.assertNotAlmostEqual(cool_weather_output, hot_weather_output)
+
+    def test_baseload_electricity_without_weather_matches_scalar_ambient_behavior(self):
+        def _annual_electricity_output(with_weather: bool) -> float:
+            model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+            model.InputParameters.update(
+                {
+                    "Power Plant Type": ParameterEntry(Name="Power Plant Type", sValue="1"),
+                    "Ambient Temperature": ParameterEntry(Name="Ambient Temperature", sValue="15.0"),
+                    "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+                }
+            )
+            model.read_parameters()
+            if with_weather:
+                model.weather_data = self._weather_data_with_temperature(15.0)
+            model.Calculate()
+            return float(np.sum(model.surfaceplant.NetElectricityProduced.value))
+
+        self.assertAlmostEqual(_annual_electricity_output(False), _annual_electricity_output(True))
+
     def test_tess_defaults_to_disabled(self):
         model = self._new_model()
 
