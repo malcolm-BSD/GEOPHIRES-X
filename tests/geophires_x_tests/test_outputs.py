@@ -16,9 +16,29 @@ _log = logging.getLogger(__name__)
 
 
 class OutputsTestCase(BaseTestCase):
-    @staticmethod
-    def _output_artifact_path(filename: str) -> Path:
-        return Path(__file__).resolve().parent / filename
+    def setUp(self) -> None:
+        super().setUp()
+        self._output_artifacts: set[Path] = set()
+
+    def tearDown(self) -> None:
+        test_dir = Path(__file__).resolve().parent
+        for artifact_path in sorted(self._output_artifacts, key=lambda path: len(path.parts), reverse=True):
+            artifact_path = artifact_path.resolve()
+            if not artifact_path.is_relative_to(test_dir):
+                continue
+            if artifact_path.exists() and artifact_path.is_file():
+                artifact_path.unlink()
+        super().tearDown()
+
+    def _register_output_artifact(self, path: Path) -> Path:
+        artifact_path = path.resolve()
+        self._output_artifacts.add(artifact_path)
+        if artifact_path.suffix.lower() == ".out":
+            self._output_artifacts.add(artifact_path.with_suffix(".json"))
+        return artifact_path
+
+    def _output_artifact_path(self, filename: str) -> Path:
+        return self._register_output_artifact(Path(__file__).resolve().parent / filename)
 
     def _geophires_input_parameters(
         self,
@@ -32,13 +52,12 @@ class OutputsTestCase(BaseTestCase):
             output_file_path=self._output_artifact_path(output_filename),
         )
 
-    @staticmethod
-    def _dispatch_graph_path(html_output_path: Path, title: str) -> Path:
+    def _dispatch_graph_path(self, html_output_path: Path, title: str) -> Path:
         file_stem = (
             f"{removeDisallowedFilenameChars(html_output_path.stem)}_"
             f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
         )
-        return Path(html_output_path.parent, f"{file_stem}.png")
+        return self._register_output_artifact(Path(html_output_path.parent, f"{file_stem}.png"))
 
     def test_html_output_file(self):
         html_path = self._output_artifact_path("example12_DH.html")
@@ -894,9 +913,12 @@ class OutputsTestCase(BaseTestCase):
 
     def test_full_scale_dispatch_example_input_runs(self):
         input_path = Path(__file__).resolve().parent / "example1_dispatchable_full_scale.txt"
-        text_output_path = input_path.parent / "example1_dispatchable_full_scale_text.out"
-        html_output_path = input_path.parent / "example1_dispatchable_full_scale.html"
-        dispatch_profile_path = input_path.parent / "example1_dispatchable_full_scale_dispatch_profile.csv"
+        demand_csv_path = Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv"
+        text_output_path = self._output_artifact_path("example1_dispatchable_full_scale_generated_text.out")
+        html_output_path = self._output_artifact_path("example1_dispatchable_full_scale_generated.html")
+        dispatch_profile_path = self._output_artifact_path(
+            "example1_dispatchable_full_scale_generated_dispatch_profile.csv"
+        )
         graph_titles = [
             "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
@@ -913,6 +935,12 @@ class OutputsTestCase(BaseTestCase):
                 self._geophires_input_parameters(
                     "example1_dispatchable_full_scale.out",
                     from_file_path=str(input_path),
+                    params={
+                        "Annual Heat Demand": str(demand_csv_path),
+                        "Improved Text Output File": str(text_output_path),
+                        "HTML Output File": str(html_output_path),
+                        "Dispatch Profile Output File": str(dispatch_profile_path),
+                    },
                 )
             )
         except RuntimeError as e:
@@ -949,9 +977,10 @@ class OutputsTestCase(BaseTestCase):
     def test_tess_dispatch_example_input_runs(self) -> None:
         """Verify the TESS dispatch example generates expected TESS outputs."""
         input_path = Path(__file__).resolve().parent / "example1_dispatchable_tess.txt"
-        text_output_path = input_path.parent / "example1_dispatchable_tess_text.out"
-        html_output_path = input_path.parent / "example1_dispatchable_tess.html"
-        dispatch_profile_path = input_path.parent / "example1_dispatchable_tess_dispatch_profile.csv"
+        demand_csv_path = Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv"
+        text_output_path = self._output_artifact_path("example1_dispatchable_tess_generated_text.out")
+        html_output_path = self._output_artifact_path("example1_dispatchable_tess_generated.html")
+        dispatch_profile_path = self._output_artifact_path("example1_dispatchable_tess_generated_dispatch_profile.csv")
         graph_titles = [
             "DISPATCH PROFILE: Demand, Served, and Unmet Heat",
             "DISPATCH PROFILE: Produced Temperature and Flow Rate",
@@ -971,6 +1000,12 @@ class OutputsTestCase(BaseTestCase):
                 self._geophires_input_parameters(
                     "example1_dispatchable_tess.out",
                     from_file_path=str(input_path),
+                    params={
+                        "Annual Heat Demand": str(demand_csv_path),
+                        "Improved Text Output File": str(text_output_path),
+                        "HTML Output File": str(html_output_path),
+                        "Dispatch Profile Output File": str(dispatch_profile_path),
+                    },
                 )
             )
         except RuntimeError as e:
