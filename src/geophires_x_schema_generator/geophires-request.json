@@ -1293,6 +1293,33 @@
       "minimum": -50,
       "maximum": 50
     },
+    "Project Latitude": {
+      "description": "Project latitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.0,
+      "minimum": -90.0,
+      "maximum": 90.0
+    },
+    "Project Longitude": {
+      "description": "Project longitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "type": "number",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 0.0,
+      "minimum": -180.0,
+      "maximum": 180.0
+    },
+    "Weather Data Year": {
+      "description": "Historical weather year to request when project latitude and longitude are provided.",
+      "type": "integer",
+      "units": null,
+      "category": "Surface Plant",
+      "default": 2024,
+      "minimum": 1900,
+      "maximum": 10000
+    },
     "Plant Lifetime": {
       "description": "System lifetime",
       "type": "integer",

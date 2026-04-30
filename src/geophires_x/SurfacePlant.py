@@ -377,6 +377,35 @@ class SurfacePlant:
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
             AllowExtendedInput = True,
         )
+        self.project_latitude = self.ParameterDict["Project Latitude"] = floatParameter(
+            "Project Latitude",
+            DefaultValue=0.0,
+            Min=-90.0,
+            Max=90.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default project latitude (0.0)",
+            ToolTipText="Project latitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+        )
+        self.project_longitude = self.ParameterDict["Project Longitude"] = floatParameter(
+            "Project Longitude",
+            DefaultValue=0.0,
+            Min=-180.0,
+            Max=180.0,
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default project longitude (0.0)",
+            ToolTipText="Project longitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+        )
+        self.weather_data_year = self.ParameterDict["Weather Data Year"] = intParameter(
+            "Weather Data Year",
+            DefaultValue=2024,
+            AllowableRange=list(range(1900, 10_001)),
+            Required=False,
+            UnitType=Units.NONE,
+            ErrMessage="assume default weather data year (2024)",
+            ToolTipText="Historical weather year to request when project latitude and longitude are provided.",
+        )
         self.plant_lifetime = self.ParameterDict[self.plant_lifetime.Name] = intParameter(
             "Plant Lifetime",
             DefaultValue=30,
