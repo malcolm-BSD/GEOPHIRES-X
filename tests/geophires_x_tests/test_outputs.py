@@ -21,10 +21,10 @@ class OutputsTestCase(BaseTestCase):
         self._output_artifacts: set[Path] = set()
 
     def tearDown(self) -> None:
-        test_dir = Path(__file__).resolve().parent
+        repo_root = Path(__file__).resolve().parents[2]
         for artifact_path in sorted(self._output_artifacts, key=lambda path: len(path.parts), reverse=True):
             artifact_path = artifact_path.resolve()
-            if not artifact_path.is_relative_to(test_dir):
+            if not artifact_path.is_relative_to(repo_root):
                 continue
             if artifact_path.exists() and artifact_path.is_file():
                 artifact_path.unlink()
@@ -58,6 +58,12 @@ class OutputsTestCase(BaseTestCase):
             f"{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
         )
         return self._register_output_artifact(Path(html_output_path.parent, f"{file_stem}.png"))
+
+    def _legacy_example_graph_path(self, file_stem: str, title: str) -> Path:
+        graph_stem = (
+            f"{removeDisallowedFilenameChars(file_stem)}_{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
+        )
+        return self._register_output_artifact(Path.cwd() / f"{graph_stem}.png")
 
     def test_html_output_file(self):
         html_path = self._output_artifact_path("example12_DH.html")
@@ -925,8 +931,25 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: Runtime Fraction and Pumping Power",
         ]
         graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
+        legacy_graph_paths = [
+            self._legacy_example_graph_path("example1_dispatchable_full_scale", title) for title in graph_titles
+        ]
+        legacy_artifact_paths = [
+            self._register_output_artifact(Path.cwd() / "example1_dispatchable_full_scale_text.out"),
+            self._register_output_artifact(Path.cwd() / "example1_dispatchable_full_scale_dispatch_profile.csv"),
+            self._register_output_artifact(
+                Path(__file__).resolve().parents[1] / "example1_dispatchable_full_scale.out"
+            ),
+            *legacy_graph_paths,
+        ]
 
-        for artifact_path in [text_output_path, html_output_path, dispatch_profile_path, *graph_paths]:
+        for artifact_path in [
+            text_output_path,
+            html_output_path,
+            dispatch_profile_path,
+            *graph_paths,
+            *legacy_artifact_paths,
+        ]:
             if artifact_path.exists():
                 artifact_path.unlink()
 
@@ -990,8 +1013,23 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: TESS Losses and Curtailment",
         ]
         graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
+        legacy_graph_paths = [
+            self._legacy_example_graph_path("example1_dispatchable_tess", title) for title in graph_titles
+        ]
+        legacy_artifact_paths = [
+            self._register_output_artifact(Path.cwd() / "example1_dispatchable_tess_text.out"),
+            self._register_output_artifact(Path.cwd() / "example1_dispatchable_tess_dispatch_profile.csv"),
+            self._register_output_artifact(Path(__file__).resolve().parents[1] / "example1_dispatchable_tess.out"),
+            *legacy_graph_paths,
+        ]
 
-        for artifact_path in [text_output_path, html_output_path, dispatch_profile_path, *graph_paths]:
+        for artifact_path in [
+            text_output_path,
+            html_output_path,
+            dispatch_profile_path,
+            *graph_paths,
+            *legacy_artifact_paths,
+        ]:
             if artifact_path.exists():
                 artifact_path.unlink()
 
