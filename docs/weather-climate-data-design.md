@@ -135,12 +135,69 @@ timeouts
 GEOPHIRES-X does not retry permanent request errors such as invalid
 coordinates, invalid years, malformed requests, or unsupported required data.
 
+## Historical Weather Cache
+
+GEOPHIRES-X caches downloaded historical weather data because historical annual
+profiles are treated as immutable for modeling purposes. A successful download
+for a project location and weather year is reused by later runs, including
+Monte Carlo and other repeated simulation series.
+
+Cache lookup occurs after input validation and before any network request:
+
+```text
+Validate Project Latitude, Project Longitude, and Weather Data Year
+Build cache key from Open-Meteo source URL, rounded latitude, rounded longitude,
+    weather year, schema version, and 8760-hour normalization convention
+If cache file exists and is readable:
+    load normalized weather data from cache
+    skip Open-Meteo request
+else:
+    request data from Open-Meteo
+    normalize to 8760 rows
+    atomically write normalized data to cache
+```
+
+The default cache location is:
+
+```text
+./weather_data_cache/
+```
+
+The cache location can be overridden with:
+
+```text
+GEOPHIRES_X_WEATHER_CACHE_DIR
+```
+
+Latitude and longitude are rounded to six decimal places for cache keys. This
+keeps equivalent coordinate values stable across minor floating-point
+representation differences while preserving sub-meter location specificity.
+
+Cached files contain:
+
+- cache schema version;
+- Open-Meteo source URL;
+- project latitude and longitude;
+- weather year;
+- Open-Meteo hourly unit metadata;
+- normalized 8760-row hourly weather data.
+
+Cache writes use a temporary file followed by an atomic replace so interrupted
+runs do not leave partially written cache files in normal operation. If a cache
+file is unreadable, GEOPHIRES-X emits a warning, ignores that file, and attempts
+a fresh Open-Meteo request. Cache write failures do not fail the simulation;
+they only prevent reuse by later runs.
+
 ## Offline Fallback
 
 If both project coordinates are provided but Open-Meteo cannot be reached
 because the machine has no network access, the request times out, or the
 service returns only transient failures, GEOPHIRES-X continues as if project
 coordinates had not been provided.
+
+If a valid cache entry already exists for the requested location and year,
+GEOPHIRES-X uses that cached weather data and does not require network access.
+The offline fallback below applies only when no valid cache entry is available.
 
 In that fallback case:
 

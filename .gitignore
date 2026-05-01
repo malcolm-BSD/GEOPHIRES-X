@@ -37,6 +37,7 @@ requirements_2025-08-11.txt
 .build
 .cache
 .eggs
+weather_data_cache/
 
 .env
 *.env

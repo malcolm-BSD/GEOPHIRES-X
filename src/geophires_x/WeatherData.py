@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import calendar
+import hashlib
+import io
+import json
+import os
 import time
 import warnings
 from dataclasses import dataclass
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
@@ -23,6 +28,10 @@ DEFAULT_BACKOFF_SECONDS = 1.0
 EXPECTED_HOURLY_ROWS = 8760
 LEAP_YEAR_HOURLY_ROWS = 8784
 TRANSIENT_STATUS_CODES = {429, 500, 502, 503, 504}
+WEATHER_CACHE_SCHEMA_VERSION = 1
+WEATHER_CACHE_LOCATION_DECIMAL_PLACES = 6
+WEATHER_CACHE_ENV_VAR = "GEOPHIRES_X_WEATHER_CACHE_DIR"
+DEFAULT_WEATHER_CACHE_DIR = Path("weather_data_cache")
 
 REQUIRED_HOURLY_VARIABLES = [
     "temperature_2m",
@@ -98,9 +107,19 @@ def fetch_open_meteo_weather(
     backoff_seconds: float = DEFAULT_BACKOFF_SECONDS,
     session: Any | None = None,
     sleep: Callable[[float], None] = time.sleep,
+    cache_dir: str | Path | None = None,
+    use_cache: bool | None = None,
 ) -> WeatherData:
     """Fetch and normalize one year of hourly weather data from Open-Meteo."""
     _validate_request_inputs(latitude, longitude, year, timeout_seconds, max_retries, backoff_seconds)
+
+    if use_cache is None:
+        use_cache = session is None or cache_dir is not None
+    weather_cache_path = _weather_cache_path(latitude, longitude, year, cache_dir) if use_cache else None
+    if weather_cache_path is not None:
+        cached_weather_data = _read_cached_weather_data(weather_cache_path)
+        if cached_weather_data is not None:
+            return cached_weather_data
 
     http_session = session or requests.Session()
     try:
@@ -136,13 +155,17 @@ def fetch_open_meteo_weather(
         )
 
     hourly_data, hourly_units = _weather_data_from_response(response_json, year)
-    return WeatherData(
+    weather_data = WeatherData(
         latitude=float(latitude),
         longitude=float(longitude),
         year=int(year),
         hourly_data=hourly_data,
         hourly_units=hourly_units,
     )
+    if weather_cache_path is not None:
+        _write_cached_weather_data(weather_cache_path, weather_data)
+
+    return weather_data
 
 
 def _validate_request_inputs(
@@ -229,6 +252,100 @@ def _latest_open_meteo_complete_historical_year(today: date | None = None) -> in
     if latest_available_date < date(latest_available_date.year, 12, 31):
         return latest_available_date.year - 1
     return latest_available_date.year
+
+
+def _weather_cache_path(latitude: float, longitude: float, year: int, cache_dir: str | Path | None = None) -> Path:
+    rounded_latitude = round(float(latitude), WEATHER_CACHE_LOCATION_DECIMAL_PLACES)
+    rounded_longitude = round(float(longitude), WEATHER_CACHE_LOCATION_DECIMAL_PLACES)
+    cache_key = {
+        "schema_version": WEATHER_CACHE_SCHEMA_VERSION,
+        "source": OPEN_METEO_ARCHIVE_URL,
+        "latitude": rounded_latitude,
+        "longitude": rounded_longitude,
+        "year": int(year),
+        "normalization": "8760-hour",
+    }
+    cache_key_json = json.dumps(cache_key, sort_keys=True, separators=(",", ":"))
+    cache_key_hash = hashlib.sha256(cache_key_json.encode("utf-8")).hexdigest()[:16]
+    file_name = f"open_meteo_{int(year)}_{rounded_latitude:.6f}_{rounded_longitude:.6f}_{cache_key_hash}.json"
+    return _weather_cache_dir(cache_dir) / file_name
+
+
+def _weather_cache_dir(cache_dir: str | Path | None = None) -> Path:
+    if cache_dir is not None:
+        return Path(cache_dir).expanduser()
+
+    configured_cache_dir = os.environ.get(WEATHER_CACHE_ENV_VAR)
+    if configured_cache_dir:
+        return Path(configured_cache_dir).expanduser()
+
+    return DEFAULT_WEATHER_CACHE_DIR
+
+
+def _read_cached_weather_data(cache_path: Path) -> WeatherData | None:
+    if not cache_path.exists():
+        return None
+
+    try:
+        with cache_path.open("r", encoding="utf-8") as cache_file:
+            payload = json.load(cache_file)
+
+        if payload.get("schema_version") != WEATHER_CACHE_SCHEMA_VERSION:
+            return None
+        if payload.get("source") != OPEN_METEO_ARCHIVE_URL:
+            return None
+
+        hourly_data = pd.read_json(io.StringIO(payload["hourly_data"]), orient="split")
+        hourly_data["time"] = pd.to_datetime(hourly_data["time"])
+        _validate_cached_hourly_data(hourly_data)
+        return WeatherData(
+            latitude=float(payload["latitude"]),
+            longitude=float(payload["longitude"]),
+            year=int(payload["year"]),
+            hourly_data=hourly_data,
+            hourly_units=dict(payload.get("hourly_units", {})),
+        )
+    except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as error:
+        warnings.warn(
+            f"Ignoring unreadable weather cache file {cache_path}: {error}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return None
+
+
+def _validate_cached_hourly_data(hourly_data: pd.DataFrame) -> None:
+    if len(hourly_data) != EXPECTED_HOURLY_ROWS:
+        raise ValueError(f"cached weather data must contain {EXPECTED_HOURLY_ROWS} rows")
+
+    missing_columns = [variable for variable in ["time", *REQUIRED_HOURLY_VARIABLES] if variable not in hourly_data]
+    if missing_columns:
+        raise ValueError(f"cached weather data is missing columns: {', '.join(missing_columns)}")
+
+
+def _write_cached_weather_data(cache_path: Path, weather_data: WeatherData) -> None:
+    payload = {
+        "schema_version": WEATHER_CACHE_SCHEMA_VERSION,
+        "source": OPEN_METEO_ARCHIVE_URL,
+        "latitude": float(weather_data.latitude),
+        "longitude": float(weather_data.longitude),
+        "year": int(weather_data.year),
+        "hourly_units": weather_data.hourly_units,
+        "hourly_data": weather_data.hourly_data.to_json(orient="split", date_format="iso"),
+    }
+
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_cache_path = cache_path.with_name(f"{cache_path.name}.{os.getpid()}.tmp")
+        with temp_cache_path.open("w", encoding="utf-8") as cache_file:
+            json.dump(payload, cache_file, sort_keys=True)
+        temp_cache_path.replace(cache_path)
+    except OSError as error:
+        warnings.warn(
+            f"Unable to write weather cache file {cache_path}: {error}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
 
 def _response_json(response: Any) -> dict[str, Any]:

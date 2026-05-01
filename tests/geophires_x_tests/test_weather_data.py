@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
 import unittest
 from datetime import date
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import requests
@@ -97,6 +100,108 @@ class WeatherDataTestCase(unittest.TestCase):
         self.assertEqual("auto", call["params"]["timezone"])
         self.assertEqual(EXPECTED_HOURLY_ROWS, len(weather_data.hourly()))
         self.assertEqual("degC", weather_data.hourly_units["temperature_2m"])
+
+    def test_cache_hit_skips_open_meteo_request(self):
+        with TemporaryDirectory() as cache_dir:
+            first_session = FakeSession([FakeResponse(200, _weather_payload())])
+            first_weather_data = fetch_open_meteo_weather(
+                39.7392,
+                -104.9903,
+                year=2024,
+                session=first_session,
+                sleep=lambda _: None,
+                cache_dir=cache_dir,
+            )
+            second_session = FakeSession([])
+
+            second_weather_data = fetch_open_meteo_weather(
+                39.7392,
+                -104.9903,
+                year=2024,
+                session=second_session,
+                sleep=lambda _: None,
+                cache_dir=cache_dir,
+            )
+
+        self.assertEqual(1, len(first_session.calls))
+        self.assertEqual(0, len(second_session.calls))
+        self.assertEqual(first_weather_data.hourly_units, second_weather_data.hourly_units)
+        self.assertEqual(EXPECTED_HOURLY_ROWS, len(second_weather_data.hourly()))
+        self.assertEqual(0.0, second_weather_data.hourly()["temperature_2m"].iloc[0])
+
+    def test_cache_key_rounds_location_to_six_decimal_places(self):
+        with TemporaryDirectory() as cache_dir:
+            first_session = FakeSession([FakeResponse(200, _weather_payload())])
+            fetch_open_meteo_weather(
+                39.7392001,
+                -104.9903001,
+                year=2024,
+                session=first_session,
+                sleep=lambda _: None,
+                cache_dir=cache_dir,
+            )
+            second_session = FakeSession([])
+
+            fetch_open_meteo_weather(
+                39.7392002,
+                -104.9903002,
+                year=2024,
+                session=second_session,
+                sleep=lambda _: None,
+                cache_dir=cache_dir,
+            )
+
+        self.assertEqual(1, len(first_session.calls))
+        self.assertEqual(0, len(second_session.calls))
+
+    def test_unreadable_cache_file_warns_and_refetches(self):
+        with TemporaryDirectory() as cache_dir:
+            first_session = FakeSession([FakeResponse(200, _weather_payload())])
+            fetch_open_meteo_weather(
+                39.7392,
+                -104.9903,
+                year=2024,
+                session=first_session,
+                sleep=lambda _: None,
+                cache_dir=cache_dir,
+            )
+            for cache_file in Path(cache_dir).glob("*.json"):
+                cache_file.write_text("not json", encoding="utf-8")
+
+            second_session = FakeSession([FakeResponse(200, _weather_payload())])
+            with self.assertWarnsRegex(RuntimeWarning, "Ignoring unreadable weather cache file"):
+                fetch_open_meteo_weather(
+                    39.7392,
+                    -104.9903,
+                    year=2024,
+                    session=second_session,
+                    sleep=lambda _: None,
+                    cache_dir=cache_dir,
+                )
+
+        self.assertEqual(1, len(second_session.calls))
+
+    def test_default_cache_directory_is_weather_data_cache(self):
+        original_cwd = Path.cwd()
+        with TemporaryDirectory() as run_dir:
+            os.chdir(run_dir)
+            try:
+                session = FakeSession([FakeResponse(200, _weather_payload())])
+                fetch_open_meteo_weather(
+                    39.7392,
+                    -104.9903,
+                    year=2024,
+                    session=session,
+                    sleep=lambda _: None,
+                    use_cache=True,
+                )
+            finally:
+                os.chdir(original_cwd)
+
+            cache_files = list((Path(run_dir) / "weather_data_cache").glob("*.json"))
+
+        self.assertEqual(1, len(session.calls))
+        self.assertEqual(1, len(cache_files))
 
     def test_missing_required_variable_raises(self):
         payload = _weather_payload()
