@@ -33,6 +33,7 @@ class Outputs:
     """
 
     VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
+    WEATHER_DATA_RESULTS_CATEGORY_NAME = 'WEATHER DATA RESULTS'
     TESS_RESULTS_CATEGORY_NAME = 'THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS'
     DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
 
@@ -324,6 +325,7 @@ class Outputs:
                             f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
                             f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
 
+                self._write_weather_data_results(model, f)
                 self._write_tess_results(model, f)
                 self._write_dispatch_results(model, f)
 
@@ -1066,6 +1068,40 @@ class Outputs:
     @staticmethod
     def _field_label(field_name: str, print_width_before_value: int) -> str:
         return f'{field_name}:{" " * (print_width_before_value - len(field_name) - 1)}'
+
+    @staticmethod
+    def _weather_output_rows(model: Model) -> list[tuple[str, str | float, str | None]]:
+        weather_data = getattr(model, 'weather_data', None)
+        if weather_data is None:
+            return []
+
+        hourly_data = weather_data.hourly_data
+        temperature_units = weather_data.hourly_units.get('temperature_2m', 'degC')
+        hourly_temperature = hourly_data['temperature_2m']
+        return [
+            ('Weather data source', 'Open-Meteo Historical Weather API', None),
+            ('Weather data year', float(weather_data.year), 'year'),
+            ('Project latitude', float(weather_data.latitude), 'deg'),
+            ('Project longitude', float(weather_data.longitude), 'deg'),
+            ('Annual average temperature', float(hourly_temperature.mean()), temperature_units),
+            ('Minimum hourly temperature', float(hourly_temperature.min()), temperature_units),
+            ('Maximum hourly temperature', float(hourly_temperature.max()), temperature_units),
+        ]
+
+    def _write_weather_data_results(self, model: Model, f) -> None:
+        weather_rows = self._weather_output_rows(model)
+        if len(weather_rows) == 0:
+            return
+
+        f.write(NL)
+        f.write(NL)
+        f.write(f'                           ***{self.WEATHER_DATA_RESULTS_CATEGORY_NAME}***\n')
+        f.write(NL)
+        for field_name, value, units in weather_rows:
+            if isinstance(value, str):
+                f.write(f'      {self._field_label(field_name, 49)}{value}\n')
+            else:
+                f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
 
     @staticmethod
     def _dispatch_output_rows(model: Model) -> list[tuple[str, float, str]]:

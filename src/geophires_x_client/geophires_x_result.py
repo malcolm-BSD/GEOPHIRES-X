@@ -425,6 +425,15 @@ class GeophiresXResult:
                 "Geothermal peak reduction ratio",
                 "Geothermal variability reduction ratio",
             ],
+            "WEATHER DATA RESULTS": [
+                _StringValueField("Weather data source"),
+                "Weather data year",
+                "Project latitude",
+                "Project longitude",
+                "Annual average temperature",
+                "Minimum hourly temperature",
+                "Maximum hourly temperature",
+            ],
             "DISPATCH RESULTS": [
                 "Dispatch analysis start year",
                 "Dispatch analysis end year",

@@ -4,9 +4,13 @@ import sys
 from csv import DictReader
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 from geophires_x.Model import Model
 from geophires_x.OutputsRich import removeDisallowedFilenameChars
 from geophires_x.Parameter import ParameterEntry
+from geophires_x.WeatherData import WeatherData
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
 from geophires_x_client.geophires_x_result import GeophiresXResult
@@ -64,6 +68,22 @@ class OutputsTestCase(BaseTestCase):
             f"{removeDisallowedFilenameChars(file_stem)}_{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
         )
         return self._register_output_artifact(Path.cwd() / f"{graph_stem}.png")
+
+    @staticmethod
+    def _weather_data() -> WeatherData:
+        hourly_temperature = np.linspace(5.0, 25.0, 8760)
+        return WeatherData(
+            latitude=39.7392,
+            longitude=-104.9903,
+            year=2024,
+            hourly_data=pd.DataFrame(
+                {
+                    "time": pd.date_range("2024-01-01", periods=8760, freq="h"),
+                    "temperature_2m": hourly_temperature,
+                }
+            ),
+            hourly_units={"temperature_2m": "degC"},
+        )
 
     def test_html_output_file(self):
         html_path = self._output_artifact_path("example12_DH.html")
@@ -260,6 +280,36 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Annual geothermal heat delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
         self.assertEqual("MW", dispatch_results["Peak hourly demand"]["unit"])
+
+    def test_weather_data_results_are_written_and_parseable(self) -> None:
+        output_path = self._output_artifact_path("weather_data_results_test.out")
+
+        model = self._new_model(input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example1.txt"))
+        model.InputParameters.update(
+            {
+                "Plant Lifetime": ParameterEntry(Name="Plant Lifetime", sValue="1"),
+            }
+        )
+        model.read_parameters()
+        model.weather_data = self._weather_data()
+        model.Calculate()
+        model.outputs.output_file = str(output_path)
+        model.outputs.PrintOutputs(model)
+
+        with open(output_path, encoding="UTF-8") as f:
+            output_text = f.read()
+        self.assertIn("***WEATHER DATA RESULTS***", output_text)
+
+        result = GeophiresXResult(str(output_path))
+        weather_results = result.result["WEATHER DATA RESULTS"]
+        self.assertEqual("Open-Meteo Historical Weather API", weather_results["Weather data source"]["value"])
+        self.assertEqual(2024.0, weather_results["Weather data year"]["value"])
+        self.assertEqual("year", weather_results["Weather data year"]["unit"])
+        self.assertAlmostEqual(39.74, weather_results["Project latitude"]["value"], places=2)
+        self.assertAlmostEqual(-104.99, weather_results["Project longitude"]["value"], places=2)
+        self.assertAlmostEqual(15.0, weather_results["Annual average temperature"]["value"], places=2)
+        self.assertAlmostEqual(5.0, weather_results["Minimum hourly temperature"]["value"], places=2)
+        self.assertAlmostEqual(25.0, weather_results["Maximum hourly temperature"]["value"], places=2)
 
     def test_tess_dispatch_outputs_are_written_and_parseable(self) -> None:
         """Verify enabled TESS dispatch text rows and CSV columns are emitted."""

@@ -492,9 +492,11 @@ Document the new input parameters and behavior:
 - how ambient and surface defaults are set;
 - which operating modes use hourly weather immediately.
 
-Consider adding a small weather summary section to output reports:
+Output reports include a small weather summary section whenever weather data is
+active:
 
 ```text
+***WEATHER DATA RESULTS***
 Weather data source
 Weather data year
 Project latitude
@@ -504,8 +506,10 @@ Minimum hourly temperature
 Maximum hourly temperature
 ```
 
-This report section is optional for the first implementation, but useful for
-auditability.
+The section is omitted when weather data is inactive or when the offline
+fallback continues without downloaded data. The client text-output parser should
+also expose this section so automated workflows can audit which weather year and
+temperature profile were used.
 
 ## Unit Tests
 
