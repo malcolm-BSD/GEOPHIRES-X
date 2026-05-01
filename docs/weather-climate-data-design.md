@@ -515,9 +515,9 @@ Weather data source
 Weather data year
 Project latitude
 Project longitude
-Annual average temperature
-Minimum hourly temperature
-Maximum hourly temperature
+Annual average temperature (from Open-Meteo)
+Minimum hourly temperature (from Open-Meteo)
+Maximum hourly temperature (from Open-Meteo)
 ```
 
 The section is omitted when weather data is inactive or when the offline

@@ -307,9 +307,9 @@ class OutputsTestCase(BaseTestCase):
         self.assertEqual("year", weather_results["Weather data year"]["unit"])
         self.assertAlmostEqual(39.74, weather_results["Project latitude"]["value"], places=2)
         self.assertAlmostEqual(-104.99, weather_results["Project longitude"]["value"], places=2)
-        self.assertAlmostEqual(15.0, weather_results["Annual average temperature"]["value"], places=2)
-        self.assertAlmostEqual(5.0, weather_results["Minimum hourly temperature"]["value"], places=2)
-        self.assertAlmostEqual(25.0, weather_results["Maximum hourly temperature"]["value"], places=2)
+        self.assertAlmostEqual(15.0, weather_results["Annual average temperature (from Open-Meteo)"]["value"], places=2)
+        self.assertAlmostEqual(5.0, weather_results["Minimum hourly temperature (from Open-Meteo)"]["value"], places=2)
+        self.assertAlmostEqual(25.0, weather_results["Maximum hourly temperature (from Open-Meteo)"]["value"], places=2)
 
     def test_tess_dispatch_outputs_are_written_and_parseable(self) -> None:
         """Verify enabled TESS dispatch text rows and CSV columns are emitted."""

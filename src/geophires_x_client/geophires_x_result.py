@@ -430,9 +430,9 @@ class GeophiresXResult:
                 "Weather data year",
                 "Project latitude",
                 "Project longitude",
-                "Annual average temperature",
-                "Minimum hourly temperature",
-                "Maximum hourly temperature",
+                "Annual average temperature (from Open-Meteo)",
+                "Minimum hourly temperature (from Open-Meteo)",
+                "Maximum hourly temperature (from Open-Meteo)",
             ],
             "DISPATCH RESULTS": [
                 "Dispatch analysis start year",

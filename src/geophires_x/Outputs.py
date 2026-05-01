@@ -1083,9 +1083,9 @@ class Outputs:
             ('Weather data year', float(weather_data.year), 'year'),
             ('Project latitude', float(weather_data.latitude), 'deg'),
             ('Project longitude', float(weather_data.longitude), 'deg'),
-            ('Annual average temperature', float(hourly_temperature.mean()), temperature_units),
-            ('Minimum hourly temperature', float(hourly_temperature.min()), temperature_units),
-            ('Maximum hourly temperature', float(hourly_temperature.max()), temperature_units),
+            ('Annual average temperature (from Open-Meteo)', float(hourly_temperature.mean()), temperature_units),
+            ('Minimum hourly temperature (from Open-Meteo)', float(hourly_temperature.min()), temperature_units),
+            ('Maximum hourly temperature (from Open-Meteo)', float(hourly_temperature.max()), temperature_units),
         ]
 
     def _write_weather_data_results(self, model: Model, f) -> None:
