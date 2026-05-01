@@ -206,6 +206,7 @@ def _dispatch_surfaceplant_mode(model: "Model") -> str:
 
 
 def dispatch_ambient_temperature(model: "Model", timestep_index: int | None = None) -> float:
+    """Return scalar or weather-profile ambient temperature for a dispatch timestep."""
     weather_data = getattr(model, "weather_data", None)
     fallback_temperature = float(model.surfaceplant.ambient_temperature.value)
     if weather_data is None:

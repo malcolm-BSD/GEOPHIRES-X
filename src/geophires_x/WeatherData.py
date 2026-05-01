@@ -1,3 +1,5 @@
+"""Fetch, normalize, and aggregate Open-Meteo weather data."""
+
 from __future__ import annotations
 
 import calendar
@@ -51,6 +53,8 @@ class OpenMeteoNetworkError(OpenMeteoWeatherError):
 
 @dataclass
 class WeatherData:
+    """Normalized hourly Open-Meteo weather data for one project location."""
+
     latitude: float
     longitude: float
     year: int
@@ -58,22 +62,27 @@ class WeatherData:
     hourly_units: dict[str, str]
 
     def hourly(self) -> pd.DataFrame:
+        """Return a copy of the normalized 8760-row hourly weather data."""
         return self.hourly_data.copy()
 
     def daily_average(self) -> pd.DataFrame:
+        """Return calendar-day mean values from normalized hourly weather data."""
         values = self._numeric_hourly_data()
         return values.groupby(self.hourly_data["time"].dt.date).mean()
 
     def weekly_average(self) -> pd.DataFrame:
+        """Return ISO-week mean values from normalized hourly weather data."""
         values = self._numeric_hourly_data()
         iso_calendar = self.hourly_data["time"].dt.isocalendar()
         return values.groupby([iso_calendar["year"], iso_calendar["week"]]).mean()
 
     def monthly_average(self) -> pd.DataFrame:
+        """Return calendar-month mean values from normalized hourly weather data."""
         values = self._numeric_hourly_data()
         return values.groupby(self.hourly_data["time"].dt.to_period("M")).mean()
 
     def annual_average(self) -> pd.Series:
+        """Return annual mean values from normalized hourly weather data."""
         return self._numeric_hourly_data().mean()
 
     def _numeric_hourly_data(self) -> pd.DataFrame:
