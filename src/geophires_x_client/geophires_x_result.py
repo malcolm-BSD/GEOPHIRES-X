@@ -426,10 +426,6 @@ class GeophiresXResult:
                 "Geothermal variability reduction ratio",
             ],
             "WEATHER DATA RESULTS": [
-                _StringValueField("Weather data source"),
-                "Weather data year",
-                "Project latitude",
-                "Project longitude",
                 "Annual average temperature (from Open-Meteo)",
                 "Minimum hourly temperature (from Open-Meteo)",
                 "Maximum hourly temperature (from Open-Meteo)",

@@ -302,11 +302,10 @@ class OutputsTestCase(BaseTestCase):
 
         result = GeophiresXResult(str(output_path))
         weather_results = result.result["WEATHER DATA RESULTS"]
-        self.assertEqual("Open-Meteo Historical Weather API", weather_results["Weather data source"]["value"])
-        self.assertEqual(2024.0, weather_results["Weather data year"]["value"])
-        self.assertEqual("year", weather_results["Weather data year"]["unit"])
-        self.assertAlmostEqual(39.74, weather_results["Project latitude"]["value"], places=2)
-        self.assertAlmostEqual(-104.99, weather_results["Project longitude"]["value"], places=2)
+        self.assertNotIn("Weather data source", weather_results)
+        self.assertNotIn("Weather data year", weather_results)
+        self.assertNotIn("Project latitude", weather_results)
+        self.assertNotIn("Project longitude", weather_results)
         self.assertAlmostEqual(15.0, weather_results["Annual average temperature (from Open-Meteo)"]["value"], places=2)
         self.assertAlmostEqual(5.0, weather_results["Minimum hourly temperature (from Open-Meteo)"]["value"], places=2)
         self.assertAlmostEqual(25.0, weather_results["Maximum hourly temperature (from Open-Meteo)"]["value"], places=2)

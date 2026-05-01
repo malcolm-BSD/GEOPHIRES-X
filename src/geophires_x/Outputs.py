@@ -1079,10 +1079,6 @@ class Outputs:
         temperature_units = weather_data.hourly_units.get('temperature_2m', 'degC')
         hourly_temperature = hourly_data['temperature_2m']
         return [
-            ('Weather data source', 'Open-Meteo Historical Weather API', None),
-            ('Weather data year', float(weather_data.year), 'year'),
-            ('Project latitude', float(weather_data.latitude), 'deg'),
-            ('Project longitude', float(weather_data.longitude), 'deg'),
             ('Annual average temperature (from Open-Meteo)', float(hourly_temperature.mean()), temperature_units),
             ('Minimum hourly temperature (from Open-Meteo)', float(hourly_temperature.min()), temperature_units),
             ('Maximum hourly temperature (from Open-Meteo)', float(hourly_temperature.max()), temperature_units),
