@@ -142,6 +142,7 @@
         "Number of production wells": {},
         "Number of injection wells": {},
         "Flowrate per production well": {},
+        "Maximum Flowrate per production well": {},
         "Well depth": {},
         "Well depth (or total length, if not vertical)": {},
         "Geothermal gradient": {},
@@ -1023,6 +1024,39 @@
             }
           },
           "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Dispatch Profile": {
+      "type": "object",
+      "description": "Hourly dispatch profile emitted for dispatch runs.",
+      "required": [
+        "schema_version",
+        "columns",
+        "rows"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
         }
       },
       "additionalProperties": false

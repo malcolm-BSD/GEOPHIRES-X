@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from geophires_x.Dispatch import build_dispatch_summary_json
+from geophires_x.DispatchReporting import build_dispatch_profile_json
 import geophires_x.Model as Model
 import geophires_x.OptionList as OptionList
 
@@ -79,6 +80,9 @@ def main(enable_geophires_logging_config=True):
     dispatch_summary = build_dispatch_summary_json(model)
     if dispatch_summary is not None:
         json_merged["Dispatch Summary"] = dispatch_summary
+    dispatch_profile = build_dispatch_profile_json(model)
+    if dispatch_profile is not None:
+        json_merged["Dispatch Profile"] = dispatch_profile
 
     json_outputfile = default_outputfile.with_suffix('.json')
     if len(sys.argv) > 2:

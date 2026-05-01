@@ -147,6 +147,10 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "VALCOC Flexibility Adjustment",
             result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
         )
+        self.assertIn(
+            "Maximum Flowrate per production well",
+            result_schema["properties"]["SUMMARY OF RESULTS"]["properties"],
+        )
         self.assertEqual(
             ["thermal", "cooling", "electric"],
             get_result_prop("Dispatch Summary", "demand_type")["enum"],
@@ -154,6 +158,11 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIn(
             "analysis_window",
             result_schema["properties"]["Dispatch Summary"]["required"],
+        )
+        self.assertIn("Dispatch Profile", result_schema["properties"])
+        self.assertEqual(
+            ["schema_version", "columns", "rows"],
+            result_schema["properties"]["Dispatch Profile"]["required"],
         )
 
 

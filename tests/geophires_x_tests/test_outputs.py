@@ -315,6 +315,7 @@ class OutputsTestCase(BaseTestCase):
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
         output_path = self._output_artifact_path("dispatch_results_tess_test.out")
+        text_output_path = self._output_artifact_path("dispatch_results_tess_test.rtf")
         dispatch_profile_path = self._output_artifact_path("dispatch_results_tess_profile.csv")
         html_output_path = self._output_artifact_path("dispatch_results_tess_test.html")
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
@@ -327,7 +328,7 @@ class OutputsTestCase(BaseTestCase):
             "DISPATCH PROFILE: TESS Losses and Curtailment",
         ]
         graph_paths = [self._dispatch_graph_path(html_output_path, title) for title in graph_titles]
-        for artifact_path in [output_path, dispatch_profile_path, html_output_path, *graph_paths]:
+        for artifact_path in [output_path, text_output_path, dispatch_profile_path, html_output_path, *graph_paths]:
             if artifact_path.exists():
                 artifact_path.unlink()
 
@@ -349,16 +350,56 @@ class OutputsTestCase(BaseTestCase):
             "Dispatch Profile Output File": ParameterEntry(
                 Name="Dispatch Profile Output File", sValue=str(dispatch_profile_path)
             ),
+            "Improved Text Output File": ParameterEntry(Name="Improved Text Output File", sValue=str(text_output_path)),
             "HTML Output File": ParameterEntry(Name="HTML Output File", sValue=str(html_output_path)),
             "Generate Dispatch HTML Graphs": ParameterEntry(Name="Generate Dispatch HTML Graphs", sValue="1"),
         }
 
         model.read_parameters()
+        model.weather_data = self._weather_data()
         model.Calculate()
         model.outputs.output_file = str(output_path)
         model.outputs.PrintOutputs(model)
 
+        with open(output_path, encoding="UTF-8") as f:
+            output_text = f.read()
+
+        self.assertIn("***WEATHER DATA RESULTS***", output_text)
+        self.assertIn("***THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS***", output_text)
+        self.assertIn("***DISPATCH RESULTS***", output_text)
+        self.assertIn("*  DISPATCH PROFILE  *", output_text)
+        self.assertIn("Maximum Flowrate per production well", output_text)
+        self.assertIn("Average Pumping Power", output_text)
+        self.assertNotIn("Average Direct-Use Heat Production", output_text)
+        self.assertNotIn("Direct-Use heat breakeven price", output_text)
+        summary_text = output_text.split("***SUMMARY OF RESULTS***", 1)[1].split("***WEATHER DATA RESULTS***", 1)[0]
+        self.assertNotRegex(summary_text, r"\n\s+Flowrate per production well:")
+        self.assertNotIn("***RESERVOIR SIMULATION RESULTS***", output_text)
+        self.assertNotIn("Maximum Net Heat Production", output_text)
+        self.assertNotIn("Average Net Heat Production", output_text)
+        self.assertNotIn("Minimum Net Heat Production", output_text)
+        self.assertNotIn("Initial Net Heat Production", output_text)
+        self.assertNotIn("Average Annual Heat Production", output_text)
+        self.assertNotIn("*  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *", output_text)
+        self.assertNotIn(
+            "*  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *",
+            output_text,
+        )
+
         result = GeophiresXResult(str(output_path))
+        summary = result.result["SUMMARY OF RESULTS"]
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertIsNone(summary["Flowrate per production well"])
+        self.assertAlmostEqual(
+            dispatch_results["Observed peak flow rate"]["value"],
+            summary["Maximum Flowrate per production well"]["value"],
+            places=1,
+        )
+        self.assertIn("DISPATCH PROFILE", result.result)
+        self.assertEqual(8761, len(result.result["DISPATCH PROFILE"]))
+        self.assertEqual("Year", result.result["DISPATCH PROFILE"][0][0])
+        self.assertEqual(8760, len(result.result["DISPATCH PROFILE"]) - 1)
+
         tess_results = result.result["THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS"]
         self.assertEqual(10000.0, tess_results["TESS volume"]["value"])
         self.assertEqual("m3", tess_results["TESS volume"]["unit"])
@@ -377,8 +418,20 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(float(rows[0]["TESS Stored Energy (MWh)"]), 0.0)
         for graph_path in graph_paths:
             self.assertTrue(graph_path.exists())
+
+        with open(text_output_path, encoding="ASCII") as f:
+            rtf_content = f.read()
+        self.assertIn("***WEATHER DATA RESULTS***", rtf_content)
+        self.assertIn("*  DISPATCH PROFILE  *", rtf_content)
+        self.assertNotIn("Average Direct-Use Heat Production", rtf_content)
+        self.assertNotIn("HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE", rtf_content)
+
         with open(html_output_path, encoding="UTF-8") as f:
             html_content = f.read()
+        self.assertIn("WEATHER DATA RESULTS", html_content)
+        self.assertIn("DISPATCH PROFILE", html_content)
+        self.assertNotIn("Average Direct-Use Heat Production", html_content)
+        self.assertNotIn("HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE", html_content)
         for graph_path in graph_paths:
             self.assertIn(f'<img src="{graph_path.name}"', html_content)
 

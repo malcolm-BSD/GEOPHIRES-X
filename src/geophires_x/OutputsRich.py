@@ -1,4 +1,5 @@
 import datetime
+import csv
 import io
 import string
 import time
@@ -14,6 +15,8 @@ from rich.console import Console
 from rich.table import Table
 
 import geophires_x
+from geophires_x.DispatchReporting import DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_table, is_dispatch_report, \
+    weather_output_rows
 from geophires_x import Model as Model
 from geophires_x.Economics import Economics
 
@@ -32,6 +35,47 @@ validFilenameChars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
 
 _GRAPH_FIGSIZE = (12, 6)
+
+
+def _filter_dispatch_summary(summary: list, model: Model) -> list:
+    allowed_parameters = {
+        'End-Use Option',
+        'Number of production wells',
+        'Number of injection wells',
+        VERTICAL_WELL_DEPTH_OUTPUT_NAME,
+        'Geothermal gradient',
+    }
+    filtered_summary = []
+    max_flowrate_inserted = False
+    maximum_flowrate = model.dispatch_results.summary_metrics.get('observed_peak_flow_kg_per_sec', 0.0)
+
+    for item in summary:
+        keep_segment_item = (
+            str(item.parameter).startswith('Segment ')
+            and ('Geothermal gradient' in str(item.parameter) or 'Thickness' in str(item.parameter))
+        )
+        if item.parameter in allowed_parameters or keep_segment_item:
+            filtered_summary.append(item)
+            if item.parameter == 'Number of injection wells':
+                filtered_summary.append(
+                    OutputTableItem(
+                        'Maximum Flowrate per production well',
+                        '{0:10.1f}'.format(maximum_flowrate),
+                        'kg/s',
+                    )
+                )
+                max_flowrate_inserted = True
+
+    if not max_flowrate_inserted:
+        filtered_summary.append(
+            OutputTableItem(
+                'Maximum Flowrate per production well',
+                '{0:10.1f}'.format(maximum_flowrate),
+                'kg/s',
+            )
+        )
+
+    return filtered_summary
 
 
 def _set_plot_xlim(ax, x: pd.array) -> None:
@@ -72,8 +116,11 @@ def print_outputs_rich(
     CAPEX = []
     OPEX = []
     surface_equipment_results = []
+    weather_results = []
     tess_results = []
     dispatch_results = []
+    dispatch_report = is_dispatch_report(model)
+    dispatch_profile_rows_table = dispatch_profile_table(model)
     # addon_results = []
 
     simulation_metadata.append(OutputTableItem('GEOPHIRES Version', geophires_x.__version__))
@@ -81,6 +128,12 @@ def print_outputs_rich(
     simulation_metadata.append(OutputTableItem('Simulation Time', datetime.datetime.now().strftime('%H:%M')))
     simulation_metadata.append(
         OutputTableItem('Calculation Time', '{0:10.3f}'.format((time.time() - model.tic)) + ' sec'))
+
+    if dispatch_report:
+        for field_name, value, units in weather_output_rows(model):
+            weather_results.append(
+                OutputTableItem(field_name, value if isinstance(value, str) else '{0:10.2f}'.format(value), units)
+            )
 
     summary.append(OutputTableItem('End-Use Option', model.surfaceplant.enduse_option.value.value))
 
@@ -299,6 +352,9 @@ def print_outputs_rich(
         summary.append(OutputTableItem('Total Avoided Carbon Emissions', '{0:10.2f}'.format(
             model.economics.CarbonThatWouldHaveBeenProducedTotal.value),
                                        model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value))
+
+    if dispatch_report:
+        summary = _filter_dispatch_summary(summary, model)
 
     if getattr(model, 'dispatch_results', None) is not None:
         dispatch_metrics = model.dispatch_results.summary_metrics
@@ -770,6 +826,8 @@ def print_outputs_rich(
                                                                      '{0:10.1f}'.format(np.average(
                                                                          model.wellbores.DPProdWell.value)),
                                                                      model.wellbores.DPProdWell.PreferredUnits.value))
+    if dispatch_report:
+        reservoir_stimulation_results = []
     if not model.economics.totalcapcost.Valid:
         CAPEX.append(
             OutputTableItem('Drilling and completion costs', '{0:10.2f}'.format(model.economics.Cwell.value),
@@ -986,6 +1044,15 @@ def print_outputs_rich(
         OutputTableItem('Average Pumping Power', '{0:10.2f}'.format(np.average(model.wellbores.PumpingPower.value)),
                         model.wellbores.PumpingPower.CurrentUnits.value))
 
+    if dispatch_report:
+        surface_equipment_results = [
+            OutputTableItem(
+                'Average Pumping Power',
+                '{0:10.2f}'.format(np.average(model.wellbores.PumpingPower.value)),
+                model.wellbores.PumpingPower.CurrentUnits.value,
+            )
+        ]
+
     # Build the data frame to hold the heating, cooling, and/or electricity production profile
     hce: pd.DataFrame = pd.DataFrame()
 
@@ -1153,6 +1220,10 @@ def print_outputs_rich(
         / model.reserv.InitialReservoirHeatContent.value
     ahce = ahce.reset_index()
 
+    if dispatch_report:
+        hce = pd.DataFrame()
+        ahce = pd.DataFrame()
+
     # Build the data frame to hold the revenue and cashflow profile
     econ: Economics = model.economics
     # create a Coam array and zero out the OPEX during construction years
@@ -1213,18 +1284,21 @@ def print_outputs_rich(
     if text_output_file.Provided:
         Write_RTF_Output(text_output_file.value, simulation_metadata, summary, economic_parameters,
                          engineering_parameters, resource_characteristics, reservoir_parameters,
-                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, tess_results, dispatch_results,
-                         sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
+                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, weather_results,
+                         tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results, hce,
+                         ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
     if html_output_file.Provided:
         Write_HTML_Output(html_output_file.value, simulation_metadata, summary, economic_parameters,
                           engineering_parameters, resource_characteristics, reservoir_parameters,
-                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, tess_results, dispatch_results,
-                          sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
+                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, weather_results,
+                          tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results, hce,
+                          ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
-        Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
-                              html_output_file.value, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
-                              addon_df)
+        if not dispatch_report:
+            Plot_Tables_Into_HTML(model.surfaceplant.enduse_option, model.surfaceplant.plant_type,
+                                  html_output_file.value, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
+                                  addon_df)
         if getattr(model.outputs, 'generate_dispatch_html_graphs', None) is not None and \
                 model.outputs.generate_dispatch_html_graphs.value and getattr(model, 'dispatch_results', None) is not None:
             Plot_Dispatch_Graphs_Into_HTML(model, html_output_file.value)
@@ -1320,12 +1394,33 @@ def Write_Complex_Text_table(title: str, df_table: pd.DataFrame, time_steps_per_
             f.write(f'{NL}')
 
 
+def _csv_table_to_text(title: str, table_rows: list[list]) -> str:
+    buffer = io.StringIO()
+    buffer.write(f'{NL}')
+    buffer.write(f'                            **********************{NL}')
+    buffer.write(f'                            *  {title}  *{NL}')
+    buffer.write(f'                            **********************{NL}')
+    writer = csv.writer(buffer, lineterminator=NL)
+    writer.writerows(table_rows)
+    buffer.write(f'{NL}')
+    return buffer.getvalue()
+
+
+def Write_CSV_Text_Table(title: str, table_rows: list[list], f) -> None:
+    f.write(_csv_table_to_text(title, table_rows))
+
+
+def Write_CSV_HTML_Table(title: str, table_rows: list[list], console: rich.console) -> None:
+    console.print(_csv_table_to_text(title, table_rows))
+
+
 def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
-                      ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
-                      sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
+                      weather_results: list, tess_results: list, dispatch_results: list, dispatch_profile_rows_table: list,
+                      sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
+                      cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame,
+                      addon_df: pd.DataFrame) -> None:
     """
     This function writes out the text output
     :param output_path: the path to the output file
@@ -1368,15 +1463,16 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
         f.write(Build_Text_Output(
             simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
             reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
-            tess_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
-            addon_df
+            weather_results, tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results,
+            hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df
         ))
 
 
 def Build_Text_Output(simulation_metadata: list, summary: list, economic_parameters: list, engineering_parameters: list,
                       resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list,
-                      surface_equipment_results: list, tess_results: list, dispatch_results: list, sdac_results: list,
+                      surface_equipment_results: list, weather_results: list, tess_results: list,
+                      dispatch_results: list, dispatch_profile_rows_table: list, sdac_results: list,
                       addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
                       pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> str:
     buffer = io.StringIO()
@@ -1395,10 +1491,13 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
     Write_Simple_Text_Table('ENGINEERING PARAMETERS', engineering_parameters, buffer)
     Write_Simple_Text_Table('RESOURCE CHARACTERISTICS', resource_characteristics, buffer)
     Write_Simple_Text_Table('RESERVOIR PARAMETERS', reservoir_parameters, buffer)
-    Write_Simple_Text_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, buffer)
+    if len(reservoir_stimulation_results) > 0:
+        Write_Simple_Text_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, buffer)
     Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, buffer)
     Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, buffer)
     Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, buffer)
+    if len(weather_results) > 0:
+        Write_Simple_Text_Table('WEATHER DATA RESULTS', weather_results, buffer)
     if len(tess_results) > 0:
         Write_Simple_Text_Table('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, buffer)
     if len(dispatch_results) > 0:
@@ -1408,8 +1507,12 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
     if len(sdac_results) > 0:
         Write_Simple_Text_Table('S_DAC_GT ECONOMICS', sdac_results, buffer)
 
-    Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, buffer)
-    Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, buffer)
+    if len(hce) > 0:
+        Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, buffer)
+    if len(ahce) > 0:
+        Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, buffer)
+    if len(dispatch_profile_rows_table) > 0:
+        Write_CSV_Text_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, buffer)
     Write_Complex_Text_table('REVENUE & CASHFLOW PROFILE', cashflow, 1, buffer)
     if len(pumping_power_profiles) > 0:
         Write_Complex_Text_table('PUMPING POWER PROFILES', pumping_power_profiles, 1, buffer)
@@ -1428,14 +1531,15 @@ def _escape_rtf(text: str) -> str:
 def Write_RTF_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                      engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                     tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame,
-                     ahce: pd.DataFrame, cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
-                     sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
+                     weather_results: list, tess_results: list, dispatch_results: list,
+                     dispatch_profile_rows_table: list, sdac_results: list, addon_results: list,
+                     hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
+                     pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     plain_text = Build_Text_Output(
         simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
         reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
-        tess_results, dispatch_results, sdac_results, addon_results, hce, ahce, cashflow, pumping_power_profiles, sdac_df,
-        addon_df
+        weather_results, tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results,
+        hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df
     )
 
     with open(output_path, 'w', encoding='ASCII', errors='ignore') as f:
@@ -1495,9 +1599,10 @@ def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_
 def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
                       reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
-                      tess_results: list, dispatch_results: list, sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
-                      cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame,
-                      sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
+                      weather_results: list, tess_results: list, dispatch_results: list,
+                      dispatch_profile_rows_table: list, sdac_results: list, addon_results: list,
+                      hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
+                      pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     """
     This function writes out the HTML output
     :param html_path: the path to the HTML output file.
@@ -1566,10 +1671,13 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
     Write_Simple_HTML_Table('ENGINEERING PARAMETERS', engineering_parameters, console)
     Write_Simple_HTML_Table('RESOURCE CHARACTERISTICS', resource_characteristics, console)
     Write_Simple_HTML_Table('RESERVOIR PARAMETERS', reservoir_parameters, console)
-    Write_Simple_HTML_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, console)
+    if len(reservoir_stimulation_results) > 0:
+        Write_Simple_HTML_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, console)
     Write_Simple_HTML_Table('CAPITAL COSTS', CAPEX, console)
     Write_Simple_HTML_Table('OPERATING AND MAINTENANCE COSTS', OPEX, console)
     Write_Simple_HTML_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, console)
+    if len(weather_results) > 0:
+        Write_Simple_HTML_Table('WEATHER DATA RESULTS', weather_results, console)
     if len(tess_results) > 0:
         Write_Simple_HTML_Table('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, console)
     if len(dispatch_results) > 0:
@@ -1580,8 +1688,12 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
         Write_Simple_HTML_Table('S_DAC_GT ECONOMICS', sdac_results, console)
 
     # write out the complex tables
-    Write_Complex_HTML_Table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, console)
-    Write_Complex_HTML_Table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, console)
+    if len(hce) > 0:
+        Write_Complex_HTML_Table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, console)
+    if len(ahce) > 0:
+        Write_Complex_HTML_Table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, console)
+    if len(dispatch_profile_rows_table) > 0:
+        Write_CSV_HTML_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, console)
     Write_Complex_HTML_Table('REVENUE & CASHFLOW PROFILE', cashflow, 1, console)
     if len(pumping_power_profiles) > 0:
         Write_Complex_HTML_Table('PUMPING POWER PROFILES', pumping_power_profiles, 1, console)

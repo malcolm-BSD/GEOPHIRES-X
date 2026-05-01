@@ -99,6 +99,7 @@ class GeophiresXResult:
                 "Number of production wells",
                 "Number of injection wells",
                 "Flowrate per production well",
+                "Maximum Flowrate per production well",
                 "Well depth",
                 "Well depth (or total length, if not vertical)",  # deprecated
                 "Geothermal gradient",
@@ -537,14 +538,19 @@ class GeophiresXResult:
                         search_lines=search_lines,
                     )
 
-        try:
-            self.result["POWER GENERATION PROFILE"] = self._get_power_generation_profile()
+        power_generation_profile = self._get_power_generation_profile()
+        if power_generation_profile is not None:
+            self.result["POWER GENERATION PROFILE"] = power_generation_profile
+
+        heat_electricity_extraction_generation_profile = self._get_heat_electricity_extraction_generation_profile()
+        if heat_electricity_extraction_generation_profile is not None:
             self.result["HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE"] = (
-                self._get_heat_electricity_extraction_generation_profile()
+                heat_electricity_extraction_generation_profile
             )
-        except Exception as e:
-            # FIXME
-            self._logger.error(f"Failed to parse power and/or extraction profiles: {e}")
+
+        dispatch_profile = self._get_dispatch_profile()
+        if dispatch_profile is not None:
+            self.result["DISPATCH PROFILE"] = dispatch_profile
 
         eep = self._get_extended_economic_profile()
         if eep is not None:
@@ -655,6 +661,7 @@ class GeophiresXResult:
                     "HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE",
                     "EXTENDED ECONOMIC PROFILE",
                     "REVENUE & CASHFLOW PROFILE",
+                    "DISPATCH PROFILE",
                     GeophiresXResult.CARBON_REVENUE_PROFILE_NAME,
                     GeophiresXResult.CCUS_PROFILE_LEGACY_NAME,
                     "S-DAC-GT PROFILE",
@@ -729,6 +736,11 @@ class GeophiresXResult:
     def dispatch_summary_json(self) -> dict[str, Any] | None:
         dispatch_summary = self._json_fields.get("Dispatch Summary")
         return dispatch_summary if isinstance(dispatch_summary, dict) else None
+
+    @property
+    def dispatch_profile_json(self) -> dict[str, Any] | None:
+        dispatch_profile = self._json_fields.get("Dispatch Profile")
+        return dispatch_profile if isinstance(dispatch_profile, dict) else None
 
     def _get_result_field(
         self,
@@ -853,24 +865,61 @@ class GeophiresXResult:
         return self.result["POWER GENERATION PROFILE"]
 
     def _get_power_generation_profile(self):
-        profile_lines = None
         try:
             profile_lines = self._get_profile_lines("HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
         except IndexError:
-            profile_lines = self._get_profile_lines("POWER GENERATION PROFILE")
-        return self._get_data_from_profile_lines(profile_lines)
+            try:
+                profile_lines = self._get_profile_lines("POWER GENERATION PROFILE")
+            except IndexError as e:
+                self._logger.debug(f"Failed to get power generation profile: {e}")
+                return None
+        try:
+            return self._get_data_from_profile_lines(profile_lines)
+        except BaseException as e:
+            self._logger.debug(f"Failed to parse power generation profile: {e}")
+            return None
 
     @property
     def heat_electricity_extraction_generation_profile(self):
         return self.result["HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE"]
 
     def _get_heat_electricity_extraction_generation_profile(self):
-        profile_lines = None
         try:
             profile_lines = self._get_profile_lines("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
         except IndexError:
-            profile_lines = self._get_profile_lines("HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE")
-        return self._get_data_from_profile_lines(profile_lines)
+            try:
+                profile_lines = self._get_profile_lines("HEAT AND/OR ELECTRICITY EXTRACTION AND GENERATION PROFILE")
+            except IndexError as e:
+                self._logger.debug(f"Failed to get heat/electricity extraction and generation profile: {e}")
+                return None
+        try:
+            return self._get_data_from_profile_lines(profile_lines)
+        except BaseException as e:
+            self._logger.debug(f"Failed to parse heat/electricity extraction and generation profile: {e}")
+            return None
+
+    @property
+    def dispatch_profile(self) -> list[list[str | float]]:
+        return self.result["DISPATCH PROFILE"]
+
+    def _get_dispatch_profile(self):
+        try:
+            lines = self._get_profile_lines("DISPATCH PROFILE")
+            csv_lines = [line.strip() for line in lines if "," in line]
+            if len(csv_lines) < 2:
+                return None
+
+            rows = []
+            reader = csv.reader(StringIO("\n".join(csv_lines)))
+            for idx, row in enumerate(reader):
+                if idx == 0:
+                    rows.append(row)
+                else:
+                    rows.append([self._parse_number(cell, field="dispatch profile") for cell in row])
+            return rows
+        except BaseException as e:
+            self._logger.debug(f"Failed to get dispatch profile: {e}")
+            return None
 
     def _get_revenue_and_cashflow_profile(self):
         def extract_table_header(lines: list) -> list:

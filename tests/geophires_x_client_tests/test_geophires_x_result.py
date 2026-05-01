@@ -292,6 +292,17 @@ class GeophiresXResultTestCase(BaseTestCase):
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_heat_kwh"], 0.0)
         self.assertGreater(dispatch_summary["summary_metrics"]["annual_served_electricity_kwh"], 0.0)
 
+        dispatch_profile_json = r.dispatch_profile_json
+        self.assertIsNotNone(dispatch_profile_json)
+        self.assertEqual(1, dispatch_profile_json["schema_version"])
+        self.assertIn("Year", dispatch_profile_json["columns"])
+        self.assertIn("Thermal Demand (MW)", dispatch_profile_json["columns"])
+        self.assertEqual(8760, len(dispatch_profile_json["rows"]))
+
+        dispatch_profile = r.result["DISPATCH PROFILE"]
+        self.assertEqual("Year", dispatch_profile[0][0])
+        self.assertEqual(8760, len(dispatch_profile) - 1)
+
     def test_metadata_end_use_option_parses_numeric_output_value(self) -> None:
         r: GeophiresXResult = GeophiresXClient().get_geophires_result(
             ImmutableGeophiresInputParameters(

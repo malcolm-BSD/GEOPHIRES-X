@@ -146,6 +146,26 @@ class GeophiresXSchemaGenerator:
             "additionalProperties": False,
         }
 
+    @staticmethod
+    def _dispatch_profile_schema() -> dict:
+        return {
+            "type": "object",
+            "description": "Hourly dispatch profile emitted for dispatch runs.",
+            "required": ["schema_version", "columns", "rows"],
+            "properties": {
+                "schema_version": {"type": "integer", "enum": [1]},
+                "columns": {"type": "array", "items": {"type": "string"}},
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                    },
+                },
+            },
+            "additionalProperties": False,
+        }
+
     def __init__(self):
         pass
 
@@ -309,6 +329,7 @@ class GeophiresXSchemaGenerator:
             properties[category] = {"type": "object", "properties": cat_properties}
 
         properties["Dispatch Summary"] = self._dispatch_summary_schema()
+        properties["Dispatch Profile"] = self._dispatch_profile_schema()
 
         result_schema = {
             "definitions": {},
