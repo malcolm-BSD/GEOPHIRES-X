@@ -1117,7 +1117,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
     def _run_demand_following_dispatch(self, model: "Model", dispatch_demand_mw: np.ndarray) -> None:
         for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
-            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
             timestep_state = {
                 "nominal_output_mw": nominal_state["dispatch_output_mw"],
                 "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
@@ -1274,14 +1274,19 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         return max(thermal_state.get("useful_heat_mw", 0.0), 0.0)
 
     @staticmethod
-    def _tess_demand_to_storage_ratio(model: "Model") -> float:
-        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+    def _tess_demand_to_storage_ratio(model: "Model", timestep_index: int | None = None) -> float:
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
         storage_basis_mw = DispatchableOperatingModeStrategy._tess_storage_basis_mw(model, nominal_state)
         if storage_basis_mw <= 0.0:
             return 0.0
         return max(nominal_state.get("dispatch_output_mw", 0.0), 0.0) / storage_basis_mw
 
-    def _demand_following_charge_command(self, model: "Model", target_charge_mw: float) -> DispatchCommand:
+    def _demand_following_charge_command(
+        self,
+        model: "Model",
+        target_charge_mw: float,
+        timestep_index: int | None = None,
+    ) -> DispatchCommand:
         """Build a geothermal charge command using the normal demand-following strategy."""
         if target_charge_mw <= 0.0:
             return DispatchCommand(
@@ -1291,7 +1296,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 target_demand_mw=0.0,
             )
 
-        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0)
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
         timestep_state = {
             "nominal_output_mw": self._tess_storage_basis_mw(model, nominal_state),
             "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
@@ -1309,24 +1314,30 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         if control_strategy not in [TESSChargeControlStrategy.TEMPERATURE_BAND, TESSChargeControlStrategy.MOVING_AVERAGE]:
             raise NotImplementedError("TESS dispatch currently supports Temperature Band and Moving Average charge control.")
 
-        demand_to_storage_ratio = self._tess_demand_to_storage_ratio(model)
-        if demand_to_storage_ratio <= 0.0:
+        demand_to_storage_ratio_profile = np.array(
+            [self._tess_demand_to_storage_ratio(model, timestep_index) for timestep_index in range(len(dispatch_demand_mw))],
+            dtype=float,
+        )
+        if np.any(demand_to_storage_ratio_profile <= 0.0):
             raise ValueError("TESS dispatch requires a positive conversion from stored heat to dispatch demand.")
         maximum_discharge_power_mw = model.surfaceplant.tess_maximum_discharge_power.value
         if getattr(model.surfaceplant, "_tess_maximum_discharge_power_auto_sized", False):
-            maximum_discharge_power_mw /= demand_to_storage_ratio
+            maximum_discharge_power_mw = float(np.max(dispatch_demand_mw / demand_to_storage_ratio_profile))
         storage = self._build_thermal_storage(model, maximum_discharge_power_mw=maximum_discharge_power_mw)
         initial_temperature_c = storage.temperature_c
         lower_threshold, upper_threshold = self._temperature_band_thresholds(model)
         charge_active = storage.temperature_c <= lower_threshold
         charge_flow_fraction = self._tess_charge_flow_fraction(model)
-        storage_equivalent_demand_mw = dispatch_demand_mw / demand_to_storage_ratio
+        storage_equivalent_demand_mw = dispatch_demand_mw / demand_to_storage_ratio_profile
         moving_average_demand_mw = self._moving_average_profile(
             storage_equivalent_demand_mw,
             model.surfaceplant.tess_moving_average_window.value,
         )
 
         for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
+            demand_to_storage_ratio = self._tess_demand_to_storage_ratio(model, timestep_index)
+            if demand_to_storage_ratio <= 0.0:
+                raise ValueError("TESS dispatch requires a positive conversion from stored heat to dispatch demand.")
             storage_demand_mw = timestep_demand_mw / demand_to_storage_ratio
             discharge_result = storage.discharge(storage_demand_mw, dt_hours=time_step_hours)
             served_demand_mw = min(
@@ -1363,7 +1374,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                     moving_average_demand_mw[timestep_index],
                     time_step_hours,
                 )
-                dispatch_command = self._demand_following_charge_command(model, target_charge_mw)
+                dispatch_command = self._demand_following_charge_command(model, target_charge_mw, timestep_index)
 
             timestep_result = model.dispatch_adapter.evaluate_timestep(dispatch_command, timestep_index)
             geothermal_charge_command_mw = (
