@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import date
 
 import numpy as np
 import requests
@@ -8,10 +9,12 @@ import requests
 from geophires_x.WeatherData import DEFAULT_HOURLY_VARIABLES
 from geophires_x.WeatherData import EXPECTED_HOURLY_ROWS
 from geophires_x.WeatherData import LEAP_YEAR_HOURLY_ROWS
+from geophires_x.WeatherData import OPEN_METEO_HISTORICAL_START_YEAR
 from geophires_x.WeatherData import OPTIONAL_HOURLY_VARIABLES
 from geophires_x.WeatherData import REQUIRED_HOURLY_VARIABLES
 from geophires_x.WeatherData import OpenMeteoNetworkError
 from geophires_x.WeatherData import OpenMeteoWeatherError
+from geophires_x.WeatherData import _latest_open_meteo_complete_historical_year
 from geophires_x.WeatherData import fetch_open_meteo_weather
 
 
@@ -182,10 +185,22 @@ class WeatherDataTestCase(unittest.TestCase):
             fetch_open_meteo_weather(91.0, -105.0, year=2024, session=session, sleep=lambda _: None)
         with self.assertRaisesRegex(OpenMeteoWeatherError, "Project Longitude"):
             fetch_open_meteo_weather(39.0, -181.0, year=2024, session=session, sleep=lambda _: None)
-        with self.assertRaisesRegex(OpenMeteoWeatherError, "complete historical year"):
+        with self.assertRaisesRegex(OpenMeteoWeatherError, "Open-Meteo historical archive range"):
             fetch_open_meteo_weather(39.0, -105.0, year=9999, session=session, sleep=lambda _: None)
+        with self.assertRaisesRegex(OpenMeteoWeatherError, "Open-Meteo historical archive range"):
+            fetch_open_meteo_weather(
+                39.0,
+                -105.0,
+                year=OPEN_METEO_HISTORICAL_START_YEAR - 1,
+                session=session,
+                sleep=lambda _: None,
+            )
 
         self.assertEqual(0, len(session.calls))
+
+    def test_latest_complete_historical_year_accounts_for_archive_delay(self):
+        self.assertEqual(2024, _latest_open_meteo_complete_historical_year(today=date(2025, 12, 31)))
+        self.assertEqual(2025, _latest_open_meteo_complete_historical_year(today=date(2026, 1, 6)))
 
     def test_leap_year_response_is_normalized_to_8760_rows(self):
         session = FakeSession([FakeResponse(200, _weather_payload(row_count=LEAP_YEAR_HOURLY_ROWS))])

@@ -4,7 +4,7 @@ import calendar
 import time
 import warnings
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Callable
 
 import numpy as np
@@ -13,6 +13,8 @@ import requests
 
 OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 DEFAULT_WEATHER_DATA_YEAR = 2024
+OPEN_METEO_HISTORICAL_START_YEAR = 1940
+OPEN_METEO_ARCHIVE_DELAY_DAYS = 5
 DEFAULT_TIMEOUT_SECONDS = 30.0
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_BACKOFF_SECONDS = 1.0
@@ -150,10 +152,12 @@ def _validate_request_inputs(
         raise OpenMeteoWeatherError("Project Latitude must be between -90 and 90 degrees.")
     if longitude < -180.0 or longitude > 180.0:
         raise OpenMeteoWeatherError("Project Longitude must be between -180 and 180 degrees.")
-    if year < 1900:
-        raise OpenMeteoWeatherError("Weather Data Year must be greater than or equal to 1900.")
-    if date(year, 12, 31) > date.today():
-        raise OpenMeteoWeatherError("Weather Data Year must identify a complete historical year.")
+    latest_year = _latest_open_meteo_complete_historical_year()
+    if year < OPEN_METEO_HISTORICAL_START_YEAR or year > latest_year:
+        raise OpenMeteoWeatherError(
+            "Weather Data Year must be within the Open-Meteo historical archive range, "
+            f"{OPEN_METEO_HISTORICAL_START_YEAR} through {latest_year}."
+        )
     if timeout_seconds <= 0.0:
         raise OpenMeteoWeatherError("Weather API timeout must be greater than zero.")
     if max_retries < 0:
@@ -209,6 +213,13 @@ def _request_open_meteo_json(
         ) from last_error
 
     raise OpenMeteoWeatherError(f"Open-Meteo request failed after {attempt_count} attempts: {last_error}") from last_error
+
+
+def _latest_open_meteo_complete_historical_year(today: date | None = None) -> int:
+    latest_available_date = (today or date.today()) - timedelta(days=OPEN_METEO_ARCHIVE_DELAY_DAYS)
+    if latest_available_date < date(latest_available_date.year, 12, 31):
+        return latest_available_date.year - 1
+    return latest_available_date.year
 
 
 def _response_json(response: Any) -> dict[str, Any]:

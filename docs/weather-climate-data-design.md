@@ -35,6 +35,17 @@ Its default is:
 2024
 ```
 
+`Weather Data Year` is validated against Open-Meteo's known historical archive
+range instead of waiting for the API response to determine validity. Open-Meteo
+documents historical access from 1940 onward. Because some archive products are
+published with a delay, GEOPHIRES-X only accepts complete historical years whose
+December 31 data should already be available after the archive delay. At
+runtime, the accepted range is:
+
+```text
+1940 through the latest complete Open-Meteo historical archive year
+```
+
 The full activation rule is:
 
 ```text
@@ -245,8 +256,8 @@ Aggregation rules:
 
 The requested behavior is average aggregation. Therefore
 `et0_fao_evapotranspiration` should be averaged in these functions even though
-Open-Meteo describes it as a preceding-hour quantity. Separate sum functions can
-be added later if water-budget workflows need annual or monthly ET0 totals.
+Open-Meteo describes it as a preceding-hour quantity. ET0 sum functions are not
+part of this effort; the weather aggregation API exposes averages only.
 
 ## Parameter Default Integration
 
@@ -401,7 +412,8 @@ The additional downloaded variables support later improvements:
 
 Potential future model enhancements:
 
-- weather-derived district heating demand;
+- optional weather-derived district heating demand source, without replacing
+  the existing temperature-file workflow;
 - weather-derived cooling demand;
 - temperature-dependent heat pump COP;
 - wet-bulb-dependent absorption chiller or cooling tower performance;
@@ -424,7 +436,9 @@ Parameter details:
 
 - `Project Latitude`: optional float, valid range `-90` to `90`.
 - `Project Longitude`: optional float, valid range `-180` to `180`.
-- `Weather Data Year`: optional integer, default `2024`.
+- `Weather Data Year`: optional integer, default `2024`, valid only within the
+  known Open-Meteo historical archive range from `1940` through the latest
+  complete archive year.
 
 Update generated request schema and parameter documentation.
 
@@ -510,6 +524,10 @@ The section is omitted when weather data is inactive or when the offline
 fallback continues without downloaded data. The client text-output parser should
 also expose this section so automated workflows can audit which weather year and
 temperature profile were used.
+
+The weather profile is not written as a CSV artifact and is not included in
+JSON output. The text report summary is the intended audit surface for this
+effort.
 
 ## Unit Tests
 
@@ -637,10 +655,12 @@ Backward compatibility requirements:
 
 ## Open Questions
 
-- Should weather data be written to a CSV artifact for auditability?
-- Should the weather profile be included in JSON output?
-- Should `Weather Data Year` be constrained to a known Open-Meteo historical
-  data range or should the API response determine validity?
-- Should future ET0 aggregation expose both averages and sums?
-- Should weather-driven district heating demand replace the existing
-  temperature-file workflow or be a new demand source?
+Resolved decisions:
+
+- Weather data should not be written to a CSV artifact.
+- The weather profile should not be included in JSON output.
+- `Weather Data Year` should be constrained to the known Open-Meteo historical
+  data range before making the API request.
+- ET0 aggregation should expose averages only, not sums.
+- Weather-driven district heating demand should be a future optional demand
+  source, not a replacement for the existing temperature-file workflow.
