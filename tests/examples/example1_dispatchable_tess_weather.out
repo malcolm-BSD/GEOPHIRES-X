@@ -1,0 +1,207 @@
+                               *****************
+                               ***CASE REPORT***
+                               *****************
+
+Simulation Metadata
+----------------------
+ GEOPHIRES Version: 3.12.1
+ Simulation Date: 2026-05-01
+ Simulation Time:  08:57
+ Calculation Time:      8.970 sec
+
+                           ***SUMMARY OF RESULTS***
+
+      End-Use Option: Direct-Use Heat
+      Average Direct-Use Heat Production:                     2.21 MW
+      Direct-Use heat breakeven price (LCOH):                 72.99 USD/MMBTU
+      Number of production wells:                             2
+      Number of injection wells:                              2
+      Flowrate per production well:                          55.0 kg/sec
+      Well depth:                                             3.0 kilometer
+      Geothermal gradient:                                     50 degC/km
+
+
+                           ***WEATHER DATA RESULTS***
+
+      Annual average temperature (from Open-Meteo):         10.55 °C
+      Minimum hourly temperature (from Open-Meteo):        -36.49 °C
+      Maximum hourly temperature (from Open-Meteo):         38.08 °C
+
+
+                           ***THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS***
+
+      TESS volume:                                       10000.00 m3
+      TESS usable capacity:                                993.65 MWh
+      TESS capital cost:                                     7.50 MUSD
+      TESS fixed O&M cost:                                   0.07 MUSD/yr
+      TESS average SOC:                                     68.32 %
+      TESS minimum SOC:                                     60.00 %
+      TESS maximum SOC:                                     77.77 %
+      TESS annual charge:                                  101.20 GWh/year
+      TESS annual discharge:                                96.65 GWh/year
+      TESS annual standby loss:                              0.50 GWh/year
+      TESS annual efficiency loss:                           4.00 GWh/year
+      TESS curtailed geothermal heat:                        0.00 GWh/year
+      TESS equivalent full cycles:                          97.27 cycles/year
+      Peak customer demand:                                 27.26 MW
+      Peak geothermal charge:                               52.99 MW
+      Customer demand standard deviation:                    2.65 MW
+      Geothermal output standard deviation:                 21.88 MW
+      Geothermal output smoothing ratio:                     8.24 -
+      Geothermal peak reduction ratio:                      -0.94 -
+      Geothermal variability reduction ratio:               -7.24 -
+
+
+                           ***DISPATCH RESULTS***
+
+      Dispatch analysis start year:                          1.00 year
+      Dispatch analysis end year:                            2.00 year
+      Dispatch capacity factor:                             18.10 %
+      Design heat produced:                                 60.96 MW
+      Annual geothermal heat delivered:                     96.65 GWh/year
+      Annual unmet thermal demand:                           0.00 GWh/year
+      Peak geothermal contribution:                         27.26 MW
+      Peak unmet load:                                       0.00 MW
+      Average runtime fraction:                             21.80 %
+      Peak hourly demand:                                   27.26 MW
+      Design flow rate:                                     55.00 kg/s
+      Observed peak flow rate:                              66.00 kg/s
+
+
+                           ***ECONOMIC PARAMETERS***
+
+      Economic Model = Fixed Charge Rate (FCR)
+      Fixed Charge Rate (FCR):                                5.00
+      Accrued financing during construction:                 0.00 %
+      Project lifetime:                                       5 yr
+      Capacity factor:                                        4.4 %
+      Project NPV:                                         -62.65 MUSD
+      Project IRR:                                           0.00 %
+      Project VIR=PI=PIR:                                   -0.10
+      Project MOIC:                                         -0.96
+      Project Payback Period:                                 N/A
+
+                          ***ENGINEERING PARAMETERS***
+
+      Number of Production Wells:                             2
+      Number of Injection Wells:                              2
+      Well depth:                                             3.0 kilometer
+      Water loss rate:                                        2.0 %
+      Pump efficiency:                                       80.0 %
+      Injection temperature:                                 50.0 degC
+      Production Wellbore heat transmission calculated with Ramey's model
+      Average production well temperature drop:               3.5 degC
+      Flowrate per production well:                          55.0 kg/sec
+      Injection well casing ID:                               7.000 in
+      Production well casing ID:                              7.000 in
+      Number of times redrilling:                             0
+
+
+                         ***RESOURCE CHARACTERISTICS***
+
+      Maximum reservoir temperature:                        400.0 degC
+      Number of segments:                                     1
+      Geothermal gradient:                                        50 degC/km
+
+
+                           ***RESERVOIR PARAMETERS***
+
+      Reservoir Model = Multiple Parallel Fractures Model (Gringarten)
+      Bottom-hole temperature:                              160.55 degC
+      Fracture model = Square
+      Well separation: fracture height:                     900.00 meter
+      Fracture area:                                     810000.00 m**2
+      Reservoir volume:                              1000000000 m**3
+      Reservoir hydrostatic pressure:                         28932.37 kPa
+      Plant outlet pressure:                                902.71 kPa
+      Production wellhead pressure:                         971.66 kPa
+      Productivity Index:                                     5.00 kg/sec/bar
+      Injectivity Index:                                      5.00 kg/sec/bar
+      Reservoir density:                                   2700.00 kg/m**3
+      Reservoir thermal conductivity:                         2.70 W/m/K
+      Reservoir heat capacity:                             1000.00 J/kg/K
+
+
+                           ***RESERVOIR SIMULATION RESULTS***
+
+      Maximum Production Temperature:                       157.4 degC
+      Average Production Temperature:                        31.5 degC
+      Minimum Production Temperature:                         0.0 degC
+      Initial Production Temperature:                       155.9 degC
+      Average Reservoir Heat Extraction:                      2.57 MW
+      Production Wellbore Heat Transmission Model = Ramey Model
+      Average Production Well Temperature Drop:               3.5 degC
+      Average Injection Well Pump Pressure Drop:            474.5 kPa
+      Average Production Well Pump Pressure Drop:          1109.7 kPa
+
+
+                          ***CAPITAL COSTS (M$)***
+
+         Exploration costs:                                   4.49 MUSD
+         Drilling and completion costs:                      17.38 MUSD
+         Drilling and completion costs per well:              4.35 MUSD
+         Stimulation costs:                                   3.02 MUSD
+         Surface power plant costs:                          21.81 MUSD
+         Field gathering system costs:                        2.67 MUSD
+         Total surface equipment costs:                      24.48 MUSD
+      Total capital costs:                                   56.87 MUSD
+      Annualized capital costs:                               2.84 MUSD
+
+
+                ***OPERATING AND MAINTENANCE COSTS (M$/yr)***
+
+         Wellfield maintenance costs:                         0.54 MUSD/yr
+         Power plant maintenance costs:                       1.34 MUSD/yr
+         Water costs:                                         0.00 MUSD/yr
+         Average Reservoir Pumping Cost:                      0.01 MUSD/yr
+      Total operating and maintenance costs:                  1.97 MUSD/yr
+
+
+                           ***SURFACE EQUIPMENT SIMULATION RESULTS***
+
+      Maximum Net Heat Production:                           27.26 MW
+      Average Net Heat Production:                            2.21 MW
+      Minimum Net Heat Production:                            0.00 MW
+      Initial Net Heat Production:                           13.19 MW
+      Average Annual Heat Production:                        19.33 GWh
+      Average Pumping Power:                                  0.02 MW
+
+                            ************************************************************
+                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *
+                            ************************************************************
+  YEAR       THERMAL               GEOFLUID               PUMP               NET
+             DRAWDOWN             TEMPERATURE             POWER              HEAT
+                                   (deg C)                (MW)               (MW)
+   0           1.0000                155.91               0.0000           13.1882
+   1           0.0000                  0.00               0.0000            0.0000
+   2           0.0000                  0.00               0.0000            0.0000
+   3           0.0000                  0.00               0.0000            0.0000
+   4           0.0000                  0.00               0.0000            0.0000
+
+
+                              *******************************************************************
+                              *  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *
+                              *******************************************************************
+  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF
+                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED
+                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)
+   1                  96.7                       112.4                298.09                   0.14
+   2                   0.0                         0.0                298.09                   0.14
+   3                   0.0                         0.0                298.09                   0.14
+   4                   0.0                         0.0                298.09                   0.14
+   5                   0.0                         0.0                298.09                   0.14
+
+
+                             ********************************
+                             *  REVENUE & CASHFLOW PROFILE  *
+                             ********************************
+Year            Electricity             |            Heat                  |           Cooling                 |         Carbon                    |          Project
+Since     Price   Ann. Rev.  Cumm. Rev. |   Price   Ann. Rev.   Cumm. Rev. |  Price   Ann. Rev.   Cumm. Rev.   |   Price   Ann. Rev.   Cumm. Rev.  | OPEX    Net Rev.      Net Cashflow
+Start    (cents/kWh)(MUSD/yr) (MUSD)    |(cents/kWh) (MUSD/yr)    (MUSD)   |(cents/kWh) (MUSD/yr)    (MUSD)    |(USD/lb)    (MUSD/yr)    (MUSD)    |(MUSD/yr) (MUSD/yr)    (MUSD)
+________________________________________________________________________________________________________________________________________________________________________________________
+  0      0.00           0.00   0.00     |    0.00     0.00         0.00    |    0.00     0.00         0.00     |    0.00     0.00         0.00     |  0.00     -56.87     -56.87
+  1      5.50           0.00   0.00     |    2.50     2.42         2.42    |    2.50     0.00         0.00     |    0.00     0.00         0.00     |  1.96      0.46     -56.42
+  2      5.50           0.00   0.00     |    2.50     0.00         2.42    |    2.50     0.00         0.00     |    0.00     0.00         0.00     |  1.96     -1.96     -58.38
+  3      5.50           0.00   0.00     |    2.50     0.00         2.42    |    2.50     0.00         0.00     |    0.00     0.00         0.00     |  1.96     -1.96     -60.34
+  4      5.50           0.00   0.00     |    2.50     0.00         2.42    |    2.50     0.00         0.00     |    0.00     0.00         0.00     |  1.96     -1.96     -62.30
+  5      5.50           0.00   0.00     |    2.50     0.00         2.42    |    2.50     0.00         0.00     |    0.00     0.00         0.00     |  1.96     -1.96     -64.25
