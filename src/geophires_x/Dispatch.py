@@ -1,3 +1,5 @@
+"""Dispatchable and baseload operating mode strategies."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -74,6 +76,8 @@ def _coerce_series_length(
 
 @dataclass
 class DemandProfile:
+    """Hourly dispatch demand profile normalized to MW."""
+
     series: np.ndarray
     units: str
     num_timesteps: int
@@ -102,8 +106,11 @@ def _series_to_mw(series: np.ndarray, units: Any, time_step_hours: float) -> np.
 
 
 class DemandProfileFactory:
+    """Build dispatch demand profiles from model input parameters."""
+
     @staticmethod
     def from_model(model: "Model") -> DemandProfile:
+        """Return the hourly dispatch demand profile requested by the model."""
         source = model.surfaceplant.dispatch_demand_source.value
         if not isinstance(source, DispatchDemandSource):
             source = DispatchDemandSource.from_input_string(source)
@@ -436,6 +443,8 @@ def _dispatch_output_state(
 
 @dataclass
 class DispatchCommand:
+    """Flow and runtime command for one dispatch timestep."""
+
     target_flow_fraction: float
     runtime_fraction: float
     is_shut_in: bool
@@ -444,6 +453,8 @@ class DispatchCommand:
 
 @dataclass
 class DispatchTimestepResult:
+    """Plant output and state values for one dispatch timestep."""
+
     produced_temperature: float = 0.0
     ambient_temperature: float = 0.0
     plant_outlet_thermal_power: float = 0.0
@@ -465,6 +476,8 @@ class DispatchTimestepResult:
 
 @dataclass
 class DispatchResults:
+    """Hourly dispatch results, annual aggregates, and summary metrics."""
+
     hourly_produced_temperature: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     hourly_ambient_temperature: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
     hourly_flow: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
@@ -508,6 +521,7 @@ class DispatchResults:
         simulation_start_hour: int = 1,
         demand_type: str = "thermal",
     ) -> "DispatchResults":
+        """Return zero-initialized dispatch result arrays for an analysis window."""
         zeros = np.zeros(num_timesteps, dtype=float)
         return cls(
             hourly_produced_temperature=zeros.copy(),
@@ -545,29 +559,39 @@ class DispatchResults:
 
 
 class ReservoirRecoveryModel(ABC):
+    """Interface for reservoir recovery during dispatch shut-in periods."""
+
     @abstractmethod
     def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        """Return the updated reservoir state after one dispatch interval."""
         raise NotImplementedError
 
 
 class NoRecoveryModel(ReservoirRecoveryModel):
+    """Reservoir recovery model that leaves state unchanged."""
+
     def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        """Return the input state without recovery."""
         return state
 
 
 class ReducedOrderRecoveryModel(ReservoirRecoveryModel):
+    """Exponential reduced-order recovery model for shut-in periods."""
+
     def __init__(
         self,
         equilibrium_state: float,
         recovery_time_constant_hours: float,
         state_bounds: tuple[float, float],
-    ):
+    ) -> None:
+        """Initialize the recovery state bounds and time constant."""
         self._equilibrium_state = float(equilibrium_state)
         self._recovery_time_constant_hours = max(float(recovery_time_constant_hours), 1.0)
         self._state_min = float(min(state_bounds))
         self._state_max = float(max(state_bounds))
 
     def update(self, state: float, dt_hours: float, is_shut_in: bool) -> float:
+        """Return recovered state when shut in, or clipped state while operating."""
         clipped_state = float(np.clip(state, self._state_min, self._state_max))
         if not is_shut_in or dt_hours <= 0:
             return clipped_state
@@ -578,13 +602,19 @@ class ReducedOrderRecoveryModel(ReservoirRecoveryModel):
 
 
 class DispatchStrategy(ABC):
+    """Interface for converting demand into dispatch commands."""
+
     @abstractmethod
     def dispatch(self, timestep_state: dict[str, Any], demand: float) -> DispatchCommand:
+        """Return the dispatch command for one timestep."""
         raise NotImplementedError
 
 
 class DemandFollowingDispatchStrategy(DispatchStrategy):
+    """Dispatch strategy that follows demand within flow and runtime limits."""
+
     def dispatch(self, timestep_state: dict[str, Any], demand: float) -> DispatchCommand:
+        """Return a demand-following command for the requested timestep demand."""
         if demand <= 0:
             return DispatchCommand(
                 target_flow_fraction=0.0,
@@ -633,37 +663,51 @@ class DemandFollowingDispatchStrategy(DispatchStrategy):
 
 
 class DispatchPlantAdapter(ABC):
+    """Interface between dispatch controls and reservoir/surface plant physics."""
+
     @abstractmethod
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        """Initialize adapter state before the dispatch simulation starts."""
         raise NotImplementedError
 
     @abstractmethod
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        """Return plant output for a dispatch command at one timestep."""
         raise NotImplementedError
 
     @abstractmethod
     def finalize(self) -> None:
+        """Finalize adapter state after dispatch simulation completes."""
         raise NotImplementedError
 
 
 class PlaceholderDispatchPlantAdapter(DispatchPlantAdapter):
-    def __init__(self, supported_reservoir_name: str):
+    """Placeholder adapter for reservoirs without dispatch timestep physics."""
+
+    def __init__(self, supported_reservoir_name: str) -> None:
+        """Record the unsupported reservoir name for error messages."""
         self._supported_reservoir_name = supported_reservoir_name
 
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        """Initialize no adapter state for placeholder reservoirs."""
         return None
 
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        """Raise because the reservoir has no dispatch implementation."""
         raise NotImplementedError(
             f"Dispatchable timestep simulation has not been implemented yet for {self._supported_reservoir_name}."
         )
 
     def finalize(self) -> None:
+        """Finalize no adapter state for placeholder reservoirs."""
         return None
 
 
 class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
+    """Dispatch adapter for cylindrical reservoir simulations."""
+
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        """Initialize cylindrical reservoir state for dispatch operation."""
         self._model = model
         self._dispatch_mode = _dispatch_target_mode(model)
         self._surfaceplant_mode = _dispatch_surfaceplant_mode(model)
@@ -710,6 +754,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         return min(max(scaled_temp_drop, 0.0), max(current_reservoir_temperature_c - self._tinj, 0.0))
 
     def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
+        """Return plant state at a requested production flow fraction."""
         if flow_fraction <= 0:
             current_reservoir_temperature_c = self._current_reservoir_temperature()
             state = _dispatch_output_state(self._model, current_reservoir_temperature_c, 0.0, 0.0, timestep_index)
@@ -748,6 +793,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         return state
 
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        """Evaluate one cylindrical dispatch timestep."""
         if dispatch_command.is_shut_in or dispatch_command.target_flow_fraction <= 0 or dispatch_command.runtime_fraction <= 0:
             self._remaining_heat_content_pj = self._recovery_model.update(
                 self._remaining_heat_content_pj,
@@ -798,6 +844,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         )
 
     def design_metrics(self) -> dict[str, float]:
+        """Return design-point metrics for dispatch summary reporting."""
         design_state = self.thermal_state_for_flow_fraction(self._maximum_dispatch_flow_fraction)
         metrics = {
             "design_heat_extracted_mw": design_state["extracted_heat_mw"],
@@ -815,14 +862,19 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         return metrics
 
     def finalize(self) -> None:
+        """Finalize no additional cylindrical adapter state."""
         return None
 
 
 class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
-    def __init__(self, supported_reservoir_name: str):
+    """Dispatch adapter using precomputed analytical reservoir output profiles."""
+
+    def __init__(self, supported_reservoir_name: str) -> None:
+        """Record the supported analytical reservoir name."""
         self._supported_reservoir_name = supported_reservoir_name
 
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        """Initialize baseline reservoir output profiles for dispatch operation."""
         self._model = model
         self._dispatch_mode = _dispatch_target_mode(model)
         self._surfaceplant_mode = _dispatch_surfaceplant_mode(model)
@@ -885,6 +937,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         return min(int(round(depletion_fraction * (len(self._baseline_produced_temperature) - 1))), len(self._baseline_produced_temperature) - 1)
 
     def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
+        """Return plant state for an analytical reservoir flow fraction."""
         baseline_index = self._baseline_index_for_depletion()
         baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
         baseline_heat_extracted_mw = self._baseline_heat_extracted_mw[baseline_index]
@@ -923,6 +976,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         return state
 
     def evaluate_timestep(self, dispatch_command: DispatchCommand, timestep_index: int) -> DispatchTimestepResult:
+        """Evaluate one analytical-reservoir dispatch timestep."""
         baseline_index = self._baseline_index_for_depletion()
         baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
 
@@ -972,6 +1026,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         )
 
     def design_metrics(self) -> dict[str, float]:
+        """Return design-point metrics for dispatch summary reporting."""
         design_state = self.thermal_state_for_flow_fraction(self._maximum_dispatch_flow_fraction)
         metrics = {
             "design_heat_extracted_mw": design_state["extracted_heat_mw"],
@@ -989,14 +1044,19 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         return metrics
 
     def finalize(self) -> None:
+        """Finalize no additional analytical adapter state."""
         return None
 
 
 class SBTDispatchPlantAdapter(AnalyticalReservoirDispatchPlantAdapter):
-    def __init__(self):
+    """Dispatch adapter for supported SBT reservoir configurations."""
+
+    def __init__(self) -> None:
+        """Initialize the SBT adapter name."""
         super().__init__("SBTReservoir")
 
     def initialize(self, model: "Model", design_state: dict[str, Any]) -> None:
+        """Validate SBT configuration before analytical dispatch initialization."""
         configuration = model.wellbores.Configuration.value
         if not isinstance(configuration, Configuration):
             configuration = Configuration.from_input_string(configuration)
@@ -1016,6 +1076,8 @@ class SBTDispatchPlantAdapter(AnalyticalReservoirDispatchPlantAdapter):
 
 
 class DispatchAdapterFactory:
+    """Factory for dispatch plant adapters by reservoir type."""
+
     _registry = {
         "CylindricalReservoir": lambda: CylindricalDispatchPlantAdapter(),
         "MPFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("MPFReservoir"),
@@ -1027,6 +1089,7 @@ class DispatchAdapterFactory:
 
     @classmethod
     def create(cls, model: "Model") -> DispatchPlantAdapter:
+        """Return a dispatch adapter for the model reservoir."""
         adapter_factory = cls._registry.get(model.reserv.__class__.__name__)
         if adapter_factory is not None:
             return adapter_factory()
@@ -1037,13 +1100,19 @@ class DispatchAdapterFactory:
 
 
 class OperatingModeStrategy(ABC):
+    """Interface for model operating mode strategies."""
+
     @abstractmethod
     def run(self, model: "Model") -> None:
+        """Run the model using the selected operating mode strategy."""
         raise NotImplementedError
 
 
 class BaseloadOperatingModeStrategy(OperatingModeStrategy):
+    """Baseload operating mode strategy."""
+
     def run(self, model: "Model") -> None:
+        """Run the standard baseload calculation sequence."""
         model.reserv.Calculate(model)
         model.wellbores.Calculate(model)
         model.surfaceplant.Calculate(model)
@@ -1057,10 +1126,14 @@ class BaseloadOperatingModeStrategy(OperatingModeStrategy):
 
 
 class DispatchableOperatingModeStrategy(OperatingModeStrategy):
-    def __init__(self, dispatch_strategy: DispatchStrategy | None = None):
+    """Dispatchable operating mode strategy."""
+
+    def __init__(self, dispatch_strategy: DispatchStrategy | None = None) -> None:
+        """Initialize the dispatchable strategy with a dispatch control policy."""
         self._dispatch_strategy = dispatch_strategy or DemandFollowingDispatchStrategy()
 
     def run(self, model: "Model") -> None:
+        """Run dispatchable simulation and economics calculations."""
         flow_strategy = model.surfaceplant.dispatch_flow_strategy.value
         if not isinstance(flow_strategy, DispatchFlowStrategy):
             flow_strategy = DispatchFlowStrategy.from_input_string(flow_strategy)
@@ -1899,6 +1972,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
 
 def create_operating_mode_strategy(operating_mode: OperatingMode) -> OperatingModeStrategy:
+    """Return the operating mode strategy for the selected operating mode."""
     if operating_mode == OperatingMode.DISPATCHABLE:
         return DispatchableOperatingModeStrategy()
 
@@ -1906,6 +1980,7 @@ def create_operating_mode_strategy(operating_mode: OperatingMode) -> OperatingMo
 
 
 def build_dispatch_summary_json(model: "Model") -> dict[str, Any] | None:
+    """Return dispatch summary data for JSON output, if dispatch results exist."""
     dispatch_results = getattr(model, "dispatch_results", None)
     if dispatch_results is None:
         return None
