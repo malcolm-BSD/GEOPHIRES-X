@@ -200,6 +200,516 @@ class Outputs:
                 elif not output_param.UnitsMatch:
                     obj.OutputParameterDict[key] = output_param.with_preferred_units()
 
+    @staticmethod
+    def _write_case_report_header(f: TextIOWrapper) -> None:
+        f.write('                               *****************\n')
+        f.write('                               ***CASE REPORT***\n')
+        f.write('                               *****************\n')
+        f.write(NL)
+
+    @staticmethod
+    def _write_simulation_metadata(model: Model, f: TextIOWrapper) -> None:
+        f.write('Simulation Metadata\n')
+        f.write('----------------------\n')
+        f.write(f' GEOPHIRES Version: {geophires_x.__version__}\n')
+        f.write(' Simulation Date: '+ datetime.datetime.now().strftime('%Y-%m-%d\n'))
+        f.write(' Simulation Time:  '+ datetime.datetime.now().strftime('%H:%M\n'))
+        f.write(' Calculation Time: '+'{0:10.3f}'.format((time.time()-model.tic)) + ' sec\n')
+
+    @staticmethod
+    def _write_summary_of_results(
+        model: Model,
+        f: TextIOWrapper,
+        dispatch_report: bool,
+        is_sam_econ_model: bool,
+    ) -> None:
+        econ: Economics = model.economics
+
+        f.write(NL)
+        f.write('                           ***SUMMARY OF RESULTS***\n')
+        f.write(NL)
+        f.write(f'      {model.surfaceplant.enduse_option_output.display_name}: '
+                f'{model.surfaceplant.enduse_option.value.value}\n')
+        if not dispatch_report and model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
+            f.write('      Surface Application: ' + str(model.surfaceplant.plant_type.value.value) + NL)
+        if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity component
+            f.write(f'      Average Net Electricity Production:               {np.average(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + NL)
+        if not dispatch_report and model.surfaceplant.enduse_option.value is not EndUseOptions.ELECTRICITY:
+            # there is a direct-use component
+            f.write(f'      Average Direct-Use Heat Production:               {np.average(model.surfaceplant.HeatProduced.value):10.2f} '+ model.surfaceplant.HeatProduced.CurrentUnits.value + NL)
+        if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            f.write(f'      Annual District Heating Demand:                   {np.average(model.surfaceplant.annual_heating_demand.value):10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
+            f.write(f'      Average Annual Geothermal Heat Production:        {sum(model.surfaceplant.dh_geothermal_heating.value * 24) / model.surfaceplant.plant_lifetime.value / 1e3:10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
+            f.write(f'      Average Annual Peaking Fuel Heat Production:      {sum(model.surfaceplant.dh_natural_gas_heating.value * 24) / model.surfaceplant.plant_lifetime.value / 1e3:10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
+        if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            f.write(f'      Average Cooling Production:                       {np.average(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.CurrentUnits.value + NL)
+
+        if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
+            f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
+            if model.economics.DoXLCOCalculations.value:
+                # XLCO and VALCO live in the same summary block as the baseline LCO output so
+                # downstream parsers can treat them as parallel commodity summary metrics.
+                f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
+            if model.economics.DoVALCOCalculations.value:
+                f.write(f'      {model.economics.VALCOE.display_name}: {model.economics.VALCOE.value:10.2f} {model.economics.VALCOE.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_EnergyAdjustment.display_name}: {model.economics.VALCOE_EnergyAdjustment.value:10.2f} {model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_CapacityAdjustment.display_name}: {model.economics.VALCOE_CapacityAdjustment.value:10.2f} {model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n')
+        elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and \
+                model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
+            f.write(f'      {model.economics.LCOH.display_name}:            {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
+            if model.economics.DoXLCOCalculations.value:
+                f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
+            if model.economics.DoVALCOCalculations.value:
+                f.write(f'      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n')
+        elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            f.write(f'      {model.economics.LCOC.display_name}:         {model.economics.LCOC.value:10.2f} {model.economics.LCOC.CurrentUnits.value}\n')
+            if model.economics.DoXLCOCalculations.value:
+                f.write(f'      {model.economics.XLCOC_Market.display_name}: {model.economics.XLCOC_Market.value:10.2f} {model.economics.XLCOC_Market.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.XLCOC_MarketSocial.display_name}: {model.economics.XLCOC_MarketSocial.value:10.2f} {model.economics.XLCOC_MarketSocial.CurrentUnits.value}\n')
+            if model.economics.DoVALCOCalculations.value:
+                f.write(f'      {model.economics.VALCOC.display_name}: {model.economics.VALCOC.value:10.2f} {model.economics.VALCOC.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOC_EnergyAdjustment.display_name}: {model.economics.VALCOC_EnergyAdjustment.value:10.2f} {model.economics.VALCOC_EnergyAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOC_CapacityAdjustment.display_name}: {model.economics.VALCOC_CapacityAdjustment.value:10.2f} {model.economics.VALCOC_CapacityAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOC_FlexibilityAdjustment.display_name}: {model.economics.VALCOC_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOC_FlexibilityAdjustment.CurrentUnits.value}\n')
+        elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+            # Cogeneration writes both electricity and heat competitiveness outputs because
+            # XLCO/VALCO are tracked independently per active commodity.
+            f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
+            if model.economics.DoXLCOCalculations.value:
+                f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
+            if model.economics.DoVALCOCalculations.value:
+                f.write(f'      {model.economics.VALCOE.display_name}: {model.economics.VALCOE.value:10.2f} {model.economics.VALCOE.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_EnergyAdjustment.display_name}: {model.economics.VALCOE_EnergyAdjustment.value:10.2f} {model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_CapacityAdjustment.display_name}: {model.economics.VALCOE_CapacityAdjustment.value:10.2f} {model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n')
+            f.write(f'      {model.economics.LCOH.display_name}:           {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
+            if model.economics.DoXLCOCalculations.value:
+                f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
+            if model.economics.DoVALCOCalculations.value:
+                f.write(f'      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n')
+                f.write(f'      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n')
+
+        if not dispatch_report and is_sam_econ_model:
+            f.write(f'      {Outputs._field_label(econ.capex_total.display_name, 50)}{econ.capex_total.value:10.2f} {econ.capex_total.CurrentUnits.value}\n')
+            f.write(f'      {Outputs._field_label(econ.capex_total_per_kw.display_name, 50)}{econ.capex_total_per_kw.value:10.0f} {econ.capex_total_per_kw.CurrentUnits.value}\n')
+
+        f.write(f'      Number of production wells:                    {model.wellbores.nprod.value:10.0f}'+NL)
+        f.write(f'      Number of injection wells:                     {model.wellbores.ninj.value:10.0f}'+NL)
+        if dispatch_report:
+            maximum_flowrate = model.dispatch_results.summary_metrics.get('observed_peak_flow_kg_per_sec', 0.0)
+            f.write(f'      Maximum Flowrate per production well:            {maximum_flowrate:10.1f} kg/s' + NL)
+        else:
+            f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} '  + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
+        f.write(f'      {Outputs._field_label(Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME, 49)}{model.reserv.depth.value:10.1f} ' + model.reserv.depth.CurrentUnits.value + NL)
+
+        if model.reserv.numseg.value == 1:
+            f.write(f'      Geothermal gradient:                             {model.reserv.gradient.value[0]:10.4g} ' + model.reserv.gradient.CurrentUnits.value + NL)
+        else:
+            for i in range(1, model.reserv.numseg.value):
+                f.write(f'      Segment {str(i):s}   Geothermal gradient:                    {model.reserv.gradient.value[i-1]:10.4g} ' + model.reserv.gradient.CurrentUnits.value +NL)
+                f.write(f'      Segment {str(i):s}   Thickness:                         {round(model.reserv.layerthickness.value[i-1], 10)} {model.reserv.layerthickness.CurrentUnits.value}\n')
+            f.write(f'      Segment {str(i+1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} ' + model.reserv.gradient.CurrentUnits.value + NL)
+        if not dispatch_report and model.economics.DoCarbonCalculations.value:
+            f.write(f'      {model.economics.CarbonThatWouldHaveBeenProducedTotal.display_name}:'
+                    f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
+                    f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
+
+    @staticmethod
+    def _write_economic_parameters(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
+        econ: Economics = model.economics
+
+        f.write(NL)
+        f.write(NL)
+        f.write('                           ***ECONOMIC PARAMETERS***\n')
+        f.write(NL)
+        if model.economics.econmodel.value == EconomicModel.FCR:
+            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
+            f.write(f'      Fixed Charge Rate (FCR):                          {model.economics.FCR.value*100.0:10.2f} {model.economics.FCR.CurrentUnits.value}\n')
+        elif model.economics.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
+            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
+            # TODO disambiguate interest rate for all economic models - see
+            #  https://github.com/softwareengineerprogrammer/GEOPHIRES/commit/535c02d4adbeeeca553b61e9b996fccf00016529
+            f.write(f'      {model.economics.interest_rate.Name}:                                    {model.economics.interest_rate.value:10.2f} {model.economics.interest_rate.CurrentUnits.value}\n')
+
+        elif is_sam_econ_model or model.economics.econmodel.value == EconomicModel.BICYCLE:
+            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
+
+        if is_sam_econ_model:
+            sam_econ_fields: list[OutputParameter] = [
+                econ.real_discount_rate,
+                econ.nominal_discount_rate,
+                econ.wacc,
+            ]
+
+            for field in sam_econ_fields:
+                label = Outputs._field_label(field.Name, 49)
+                f.write(f'      {label}{field.value:10.2f} {field.CurrentUnits.value}\n')
+
+        if econ.RITCValue.value and is_sam_econ_model:
+            # Non-SAM-EMs (inaccurately) treat ITC as a capital cost and thus are displayed in the capital
+            # costs category rather than here.
+            f.write(
+                f'      {econ.RITCValue.display_name}:                           {abs(econ.RITCValue.value):10.2f} {econ.RITCValue.CurrentUnits.value}\n')
+
+        if not is_sam_econ_model:  # (parameter is ambiguous to the point of meaninglessness for SAM-EM)
+            acf: OutputParameter = econ.accrued_financing_during_construction_percentage
+            acf_label = Outputs._field_label(acf.display_name, 49)
+            f.write(f'      {acf_label}{acf.value:10.2f} {acf.CurrentUnits.value}\n')
+
+        display_inflation_costs_in_economic_parameters: bool = (
+            econ.econmodel.value in [EconomicModel.BICYCLE,
+                                     EconomicModel.FCR,
+                                     EconomicModel.STANDARDIZED_LEVELIZED_COST]
+            and
+            econ.inflation_cost_during_construction.value != 0.
+        )
+        if display_inflation_costs_in_economic_parameters:
+            # Inflation cost is displayed here for economic models that don't treat inflation cost as a
+            # capital cost
+            icc: OutputParameter = econ.inflation_cost_during_construction
+            icc_label = Outputs._field_label(icc.display_name, 49)
+            f.write(f'      {icc_label}{icc.value:10.2f} {icc.CurrentUnits.value}\n')
+
+        f.write(f'      Project lifetime:                              {model.surfaceplant.plant_lifetime.value:10.0f} {model.surfaceplant.plant_lifetime.CurrentUnits.value}\n')
+        f.write(f'      Capacity factor:                                 {model.surfaceplant.utilization_factor.value * 100:10.1f} %\n')
+
+        e_npv: OutputParameter = model.economics.ProjectNPV
+        npv_field_label = Outputs._field_label(e_npv.display_name, 49)
+        # TODO should use CurrentUnits instead of PreferredUnits
+        f.write(f'      {npv_field_label}{e_npv.value:10.2f} {e_npv.PreferredUnits.value}\n')
+
+        irr_output_param: OutputParameter = econ.ProjectIRR \
+            if not is_sam_econ_model else econ.after_tax_irr
+        irr_field_label = Outputs._field_label(irr_output_param.display_name, 49)
+        irr_display_value = f'{irr_output_param.value:10.2f}' \
+            if not math.isnan(irr_output_param.value) else 'NaN'
+        f.write(f'      {irr_field_label}{irr_display_value} {irr_output_param.CurrentUnits.value}\n')
+
+        f.write(f'      {econ.ProjectVIR.display_name}:                              {econ.ProjectVIR.value:10.2f}\n')
+        f.write(f'      {econ.ProjectMOIC.display_name}:                                    {econ.ProjectMOIC.value:10.2f}\n')
+
+        payback_period_val = model.economics.ProjectPaybackPeriod.value
+        project_payback_period_display = (f'{payback_period_val:10.2f} '
+                                          f'{econ.ProjectPaybackPeriod.PreferredUnits.value}') \
+            if payback_period_val > 0.0 else 'N/A'
+        project_payback_period_label = Outputs._field_label(model.economics.ProjectPaybackPeriod.display_name, 56)
+        f.write(f'      {project_payback_period_label}{project_payback_period_display}\n')
+
+        if model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+                                                      EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+            f.write(f'      CHP: Percent cost allocation for electrical plant: {model.economics.CAPEX_heat_electricity_plant_ratio.value*100.0:10.2f} %\n')
+
+        if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
+            f.write(f'      Estimated Jobs Created:                                 {model.economics.jobs_created.value}\n')
+
+    @staticmethod
+    def _write_engineering_parameters(model: Model, f: TextIOWrapper) -> None:
+        f.write(NL)
+        f.write('                          ***ENGINEERING PARAMETERS***\n')
+        f.write(NL)
+        f.write(f'      Number of Production Wells:                    {model.wellbores.nprod.value:10.0f}' + NL)
+        f.write(f'      Number of Injection Wells:                     {model.wellbores.ninj.value:10.0f}' + NL)
+        f.write(f'      {Outputs._field_label(Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME, 49)}{model.reserv.depth.value:10.1f} ' + model.reserv.depth.CurrentUnits.value + NL)
+        f.write(f'      Water loss rate:                                 {model.reserv.waterloss.value:10.1f} {model.reserv.waterloss.CurrentUnits.value}\n')
+        f.write(f'      Pump efficiency:                                 {model.surfaceplant.pump_efficiency.value:10.1f} ' + model.surfaceplant.pump_efficiency.CurrentUnits.value + NL)
+        f.write(f'      Injection temperature:                           {model.wellbores.Tinj.value:10.1f} ' + model.wellbores.Tinj.CurrentUnits.value + NL)
+        if model.wellbores.rameyoptionprod.value:
+            f.write('      Production Wellbore heat transmission calculated with Ramey\'s model\n')
+            f.write(f'      Average production well temperature drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
+        else:
+            f.write('      User-provided production well temperature drop\n')
+            f.write(f'      Constant production well temperature drop:       {model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
+        f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} ' + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
+        f.write(f'      {model.wellbores.injection_well_casing_inner_diameter.display_name}:                          {model.wellbores.injection_well_casing_inner_diameter.value:10.3f} {model.wellbores.injection_well_casing_inner_diameter.CurrentUnits.value}\n')
+        f.write(f'      {model.wellbores.production_well_casing_inner_diameter.display_name}:                         {model.wellbores.production_well_casing_inner_diameter.value:10.3f} {model.wellbores.production_well_casing_inner_diameter.CurrentUnits.value}\n')
+        if model.wellbores.IsAGS.value and model.wellbores.tot_vert_m.value > 0:
+            f.write(f'      Vertical length of wellbore (per vertical):         {(model.wellbores.tot_vert_m.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.1f} ' + model.wellbores.tot_vert_m.CurrentUnits.value + NL)
+        if model.wellbores.IsAGS.value and model.wellbores.tot_lateral_m.value > 0:
+            f.write(f'      Lateral length of wellbore (per lateral):           {(model.wellbores.tot_lateral_m.value/model.wellbores.numnonverticalsections.value):10.1f} ' + model.wellbores.tot_lateral_m.CurrentUnits.value + NL)
+        f.write(f'      {model.wellbores.redrill.display_name}:                    {model.wellbores.redrill.value:10.0f}\n')
+        if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+            f.write('      Power plant type:                                       ' + str(model.surfaceplant.plant_type.value.value) + NL)
+
+    @staticmethod
+    def _write_resource_characteristics(model: Model, f: TextIOWrapper) -> None:
+        f.write(NL)
+        f.write(NL)
+        f.write('                         ***RESOURCE CHARACTERISTICS***\n')
+        f.write(NL)
+        f.write(f'      Maximum reservoir temperature:                   {model.reserv.Tmax.value:10.1f} {model.reserv.Tmax.CurrentUnits.value}\n')
+        f.write(f'      Number of segments:                            {model.reserv.numseg.value:10.0f}\n')
+        if model.reserv.numseg.value == 1:
+            f.write(f'      Geothermal gradient:                                {model.reserv.gradient.value[0]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
+        else:
+            for i in range(1, model.reserv.numseg.value):
+                f.write(f'      Segment {str(i):s}   Geothermal gradient:                    {model.reserv.gradient.value[i-1]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
+                f.write(f'      Segment {str(i):s}   Thickness:                         {round(model.reserv.layerthickness.value[i-1], 10)} {model.reserv.layerthickness.CurrentUnits.value}\n')
+            f.write(f'      Segment {str(i+1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
+
+    @staticmethod
+    def _write_reservoir_parameters(model: Model, f: TextIOWrapper) -> None:
+        f.write(NL)
+        f.write(NL)
+        f.write('                           ***RESERVOIR PARAMETERS***\n')
+        f.write(NL)
+        if model.wellbores.IsAGS.value:
+            f.write('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.\n')
+        else:
+            f.write(f'      Reservoir Model = {model.reserv.resoption.value.display_name}\n')
+            if model.reserv.resoption.value is ReservoirModel.SINGLE_FRACTURE:
+                f.write(f'      m/A Drawdown Parameter:                                 {model.reserv.drawdp.value:.5f} ' + model.reserv.drawdp.CurrentUnits.value + NL)
+            elif model.reserv.resoption.value is ReservoirModel.ANNUAL_PERCENTAGE:
+                f.write(f'      Annual Thermal Drawdown:                                {model.reserv.drawdp.value*100:.3f} ' + model.reserv.drawdp.CurrentUnits.value + NL)
+            f.write(f'      Bottom-hole temperature:                          {model.reserv.Trock.value:10.2f} {model.reserv.Trock.CurrentUnits.value}\n')
+            if model.reserv.resoption.value in [ReservoirModel.ANNUAL_PERCENTAGE, ReservoirModel.USER_PROVIDED_PROFILE, ReservoirModel.TOUGH2_SIMULATOR]:
+                f.write('      Warning: the reservoir dimensions and thermo-physical properties \n')
+                f.write('               listed below are default values if not provided by the user.   \n')
+                f.write('               They are only used for calculating remaining heat content.  \n')
+                # TODO parse this note in GeophiresXResult
+
+            if model.reserv.resoption.value in [ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP]:
+                f.write(f'      Fracture model = {model.reserv.fracshape.value.value}\n')
+                if model.reserv.fracshape.value == FractureShape.CIRCULAR_AREA:
+                    f.write(f'      Well separation: fracture diameter:               {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
+                elif model.reserv.fracshape.value == FractureShape.CIRCULAR_DIAMETER:
+                    f.write(f'      Well separation: fracture diameter:               {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
+                elif model.reserv.fracshape.value == FractureShape.SQUARE:
+                    f.write(f'      Well separation: fracture height:                 {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
+                elif model.reserv.fracshape.value == FractureShape.RECTANGULAR:
+                    f.write(f'      Well separation: fracture height:                 {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
+                    f.write(f'      {model.reserv.fracwidthcalc.display_name}:                                             {model.reserv.fracwidthcalc.value:10.2f} {model.reserv.fracwidth.CurrentUnits.value }\n')
+                f.write(f'      {model.reserv.fracareacalc.display_name}:                                    {model.reserv.fracareacalc.value:10.2f} {model.reserv.fracarea.CurrentUnits.value}\n')
+            if model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
+                f.write('      Reservoir volume calculated with fracture separation and number of fractures as input\n')
+            elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_FRAC_SEP:
+                f.write('      Number of fractures calculated with reservoir volume and fracture separation as input\n')
+            elif model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
+                f.write('      Fracture separation calculated with reservoir volume and number of fractures as input\n')
+            elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_ONLY:
+                f.write('      Reservoir volume provided as input\n')
+            if model.reserv.resvoloption.value in [ReservoirVolume.FRAC_NUM_SEP, ReservoirVolume.RES_VOL_FRAC_SEP, ReservoirVolume.FRAC_NUM_SEP]:
+                frac_num_label = Outputs._field_label(model.reserv.fracnumbcalc.display_name, 56)
+                f.write(f'      {frac_num_label}{math.ceil(model.reserv.fracnumbcalc.value)}\n')
+                f.write(f'      {model.reserv.fracsepcalc.display_name}:                              {model.reserv.fracsepcalc.value:10.2f} {model.reserv.fracsep.CurrentUnits.value}\n')
+            f.write(f'      Reservoir volume:                              {model.reserv.resvolcalc.value:10.0f} {model.reserv.resvol.CurrentUnits.value}\n')
+
+            if model.wellbores.impedancemodelused.value:
+                # See note re: unit conversion:
+                # https://github.com/NREL/GEOPHIRES-X/blob/d51eb8d1dc8b21c7a79c4d35f296d740347658e0/src/geophires_x/WellBores.py#L1280-L1282
+                f.write(f'      Reservoir impedance:                              {model.wellbores.impedance.value/1000:10.4f} {model.wellbores.impedance.CurrentUnits.value}\n')
+            else:
+                if model.wellbores.overpressure_percentage.Provided:
+                    # write the reservoir pressure as an average in the overpressure case
+                    f.write(f'      {model.wellbores.average_production_reservoir_pressure.display_name}:                       {model.wellbores.average_production_reservoir_pressure.value:10.2f} {model.wellbores.average_production_reservoir_pressure.CurrentUnits.value}\n')
+                else:
+                    # write the reservoir pressure as a single value
+                    f.write(f'      Reservoir hydrostatic pressure:                       {model.wellbores.production_reservoir_pressure.value[0]:10.2f} ' + model.wellbores.production_reservoir_pressure.CurrentUnits.value + NL)
+                f.write(f'      Plant outlet pressure:                            {model.surfaceplant.plant_outlet_pressure.value:10.2f} ' + model.surfaceplant.plant_outlet_pressure.CurrentUnits.value + NL)
+                if model.wellbores.productionwellpumping.value:
+                    f.write(f'      Production wellhead pressure:                     {model.wellbores.Pprodwellhead.value:10.2f} ' + model.wellbores.Pprodwellhead.CurrentUnits.value + NL)
+                    f.write(f'      Productivity Index:                               {model.wellbores.PI.value:10.2f} ' + model.wellbores.PI.CurrentUnits.value + NL)
+                f.write(f'      Injectivity Index:                                {model.wellbores.II.value:10.2f} ' + model.wellbores.II.CurrentUnits.value + NL)
+
+            f.write(f'      Reservoir density:                                {model.reserv.rhorock.value:10.2f} ' + model.reserv.rhorock.CurrentUnits.value + NL)
+            if model.wellbores.rameyoptionprod.value or model.reserv.resoption.value in [ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP, ReservoirModel.SINGLE_FRACTURE, ReservoirModel.TOUGH2_SIMULATOR]:
+                f.write(f'      Reservoir thermal conductivity:                   {model.reserv.krock.value:10.2f} {model.reserv.krock.CurrentUnits.value}{NL}')
+            f.write(f'      Reservoir heat capacity:                          {model.reserv.cprock.value:10.2f} ' + model.reserv.cprock.CurrentUnits.value + NL)
+            if model.reserv.resoption.value is ReservoirModel.LINEAR_HEAT_SWEEP or (model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model):
+                f.write(f'      Reservoir porosity:                               {model.reserv.porrock.value*100:10.2f} ' + model.reserv.porrock.CurrentUnits.value + NL)
+            if model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model:
+                f.write(f'      Reservoir permeability:                           {model.reserv.permrock.value:10.2E} ' + model.reserv.permrock.CurrentUnits.value + NL)
+                f.write(f'      Reservoir thickness:                              {model.reserv.resthickness.value:10.2f} ' + model.reserv.resthickness.CurrentUnits.value + NL)
+                f.write(f'      Reservoir width:                                  {model.reserv.reswidth.value:10.2f} ' + model.reserv.reswidth.CurrentUnits.value + NL)
+                f.write(f'      Well separation:                                  {model.wellbores.wellsep.value:10.2f} ' + model.wellbores.wellsep.CurrentUnits.value + NL)
+
+    @staticmethod
+    def _write_reservoir_simulation_results(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:
+        if not dispatch_report:
+            f.write(NL)
+            f.write(NL)
+            f.write('                           ***RESERVOIR SIMULATION RESULTS***\n')
+            f.write(NL)
+            f.write(f'      Maximum Production Temperature:                  {np.max(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
+            f.write(f'      Average Production Temperature:                  {np.average(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
+            f.write(f'      Minimum Production Temperature:                  {np.min(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
+            f.write(f'      Initial Production Temperature:                  {model.wellbores.ProducedTemperature.value[0]:10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
+            if model.wellbores.IsAGS.value:
+                f.write('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.\n')
+            else:
+                f.write(f'      Average Reservoir Heat Extraction:                {np.average(model.surfaceplant.HeatExtracted.value):10.2f} ' + model.surfaceplant.HeatExtracted.PreferredUnits.value + NL)
+                if model.wellbores.rameyoptionprod.value:
+                    f.write('      Production Wellbore Heat Transmission Model = Ramey Model\n')
+                    f.write(f'      Average Production Well Temperature Drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
+                else:
+                    f.write(f'      Wellbore Heat Transmission Model = Constant Temperature Drop:{model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
+                if model.wellbores.impedancemodelused.value:
+                    f.write(f'      Total Average Pressure Drop:                     {np.average(model.wellbores.DPOverall.value):10.1f} ' + model.wellbores.DPOverall.PreferredUnits.value + NL)
+                    f.write(f'      Average Injection Well Pressure Drop:            {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
+                    f.write(f'      Average Reservoir Pressure Drop:                 {np.average(model.wellbores.DPReserv.value):10.1f} ' + model.wellbores.DPReserv.PreferredUnits.value + NL)
+                    f.write(f'      Average Production Well Pressure Drop:           {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
+                    f.write(f'      Average Buoyancy Pressure Drop:                  {np.average(model.wellbores.DPBouyancy.value):10.1f} ' + model.wellbores.DPBouyancy.PreferredUnits.value + NL)
+                else:
+                    f.write(f'      Average Injection Well Pump Pressure Drop:       {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
+                    if model.wellbores.productionwellpumping.value:
+                        f.write(f'      Average Production Well Pump Pressure Drop:      {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
+
+    @staticmethod
+    def _write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
+        econ: Economics = model.economics
+
+        f.write('\n\n                          ***CAPITAL COSTS (M$)***\n\n')
+        if not model.economics.totalcapcost.Valid:
+            f.write(f'         {econ.Cexpl.display_name}:                             {econ.Cexpl.value:10.2f} {econ.Cexpl.CurrentUnits.value}\n')
+
+            f.write(f'         {model.economics.Cwell.display_name}:                 {model.economics.Cwell.value:10.2f} {model.economics.Cwell.CurrentUnits.value}\n')
+
+            if econ.cost_lateral_section.value > 0.0:
+                f.write(f'             Drilling and completion costs per vertical production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
+                f.write(f'             Drilling and completion costs per vertical injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
+                f.write(f'             {econ.cost_per_lateral_section.Name}:       {econ.cost_per_lateral_section.value:10.2f} {econ.cost_lateral_section.CurrentUnits.value}\n')
+            elif round(econ.cost_one_production_well.value, 4) != round(econ.cost_one_injection_well.value, 4) \
+                and model.economics.cost_one_injection_well.value != -1:
+                f.write(f'             Drilling and completion costs per production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
+                f.write(f'             Drilling and completion costs per injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
+            else:
+                cpw_label = Outputs._field_label(econ.drilling_and_completion_costs_per_well.display_name, 47)
+                f.write(f'         {cpw_label}{econ.drilling_and_completion_costs_per_well.value:10.2f} {econ.Cwell.CurrentUnits.value}\n')
+
+            f.write(f'         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n')
+
+            f.write(f'         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n')
+            if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+                f.write(f'            of which Absorption Chiller Cost:           {model.economics.chillercapex.value:10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
+            if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+                f.write(f'            of which Heat Pump Cost:                    {model.economics.heatpumpcapex.value:10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
+            if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+                f.write(f'            of which Peaking Boiler Cost:               {model.economics.peakingboilercost.value:10.2f} ' + model.economics.peakingboilercost.CurrentUnits.value + NL)
+            f.write(f'         {model.economics.Cgath.display_name}:                  {model.economics.Cgath.value:10.2f} {model.economics.Cgath.CurrentUnits.value}\n')
+
+            if model.surfaceplant.piping_length.value > 0:
+                f.write(f'         {model.economics.Cpiping.display_name}:                    {model.economics.Cpiping.value:10.2f} {model.economics.Cpiping.CurrentUnits.value}\n')
+
+            if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+                f.write(f'         District Heating System Cost:                  {model.economics.dhdistrictcost.value:10.2f} {model.economics.dhdistrictcost.CurrentUnits.value}\n')
+
+            f.write(f'         Total surface equipment costs:                 {(model.economics.Cplant.value+model.economics.Cgath.value):10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
+
+        if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
+            f.write(f'         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n')
+            f.write(f'      Drilling and completion costs per redrilled well: {(econ.Cwell.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.2f} {econ.Cwell.CurrentUnits.value}\n')
+            f.write(f'         Stimulation costs (for redrilling):            {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n')
+
+        if model.economics.RITCValue.value and not is_sam_econ_model:
+            # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)
+            f.write(f'         {econ.RITCValue.display_name}:                         {-1 * econ.RITCValue.value:10.2f} {econ.RITCValue.CurrentUnits.value}\n')
+
+        additional_capex_modifiers: list[tuple[Parameter, int]] = [
+            (econ.FlatLicenseEtc, 1),
+            (econ.OtherIncentives, -1),
+            (econ.TotalGrant, -1)
+        ]
+        for additional_capex_modifier_entry in additional_capex_modifiers:
+            additional_capex_modifier_param: Parameter = additional_capex_modifier_entry[0]
+            additional_capex_modifier_multiplier: int = additional_capex_modifier_entry[1]
+
+            acm_render_value = additional_capex_modifier_param.value * additional_capex_modifier_multiplier
+
+            if additional_capex_modifier_param.Provided:
+                acm_label = Outputs._field_label(additional_capex_modifier_param.Name, 47)
+                f.write(
+                    f'         {acm_label}{acm_render_value:10.2f} {additional_capex_modifier_param.CurrentUnits.value}\n')
+
+        if is_sam_econ_model and econ.DoAddOnCalculations.value:
+            # Non-SAM econ models print this in Extended Economics profile
+            aoc_label = Outputs._field_label(model.addeconomics.AddOnCAPEXTotal.display_name, 47)
+            f.write(f'         {aoc_label}{model.addeconomics.AddOnCAPEXTotal.value:10.2f} {model.addeconomics.AddOnCAPEXTotal.CurrentUnits.value}\n')
+
+        display_occ_and_inflation_during_construction_in_capital_costs = is_sam_econ_model
+        if display_occ_and_inflation_during_construction_in_capital_costs:
+            occ_label = Outputs._field_label(econ.overnight_capital_cost.display_name, 47)
+            f.write(
+                f'         {occ_label}{econ.overnight_capital_cost.value:10.2f} {econ.overnight_capital_cost.CurrentUnits.value}\n')
+
+            icc_label = Outputs._field_label(econ.inflation_cost_during_construction.display_name, 47)
+            f.write(f'         {icc_label}{econ.inflation_cost_during_construction.value:10.2f} {econ.inflation_cost_during_construction.CurrentUnits.value}\n')
+
+        if econ.royalty_supplemental_payments.Provided:
+            rsp_label = Outputs._field_label(econ.royalty_supplemental_payments_cost_during_construction.display_name, 41)
+            f.write(
+                f'         {rsp_label}   {econ.royalty_supplemental_payments_cost_during_construction.value:.2f} {econ.royalty_supplemental_payments_cost_during_construction.CurrentUnits.value}\n')
+
+        display_idc_in_capital_costs = is_sam_econ_model \
+                                               and model.surfaceplant.construction_years.value > 1
+        if display_idc_in_capital_costs:
+            idc_label = Outputs._field_label(econ.interest_during_construction.display_name, 47)
+            f.write(
+                f'         {idc_label}{econ.interest_during_construction.value:10.2f} {econ.interest_during_construction.CurrentUnits.value}\n')
+
+        capex_param = econ.CCap if not is_sam_econ_model else econ.capex_total
+        capex_label = Outputs._field_label(capex_param.display_name, 50)
+        f.write(f'      {capex_label}{capex_param.value:10.2f} {capex_param.CurrentUnits.value}\n')
+
+        if model.economics.econmodel.value == EconomicModel.FCR:
+            f.write(f'      Annualized capital costs:                         {(model.economics.CCap.value*(1+model.economics.inflrateconstruction.value)*model.economics.FCR.value):10.2f} ' + model.economics.CCap.CurrentUnits.value + NL)
+
+    @staticmethod
+    def _write_operation_and_maintenance_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
+        econ: Economics = model.economics
+
+        f.write(NL)
+        f.write(NL)
+        f.write('                ***OPERATING AND MAINTENANCE COSTS (M$/yr)***\n')
+        f.write(NL)
+        if not model.economics.oamtotalfixed.Valid:
+            f.write(f'         {model.economics.Coamwell.display_name}:                   {model.economics.Coamwell.value:10.2f} {model.economics.Coamwell.CurrentUnits.value}\n')
+            f.write(f'         {model.economics.Coamplant.display_name}:                 {model.economics.Coamplant.value:10.2f} {model.economics.Coamplant.CurrentUnits.value}\n')
+            f.write(f'         {model.economics.Coamwater.display_name}:                                   {model.economics.Coamwater.value:10.2f} {model.economics.Coamwater.CurrentUnits.value}\n')
+            if model.surfaceplant.plant_type.value in [PlantType.INDUSTRIAL, PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
+                f.write(f'         Average Reservoir Pumping Cost:                {model.economics.averageannualpumpingcosts.value:10.2f} {model.economics.averageannualpumpingcosts.CurrentUnits.value}\n')
+            if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+                f.write(f'         Absorption Chiller O&M Cost:                   {model.economics.chilleropex.value:10.2f} {model.economics.chilleropex.CurrentUnits.value}\n')
+            if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+                f.write(f'         Average Heat Pump Electricity Cost:            {model.economics.averageannualheatpumpelectricitycost.value:10.2f} {model.economics.averageannualheatpumpelectricitycost.CurrentUnits.value}\n')
+            if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+                f.write(f'         Annual District Heating O&M Cost:              {model.economics.dhdistrictoandmcost.value:10.2f} {model.economics.dhdistrictoandmcost.CurrentUnits.value}\n')
+                f.write(f'         Average Annual Peaking Fuel Cost:              {model.economics.averageannualngcost.value:10.2f} {model.economics.averageannualngcost.CurrentUnits.value}\n')
+
+            if model.wellbores.redrill.value > 0:
+                redrill_label = Outputs._field_label(econ.redrilling_annual_cost.display_name, 47)
+                f.write(f'         {redrill_label}{econ.redrilling_annual_cost.value:10.2f} {econ.redrilling_annual_cost.CurrentUnits.value}\n')
+
+            if econ.DoAddOnCalculations.value and is_sam_econ_model:
+                # Non-SAM econ models print this in Extended Economics profile
+                aoc_label = Outputs._field_label(model.addeconomics.AddOnOPEXTotalPerYear.display_name, 47)
+                f.write(f'         {aoc_label}{model.addeconomics.AddOnOPEXTotalPerYear.value:10.2f} {model.addeconomics.AddOnOPEXTotalPerYear.CurrentUnits.value}\n')
+
+            if econ.has_production_based_royalties:
+                royalties_label = Outputs._field_label(econ.royalties_average_annual_cost.display_name, 47)
+                f.write(f'         {royalties_label}{econ.royalties_average_annual_cost.value:10.2f} {econ.royalties_average_annual_cost.CurrentUnits.value}\n')
+
+            f.write(f'      {econ.Coam.display_name}:            {(econ.Coam.value + econ.averageannualpumpingcosts.value + econ.averageannualheatpumpelectricitycost.value):10.2f} {econ.Coam.CurrentUnits.value}\n')
+        else:
+            f.write(f'      {econ.Coam.display_name}:            {econ.Coam.value:10.2f} {econ.Coam.CurrentUnits.value}\n')
+
     def PrintOutputs(self, model: Model):
         """
         PrintOutputs writes the standard outputs to the output file.
@@ -219,485 +729,23 @@ class Outputs:
                 is_sam_econ_model = econ.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA
                 dispatch_report = is_dispatch_report(model)
 
-                f.write('                               *****************\n')
-                f.write('                               ***CASE REPORT***\n')
-                f.write('                               *****************\n')
-                f.write(NL)
-                f.write('Simulation Metadata\n')
-                f.write('----------------------\n')
-                f.write(f' GEOPHIRES Version: {geophires_x.__version__}\n')
-                f.write(' Simulation Date: '+ datetime.datetime.now().strftime('%Y-%m-%d\n'))
-                f.write(' Simulation Time:  '+ datetime.datetime.now().strftime('%H:%M\n'))
-                f.write(' Calculation Time: '+'{0:10.3f}'.format((time.time()-model.tic)) + ' sec\n')
+                self._write_case_report_header(f)
+                self._write_simulation_metadata(model, f)
 
-                f.write(NL)
-                f.write('                           ***SUMMARY OF RESULTS***\n')
-                f.write(NL)
-                f.write(f'      {model.surfaceplant.enduse_option_output.display_name}: '
-                        f'{model.surfaceplant.enduse_option.value.value}\n')
-                if not dispatch_report and model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-                    f.write('      Surface Application: ' + str(model.surfaceplant.plant_type.value.value) + NL)
-                if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity component
-                    f.write(f'      Average Net Electricity Production:               {np.average(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + NL)
-                if not dispatch_report and model.surfaceplant.enduse_option.value is not EndUseOptions.ELECTRICITY:
-                    # there is a direct-use component
-                    f.write(f'      Average Direct-Use Heat Production:               {np.average(model.surfaceplant.HeatProduced.value):10.2f} '+ model.surfaceplant.HeatProduced.CurrentUnits.value + NL)
-                if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                    f.write(f'      Annual District Heating Demand:                   {np.average(model.surfaceplant.annual_heating_demand.value):10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
-                    f.write(f'      Average Annual Geothermal Heat Production:        {sum(model.surfaceplant.dh_geothermal_heating.value * 24) / model.surfaceplant.plant_lifetime.value / 1e3:10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
-                    f.write(f'      Average Annual Peaking Fuel Heat Production:      {sum(model.surfaceplant.dh_natural_gas_heating.value * 24) / model.surfaceplant.plant_lifetime.value / 1e3:10.2f} ' + model.surfaceplant.annual_heating_demand.CurrentUnits.value + NL)
-                if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                    f.write(f'      Average Cooling Production:                       {np.average(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.CurrentUnits.value + NL)
-
-                if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
-                    f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOCalculations.value:
-                        # XLCO and VALCO live in the same summary block as the baseline LCO output so
-                        # downstream parsers can treat them as parallel commodity summary metrics.
-                        f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
-                    if model.economics.DoVALCOCalculations.value:
-                        f.write(f'      {model.economics.VALCOE.display_name}: {model.economics.VALCOE.value:10.2f} {model.economics.VALCOE.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_EnergyAdjustment.display_name}: {model.economics.VALCOE_EnergyAdjustment.value:10.2f} {model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_CapacityAdjustment.display_name}: {model.economics.VALCOE_CapacityAdjustment.value:10.2f} {model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n')
-                elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and \
-                        model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
-                    f.write(f'      {model.economics.LCOH.display_name}:            {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOCalculations.value:
-                        f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
-                    if model.economics.DoVALCOCalculations.value:
-                        f.write(f'      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n')
-                elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                    f.write(f'      {model.economics.LCOC.display_name}:         {model.economics.LCOC.value:10.2f} {model.economics.LCOC.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOCalculations.value:
-                        f.write(f'      {model.economics.XLCOC_Market.display_name}: {model.economics.XLCOC_Market.value:10.2f} {model.economics.XLCOC_Market.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.XLCOC_MarketSocial.display_name}: {model.economics.XLCOC_MarketSocial.value:10.2f} {model.economics.XLCOC_MarketSocial.CurrentUnits.value}\n')
-                    if model.economics.DoVALCOCalculations.value:
-                        f.write(f'      {model.economics.VALCOC.display_name}: {model.economics.VALCOC.value:10.2f} {model.economics.VALCOC.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOC_EnergyAdjustment.display_name}: {model.economics.VALCOC_EnergyAdjustment.value:10.2f} {model.economics.VALCOC_EnergyAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOC_CapacityAdjustment.display_name}: {model.economics.VALCOC_CapacityAdjustment.value:10.2f} {model.economics.VALCOC_CapacityAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOC_FlexibilityAdjustment.display_name}: {model.economics.VALCOC_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOC_FlexibilityAdjustment.CurrentUnits.value}\n')
-                elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                              EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                              EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-                    # Cogeneration writes both electricity and heat competitiveness outputs because
-                    # XLCO/VALCO are tracked independently per active commodity.
-                    f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOCalculations.value:
-                        f.write(f'      {model.economics.XLCOE_Market.display_name}: {model.economics.XLCOE_Market.value:10.2f} {model.economics.XLCOE_Market.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.XLCOE_MarketSocial.display_name}: {model.economics.XLCOE_MarketSocial.value:10.2f} {model.economics.XLCOE_MarketSocial.CurrentUnits.value}\n')
-                    if model.economics.DoVALCOCalculations.value:
-                        f.write(f'      {model.economics.VALCOE.display_name}: {model.economics.VALCOE.value:10.2f} {model.economics.VALCOE.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_EnergyAdjustment.display_name}: {model.economics.VALCOE_EnergyAdjustment.value:10.2f} {model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_CapacityAdjustment.display_name}: {model.economics.VALCOE_CapacityAdjustment.value:10.2f} {model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n')
-                    f.write(f'      {model.economics.LCOH.display_name}:           {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n')
-                    if model.economics.DoXLCOCalculations.value:
-                        f.write(f'      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n')
-                    if model.economics.DoVALCOCalculations.value:
-                        f.write(f'      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n')
-                        f.write(f'      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n')
-
-                if not dispatch_report and is_sam_econ_model:
-                    f.write(f'      {Outputs._field_label(econ.capex_total.display_name, 50)}{econ.capex_total.value:10.2f} {econ.capex_total.CurrentUnits.value}\n')
-                    f.write(f'      {Outputs._field_label(econ.capex_total_per_kw.display_name, 50)}{econ.capex_total_per_kw.value:10.0f} {econ.capex_total_per_kw.CurrentUnits.value}\n')
-
-                f.write(f'      Number of production wells:                    {model.wellbores.nprod.value:10.0f}'+NL)
-                f.write(f'      Number of injection wells:                     {model.wellbores.ninj.value:10.0f}'+NL)
-                if dispatch_report:
-                    maximum_flowrate = model.dispatch_results.summary_metrics.get('observed_peak_flow_kg_per_sec', 0.0)
-                    f.write(f'      Maximum Flowrate per production well:            {maximum_flowrate:10.1f} kg/s' + NL)
-                else:
-                    f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} '  + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
-                f.write(f'      {Outputs._field_label(Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME, 49)}{model.reserv.depth.value:10.1f} ' + model.reserv.depth.CurrentUnits.value + NL)
-
-                if model.reserv.numseg.value == 1:
-                    f.write(f'      Geothermal gradient:                             {model.reserv.gradient.value[0]:10.4g} ' + model.reserv.gradient.CurrentUnits.value + NL)
-                else:
-                    for i in range(1, model.reserv.numseg.value):
-                        f.write(f'      Segment {str(i):s}   Geothermal gradient:                    {model.reserv.gradient.value[i-1]:10.4g} ' + model.reserv.gradient.CurrentUnits.value +NL)
-                        f.write(f'      Segment {str(i):s}   Thickness:                         {round(model.reserv.layerthickness.value[i-1], 10)} {model.reserv.layerthickness.CurrentUnits.value}\n')
-                    f.write(f'      Segment {str(i+1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} ' + model.reserv.gradient.CurrentUnits.value + NL)
-                if not dispatch_report and model.economics.DoCarbonCalculations.value:
-                    f.write(f'      {model.economics.CarbonThatWouldHaveBeenProducedTotal.display_name}:'
-                            f'                       {model.economics.CarbonThatWouldHaveBeenProducedTotal.value:10.2f}'
-                            f' {model.economics.CarbonThatWouldHaveBeenProducedTotal.CurrentUnits.value}\n')
+                self._write_summary_of_results(model, f, dispatch_report, is_sam_econ_model)
 
                 self._write_weather_data_results(model, f)
                 self._write_tess_results(model, f)
                 self._write_dispatch_results(model, f)
 
-                f.write(NL)
-                f.write(NL)
-                f.write('                           ***ECONOMIC PARAMETERS***\n')
-                f.write(NL)
-                if model.economics.econmodel.value == EconomicModel.FCR:
-                    f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-                    f.write(f'      Fixed Charge Rate (FCR):                          {model.economics.FCR.value*100.0:10.2f} {model.economics.FCR.CurrentUnits.value}\n')
-                elif model.economics.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
-                    f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-                    # TODO disambiguate interest rate for all economic models - see
-                    #  https://github.com/softwareengineerprogrammer/GEOPHIRES/commit/535c02d4adbeeeca553b61e9b996fccf00016529
-                    f.write(f'      {model.economics.interest_rate.Name}:                                    {model.economics.interest_rate.value:10.2f} {model.economics.interest_rate.CurrentUnits.value}\n')
+                self._write_economic_parameters(model, f, is_sam_econ_model)
+                self._write_engineering_parameters(model, f)
+                self._write_resource_characteristics(model, f)
+                self._write_reservoir_parameters(model, f)
+                self._write_reservoir_simulation_results(model, f, dispatch_report)
 
-                elif is_sam_econ_model or model.economics.econmodel.value == EconomicModel.BICYCLE:
-                    f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-
-                if is_sam_econ_model:
-                    sam_econ_fields: list[OutputParameter] = [
-                        econ.real_discount_rate,
-                        econ.nominal_discount_rate,
-                        econ.wacc,
-                    ]
-
-                    for field in sam_econ_fields:
-                        label = Outputs._field_label(field.Name, 49)
-                        f.write(f'      {label}{field.value:10.2f} {field.CurrentUnits.value}\n')
-
-                if econ.RITCValue.value and is_sam_econ_model:
-                    # Non-SAM-EMs (inaccurately) treat ITC as a capital cost and thus are displayed in the capital
-                    # costs category rather than here.
-                    f.write(
-                        f'      {econ.RITCValue.display_name}:                           {abs(econ.RITCValue.value):10.2f} {econ.RITCValue.CurrentUnits.value}\n')
-
-                if not is_sam_econ_model:  # (parameter is ambiguous to the point of meaninglessness for SAM-EM)
-                    acf: OutputParameter = econ.accrued_financing_during_construction_percentage
-                    acf_label = Outputs._field_label(acf.display_name, 49)
-                    f.write(f'      {acf_label}{acf.value:10.2f} {acf.CurrentUnits.value}\n')
-
-                display_inflation_costs_in_economic_parameters: bool = (
-                    econ.econmodel.value in [EconomicModel.BICYCLE,
-                                             EconomicModel.FCR,
-                                             EconomicModel.STANDARDIZED_LEVELIZED_COST]
-                    and
-                    econ.inflation_cost_during_construction.value != 0.
-                )
-                if display_inflation_costs_in_economic_parameters:
-                    # Inflation cost is displayed here for economic models that don't treat inflation cost as a
-                    # capital cost
-                    icc: OutputParameter = econ.inflation_cost_during_construction
-                    icc_label = Outputs._field_label(icc.display_name, 49)
-                    f.write(f'      {icc_label}{icc.value:10.2f} {icc.CurrentUnits.value}\n')
-
-                f.write(f'      Project lifetime:                              {model.surfaceplant.plant_lifetime.value:10.0f} {model.surfaceplant.plant_lifetime.CurrentUnits.value}\n')
-                f.write(f'      Capacity factor:                                 {model.surfaceplant.utilization_factor.value * 100:10.1f} %\n')
-
-                e_npv: OutputParameter = model.economics.ProjectNPV
-                npv_field_label = Outputs._field_label(e_npv.display_name, 49)
-                # TODO should use CurrentUnits instead of PreferredUnits
-                f.write(f'      {npv_field_label}{e_npv.value:10.2f} {e_npv.PreferredUnits.value}\n')
-
-                irr_output_param: OutputParameter = econ.ProjectIRR \
-                    if not is_sam_econ_model else econ.after_tax_irr
-                irr_field_label = Outputs._field_label(irr_output_param.display_name, 49)
-                irr_display_value = f'{irr_output_param.value:10.2f}' \
-                    if not math.isnan(irr_output_param.value) else 'NaN'
-                f.write(f'      {irr_field_label}{irr_display_value} {irr_output_param.CurrentUnits.value}\n')
-
-                f.write(f'      {econ.ProjectVIR.display_name}:                              {econ.ProjectVIR.value:10.2f}\n')
-                f.write(f'      {econ.ProjectMOIC.display_name}:                                    {econ.ProjectMOIC.value:10.2f}\n')
-
-                payback_period_val = model.economics.ProjectPaybackPeriod.value
-                project_payback_period_display = (f'{payback_period_val:10.2f} '
-                                                  f'{econ.ProjectPaybackPeriod.PreferredUnits.value}') \
-                    if payback_period_val > 0.0 else 'N/A'
-                project_payback_period_label = Outputs._field_label(model.economics.ProjectPaybackPeriod.display_name, 56)
-                f.write(f'      {project_payback_period_label}{project_payback_period_display}\n')
-
-                if model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                              EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                              EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                              EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-                    f.write(f'      CHP: Percent cost allocation for electrical plant: {model.economics.CAPEX_heat_electricity_plant_ratio.value*100.0:10.2f} %\n')
-
-                if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
-                    f.write(f'      Estimated Jobs Created:                                 {model.economics.jobs_created.value}\n')
-
-                f.write(NL)
-                f.write('                          ***ENGINEERING PARAMETERS***\n')
-                f.write(NL)
-                f.write(f'      Number of Production Wells:                    {model.wellbores.nprod.value:10.0f}' + NL)
-                f.write(f'      Number of Injection Wells:                     {model.wellbores.ninj.value:10.0f}' + NL)
-                f.write(f'      {Outputs._field_label(Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME, 49)}{model.reserv.depth.value:10.1f} ' + model.reserv.depth.CurrentUnits.value + NL)
-                f.write(f'      Water loss rate:                                 {model.reserv.waterloss.value:10.1f} {model.reserv.waterloss.CurrentUnits.value}\n')
-                f.write(f'      Pump efficiency:                                 {model.surfaceplant.pump_efficiency.value:10.1f} ' + model.surfaceplant.pump_efficiency.CurrentUnits.value + NL)
-                f.write(f'      Injection temperature:                           {model.wellbores.Tinj.value:10.1f} ' + model.wellbores.Tinj.CurrentUnits.value + NL)
-                if model.wellbores.rameyoptionprod.value:
-                    f.write('      Production Wellbore heat transmission calculated with Ramey\'s model\n')
-                    f.write(f'      Average production well temperature drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
-                else:
-                    f.write('      User-provided production well temperature drop\n')
-                    f.write(f'      Constant production well temperature drop:       {model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
-                f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} ' + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
-                f.write(f'      {model.wellbores.injection_well_casing_inner_diameter.display_name}:                          {model.wellbores.injection_well_casing_inner_diameter.value:10.3f} {model.wellbores.injection_well_casing_inner_diameter.CurrentUnits.value}\n')
-                f.write(f'      {model.wellbores.production_well_casing_inner_diameter.display_name}:                         {model.wellbores.production_well_casing_inner_diameter.value:10.3f} {model.wellbores.production_well_casing_inner_diameter.CurrentUnits.value}\n')
-                if model.wellbores.IsAGS.value and model.wellbores.tot_vert_m.value > 0:
-                    f.write(f'      Vertical length of wellbore (per vertical):         {(model.wellbores.tot_vert_m.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.1f} ' + model.wellbores.tot_vert_m.CurrentUnits.value + NL)
-                if model.wellbores.IsAGS.value and model.wellbores.tot_lateral_m.value > 0:
-                    f.write(f'      Lateral length of wellbore (per lateral):           {(model.wellbores.tot_lateral_m.value/model.wellbores.numnonverticalsections.value):10.1f} ' + model.wellbores.tot_lateral_m.CurrentUnits.value + NL)
-                f.write(f'      {model.wellbores.redrill.display_name}:                    {model.wellbores.redrill.value:10.0f}\n')
-                if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-                    f.write('      Power plant type:                                       ' + str(model.surfaceplant.plant_type.value.value) + NL)
-                f.write(NL)
-                f.write(NL)
-                f.write('                         ***RESOURCE CHARACTERISTICS***\n')
-                f.write(NL)
-                f.write(f'      Maximum reservoir temperature:                   {model.reserv.Tmax.value:10.1f} {model.reserv.Tmax.CurrentUnits.value}\n')
-                f.write(f'      Number of segments:                            {model.reserv.numseg.value:10.0f}\n')
-                if model.reserv.numseg.value == 1:
-                    f.write(f'      Geothermal gradient:                                {model.reserv.gradient.value[0]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
-                else:
-                    for i in range(1, model.reserv.numseg.value):
-                        f.write(f'      Segment {str(i):s}   Geothermal gradient:                    {model.reserv.gradient.value[i-1]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
-                        f.write(f'      Segment {str(i):s}   Thickness:                         {round(model.reserv.layerthickness.value[i-1], 10)} {model.reserv.layerthickness.CurrentUnits.value}\n')
-                    f.write(f'      Segment {str(i+1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
-
-                f.write(NL)
-                f.write(NL)
-                f.write('                           ***RESERVOIR PARAMETERS***\n')
-                f.write(NL)
-                if model.wellbores.IsAGS.value:
-                    f.write('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.\n')
-                else:
-                    f.write(f'      Reservoir Model = {model.reserv.resoption.value.display_name}\n')
-                    if model.reserv.resoption.value is ReservoirModel.SINGLE_FRACTURE:
-                        f.write(f'      m/A Drawdown Parameter:                                 {model.reserv.drawdp.value:.5f} ' + model.reserv.drawdp.CurrentUnits.value + NL)
-                    elif model.reserv.resoption.value is ReservoirModel.ANNUAL_PERCENTAGE:
-                        f.write(f'      Annual Thermal Drawdown:                                {model.reserv.drawdp.value*100:.3f} ' + model.reserv.drawdp.CurrentUnits.value + NL)
-                    f.write(f'      Bottom-hole temperature:                          {model.reserv.Trock.value:10.2f} {model.reserv.Trock.CurrentUnits.value}\n')
-                    if model.reserv.resoption.value in [ReservoirModel.ANNUAL_PERCENTAGE, ReservoirModel.USER_PROVIDED_PROFILE, ReservoirModel.TOUGH2_SIMULATOR]:
-                        f.write('      Warning: the reservoir dimensions and thermo-physical properties \n')
-                        f.write('               listed below are default values if not provided by the user.   \n')
-                        f.write('               They are only used for calculating remaining heat content.  \n')
-                        # TODO parse this note in GeophiresXResult
-
-                    if model.reserv.resoption.value in [ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP]:
-                        f.write(f'      Fracture model = {model.reserv.fracshape.value.value}\n')
-                        if model.reserv.fracshape.value == FractureShape.CIRCULAR_AREA:
-                            f.write(f'      Well separation: fracture diameter:               {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
-                        elif model.reserv.fracshape.value == FractureShape.CIRCULAR_DIAMETER:
-                            f.write(f'      Well separation: fracture diameter:               {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
-                        elif model.reserv.fracshape.value == FractureShape.SQUARE:
-                            f.write(f'      Well separation: fracture height:                 {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
-                        elif model.reserv.fracshape.value == FractureShape.RECTANGULAR:
-                            f.write(f'      Well separation: fracture height:                 {model.reserv.fracheightcalc.value:10.2f} ' + model.reserv.fracheight.CurrentUnits.value + NL)
-                            f.write(f'      {model.reserv.fracwidthcalc.display_name}:                                             {model.reserv.fracwidthcalc.value:10.2f} {model.reserv.fracwidth.CurrentUnits.value }\n')
-                        f.write(f'      {model.reserv.fracareacalc.display_name}:                                    {model.reserv.fracareacalc.value:10.2f} {model.reserv.fracarea.CurrentUnits.value}\n')
-                    if model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
-                        f.write('      Reservoir volume calculated with fracture separation and number of fractures as input\n')
-                    elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_FRAC_SEP:
-                        f.write('      Number of fractures calculated with reservoir volume and fracture separation as input\n')
-                    elif model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
-                        f.write('      Fracture separation calculated with reservoir volume and number of fractures as input\n')
-                    elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_ONLY:
-                        f.write('      Reservoir volume provided as input\n')
-                    if model.reserv.resvoloption.value in [ReservoirVolume.FRAC_NUM_SEP, ReservoirVolume.RES_VOL_FRAC_SEP, ReservoirVolume.FRAC_NUM_SEP]:
-                        frac_num_label = Outputs._field_label(model.reserv.fracnumbcalc.display_name, 56)
-                        f.write(f'      {frac_num_label}{math.ceil(model.reserv.fracnumbcalc.value)}\n')
-                        f.write(f'      {model.reserv.fracsepcalc.display_name}:                              {model.reserv.fracsepcalc.value:10.2f} {model.reserv.fracsep.CurrentUnits.value}\n')
-                    f.write(f'      Reservoir volume:                              {model.reserv.resvolcalc.value:10.0f} {model.reserv.resvol.CurrentUnits.value}\n')
-
-                    if model.wellbores.impedancemodelused.value:
-                        # See note re: unit conversion:
-                        # https://github.com/NREL/GEOPHIRES-X/blob/d51eb8d1dc8b21c7a79c4d35f296d740347658e0/src/geophires_x/WellBores.py#L1280-L1282
-                        f.write(f'      Reservoir impedance:                              {model.wellbores.impedance.value/1000:10.4f} {model.wellbores.impedance.CurrentUnits.value}\n')
-                    else:
-                        if model.wellbores.overpressure_percentage.Provided:
-                            # write the reservoir pressure as an average in the overpressure case
-                            f.write(f'      {model.wellbores.average_production_reservoir_pressure.display_name}:                       {model.wellbores.average_production_reservoir_pressure.value:10.2f} {model.wellbores.average_production_reservoir_pressure.CurrentUnits.value}\n')
-                        else:
-                            # write the reservoir pressure as a single value
-                            f.write(f'      Reservoir hydrostatic pressure:                       {model.wellbores.production_reservoir_pressure.value[0]:10.2f} ' + model.wellbores.production_reservoir_pressure.CurrentUnits.value + NL)
-                        f.write(f'      Plant outlet pressure:                            {model.surfaceplant.plant_outlet_pressure.value:10.2f} ' + model.surfaceplant.plant_outlet_pressure.CurrentUnits.value + NL)
-                        if model.wellbores.productionwellpumping.value:
-                            f.write(f'      Production wellhead pressure:                     {model.wellbores.Pprodwellhead.value:10.2f} ' + model.wellbores.Pprodwellhead.CurrentUnits.value + NL)
-                            f.write(f'      Productivity Index:                               {model.wellbores.PI.value:10.2f} ' + model.wellbores.PI.CurrentUnits.value + NL)
-                        f.write(f'      Injectivity Index:                                {model.wellbores.II.value:10.2f} ' + model.wellbores.II.CurrentUnits.value + NL)
-
-                    f.write(f'      Reservoir density:                                {model.reserv.rhorock.value:10.2f} ' + model.reserv.rhorock.CurrentUnits.value + NL)
-                    if model.wellbores.rameyoptionprod.value or model.reserv.resoption.value in [ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP, ReservoirModel.SINGLE_FRACTURE, ReservoirModel.TOUGH2_SIMULATOR]:
-                        f.write(f'      Reservoir thermal conductivity:                   {model.reserv.krock.value:10.2f} {model.reserv.krock.CurrentUnits.value}{NL}')
-                    f.write(f'      Reservoir heat capacity:                          {model.reserv.cprock.value:10.2f} ' + model.reserv.cprock.CurrentUnits.value + NL)
-                    if model.reserv.resoption.value is ReservoirModel.LINEAR_HEAT_SWEEP or (model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model):
-                        f.write(f'      Reservoir porosity:                               {model.reserv.porrock.value*100:10.2f} ' + model.reserv.porrock.CurrentUnits.value + NL)
-                    if model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model:
-                        f.write(f'      Reservoir permeability:                           {model.reserv.permrock.value:10.2E} ' + model.reserv.permrock.CurrentUnits.value + NL)
-                        f.write(f'      Reservoir thickness:                              {model.reserv.resthickness.value:10.2f} ' + model.reserv.resthickness.CurrentUnits.value + NL)
-                        f.write(f'      Reservoir width:                                  {model.reserv.reswidth.value:10.2f} ' + model.reserv.reswidth.CurrentUnits.value + NL)
-                        f.write(f'      Well separation:                                  {model.wellbores.wellsep.value:10.2f} ' + model.wellbores.wellsep.CurrentUnits.value + NL)
-
-                if not dispatch_report:
-                    f.write(NL)
-                    f.write(NL)
-                    f.write('                           ***RESERVOIR SIMULATION RESULTS***\n')
-                    f.write(NL)
-                    f.write(f'      Maximum Production Temperature:                  {np.max(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-                    f.write(f'      Average Production Temperature:                  {np.average(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Production Temperature:                  {np.min(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-                    f.write(f'      Initial Production Temperature:                  {model.wellbores.ProducedTemperature.value[0]:10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-                    if model.wellbores.IsAGS.value:
-                        f.write('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.\n')
-                    else:
-                        f.write(f'      Average Reservoir Heat Extraction:                {np.average(model.surfaceplant.HeatExtracted.value):10.2f} ' + model.surfaceplant.HeatExtracted.PreferredUnits.value + NL)
-                        if model.wellbores.rameyoptionprod.value:
-                            f.write('      Production Wellbore Heat Transmission Model = Ramey Model\n')
-                            f.write(f'      Average Production Well Temperature Drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
-                        else:
-                            f.write(f'      Wellbore Heat Transmission Model = Constant Temperature Drop:{model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
-                        if model.wellbores.impedancemodelused.value:
-                            f.write(f'      Total Average Pressure Drop:                     {np.average(model.wellbores.DPOverall.value):10.1f} ' + model.wellbores.DPOverall.PreferredUnits.value + NL)
-                            f.write(f'      Average Injection Well Pressure Drop:            {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
-                            f.write(f'      Average Reservoir Pressure Drop:                 {np.average(model.wellbores.DPReserv.value):10.1f} ' + model.wellbores.DPReserv.PreferredUnits.value + NL)
-                            f.write(f'      Average Production Well Pressure Drop:           {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
-                            f.write(f'      Average Buoyancy Pressure Drop:                  {np.average(model.wellbores.DPBouyancy.value):10.1f} ' + model.wellbores.DPBouyancy.PreferredUnits.value + NL)
-                        else:
-                            f.write(f'      Average Injection Well Pump Pressure Drop:       {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
-                            if model.wellbores.productionwellpumping.value:
-                                f.write(f'      Average Production Well Pump Pressure Drop:      {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
-
-
-                f.write('\n\n                          ***CAPITAL COSTS (M$)***\n\n')
-                if not model.economics.totalcapcost.Valid:
-                    f.write(f'         {econ.Cexpl.display_name}:                             {econ.Cexpl.value:10.2f} {econ.Cexpl.CurrentUnits.value}\n')
-
-                    f.write(f'         {model.economics.Cwell.display_name}:                 {model.economics.Cwell.value:10.2f} {model.economics.Cwell.CurrentUnits.value}\n')
-
-                    if econ.cost_lateral_section.value > 0.0:
-                        f.write(f'             Drilling and completion costs per vertical production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
-                        f.write(f'             Drilling and completion costs per vertical injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
-                        f.write(f'             {econ.cost_per_lateral_section.Name}:       {econ.cost_per_lateral_section.value:10.2f} {econ.cost_lateral_section.CurrentUnits.value}\n')
-                    elif round(econ.cost_one_production_well.value, 4) != round(econ.cost_one_injection_well.value, 4) \
-                        and model.economics.cost_one_injection_well.value != -1:
-                        f.write(f'             Drilling and completion costs per production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
-                        f.write(f'             Drilling and completion costs per injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
-                    else:
-                        cpw_label = Outputs._field_label(econ.drilling_and_completion_costs_per_well.display_name, 47)
-                        f.write(f'         {cpw_label}{econ.drilling_and_completion_costs_per_well.value:10.2f} {econ.Cwell.CurrentUnits.value}\n')
-
-                    f.write(f'         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n')
-
-                    f.write(f'         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n')
-                    if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                        f.write(f'            of which Absorption Chiller Cost:           {model.economics.chillercapex.value:10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
-                    if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-                        f.write(f'            of which Heat Pump Cost:                    {model.economics.heatpumpcapex.value:10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
-                    if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                        f.write(f'            of which Peaking Boiler Cost:               {model.economics.peakingboilercost.value:10.2f} ' + model.economics.peakingboilercost.CurrentUnits.value + NL)
-                    f.write(f'         {model.economics.Cgath.display_name}:                  {model.economics.Cgath.value:10.2f} {model.economics.Cgath.CurrentUnits.value}\n')
-
-                    if model.surfaceplant.piping_length.value > 0:
-                        f.write(f'         {model.economics.Cpiping.display_name}:                    {model.economics.Cpiping.value:10.2f} {model.economics.Cpiping.CurrentUnits.value}\n')
-
-                    if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                        f.write(f'         District Heating System Cost:                  {model.economics.dhdistrictcost.value:10.2f} {model.economics.dhdistrictcost.CurrentUnits.value}\n')
-
-                    f.write(f'         Total surface equipment costs:                 {(model.economics.Cplant.value+model.economics.Cgath.value):10.2f} ' + model.economics.Cplant.CurrentUnits.value + NL)
-
-                if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
-                    f.write(f'         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n')
-                    f.write(f'      Drilling and completion costs per redrilled well: {(econ.Cwell.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.2f} {econ.Cwell.CurrentUnits.value}\n')
-                    f.write(f'         Stimulation costs (for redrilling):            {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n')
-
-                if model.economics.RITCValue.value and not is_sam_econ_model:
-                    # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)
-                    f.write(f'         {econ.RITCValue.display_name}:                         {-1 * econ.RITCValue.value:10.2f} {econ.RITCValue.CurrentUnits.value}\n')
-
-                additional_capex_modifiers: list[tuple[Parameter, int]] = [
-                    (econ.FlatLicenseEtc, 1),
-                    (econ.OtherIncentives, -1),
-                    (econ.TotalGrant, -1)
-                ]
-                for additional_capex_modifier_entry in additional_capex_modifiers:
-                    additional_capex_modifier_param: Parameter = additional_capex_modifier_entry[0]
-                    additional_capex_modifier_multiplier: int = additional_capex_modifier_entry[1]
-
-                    acm_render_value = additional_capex_modifier_param.value * additional_capex_modifier_multiplier
-
-                    if additional_capex_modifier_param.Provided:
-                        acm_label = Outputs._field_label(additional_capex_modifier_param.Name, 47)
-                        f.write(
-                            f'         {acm_label}{acm_render_value:10.2f} {additional_capex_modifier_param.CurrentUnits.value}\n')
-
-                if is_sam_econ_model and econ.DoAddOnCalculations.value:
-                    # Non-SAM econ models print this in Extended Economics profile
-                    aoc_label = Outputs._field_label(model.addeconomics.AddOnCAPEXTotal.display_name, 47)
-                    f.write(f'         {aoc_label}{model.addeconomics.AddOnCAPEXTotal.value:10.2f} {model.addeconomics.AddOnCAPEXTotal.CurrentUnits.value}\n')
-
-                display_occ_and_inflation_during_construction_in_capital_costs = is_sam_econ_model
-                if display_occ_and_inflation_during_construction_in_capital_costs:
-                    occ_label = Outputs._field_label(econ.overnight_capital_cost.display_name, 47)
-                    f.write(
-                        f'         {occ_label}{econ.overnight_capital_cost.value:10.2f} {econ.overnight_capital_cost.CurrentUnits.value}\n')
-
-                    icc_label = Outputs._field_label(econ.inflation_cost_during_construction.display_name, 47)
-                    f.write(f'         {icc_label}{econ.inflation_cost_during_construction.value:10.2f} {econ.inflation_cost_during_construction.CurrentUnits.value}\n')
-
-                if econ.royalty_supplemental_payments.Provided:
-                    rsp_label = Outputs._field_label(econ.royalty_supplemental_payments_cost_during_construction.display_name, 41)
-                    f.write(
-                        f'         {rsp_label}   {econ.royalty_supplemental_payments_cost_during_construction.value:.2f} {econ.royalty_supplemental_payments_cost_during_construction.CurrentUnits.value}\n')
-
-                display_idc_in_capital_costs = is_sam_econ_model \
-                                                       and model.surfaceplant.construction_years.value > 1
-                if display_idc_in_capital_costs:
-                    idc_label = Outputs._field_label(econ.interest_during_construction.display_name, 47)
-                    f.write(
-                        f'         {idc_label}{econ.interest_during_construction.value:10.2f} {econ.interest_during_construction.CurrentUnits.value}\n')
-
-                capex_param = econ.CCap if not is_sam_econ_model else econ.capex_total
-                capex_label = Outputs._field_label(capex_param.display_name, 50)
-                f.write(f'      {capex_label}{capex_param.value:10.2f} {capex_param.CurrentUnits.value}\n')
-
-                if model.economics.econmodel.value == EconomicModel.FCR:
-                    f.write(f'      Annualized capital costs:                         {(model.economics.CCap.value*(1+model.economics.inflrateconstruction.value)*model.economics.FCR.value):10.2f} ' + model.economics.CCap.CurrentUnits.value + NL)
-
-                f.write(NL)
-                f.write(NL)
-                f.write('                ***OPERATING AND MAINTENANCE COSTS (M$/yr)***\n')
-                f.write(NL)
-                if not model.economics.oamtotalfixed.Valid:
-                    f.write(f'         {model.economics.Coamwell.display_name}:                   {model.economics.Coamwell.value:10.2f} {model.economics.Coamwell.CurrentUnits.value}\n')
-                    f.write(f'         {model.economics.Coamplant.display_name}:                 {model.economics.Coamplant.value:10.2f} {model.economics.Coamplant.CurrentUnits.value}\n')
-                    f.write(f'         {model.economics.Coamwater.display_name}:                                   {model.economics.Coamwater.value:10.2f} {model.economics.Coamwater.CurrentUnits.value}\n')
-                    if model.surfaceplant.plant_type.value in [PlantType.INDUSTRIAL, PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-                        f.write(f'         Average Reservoir Pumping Cost:                {model.economics.averageannualpumpingcosts.value:10.2f} {model.economics.averageannualpumpingcosts.CurrentUnits.value}\n')
-                    if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                        f.write(f'         Absorption Chiller O&M Cost:                   {model.economics.chilleropex.value:10.2f} {model.economics.chilleropex.CurrentUnits.value}\n')
-                    if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-                        f.write(f'         Average Heat Pump Electricity Cost:            {model.economics.averageannualheatpumpelectricitycost.value:10.2f} {model.economics.averageannualheatpumpelectricitycost.CurrentUnits.value}\n')
-                    if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                        f.write(f'         Annual District Heating O&M Cost:              {model.economics.dhdistrictoandmcost.value:10.2f} {model.economics.dhdistrictoandmcost.CurrentUnits.value}\n')
-                        f.write(f'         Average Annual Peaking Fuel Cost:              {model.economics.averageannualngcost.value:10.2f} {model.economics.averageannualngcost.CurrentUnits.value}\n')
-
-                    if model.wellbores.redrill.value > 0:
-                        redrill_label = Outputs._field_label(econ.redrilling_annual_cost.display_name, 47)
-                        f.write(f'         {redrill_label}{econ.redrilling_annual_cost.value:10.2f} {econ.redrilling_annual_cost.CurrentUnits.value}\n')
-
-                    if econ.DoAddOnCalculations.value and is_sam_econ_model:
-                        # Non-SAM econ models print this in Extended Economics profile
-                        aoc_label = Outputs._field_label(model.addeconomics.AddOnOPEXTotalPerYear.display_name, 47)
-                        f.write(f'         {aoc_label}{model.addeconomics.AddOnOPEXTotalPerYear.value:10.2f} {model.addeconomics.AddOnOPEXTotalPerYear.CurrentUnits.value}\n')
-
-                    if econ.has_production_based_royalties:
-                        royalties_label = Outputs._field_label(econ.royalties_average_annual_cost.display_name, 47)
-                        f.write(f'         {royalties_label}{econ.royalties_average_annual_cost.value:10.2f} {econ.royalties_average_annual_cost.CurrentUnits.value}\n')
-
-                    f.write(f'      {econ.Coam.display_name}:            {(econ.Coam.value + econ.averageannualpumpingcosts.value + econ.averageannualheatpumpelectricitycost.value):10.2f} {econ.Coam.CurrentUnits.value}\n')
-                else:
-                    f.write(f'      {econ.Coam.display_name}:            {econ.Coam.value:10.2f} {econ.Coam.CurrentUnits.value}\n')
+                self._write_capital_costs(model, f, is_sam_econ_model)
+                self._write_operation_and_maintenance_costs(model, f, is_sam_econ_model)
 
                 f.write(NL)
                 f.write(NL)

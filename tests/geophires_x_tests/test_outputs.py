@@ -63,6 +63,28 @@ class OutputsTestCase(BaseTestCase):
         )
         return self._register_output_artifact(Path(html_output_path.parent, f"{file_stem}.png"))
 
+    @staticmethod
+    def _normalized_text_output_lines(path: Path) -> list[str]:
+        normalized_lines = []
+        volatile_metadata_prefixes = (
+            " GEOPHIRES Version:",
+            " Simulation Date:",
+            " Simulation Time:",
+            " Calculation Time:",
+        )
+        for line in path.read_text(encoding="utf-8").splitlines():
+            normalized_line = line.rstrip()
+            for prefix in volatile_metadata_prefixes:
+                if line.startswith(prefix):
+                    normalized_line = f"{prefix} <volatile>"
+                    break
+            normalized_lines.append(normalized_line)
+
+        while normalized_lines and normalized_lines[-1] == "":
+            normalized_lines.pop()
+
+        return normalized_lines
+
     def _legacy_example_graph_path(self, file_stem: str, title: str) -> Path:
         graph_stem = (
             f"{removeDisallowedFilenameChars(file_stem)}_{removeDisallowedFilenameChars(title.replace(' ', '_'))}"
@@ -84,6 +106,21 @@ class OutputsTestCase(BaseTestCase):
             ),
             hourly_units={"temperature_2m": "degC"},
         )
+
+    def test_baseload_text_output_format_matches_example_fixture(self):
+        result = GeophiresXClient().get_geophires_result(
+            self._geophires_input_parameters(
+                "example1_baseload_format.out",
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+            )
+        )
+
+        actual_lines = self._normalized_text_output_lines(Path(result.output_file_path))
+        expected_lines = self._normalized_text_output_lines(
+            Path(__file__).resolve().parent / "baseline_example1_current_format.txt"
+        )
+
+        self.assertEqual(expected_lines, actual_lines)
 
     def test_html_output_file(self):
         html_path = self._output_artifact_path("example12_DH.html")
