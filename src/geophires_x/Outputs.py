@@ -40,6 +40,27 @@ class Outputs:
     TESS_RESULTS_CATEGORY_NAME = 'THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS'
     DISPATCH_RESULTS_CATEGORY_NAME = 'DISPATCH RESULTS'
     DISPATCH_PROFILE_CATEGORY_NAME = DISPATCH_PROFILE_CATEGORY_NAME
+    COGENERATION_END_USE_OPTIONS = (
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+        EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+        EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+    )
+    ELECTRICITY_END_USE_OPTIONS = (EndUseOptions.ELECTRICITY, *COGENERATION_END_USE_OPTIONS)
+    HEAT_END_USE_OPTIONS = (EndUseOptions.HEAT, *COGENERATION_END_USE_OPTIONS)
+    SURFACE_HEAT_RESULT_OPTIONS = (
+        EndUseOptions.HEAT,
+        PlantType.ABSORPTION_CHILLER,
+        PlantType.HEAT_PUMP,
+        *COGENERATION_END_USE_OPTIONS,
+    )
+    SPECIAL_HEAT_PLANT_TYPES = (
+        PlantType.ABSORPTION_CHILLER,
+        PlantType.HEAT_PUMP,
+        PlantType.DISTRICT_HEATING,
+    )
 
     def __init__(self, model: Model, output_file: str = 'HDR.out'):
         model.logger.info(f'Init {__class__!s}: {__name__}')
@@ -111,6 +132,22 @@ class Outputs:
 
     def __str__(self):
         return 'Outputs'
+
+    @staticmethod
+    def _has_electricity_component(enduse_option: EndUseOptions) -> bool:
+        return enduse_option in Outputs.ELECTRICITY_END_USE_OPTIONS
+
+    @staticmethod
+    def _has_heat_component(enduse_option: EndUseOptions) -> bool:
+        return enduse_option in Outputs.HEAT_END_USE_OPTIONS
+
+    @staticmethod
+    def _writes_surface_heat_results(enduse_option: EndUseOptions) -> bool:
+        return enduse_option in Outputs.SURFACE_HEAT_RESULT_OPTIONS
+
+    @staticmethod
+    def _is_cogeneration_end_use(enduse_option: EndUseOptions) -> bool:
+        return enduse_option in Outputs.COGENERATION_END_USE_OPTIONS
 
     @staticmethod
     def _thermal_drawdown_ratio(model: Model, idx: int) -> float:
@@ -230,9 +267,9 @@ class Outputs:
         f.write(NL)
         f.write(f'      {model.surfaceplant.enduse_option_output.display_name}: '
                 f'{model.surfaceplant.enduse_option.value.value}\n')
-        if not dispatch_report and model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
+        if not dispatch_report and model.surfaceplant.plant_type.value in Outputs.SPECIAL_HEAT_PLANT_TYPES:
             f.write('      Surface Application: ' + str(model.surfaceplant.plant_type.value.value) + NL)
-        if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity component
+        if not dispatch_report and Outputs._has_electricity_component(model.surfaceplant.enduse_option.value):
             f.write(f'      Average Net Electricity Production:               {np.average(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + NL)
         if not dispatch_report and model.surfaceplant.enduse_option.value is not EndUseOptions.ELECTRICITY:
             # there is a direct-use component
@@ -277,12 +314,7 @@ class Outputs:
                 f.write(f'      {model.economics.VALCOC_EnergyAdjustment.display_name}: {model.economics.VALCOC_EnergyAdjustment.value:10.2f} {model.economics.VALCOC_EnergyAdjustment.CurrentUnits.value}\n')
                 f.write(f'      {model.economics.VALCOC_CapacityAdjustment.display_name}: {model.economics.VALCOC_CapacityAdjustment.value:10.2f} {model.economics.VALCOC_CapacityAdjustment.CurrentUnits.value}\n')
                 f.write(f'      {model.economics.VALCOC_FlexibilityAdjustment.display_name}: {model.economics.VALCOC_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOC_FlexibilityAdjustment.CurrentUnits.value}\n')
-        elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+        elif not dispatch_report and Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
             # Cogeneration writes both electricity and heat competitiveness outputs because
             # XLCO/VALCO are tracked independently per active commodity.
             f.write(f'      {model.economics.LCOE.display_name}:                      {model.economics.LCOE.value:10.2f} {model.economics.LCOE.CurrentUnits.value}\n')
@@ -410,12 +442,7 @@ class Outputs:
         project_payback_period_label = Outputs._field_label(model.economics.ProjectPaybackPeriod.display_name, 56)
         f.write(f'      {project_payback_period_label}{project_payback_period_display}\n')
 
-        if model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                      EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                      EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                      EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+        if Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
             f.write(f'      CHP: Percent cost allocation for electrical plant: {model.economics.CAPEX_heat_electricity_plant_ratio.value*100.0:10.2f} %\n')
 
         if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
@@ -446,7 +473,7 @@ class Outputs:
         if model.wellbores.IsAGS.value and model.wellbores.tot_lateral_m.value > 0:
             f.write(f'      Lateral length of wellbore (per lateral):           {(model.wellbores.tot_lateral_m.value/model.wellbores.numnonverticalsections.value):10.1f} ' + model.wellbores.tot_lateral_m.CurrentUnits.value + NL)
         f.write(f'      {model.wellbores.redrill.display_name}:                    {model.wellbores.redrill.value:10.0f}\n')
-        if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
+        if Outputs._has_electricity_component(model.surfaceplant.enduse_option.value):
             f.write('      Power plant type:                                       ' + str(model.surfaceplant.plant_type.value.value) + NL)
 
     @staticmethod
@@ -710,310 +737,367 @@ class Outputs:
         else:
             f.write(f'      {econ.Coam.display_name}:            {econ.Coam.value:10.2f} {econ.Coam.CurrentUnits.value}\n')
 
-    def PrintOutputs(self, model: Model):
-        """
-        PrintOutputs writes the standard outputs to the output file.
-        :param model: The container class of the application, giving access to everything else, including the logger
-        :type model: :class:`~geophires_x.Model.Model`
-        :return: None
-        """
-        model.logger.info(f'Init {str(__class__)}: {sys._getframe().f_code.co_name}')
+    @staticmethod
+    def _write_surface_equipment_simulation_results(
+        model: Model,
+        f: TextIOWrapper,
+        dispatch_report: bool,
+    ) -> None:
+        f.write(NL)
+        f.write(NL)
+        f.write('                           ***SURFACE EQUIPMENT SIMULATION RESULTS***\n')
+        f.write(NL)
+        if not dispatch_report and Outputs._has_electricity_component(model.surfaceplant.enduse_option.value):
+            f.write(f'      Initial geofluid availability:                    {model.surfaceplant.Availability.value[0]:10.2f} ' + model.surfaceplant.Availability.PreferredUnits.value + NL)
+            f.write(f'      Maximum Total Electricity Generation:             {np.max(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Average Total Electricity Generation:             {np.average(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Minimum Total Electricity Generation:             {np.min(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Initial Total Electricity Generation:             {model.surfaceplant.ElectricityProduced.value[0]:10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Maximum Net Electricity Generation:               {np.max(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Average Net Electricity Generation:               {np.average(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Minimum Net Electricity Generation:               {np.min(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Initial Net Electricity Generation:               {model.surfaceplant.NetElectricityProduced.value[0]:10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
+            f.write(f'      Average Annual Total Electricity Generation:      {np.average(model.surfaceplant.TotalkWhProduced.value/1E6):10.2f} GWh' + NL)
+            f.write(f'      Average Annual Net Electricity Generation:        {np.average(model.surfaceplant.NetkWhProduced.value/1E6):10.2f} GWh' + NL)
 
-        self._convert_units(model)
+            if model.wellbores.PumpingPower.value[0] > 0.0:
+                ipp_nip = model.wellbores.PumpingPower.value[0] / model.surfaceplant.NetElectricityProduced.value[0]
+                f.write(f'      Initial pumping power/net installed power:        {(ipp_nip*100):10.2f} %\n')
 
-        # write results to output file and screen
-        try:
-            with open(self.output_file, 'w', encoding='UTF-8') as f:
+        if not dispatch_report and Outputs._writes_surface_heat_results(model.surfaceplant.enduse_option.value):
+            f.write(f'      Maximum Net Heat Production:                      {np.max(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
+            f.write(f'      Average Net Heat Production:                      {np.average(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
+            f.write(f'      Minimum Net Heat Production:                      {np.min(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
+            f.write(f'      Initial Net Heat Production:                      {model.surfaceplant.HeatProduced.value[0]:10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
+            f.write(f'      Average Annual Heat Production:                   {np.average(model.surfaceplant.HeatkWhProduced.value/1E6):10.2f} GWh' + NL)
 
-                econ: Economics = model.economics
-                is_sam_econ_model = econ.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA
-                dispatch_report = is_dispatch_report(model)
+        if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+            f.write(f'      Average Annual Heat Pump Electricity Use:         {np.average(model.surfaceplant.heat_pump_electricity_kwh_used.value / 1E6):10.2f} ' + 'GWh/year' + NL)
+        if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            f.write(f'      Maximum Cooling Production:                       {np.max(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
+            f.write(f'      Average Cooling Production:                       {np.average(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
+            f.write(f'      Minimum Cooling Production:                       {np.min(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
+            f.write(f'      Initial Cooling Production:                       {model.surfaceplant.cooling_produced.value[0]:10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
+            f.write(f'      Average Annual Cooling Production:                {np.average(model.surfaceplant.cooling_kWh_Produced.value / 1E6):10.2f} ' + 'GWh/year' + NL)
 
-                self._write_case_report_header(f)
-                self._write_simulation_metadata(model, f)
+        if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            f.write(f'      Annual District Heating Demand:                   {model.surfaceplant.annual_heating_demand.value:10.2f} ' + model.surfaceplant.annual_heating_demand.PreferredUnits.value + NL)
+            f.write(f'      Maximum Daily District Heating Demand:            {np.max(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
+            f.write(f'      Average Daily District Heating Demand:            {np.average(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
+            f.write(f'      Minimum Daily District Heating Demand:            {np.min(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
+            f.write(f'      Maximum Geothermal Heating Production:            {np.max(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
+            f.write(f'      Average Geothermal Heating Production:            {np.average(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
+            f.write(f'      Minimum Geothermal Heating Production:            {np.min(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
+            f.write(f'      Maximum Peaking Boiler Heat Production:           {np.max(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
+            f.write(f'      Average Peaking Boiler Heat Production:           {np.average(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
+            f.write(f'      Minimum Peaking Boiler Heat Production:           {np.min(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
 
-                self._write_summary_of_results(model, f, dispatch_report, is_sam_econ_model)
+        f.write(f'      Average Pumping Power:                            {np.average(model.wellbores.PumpingPower.value):10.2f} {model.wellbores.PumpingPower.CurrentUnits.value}{NL}')
 
-                self._write_weather_data_results(model, f)
-                self._write_tess_results(model, f)
-                self._write_dispatch_results(model, f)
+        if not dispatch_report and model.surfaceplant.heat_to_power_conversion_efficiency.value is not None:
+            hpce = model.surfaceplant.heat_to_power_conversion_efficiency
+            f.write(f'      {Outputs._field_label(hpce.Name, 50)}'
+                    f'{hpce.value:10.2f} {model.surfaceplant.heat_to_power_conversion_efficiency.CurrentUnits.value}\n')
 
-                self._write_economic_parameters(model, f, is_sam_econ_model)
-                self._write_engineering_parameters(model, f)
-                self._write_resource_characteristics(model, f)
-                self._write_reservoir_parameters(model, f)
-                self._write_reservoir_simulation_results(model, f, dispatch_report)
+    @staticmethod
+    def _write_production_profile(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:
+        if dispatch_report:
+            return
 
-                self._write_capital_costs(model, f, is_sam_econ_model)
-                self._write_operation_and_maintenance_costs(model, f, is_sam_econ_model)
+        f.write(NL)
+        f.write('                            ************************************************************\n')
+        f.write('                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
+        f.write('                            ************************************************************\n')
 
+        if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+            Outputs._write_electricity_production_profile(model, f)
+        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value not in Outputs.SPECIAL_HEAT_PLANT_TYPES:
+            Outputs._write_direct_use_production_profile(model, f)
+        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+            Outputs._write_heat_pump_production_profile(model, f)
+        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            Outputs._write_district_heating_production_profile(model, f)
+        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            Outputs._write_absorption_chiller_production_profile(model, f)
+        elif Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+            Outputs._write_cogeneration_production_profile(model, f)
+
+        f.write(NL)
+        f.write(NL)
+
+    @staticmethod
+    def _write_electricity_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET               FIRST LAW\n')
+        f.write('             DRAWDOWN             TEMPERATURE             POWER             POWER              EFFICIENCY\n')
+        f.write('                                     (' + model.wellbores.ProducedTemperature.CurrentUnits.value+')               (' + model.wellbores.PumpingPower.CurrentUnits.value + ')              (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}              {5:8.4f}'.format(i+1,
+                                    Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                            model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                            model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                            model.surfaceplant.FirstLawEfficiency.value[i*model.economics.timestepsperyear.value]*100)+NL)
+
+    @staticmethod
+    def _write_direct_use_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET\n')
+        f.write('             DRAWDOWN             TEMPERATURE             POWER              HEAT\n')
+        f.write('                                   (deg C)                (MW)               (MW)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i,
+                                    Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                            model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                            model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                    model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
+
+    @staticmethod
+    def _write_heat_pump_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET             HEAT PUMP\n')
+        f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT         ELECTRICITY USE\n')
+        f.write('                                    (deg C)                (MWe)              (MWt)             (MWe)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i,
+                                                                                                                                   Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                                                                                                  model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                  model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                  model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.heat_pump_electricity_used.value[i * model.economics.timestepsperyear.value]) + NL)
+
+    @staticmethod
+    def _write_district_heating_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR         THERMAL              GEOFLUID               PUMP              GEOTHERMAL\n')
+        f.write('               DRAWDOWN            TEMPERATURE             POWER            HEAT OUTPUT\n')
+        f.write('                                    (deg C)                (MWe)               (MWt)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i,
+                                    Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                            model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                            model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                    model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
+
+    @staticmethod
+    def _write_absorption_chiller_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET              NET\n')
+        f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT             COOLING\n')
+        f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i,
+                                                                                                                                  Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                                                                                                 model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                 model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                 model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.cooling_produced.value[i * model.economics.timestepsperyear.value], ) + NL)
+
+    @staticmethod
+    def _write_cogeneration_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR     THERMAL             GEOFLUID             PUMP             NET              NET             FIRST LAW\n')
+        f.write('           DRAWDOWN           TEMPERATURE           POWER           POWER             HEAT            EFFICIENCY\n')
+        f.write('                                (deg C)             (MW)            (MW)              (MW)               (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i,
+                                    Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
+                                                            model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
+                                                                                        model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
+                                                                                                                model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                        model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value],
+                                                                                                                                                                    model.surfaceplant.FirstLawEfficiency.value[i*model.economics.timestepsperyear.value]*100)+NL)
+
+    @staticmethod
+    def _write_annual_production_profile(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:
+        if not dispatch_report:
+            f.write('                              *******************************************************************\n')
+            f.write('                              *  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
+            f.write('                              *******************************************************************\n')
+        if not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # only electricity
+            f.write('  YEAR             ELECTRICITY                   HEAT                RESERVOIR            PERCENTAGE OF\n')
+            f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+            f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
+                                        model.surfaceplant.NetkWhProduced.value[i]/1E6,
+                                                                    model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                            model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                    (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER: # absorption chiller
+            f.write('  YEAR              COOLING                 HEAT                RESERVOIR            PERCENTAGE OF\n')
+            f.write('                    PROVIDED              EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+            f.write('                   (GWh/year)             (GWh/year)            (10^15 J)                 (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i + 1,
+                                                                                                                              model.surfaceplant.cooling_kWh_Produced.value[i] / 1E6,
+                                                                                                                              model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
+                                                                                                                              model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                              (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+
+        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP: # heat pump
+            f.write('  YEAR              HEATING             RESERVOIR HEAT          HEAT PUMP          RESERVOIR           PERCENTAGE OF\n')
+            f.write('                    PROVIDED              EXTRACTED          ELECTRICITY USE      HEAT CONTENT        TOTAL HEAT MINED\n')
+            f.write('                   (GWh/year)             (GWh/year)           (GWh/year)           (10^15 J)                (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}             {3:8.2f}             {4:8.2f}              {5:8.2f}'.format(i + 1,
+                                                                                                                                                         model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
+                                                                                                                                                         model.surfaceplant.HeatkWhExtracted.value[i] / 1E6, model.surfaceplant.heat_pump_electricity_kwh_used.value[i] / 1E6,
+                                                                                                                                                         model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                                                         (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+
+        elif not dispatch_report and Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+            f.write('  YEAR             HEAT                 ELECTRICITY                HEAT              RESERVOIR        PERCENTAGE OF\n')
+            f.write('                  PROVIDED               PROVIDED                EXTRACTED          HEAT CONTENT    TOTAL HEAT MINED\n')
+            f.write('                 (GWh/year)             (GWh/year)               (GWh/year)          (10^15 J)           (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}            {1:8.1f}               {2:8.1f}                  {3:8.2f}            {4:8.2f}             {5:8.2f}'.format(i+1,
+                                    model.surfaceplant.HeatkWhProduced.value[i]/1E6,
+                                                                model.surfaceplant.NetkWhProduced.value[i]/1E6,
+                                                                                            model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                                                    model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                                        (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+
+        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING: # district-heating
+            f.write('  YEAR           GEOTHERMAL          PEAKING BOILER       RESERVOIR HEAT          RESERVOIR         PERCENTAGE OF\n')
+            f.write('              HEATING PROVIDED      HEATING PROVIDED        EXTRACTED            HEAT CONTENT     TOTAL HEAT MINED\n')
+            f.write('                 (GWh/year)            (GWh/year)           (GWh/year)            (10^15 J)              (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}            {1:8.1f}              {2:8.1f}              {3:8.2f}             {4:8.2f}            {5:8.2f}'.format(i + 1,
+                                                                                                                                                     model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
+                                                                                                                                                     model.surfaceplant.annual_ng_demand.value[i] / 1E3,
+                                                                                                                                                     model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
+                                                                                                                                                     model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                                                     (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+        elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT: # only direct-use
+            f.write('  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF\n')
+            f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+            f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
+                                        model.surfaceplant.HeatkWhProduced.value[i]/1E6,
+                                                                    model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                            model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                    (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    def _write_cashflow_profile_sections(
+        self,
+        model: Model,
+        f: TextIOWrapper,
+        dispatch_report: bool,
+        is_sam_econ_model: bool,
+    ) -> None:
+        if dispatch_report:
+            self._write_dispatch_profile_report_table(model, f)
+
+        if not is_sam_econ_model:
+            self.write_revenue_and_cashflow_profile_output(model, f)
+
+        if is_sam_econ_model:
+            f.write(self.get_sam_cash_flow_profile_output(model))
+
+    @staticmethod
+    def _write_reservoir_power_required_profiles(model: Model, f: TextIOWrapper) -> None:
+        # if we are dealing with overpressure and two different reservoirs, show a table reporting the values
+        if model.wellbores.overpressure_percentage.Provided:
+            f.write(NL)
+            f.write('                            ***************************************\n')
+            f.write('                            *  RESERVOIR POWER REQUIRED PROFILES  *\n')
+            f.write('                            ***************************************\n')
+            f.write('  YEAR     PROD PUMP     INJECT PUMP     TOTAL PUMP\n')
+            f.write('             POWER          POWER           POWER\n')
+            f.write(
+                '             (' + model.wellbores.PumpingPowerProd.CurrentUnits.value + ')           (' + model.wellbores.PumpingPowerInj.CurrentUnits.value + ')            (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  \n')
+            for i in range(0, model.surfaceplant.plant_lifetime.value):
+                f.write('  {0:2.0f}     {1:8.4f}        {2:8.4f}       {3:8.4f}'.format(i + 1,
+                                                                                model.wellbores.PumpingPowerProd.value[
+                                                                                    i * model.economics.timestepsperyear.value],
+                                                                                model.wellbores.PumpingPowerInj.value[
+                                                                                    i * model.economics.timestepsperyear.value],
+                                                                                model.wellbores.PumpingPower.value[
+                                                                                    i * model.economics.timestepsperyear.value]))
                 f.write(NL)
-                f.write(NL)
-                f.write('                           ***SURFACE EQUIPMENT SIMULATION RESULTS***\n')
-                f.write(NL)
-                if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # there is an electricity componenent:
-                    f.write(f'      Initial geofluid availability:                    {model.surfaceplant.Availability.value[0]:10.2f} ' + model.surfaceplant.Availability.PreferredUnits.value + NL)
-                    f.write(f'      Maximum Total Electricity Generation:             {np.max(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Average Total Electricity Generation:             {np.average(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Total Electricity Generation:             {np.min(model.surfaceplant.ElectricityProduced.value):10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Initial Total Electricity Generation:             {model.surfaceplant.ElectricityProduced.value[0]:10.2f} ' + model.surfaceplant.ElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Maximum Net Electricity Generation:               {np.max(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Average Net Electricity Generation:               {np.average(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Net Electricity Generation:               {np.min(model.surfaceplant.NetElectricityProduced.value):10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Initial Net Electricity Generation:               {model.surfaceplant.NetElectricityProduced.value[0]:10.2f} ' + model.surfaceplant.NetElectricityProduced.PreferredUnits.value + NL)
-                    f.write(f'      Average Annual Total Electricity Generation:      {np.average(model.surfaceplant.TotalkWhProduced.value/1E6):10.2f} GWh' + NL)
-                    f.write(f'      Average Annual Net Electricity Generation:        {np.average(model.surfaceplant.NetkWhProduced.value/1E6):10.2f} GWh' + NL)
+            f.write(NL)
 
-                    if model.wellbores.PumpingPower.value[0] > 0.0:
-                        ipp_nip = model.wellbores.PumpingPower.value[0] / model.surfaceplant.NetElectricityProduced.value[0]
-                        f.write(f'      Initial pumping power/net installed power:        {(ipp_nip*100):10.2f} %\n')
+    @staticmethod
+    def _is_sam_econ_model(model: Model) -> bool:
+        return model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA
 
-                if not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT, PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: # geothermal heating component:
-                    f.write(f'      Maximum Net Heat Production:                      {np.max(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
-                    f.write(f'      Average Net Heat Production:                      {np.average(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Net Heat Production:                      {np.min(model.surfaceplant.HeatProduced.value):10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
-                    f.write(f'      Initial Net Heat Production:                      {model.surfaceplant.HeatProduced.value[0]:10.2f} ' + model.surfaceplant.HeatProduced.PreferredUnits.value + NL)
-                    f.write(f'      Average Annual Heat Production:                   {np.average(model.surfaceplant.HeatkWhProduced.value/1E6):10.2f} GWh' + NL)
+    def _write_primary_report(
+        self,
+        model: Model,
+        f: TextIOWrapper,
+        is_sam_econ_model: bool,
+        dispatch_report: bool,
+    ) -> None:
+        self._write_case_report_header(f)
+        self._write_simulation_metadata(model, f)
 
-                if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-                    f.write(f'      Average Annual Heat Pump Electricity Use:         {np.average(model.surfaceplant.heat_pump_electricity_kwh_used.value / 1E6):10.2f} ' + 'GWh/year' + NL)
-                if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                    f.write(f'      Maximum Cooling Production:                       {np.max(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
-                    f.write(f'      Average Cooling Production:                       {np.average(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Cooling Production:                       {np.min(model.surfaceplant.cooling_produced.value):10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
-                    f.write(f'      Initial Cooling Production:                       {model.surfaceplant.cooling_produced.value[0]:10.2f} ' + model.surfaceplant.cooling_produced.PreferredUnits.value + NL)
-                    f.write(f'      Average Annual Cooling Production:                {np.average(model.surfaceplant.cooling_kWh_Produced.value / 1E6):10.2f} ' + 'GWh/year' + NL)
+        self._write_summary_of_results(model, f, dispatch_report, is_sam_econ_model)
 
-                if not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                    f.write(f'      Annual District Heating Demand:                   {model.surfaceplant.annual_heating_demand.value:10.2f} ' + model.surfaceplant.annual_heating_demand.PreferredUnits.value + NL)
-                    f.write(f'      Maximum Daily District Heating Demand:            {np.max(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
-                    f.write(f'      Average Daily District Heating Demand:            {np.average(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Daily District Heating Demand:            {np.min(model.surfaceplant.daily_heating_demand.value):10.2f} ' + model.surfaceplant.daily_heating_demand.PreferredUnits.value + NL)
-                    f.write(f'      Maximum Geothermal Heating Production:            {np.max(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
-                    f.write(f'      Average Geothermal Heating Production:            {np.average(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Geothermal Heating Production:            {np.min(model.surfaceplant.dh_geothermal_heating.value):10.2f} ' + model.surfaceplant.dh_geothermal_heating.PreferredUnits.value + NL)
-                    f.write(f'      Maximum Peaking Boiler Heat Production:           {np.max(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
-                    f.write(f'      Average Peaking Boiler Heat Production:           {np.average(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
-                    f.write(f'      Minimum Peaking Boiler Heat Production:           {np.min(model.surfaceplant.dh_natural_gas_heating.value):10.2f} ' + model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value + NL)
+        self._write_weather_data_results(model, f)
+        self._write_tess_results(model, f)
+        self._write_dispatch_results(model, f)
 
-                f.write(f'      Average Pumping Power:                            {np.average(model.wellbores.PumpingPower.value):10.2f} {model.wellbores.PumpingPower.CurrentUnits.value}{NL}')
+        self._write_economic_parameters(model, f, is_sam_econ_model)
+        self._write_engineering_parameters(model, f)
+        self._write_resource_characteristics(model, f)
+        self._write_reservoir_parameters(model, f)
+        self._write_reservoir_simulation_results(model, f, dispatch_report)
 
-                if not dispatch_report and model.surfaceplant.heat_to_power_conversion_efficiency.value is not None:
-                    hpce = model.surfaceplant.heat_to_power_conversion_efficiency
-                    f.write(f'      {Outputs._field_label(hpce.Name, 50)}'
-                            f'{hpce.value:10.2f} {model.surfaceplant.heat_to_power_conversion_efficiency.CurrentUnits.value}\n')
+        self._write_capital_costs(model, f, is_sam_econ_model)
+        self._write_operation_and_maintenance_costs(model, f, is_sam_econ_model)
 
-                if not dispatch_report:
-                    f.write(NL)
-                    f.write('                            ************************************************************\n')
-                    f.write('                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
-                    f.write('                            ************************************************************\n')
-                if not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY: # only electricity
-                    f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET               FIRST LAW\n')
-                    f.write('             DRAWDOWN             TEMPERATURE             POWER             POWER              EFFICIENCY\n')
-                    f.write('                                     (' + model.wellbores.ProducedTemperature.CurrentUnits.value+')               (' + model.wellbores.PumpingPower.CurrentUnits.value + ')              (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}              {5:8.4f}'.format(i+1,
-                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                        model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                        model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                            model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                        model.surfaceplant.FirstLawEfficiency.value[i*model.economics.timestepsperyear.value]*100)+NL)
-                elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value not in [PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING, PlantType.ABSORPTION_CHILLER]: # only direct-use
-                    f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET\n')
-                    f.write('             DRAWDOWN             TEMPERATURE             POWER              HEAT\n')
-                    f.write('                                   (deg C)                (MW)               (MW)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i,
-                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                        model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                        model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
+        self._write_surface_equipment_simulation_results(model, f, dispatch_report)
+        self._write_production_profile(model, f, dispatch_report)
+        self._write_annual_production_profile(model, f, dispatch_report)
+        self._write_cashflow_profile_sections(model, f, dispatch_report, is_sam_econ_model)
+        self._write_reservoir_power_required_profiles(model, f)
 
-                elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value in [PlantType.HEAT_PUMP]: # heat pump
-                    f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET             HEAT PUMP\n')
-                    f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT         ELECTRICITY USE\n')
-                    f.write('                                    (deg C)                (MWe)              (MWt)             (MWe)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i,
-                                                                                                                                                       Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                                                                                                      model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                      model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                      model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.heat_pump_electricity_used.value[i * model.economics.timestepsperyear.value]) + NL)
+    @staticmethod
+    def _write_addon_outputs(model: Model, is_sam_econ_model: bool) -> tuple[pd.DataFrame, list, bool]:
+        addon_df = pd.DataFrame()
+        addon_results = []
+        extended_economics_header_printed = False
+        if model.economics.DoAddOnCalculations.value and not is_sam_econ_model:
+            # SAM econ models incorporate add-on economics into main economics, not as separate extended economics.
+            addon_df, addon_results = model.addoutputs.PrintOutputs(model)
+            extended_economics_header_printed = True
 
-                elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value in [PlantType.DISTRICT_HEATING]: # district heating
-                    f.write('  YEAR         THERMAL              GEOFLUID               PUMP              GEOTHERMAL\n')
-                    f.write('               DRAWDOWN            TEMPERATURE             POWER            HEAT OUTPUT\n')
-                    f.write('                                    (deg C)                (MWe)               (MWt)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i,
-                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                        model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                        model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value])+NL)
+        return addon_df, addon_results, extended_economics_header_printed
 
-                elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER]: # absorption chiller
-                    f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET              NET\n')
-                    f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT             COOLING\n')
-                    f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i,
-                                                                                                                                                      Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                                                                                                     model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                     model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                     model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.cooling_produced.value[i * model.economics.timestepsperyear.value], ) + NL)
+    def _write_royalty_holder_outputs(
+        self,
+        model: Model,
+        extended_economics_header_printed: bool,
+    ) -> None:
+        econ: Economics = model.economics
 
-                elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:  # co-gen
-                    f.write('  YEAR     THERMAL             GEOFLUID             PUMP             NET              NET             FIRST LAW\n')
-                    f.write('           DRAWDOWN           TEMPERATURE           POWER           POWER             HEAT            EFFICIENCY\n')
-                    f.write('                                (deg C)             (MW)            (MW)              (MW)               (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i,
-                                                Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                        model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                    model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                            model.surfaceplant.NetElectricityProduced.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                    model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                                                model.surfaceplant.FirstLawEfficiency.value[i*model.economics.timestepsperyear.value]*100)+NL)
-                if not dispatch_report:
-                    f.write(NL)
-                    f.write(NL)
+        if not econ.has_royalties:
+            return
 
-                    f.write('                              *******************************************************************\n')
-                    f.write('                              *  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
-                    f.write('                              *******************************************************************\n')
-                if not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # only electricity
-                    f.write('  YEAR             ELECTRICITY                   HEAT                RESERVOIR            PERCENTAGE OF\n')
-                    f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-                    f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
-                                                model.surfaceplant.NetkWhProduced.value[i]/1E6,
-                                                                            model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                                    model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                            (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
-                elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER: # absorption chiller
-                    f.write('  YEAR              COOLING                 HEAT                RESERVOIR            PERCENTAGE OF\n')
-                    f.write('                    PROVIDED              EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-                    f.write('                   (GWh/year)             (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i + 1,
-                                                                                                                                              model.surfaceplant.cooling_kWh_Produced.value[i] / 1E6,
-                                                                                                                                              model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
-                                                                                                                                              model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                              (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+        with open(self.output_file, 'a', encoding='UTF-8') as f_:
+            if not extended_economics_header_printed:
+                self._print_extended_economics_header(f_)
 
-                elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP: # heat pump
-                    f.write('  YEAR              HEATING             RESERVOIR HEAT          HEAT PUMP          RESERVOIR           PERCENTAGE OF\n')
-                    f.write('                    PROVIDED              EXTRACTED          ELECTRICITY USE      HEAT CONTENT        TOTAL HEAT MINED\n')
-                    f.write('                   (GWh/year)             (GWh/year)           (GWh/year)           (10^15 J)                (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}             {3:8.2f}             {4:8.2f}              {5:8.2f}'.format(i + 1,
-                                                                                                                                                                 model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
-                                                                                                                                                                 model.surfaceplant.HeatkWhExtracted.value[i] / 1E6, model.surfaceplant.heat_pump_electricity_kwh_used.value[i] / 1E6,
-                                                                                                                                                                 model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                                                 (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+            for royalty_output in [
+                econ.royalty_holder_npv,
+                econ.royalty_holder_annual_revenue,
+                econ.royalty_holder_total_revenue
+            ]:
+                label = Outputs._field_label(royalty_output.display_name, 49)
+                f_.write(
+                    f'      {label}{royalty_output.value:10.2f} {royalty_output.CurrentUnits.value}\n')
 
-                elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]: #co-gen
-                    f.write('  YEAR             HEAT                 ELECTRICITY                HEAT              RESERVOIR        PERCENTAGE OF\n')
-                    f.write('                  PROVIDED               PROVIDED                EXTRACTED          HEAT CONTENT    TOTAL HEAT MINED\n')
-                    f.write('                 (GWh/year)             (GWh/year)               (GWh/year)          (10^15 J)           (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}            {1:8.1f}               {2:8.1f}                  {3:8.2f}            {4:8.2f}             {5:8.2f}'.format(i+1,
-                                            model.surfaceplant.HeatkWhProduced.value[i]/1E6,
-                                                                        model.surfaceplant.NetkWhProduced.value[i]/1E6,
-                                                                                                    model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                                                            model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                                (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+    @staticmethod
+    def _write_sdac_outputs(model: Model) -> tuple[pd.DataFrame, list]:
+        sdac_df = pd.DataFrame()
+        sdac_results = []
+        if model.economics.DoSDACGTCalculations.value:
+            sdac_df, sdac_results = model.sdacgtoutputs.PrintOutputs(model)
 
-                elif not dispatch_report and model.surfaceplant.plant_type.value in [PlantType.DISTRICT_HEATING]: # district-heating
-                    f.write('  YEAR           GEOTHERMAL          PEAKING BOILER       RESERVOIR HEAT          RESERVOIR         PERCENTAGE OF\n')
-                    f.write('              HEATING PROVIDED      HEATING PROVIDED        EXTRACTED            HEAT CONTENT     TOTAL HEAT MINED\n')
-                    f.write('                 (GWh/year)            (GWh/year)           (GWh/year)            (10^15 J)              (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}            {1:8.1f}              {2:8.1f}              {3:8.2f}             {4:8.2f}            {5:8.2f}'.format(i + 1,
-                                                                                                                                                             model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
-                                                                                                                                                             model.surfaceplant.annual_ng_demand.value[i] / 1E3,
-                                                                                                                                                             model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
-                                                                                                                                                             model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                                             (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
-                elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT: # only direct-use
-                    f.write('  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF\n')
-                    f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-                    f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
-                                                model.surfaceplant.HeatkWhProduced.value[i]/1E6,
-                                                                            model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                                    model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                            (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+        return sdac_df, sdac_results
 
-                if dispatch_report:
-                    self._write_dispatch_profile_report_table(model, f)
-
-                if not is_sam_econ_model:
-                    self.write_revenue_and_cashflow_profile_output(model, f)
-
-                if is_sam_econ_model:
-                    f.write(self.get_sam_cash_flow_profile_output(model))
-
-                # if we are dealing with overpressure and two different reservoirs, show a table reporting the values
-                if model.wellbores.overpressure_percentage.Provided:
-                    f.write(NL)
-                    f.write('                            ***************************************\n')
-                    f.write('                            *  RESERVOIR POWER REQUIRED PROFILES  *\n')
-                    f.write('                            ***************************************\n')
-                    f.write('  YEAR     PROD PUMP     INJECT PUMP     TOTAL PUMP\n')
-                    f.write('             POWER          POWER           POWER\n')
-                    f.write(
-                        '             (' + model.wellbores.PumpingPowerProd.CurrentUnits.value + ')           (' + model.wellbores.PumpingPowerInj.CurrentUnits.value + ')            (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  \n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}     {1:8.4f}        {2:8.4f}       {3:8.4f}'.format(i + 1,
-                                                                                                model.wellbores.PumpingPowerProd.value[
-                                                                                                    i * model.economics.timestepsperyear.value],
-                                                                                                model.wellbores.PumpingPowerInj.value[
-                                                                                                    i * model.economics.timestepsperyear.value],
-                                                                                                model.wellbores.PumpingPower.value[
-                                                                                                    i * model.economics.timestepsperyear.value]))
-                        f.write(NL)
-                    f.write(NL)
-
-            addon_df = pd.DataFrame()
-            addon_results = []
-            extended_economics_header_printed = False
-            if model.economics.DoAddOnCalculations.value and not is_sam_econ_model:
-                # SAM econ models incorporate add-on economics into main economics, not as separate extended economics.
-                addon_df, addon_results = model.addoutputs.PrintOutputs(model)
-                extended_economics_header_printed = True
-
-            if econ.has_royalties:
-                with open(self.output_file, 'a', encoding='UTF-8') as f_:
-                    if not extended_economics_header_printed:
-                        self._print_extended_economics_header(f_)
-
-                    for royalty_output in [
-                        econ.royalty_holder_npv,
-                        econ.royalty_holder_annual_revenue,
-                        econ.royalty_holder_total_revenue
-                    ]:
-                        label = Outputs._field_label(royalty_output.display_name, 49)
-                        f_.write(
-                            f'      {label}{royalty_output.value:10.2f} {royalty_output.CurrentUnits.value}\n')
-
-            sdac_df = pd.DataFrame()
-            sdac_results = []
-            if model.economics.DoSDACGTCalculations.value:
-                sdac_df, sdac_results = model.sdacgtoutputs.PrintOutputs(model)
-
-        except BaseException as ex:
-            tb = sys.exc_info()[2]
-            msg = 'Error: GEOPHIRES Failed to write the output file. Exiting....Line %i' % tb.tb_lineno
-            print(str(ex))
-            print(msg)
-            model.logger.critical(str(ex))
-            model.logger.critical(msg)
-            raise RuntimeError(msg) from ex
-
+    def _write_rich_outputs(
+        self,
+        model: Model,
+        sdac_results: list,
+        addon_results: list,
+        sdac_df: pd.DataFrame,
+        addon_df: pd.DataFrame,
+    ) -> None:
         if self.text_output_file.Provided:
             self.text_output_file.Valid = True
 
@@ -1030,6 +1114,41 @@ class Outputs:
             addon_df
         )
 
+    def PrintOutputs(self, model: Model):
+        """
+        PrintOutputs writes the standard outputs to the output file.
+        :param model: The container class of the application, giving access to everything else, including the logger
+        :type model: :class:`~geophires_x.Model.Model`
+        :return: None
+        """
+        model.logger.info(f'Init {str(__class__)}: {sys._getframe().f_code.co_name}')
+
+        self._convert_units(model)
+
+        # write results to output file and screen
+        try:
+            is_sam_econ_model = self._is_sam_econ_model(model)
+            dispatch_report = is_dispatch_report(model)
+            with open(self.output_file, 'w', encoding='UTF-8') as f:
+                self._write_primary_report(model, f, is_sam_econ_model, dispatch_report)
+
+            addon_df, addon_results, extended_economics_header_printed = self._write_addon_outputs(
+                model,
+                is_sam_econ_model,
+            )
+            self._write_royalty_holder_outputs(model, extended_economics_header_printed)
+            sdac_df, sdac_results = self._write_sdac_outputs(model)
+
+        except BaseException as ex:
+            tb = sys.exc_info()[2]
+            msg = 'Error: GEOPHIRES Failed to write the output file. Exiting....Line %i' % tb.tb_lineno
+            print(str(ex))
+            print(msg)
+            model.logger.critical(str(ex))
+            model.logger.critical(msg)
+            raise RuntimeError(msg) from ex
+
+        self._write_rich_outputs(model, sdac_results, addon_results, sdac_df, addon_df)
         self._write_dispatch_profile_output(model)
 
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')
@@ -1160,24 +1279,8 @@ class Outputs:
         metrics = dispatch_results.summary_metrics
         demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
         enduse_option = model.surfaceplant.enduse_option.value
-        has_heat_component = enduse_option in [
-            EndUseOptions.HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
-        ]
-        has_electric_component = enduse_option in [
-            EndUseOptions.ELECTRICITY,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
-        ]
+        has_heat_component = Outputs._has_heat_component(enduse_option)
+        has_electric_component = Outputs._has_electricity_component(enduse_option)
         plant_type = model.surfaceplant.plant_type.value
         rows = [
             ('Dispatch analysis start year', metrics.get('dispatch_analysis_start_year', 1.0), 'year'),
