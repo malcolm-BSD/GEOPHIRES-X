@@ -1,0 +1,11 @@
+model_id,manufacturer,nominal_cooling_kW,nominal_COP,effect_type,refrigerant_family,recommended_generator_in_C,chilled_supply_C,chilled_deltaT_K,nominal_chilled_flow_kg_s,nominal_hot_flow_kg_s,min_PLR,turndown_ratio,pump_head_m,electrical_aux_kW,installed_cost_USD,footprint_m2,source,last_verified
+YZK-YNH-1000,Yazaki,1000,0.75,single,LiBr-water,90,7,5,12.0,10.0,0.25,3.0,30,6,900000,28,seed,2026-05-04
+THX-TF-500,Thermax,500,0.72,single,LiBr-water,95,7,5,6.0,6.0,0.2,3.0,30,4,520000,22,seed,2026-05-04
+TRN-AC-1200,Trane,1200,0.70,single,LiBr-water,90,7,5,14.4,12.0,0.2,3.0,30,7,1100000,35,seed,2026-05-04
+CRR-ABS-1500,Carrier,1500,0.70,double,LiBr-water,150,7,5,18.0,16.0,0.2,3.0,30,9,1800000,50,seed,2026-05-04
+BRD-BDA-2000,Broad,2000,1.10,double,LiBr-water,150,7,5,24.0,20.0,0.2,3.0,30,12,2200000,70,seed,2026-05-04
+YZK-YNH-3000,Yazaki,3000,0.68,triple,LiBr-water,180,7,5,36.0,30.0,0.2,3.0,30,18,4200000,90,seed,2026-05-04
+MWK-MY-600,Mayekawa,600,0.70,single,NH3-water,95,7,5,7.2,6.0,0.2,3.0,30,5,650000,24,seed,2026-05-04
+JCI-JC-900,JohnsonControls,900,0.70,single,LiBr-water,90,7,5,10.8,9.0,0.2,3.0,30,6,920000,30,seed,2026-05-04
+MHI-MH-800,MitsubishiHeavy,800,0.72,double,LiBr-water,150,7,5,9.6,8.0,0.2,3.0,30,5,760000,32,seed,2026-05-04
+YZK-YNH-250,Yazaki,250,0.75,single,LiBr-water,90,7,5,3.0,2.5,0.25,3.0,30,2,260000,12,seed,2026-05-04
