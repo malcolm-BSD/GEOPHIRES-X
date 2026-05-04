@@ -37,13 +37,49 @@ class Catalog:
         self._load_embedded()
 
     def _load_embedded(self) -> None:
+        # First try package resource (works for installed packages)
         try:
             data = pkgutil.get_data(__package__.split(".")[0], self.embedded_path)
-            if data:
+        except Exception:
+            data = None
+
+        if data:
+            try:
                 text = data.decode("utf-8")
                 reader = csv.DictReader(io.StringIO(text))
                 for row in reader:
-                    self.entries.append(CatalogEntry(**row))
+                    clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+                    self.entries.append(CatalogEntry(**clean))
+                return
+            except Exception:
+                # If package resource present but parsing failed, continue to fallback
+                pass
+
+        # Fallback: search upward from this file for a data directory containing the embedded CSV
+        try:
+            from pathlib import Path
+
+            current = Path(__file__).resolve().parent
+            # walk up a reasonable number of parents looking for the data file
+            for parent in [current] + list(current.parents)[:8]:
+                # try the exact embedded path first
+                candidate = parent / self.embedded_path
+                if candidate.is_file():
+                    with candidate.open("r", encoding="utf-8") as fh:
+                        reader = csv.DictReader(fh)
+                        for row in reader:
+                            clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+                            self.entries.append(CatalogEntry(**clean))
+                    return
+                # also try common layout where 'data/' is at repo root
+                candidate2 = parent / "data" / Path(self.embedded_path).name
+                if candidate2.is_file():
+                    with candidate2.open("r", encoding="utf-8") as fh:
+                        reader = csv.DictReader(fh)
+                        for row in reader:
+                            clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+                            self.entries.append(CatalogEntry(**clean))
+                    return
         except Exception:
             # Embedded data not found or failed to load; catalog remains empty
             pass
@@ -85,33 +121,80 @@ class Catalog:
         This is a naive greedy packer by descending nominal size that tries to
         reach the required capacity.
         """
-        sorted_entries = sorted(self.entries, key=lambda e: float(e.get("nominal_cooling_kW", 0)), reverse=True)
-        remaining = required_capacity_kW
-        selection: List[Dict[str, Any]] = []
-        total_capacity = 0.0
-        total_cost = 0.0
-        for e in sorted_entries:
+        # Try to use an integer linear program to minimize installed cost while meeting capacity
+        entries = [e for e in self.entries]
+        if not entries:
+            return {"selected": [], "total_capacity_kW": 0.0, "estimated_cost_USD": 0.0}
+
+        # Prepare data
+        caps = []
+        costs = []
+        ids = []
+        for e in entries:
             try:
-                cap = float(e.get("nominal_cooling_kW", 0))
+                caps.append(float(e.get("nominal_cooling_kW", 0)))
             except Exception:
-                continue
-            if cap <= 0:
-                continue
-            count = int(remaining // cap)
-            if remaining % cap > 0:
-                count += 1
-            if count <= 0:
-                continue
-            selection.append({"model_id": e.get("model_id"), "count": count, "nominal_kW": cap})
-            total_capacity += cap * count
+                caps.append(0.0)
             try:
-                total_cost += float(e.get("installed_cost_USD", 0)) * count
+                costs.append(float(e.get("installed_cost_USD", 0)))
             except Exception:
-                total_cost += 0.0
-            remaining = max(0.0, remaining - cap * count)
-            if remaining <= 0:
-                break
-        return {"selected": selection, "total_capacity_kW": total_capacity, "estimated_cost_USD": total_cost}
+                costs.append(0.0)
+            ids.append(e.get("model_id"))
+
+        # If PuLP is available, solve an integer knapsack-like problem. Otherwise fall back to greedy.
+        try:
+            import pulp
+
+            prob = pulp.LpProblem("catalog_selection", pulp.LpMinimize)
+            var_names = [f"n_{i}" for i in range(len(entries))]
+            # upper bounds: at most ceil(required / cap) + 5 as reasonable cap
+            ub = [max(0, int((required_capacity_kW // (c if c > 0 else 1)) + 5)) for c in caps]
+            vars_dict = {i: pulp.LpVariable(var_names[i], lowBound=0, upBound=ub[i], cat=pulp.LpInteger) for i in range(len(entries))}
+            # objective: minimize installed cost
+            prob += pulp.lpSum([costs[i] * vars_dict[i] for i in range(len(entries))])
+            # capacity constraint
+            prob += pulp.lpSum([caps[i] * vars_dict[i] for i in range(len(entries))]) >= float(required_capacity_kW)
+            # solve
+            prob.solve(pulp.PULP_CBC_CMD(msg=False))
+            selection = []
+            total_capacity = 0.0
+            total_cost = 0.0
+            for i in range(len(entries)):
+                val = int(pulp.value(vars_dict[i])) if pulp.value(vars_dict[i]) is not None else 0
+                if val > 0:
+                    selection.append({"model_id": ids[i], "count": val, "nominal_kW": caps[i]})
+                    total_capacity += caps[i] * val
+                    total_cost += costs[i] * val
+            return {"selected": selection, "total_capacity_kW": total_capacity, "estimated_cost_USD": total_cost}
+        except Exception:
+            # Fall back to greedy packer by descending nominal size
+            sorted_entries = sorted(self.entries, key=lambda e: float(e.get("nominal_cooling_kW", 0)), reverse=True)
+            remaining = required_capacity_kW
+            selection: List[Dict[str, Any]] = []
+            total_capacity = 0.0
+            total_cost = 0.0
+            for e in sorted_entries:
+                try:
+                    cap = float(e.get("nominal_cooling_kW", 0))
+                except Exception:
+                    continue
+                if cap <= 0:
+                    continue
+                count = int(remaining // cap)
+                if remaining % cap > 0:
+                    count += 1
+                if count <= 0:
+                    continue
+                selection.append({"model_id": e.get("model_id"), "count": count, "nominal_kW": cap})
+                total_capacity += cap * count
+                try:
+                    total_cost += float(e.get("installed_cost_USD", 0)) * count
+                except Exception:
+                    total_cost += 0.0
+                remaining = max(0.0, remaining - cap * count)
+                if remaining <= 0:
+                    break
+            return {"selected": selection, "total_capacity_kW": total_capacity, "estimated_cost_USD": total_cost}
 
     def query_remote_catalog(self, query_params: Dict[str, Any], timeout_s: int = 10) -> List[CatalogEntry]:
         """Best-effort remote query. Returns empty list by default.
