@@ -45,7 +45,18 @@ class FluidPropsAdapter:
                 return CP.PropsSI("C", "T", t_c + 273.15, "P", 101325, fluid)
             except Exception:
                 pass
-        # fallback constants (approximate)
+        # Fallback approximations
+        if fluid is None:
+            return 4186.0
+        fl = fluid.lower()
+        # LiBr-water solution approximate cp
+        if "libr" in fl or "libr" in fluid.lower() or "lib" in fl:
+            # approximate specific heat capacity for LiBr solution [J/kg/K]
+            return 3500.0
+        if "nh3" in fl or "ammonia" in fl:
+            # ammonia/water mixture cp fallback
+            return 4200.0
+        # default water
         return 4186.0
 
     def density(self, fluid: str, t_c: float, x: Optional[float] = None) -> float:
@@ -55,6 +66,11 @@ class FluidPropsAdapter:
                 return CP.PropsSI("D", "T", t_c + 273.15, "P", 101325, fluid)
             except Exception:
                 pass
+        fl = (fluid or "").lower()
+        if "libr" in fl or "lib" in fl:
+            return 1200.0
+        if "nh3" in fl or "ammonia" in fl:
+            return 682.0
         # fallback for water at ambient
         return 997.0
 
@@ -70,5 +86,6 @@ class FluidPropsAdapter:
             except Exception:
                 pass
         cp_val = self.cp(fluid, t_c, x)
+        # approximate enthalpy relative to 0 degC [J/kg]
         return cp_val * (t_c)
 

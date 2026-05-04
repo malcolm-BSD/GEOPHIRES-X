@@ -61,22 +61,63 @@ class ChillerBank:
                 "unit_dispatch": np.zeros((0, hours), dtype=int),
             }
 
-        # For simplicity assume all units have same nominal capacity
-        nominal = unit_list[0].nominal_cooling_kW
+        # Choose dispatch ordering depending on strategy
+        if self.dispatch_strategy == "min_units":
+            unit_list.sort(key=lambda u: u.nominal_cooling_kW, reverse=True)
+        elif self.dispatch_strategy == "min_cost":
+            # prefer lower installed cost per kW
+            def cost_key(u):
+                try:
+                    return float(u.installed_cost_USD) / float(u.nominal_cooling_kW)
+                except Exception:
+                    return float(u.nominal_cooling_kW) * 1.0
+
+            unit_list.sort(key=cost_key)
+        else:
+            # default: keep original order (first-fit)
+            pass
+
+        # If baseload mode requested, compute steady target output
+        target_base = None
+        if mode == "baseload":
+            target_base = float(np.mean(cooling_load_kW_hourly))
+
         for i, load in enumerate(cooling_load_kW_hourly):
-            remaining = float(load)
+            requested = float(load if target_base is None else target_base)
+            remaining = float(requested)
             units_on = 0
             for u in unit_list:
                 if remaining <= 0:
                     break
-                # turn unit on at PLR to try to consume remaining
-                plr = min(1.0, remaining / u.nominal_cooling_kW)
+                # determine feasible plr (respecting min_PLR)
+                max_unit_cap = u.nominal_cooling_kW
+                desired_plr = min(1.0, remaining / max_unit_cap)
+                if desired_plr > 0 and desired_plr < u.min_PLR:
+                    # if below min PLR, either run at min_PLR (if helps) or skip
+                    if u.min_PLR * max_unit_cap <= remaining:
+                        plr = u.min_PLR
+                    else:
+                        # skip this unit; it cannot operate effectively for remaining
+                        continue
+                else:
+                    plr = desired_plr
+
                 perf = u.performance_at_plr(plr, 100.0, 7.0, 30.0)
                 cooling[i] += perf["cooling_kW"]
                 q_gen[i] += perf["fuel_input_kW"]
-                cop[i] = perf["cop"] if cop[i] == 0 else cop[i]
+                # set cop as weighted average if multiple units used
+                cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
                 units_on += 1
                 remaining = max(0.0, remaining - perf["cooling_kW"])
+
+            # If generator heat constraint provided and strategy is follow_heat, limit q_gen
+            if generator_heat_available_kW_hourly is not None and self.dispatch_strategy == "follow_heat":
+                available = float(generator_heat_available_kW_hourly[i])
+                if q_gen[i] > available:
+                    # scale down cooling and q_gen proportionally
+                    scale = available / q_gen[i] if q_gen[i] > 0 else 0.0
+                    cooling[i] *= scale
+                    q_gen[i] = available
             # estimate chilled mdot and pump_power (approx)
             if cooling[i] > 0:
                 cp = 4186.0

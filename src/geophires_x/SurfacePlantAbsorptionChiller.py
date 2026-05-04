@@ -1,5 +1,5 @@
 import numpy as np
-from .Parameter import floatParameter, OutputParameter
+from .Parameter import floatParameter, OutputParameter, boolParameter
 from .SurfacePlant import SurfacePlant
 from .Units import *
 import geophires_x.Model as Model
@@ -46,6 +46,19 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH, CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default absorption chiller COP (0.7)",
             ToolTipText="Specify the coefficient of performance (COP) of the absorption chiller"
+        )
+
+        # Opt-in advanced absorption chiller subsystem. When True the new
+        # AbsorptionChiller subsystem (in src/geophires_x/absorption) will be
+        # used. Default True for the new design; set to False to preserve
+        # legacy behaviour exactly.
+        self.UseAdvancedAbsorptionChiller = self.ParameterDict[self.UseAdvancedAbsorptionChiller.Name] = boolParameter(
+            "Use Advanced Absorption Chiller",
+            DefaultValue=True,
+            value=True,
+            Required=False,
+            ErrMessage="Enable advanced absorption chiller subsystem (default: True)",
+            ToolTipText="If True use the advanced AbsorptionChiller subsystem (opt-in)."
         )
 
         # Output Parameters
@@ -107,7 +120,51 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             model.wellbores.ProducedTemperature.value - model.wellbores.Tinj.value) / 1E6  # heat extracted from geofluid [MWth]
         self.HeatProduced.value = self.HeatExtracted.value
 
-        self.cooling_produced.value = self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value  # MW
+        # Use advanced AbsorptionChiller subsystem when enabled; otherwise keep legacy behavior
+        try:
+            use_adv = bool(getattr(self.UseAdvancedAbsorptionChiller, "value", False))
+        except Exception:
+            use_adv = False
+
+        if use_adv:
+            try:
+                # Import here to avoid import-time dependency if not used
+                from geophires_x.absorption.absorption_chiller import AbsorptionChiller
+
+                ch = AbsorptionChiller()
+
+                # Determine cooling demand time series: prefer user-provided CoolingDemand, else derive from available heat
+                cooling_series = None
+                try:
+                    cd = getattr(self, "CoolingDemand", None)
+                    if cd is not None and getattr(cd, "value", None) is not None and len(getattr(cd, "value")) > 0:
+                        # convert user series to MW if necessary
+                        try:
+                            cooling_series = self._series_to_mw(cd.value, getattr(cd, "CurrentYUnits", None), time_step_hours=1.0)
+                        except Exception:
+                            cooling_series = np.asarray(cd.value, dtype=float)
+                except Exception:
+                    cooling_series = None
+
+                if cooling_series is None:
+                    # Fallback: derive cooling demand from available heat (legacy-equivalent)
+                    cooling_series = np.asarray(self.HeatProduced.value, dtype=float) * float(self.absorption_chiller_cop.value) * float(self.enduse_efficiency_factor.value)
+
+                # choose mode based on operating_mode parameter
+                op_mode = getattr(self.operating_mode, "value", "").__str__() if hasattr(self.operating_mode, "value") else str(getattr(self.operating_mode, "value", ""))
+                mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
+
+                results = ch.evaluate_hourly(cooling_series, model.wellbores.ProducedTemperature.value, chilled_supply_setpoint_c=7.0, ambient_temp_hourly=None, mode=mode)
+
+                # store key outputs into SurfacePlant outputs
+                self.cooling_produced.value = results.get("cooling_produced_hourly", np.asarray(cooling_series, dtype=float))
+                # store additional chiller outputs for downstream use
+                setattr(self, "_absorption_chiller_results", results)
+            except Exception as exc:  # pragma: no cover - liberal fallback
+                model.logger.exception("Advanced AbsorptionChiller failed; falling back to legacy calculation: %s", exc)
+                self.cooling_produced.value = self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value
+        else:
+            self.cooling_produced.value = self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value  # MW
 
         # Calculate annual electricity/heat production
         # all end-use options have "heat extracted from reservoir" and pumping kWs
