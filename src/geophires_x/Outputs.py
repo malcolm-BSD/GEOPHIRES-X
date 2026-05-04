@@ -902,75 +902,99 @@ class Outputs:
 
     @staticmethod
     def _write_annual_production_profile(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:
-        if not dispatch_report:
-            f.write('                              *******************************************************************\n')
-            f.write('                              *  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
-            f.write('                              *******************************************************************\n')
-        if not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # only electricity
-            f.write('  YEAR             ELECTRICITY                   HEAT                RESERVOIR            PERCENTAGE OF\n')
-            f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-            f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
-                                        model.surfaceplant.NetkWhProduced.value[i]/1E6,
-                                                                    model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                            model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                    (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
-        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER: # absorption chiller
-            f.write('  YEAR              COOLING                 HEAT                RESERVOIR            PERCENTAGE OF\n')
-            f.write('                    PROVIDED              EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-            f.write('                   (GWh/year)             (GWh/year)            (10^15 J)                 (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i + 1,
-                                                                                                                              model.surfaceplant.cooling_kWh_Produced.value[i] / 1E6,
-                                                                                                                              model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
-                                                                                                                              model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                              (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+        if dispatch_report:
+            return
 
-        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP: # heat pump
-            f.write('  YEAR              HEATING             RESERVOIR HEAT          HEAT PUMP          RESERVOIR           PERCENTAGE OF\n')
-            f.write('                    PROVIDED              EXTRACTED          ELECTRICITY USE      HEAT CONTENT        TOTAL HEAT MINED\n')
-            f.write('                   (GWh/year)             (GWh/year)           (GWh/year)           (10^15 J)                (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}             {3:8.2f}             {4:8.2f}              {5:8.2f}'.format(i + 1,
-                                                                                                                                                         model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
-                                                                                                                                                         model.surfaceplant.HeatkWhExtracted.value[i] / 1E6, model.surfaceplant.heat_pump_electricity_kwh_used.value[i] / 1E6,
-                                                                                                                                                         model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                                         (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+        f.write('                              *******************************************************************\n')
+        f.write('                              *  ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
+        f.write('                              *******************************************************************\n')
 
-        elif not dispatch_report and Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
-            f.write('  YEAR             HEAT                 ELECTRICITY                HEAT              RESERVOIR        PERCENTAGE OF\n')
-            f.write('                  PROVIDED               PROVIDED                EXTRACTED          HEAT CONTENT    TOTAL HEAT MINED\n')
-            f.write('                 (GWh/year)             (GWh/year)               (GWh/year)          (10^15 J)           (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}            {1:8.1f}               {2:8.1f}                  {3:8.2f}            {4:8.2f}             {5:8.2f}'.format(i+1,
-                                    model.surfaceplant.HeatkWhProduced.value[i]/1E6,
-                                                                model.surfaceplant.NetkWhProduced.value[i]/1E6,
-                                                                                            model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                                                    model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                                        (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+        if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+            Outputs._write_electricity_annual_production_profile(model, f)
+        elif model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            Outputs._write_absorption_chiller_annual_production_profile(model, f)
+        elif model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+            Outputs._write_heat_pump_annual_production_profile(model, f)
+        elif Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+            Outputs._write_cogeneration_annual_production_profile(model, f)
+        elif model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            Outputs._write_district_heating_annual_production_profile(model, f)
+        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
+            Outputs._write_direct_use_annual_production_profile(model, f)
 
-        elif not dispatch_report and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING: # district-heating
-            f.write('  YEAR           GEOTHERMAL          PEAKING BOILER       RESERVOIR HEAT          RESERVOIR         PERCENTAGE OF\n')
-            f.write('              HEATING PROVIDED      HEATING PROVIDED        EXTRACTED            HEAT CONTENT     TOTAL HEAT MINED\n')
-            f.write('                 (GWh/year)            (GWh/year)           (GWh/year)            (10^15 J)              (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}            {1:8.1f}              {2:8.1f}              {3:8.2f}             {4:8.2f}            {5:8.2f}'.format(i + 1,
+    @staticmethod
+    def _write_electricity_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR             ELECTRICITY                   HEAT                RESERVOIR            PERCENTAGE OF\n')
+        f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+        f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
+                                    model.surfaceplant.NetkWhProduced.value[i]/1E6,
+                                                                model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                        model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    @staticmethod
+    def _write_absorption_chiller_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR              COOLING                 HEAT                RESERVOIR            PERCENTAGE OF\n')
+        f.write('                    PROVIDED              EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+        f.write('                   (GWh/year)             (GWh/year)            (10^15 J)                 (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i + 1,
+                                                                                                                          model.surfaceplant.cooling_kWh_Produced.value[i] / 1E6,
+                                                                                                                          model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
+                                                                                                                          model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                          (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    @staticmethod
+    def _write_heat_pump_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR              HEATING             RESERVOIR HEAT          HEAT PUMP          RESERVOIR           PERCENTAGE OF\n')
+        f.write('                    PROVIDED              EXTRACTED          ELECTRICITY USE      HEAT CONTENT        TOTAL HEAT MINED\n')
+        f.write('                   (GWh/year)             (GWh/year)           (GWh/year)           (10^15 J)                (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}             {3:8.2f}             {4:8.2f}              {5:8.2f}'.format(i + 1,
                                                                                                                                                      model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
-                                                                                                                                                     model.surfaceplant.annual_ng_demand.value[i] / 1E3,
-                                                                                                                                                     model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
+                                                                                                                                                     model.surfaceplant.HeatkWhExtracted.value[i] / 1E6, model.surfaceplant.heat_pump_electricity_kwh_used.value[i] / 1E6,
                                                                                                                                                      model.surfaceplant.RemainingReservoirHeatContent.value[i],
                                                                                                                                                      (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
-        elif not dispatch_report and model.surfaceplant.enduse_option.value == EndUseOptions.HEAT: # only direct-use
-            f.write('  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF\n')
-            f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
-            f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
-                                        model.surfaceplant.HeatkWhProduced.value[i]/1E6,
-                                                                    model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
-                                                                                            model.surfaceplant.RemainingReservoirHeatContent.value[i],
-                                                                                                                    (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    @staticmethod
+    def _write_cogeneration_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR             HEAT                 ELECTRICITY                HEAT              RESERVOIR        PERCENTAGE OF\n')
+        f.write('                  PROVIDED               PROVIDED                EXTRACTED          HEAT CONTENT    TOTAL HEAT MINED\n')
+        f.write('                 (GWh/year)             (GWh/year)               (GWh/year)          (10^15 J)           (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}            {1:8.1f}               {2:8.1f}                  {3:8.2f}            {4:8.2f}             {5:8.2f}'.format(i+1,
+                                model.surfaceplant.HeatkWhProduced.value[i]/1E6,
+                                                            model.surfaceplant.NetkWhProduced.value[i]/1E6,
+                                                                                        model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                                                model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                                    (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    @staticmethod
+    def _write_district_heating_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR           GEOTHERMAL          PEAKING BOILER       RESERVOIR HEAT          RESERVOIR         PERCENTAGE OF\n')
+        f.write('              HEATING PROVIDED      HEATING PROVIDED        EXTRACTED            HEAT CONTENT     TOTAL HEAT MINED\n')
+        f.write('                 (GWh/year)            (GWh/year)           (GWh/year)            (10^15 J)              (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}            {1:8.1f}              {2:8.1f}              {3:8.2f}             {4:8.2f}            {5:8.2f}'.format(i + 1,
+                                                                                                                                                 model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
+                                                                                                                                                 model.surfaceplant.annual_ng_demand.value[i] / 1E3,
+                                                                                                                                                 model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
+                                                                                                                                                 model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                                                 (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i]) * 100 / model.reserv.InitialReservoirHeatContent.value)+NL)
+
+    @staticmethod
+    def _write_direct_use_annual_production_profile(model: Model, f: TextIOWrapper) -> None:
+        f.write('  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF\n')
+        f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
+        f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
+                                    model.surfaceplant.HeatkWhProduced.value[i]/1E6,
+                                                                model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
+                                                                                        model.surfaceplant.RemainingReservoirHeatContent.value[i],
+                                                                                                                (model.reserv.InitialReservoirHeatContent.value-model.surfaceplant.RemainingReservoirHeatContent.value[i])*100/model.reserv.InitialReservoirHeatContent.value)+NL)
 
     def _write_cashflow_profile_sections(
         self,
