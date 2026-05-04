@@ -533,3 +533,108 @@ If you want, I can now:
 - Or, start implementing the numerical core functions and tests.
 
 Which should I do next?
+
+ILP, MILP, PuLP, and PLR vs COP (notes for implementers and users)
+---------------------------------------------------------------
+
+Integer Linear Programming (ILP)
+--------------------------------
+- Definition: ILP is a mathematical optimization where the objective and
+  constraints are linear, and some or all decision variables are constrained
+  to take integer values. A common ILP use in this project is selecting how
+  many whole commercial chiller units of each model to install (counts must
+  be integers).
+- What it does here: given a list of candidate units (nominal capacities and
+  installed costs), ILP selects integer counts of each model to meet a
+  required capacity while minimizing installed cost.
+- User-provided inputs required to support ILP selection:
+  - `installed_cost_USD` (per unit) in the catalog entries
+  - `nominal_cooling_kW` per model
+  - reasonable upper bounds (implicitly provided by catalog counts or
+    by solver bounds) to keep the IP small and solve quickly
+
+Mixed-Integer Linear Programming (MILP)
+--------------------------------------
+- Definition: MILP generalizes ILP by allowing both integer (often binary)
+  variables and continuous variables; objectives and constraints remain
+  linear. MILP lets us model both discrete decisions (which units are on)
+  and continuous decisions (part-load ratios, PLR) in the same optimization.
+- What it does here: the per-hour dispatch MILP contains binary on/off
+  variables for each unit instance and continuous PLR variables in [0,1].
+  Constraints enforce minimum PLR when a unit is on (plr_k >= min_PLR * y_k),
+  and the sum of capacities times PLR must meet the hourly requested cooling.
+- Generator-heat linear constraint: we include a conservative linear
+  approximation that bounds generator heat input using a per-unit COP value
+  evaluated at the unit's minimum PLR (COP_min). This produces a linear
+  constraint of the form:
+
+  sum( nominal_kW_k * plr_k / COP_min_k ) <= available_generator_heat_kW
+
+  This is conservative because COP typically improves at higher PLR; using
+  COP_min ensures the modeled generator heat does not exceed available heat
+  for any feasible PLR >= min_PLR.
+
+What users must provide to enable MILP dispatch
+-----------------------------------------------
+- For accurate MILP dispatch, catalog/units should provide (per-model):
+  - `nominal_cooling_kW` (kW)
+  - `nominal_COP` (COP at rated conditions)
+  - `min_PLR` (minimum part-load ratio)
+  - `installed_cost_USD` (cost proxy used in objective)
+  - ideally a `PerformanceMap` or part-load curve so the solver's
+    continuous PLR variables can be mapped to an expected COP. If a
+    `PerformanceMap` is not available, the MILP uses conservative values
+    (COP at min_PLR) to bound generator heat.
+
+PuLP: solver library used by the implementation
+-----------------------------------------------
+- What is PuLP: PuLP is a Python library that provides an interface to
+  formulate linear and integer linear programs and to call external and
+  bundled solvers (for example, the CBC solver bundled with PuLP).
+- How we use PuLP here: the implementation builds small MILPs per hour
+  (binary on/off variables for units and continuous PLR variables) and one
+  ILP for initial catalog selection. The code calls `pulp.PULP_CBC_CMD(msg=False)`
+  to solve quietly using the CBC solver if available.
+- Developer / CI notes: PuLP is an optional dependency in the runtime
+  sense (the code falls back to greedy heuristics if PuLP is unavailable),
+  but including PuLP in CI / development requirements enables deterministic
+  unit tests that exercise the ILP/MILP paths. Add `pulp>=2.6.0` to CI or
+  dev requirements if you want these tests to run in continuous integration.
+
+PLR vs COP — brief explanation
+-------------------------------
+- PLR (Part-Load Ratio) is defined as the instantaneous output of a unit
+  divided by its nominal (rated) capacity. PLR ∈ [0,1]. Example: a 1000 kW
+  chiller producing 500 kW is at PLR = 0.5.
+- COP (Coefficient of Performance) is the ratio of useful cooling provided
+  (Q_cooling) to the thermal input required by the chiller generator
+  (Q_generator) for absorption chillers. COP typically varies with PLR and
+  operating temperatures:
+
+  COP = Q_cooling / Q_generator
+
+- Relationship and modeling:
+  - At part-load, COP often degrades versus rated conditions; we model this
+    with a PLR-correction factor (e.g., COP_part = COP_rated * (1 - alpha * (1-PLR)^beta)).
+  - MILP uses PLR continuous variables to represent fractional loading; to
+    remain linear we cannot represent nonlinear COP(PLR) inside the MILP.
+    Therefore we either:
+    1. Pre-linearize COP(PLR) into piecewise-linear segments and add those
+       linear constraints to the MILP (more complex, but more accurate), or
+    2. Use conservative constant COP estimates (e.g., COP at min_PLR) to
+       form linear generator-heat constraints (implemented here). The
+       conservative approach ensures feasibility (won't overcommit limited
+       generator heat) but may under-utilize available heat compared to a
+       nonlinear model.
+
+Recommendations for users and developers
+---------------------------------------
+- Provide per-unit part-load performance maps when possible; these allow
+  more accurate post-solve performance calculations. If you supply a
+  detailed `PerformanceMap` (lookup table or piecewise-linear fit), we can
+  optionally construct a MILP with piecewise-linear COP approximations.
+- If you need the MILP to consider operating cost beyond installed cost
+  (fuel cost, electrical parity, startup/shutdown penalties), extend the
+  objective with those terms and, where necessary, include multi-hour
+  coupling variables (e.g., startup binaries) — note this increases MILP
+  complexity and solve time.
