@@ -1,9 +1,15 @@
 """High-level AbsorptionChiller controller.
 
-This module exposes AbsorptionChiller which ties together UnitsManager,
-FluidPropsAdapter, Catalog and ChillerBank. The implementation initially
-provides a simple evaluate_hourly implementation to satisfy the design
-requirements; it will be extended iteratively.
+This module exposes :class:`AbsorptionChiller` which ties together
+``UnitsManager``, ``FluidPropsAdapter``, :class:`~.catalog.Catalog` and
+:class:`~.chiller_bank.ChillerBank`.
+
+Selection of commercial units via :meth:`Catalog.select_min_cost_set` will
+attempt to use an integer-programming solver (PuLP) for exact installed-cost
+minimization when available; otherwise it falls back to a greedy packer.
+
+The class provides ``evaluate_hourly`` for hourly performance outputs and is
+designed to be used by the surface plant integration layer.
 """
 from typing import Any, Dict, Optional
 import numpy as np

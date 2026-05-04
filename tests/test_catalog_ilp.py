@@ -24,9 +24,8 @@ def test_catalog_ilp_selection_optimal():
     ]
 
     sel = cat.select_min_cost_set(1000)
-    # optimal is B(600)+C(400) with total cost 600, not A with cost 1000
+    # optimal total cost should be 600 (either B+C or 3xC)
     assert sel["total_capacity_kW"] >= 1000
     assert pytest.approx(sel["estimated_cost_USD"]) == 600.0
-    selected_map = {s["model_id"]: s["count"] for s in sel["selected"]}
-    assert selected_map.get("B", 0) == 1
-    assert selected_map.get("C", 0) == 1
+    assert isinstance(sel["selected"], list)
+    assert len(sel["selected"]) > 0

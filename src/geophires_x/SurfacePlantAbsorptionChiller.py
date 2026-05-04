@@ -98,7 +98,22 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
     def Calculate(self, model: Model) -> None:
         """
         The Calculate function is where all the calculations are done.
-        This function can be called multiple times, and will only recalculate what has changed each time it is called.
+
+        Note about the advanced absorption chiller subsystem:
+        - If the parameter ``UseAdvancedAbsorptionChiller`` is True (default),
+          this method will call into the new :mod:`geophires_x.absorption`
+          subsystem. That subsystem will attempt to size and dispatch
+          commercial absorption chillers; when PuLP is available the catalog
+          selection uses integer programming and the per-hour dispatch will
+          also try to solve a small integer program to minimize cost.
+        - If ``UseAdvancedAbsorptionChiller`` is False or if the advanced
+          subsystem fails, the method falls back to the legacy, scalar
+          calculation that preserves previous behaviour.
+
+        The advanced dispatch supports strategies including ``min_cost``,
+        ``min_units`` and ``follow_heat`` (see the documentation in
+        ``src/geophires_x/absorption/chiller_bank.py``).
+
         :param model: The container class of the application, giving access to everything else, including the logger
         :type model: :class:`~geophires_x.Model.Model`
         :return: Nothing, but it does make calculations and set values in the model
