@@ -1,5 +1,5 @@
 import numpy as np
-from .Parameter import floatParameter, OutputParameter, boolParameter, strParameter, intParameter
+from .Parameter import boolParameter, floatParameter, intParameter, listParameter, OutputParameter, strParameter
 from .SurfacePlant import SurfacePlant
 from .Units import *
 import geophires_x.Model as Model
@@ -52,7 +52,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         # AbsorptionChiller subsystem (in src/geophires_x/absorption) will be
         # used. Default True for the new design; set to False to preserve
         # legacy behaviour exactly.
-        self.Use Advanced Absorption Chiller = self.ParameterDict[self.Use Advanced Absorption Chiller.Name] = boolParameter(
+        self.use_advanced_absorption_chiller = self.ParameterDict["Use Advanced Absorption Chiller"] = boolParameter(
             "Use Advanced Absorption Chiller",
             DefaultValue=True,
             value=True,
@@ -161,11 +161,18 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         )
 
         # Advanced chiller MILP tuning: number of PLR segments used in piecewise-linear COP approximation
-        self.absorption_chiller_n_segments = self.ParameterDict[self.absorption_chiller_n_segments.Name] = floatParameter(
+        self.absorption_chiller_dispatch_strategy = self.ParameterDict["Absorption Chiller Dispatch Strategy"] = strParameter(
+            "Absorption Chiller Dispatch Strategy",
+            DefaultValue="min_cost",
+            Required=False,
+            ErrMessage="assume default absorption chiller dispatch strategy (min_cost)",
+            ToolTipText="Absorption chiller dispatch strategy: 'min_cost' | 'min_units' | 'follow_heat'.",
+        )
+
+        self.absorption_chiller_n_segments = self.ParameterDict["Absorption Chiller PLR Segments"] = intParameter(
             "Absorption Chiller PLR Segments",
-            value=5,
-            Min=1,
-            Max=20,
+            DefaultValue=5,
+            AllowableRange=list(range(1, 21)),
             UnitType=Units.NONE,
             ErrMessage="number of PLR segments must be >=1",
             ToolTipText="Number of PLR segments used for piecewise-linear COP approximation in MILP dispatch (default 5)",
@@ -177,8 +184,47 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             DefaultValue=False,
             value=False,
             Required=False,
-            ErrMessage="If True, provide hourly 'temps' arrays to dispatch_hourly/evaluate_hourly",
-            ToolTipText="When True, the MILP will evaluate COP segments using per-hour temperatures supplied to the dispatcher.",
+            ErrMessage="If True, use hourly absorption chiller temperature profiles when provided",
+            ToolTipText="When True, the MILP will evaluate COP segments using the absorption chiller hourly temperature profile parameters.",
+        )
+
+        self.absorption_chiller_generator_temperature = self.ParameterDict[
+            "Absorption Chiller Generator Temperature Profile"
+        ] = listParameter(
+            "Absorption Chiller Generator Temperature Profile",
+            DefaultValue=[],
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            AllowExtendedInput=True,
+            ErrMessage="assume geothermal production temperature for the absorption chiller generator profile",
+            ToolTipText="Hourly absorption chiller generator inlet temperature profile.",
+        )
+
+        self.absorption_chiller_evaporator_temperature = self.ParameterDict[
+            "Absorption Chiller Evaporator Temperature Profile"
+        ] = listParameter(
+            "Absorption Chiller Evaporator Temperature Profile",
+            DefaultValue=[],
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            AllowExtendedInput=True,
+            ErrMessage="assume default absorption chiller evaporator temperature profile (7 degC)",
+            ToolTipText="Hourly absorption chiller evaporator or chilled-water supply temperature profile.",
+        )
+
+        self.absorption_chiller_condenser_temperature = self.ParameterDict[
+            "Absorption Chiller Condenser Temperature Profile"
+        ] = listParameter(
+            "Absorption Chiller Condenser Temperature Profile",
+            DefaultValue=[],
+            UnitType=Units.TEMPERATURE,
+            PreferredUnits=TemperatureUnit.CELSIUS,
+            CurrentUnits=TemperatureUnit.CELSIUS,
+            AllowExtendedInput=True,
+            ErrMessage="assume default absorption chiller condenser temperature profile (30 degC)",
+            ToolTipText="Hourly absorption chiller condenser or ambient temperature profile.",
         )
 
         # NOTE: legacy dotted-key aliases (e.g. 'AbsorptionChiller.*') were removed
@@ -206,6 +252,158 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
 
     def __str__(self):
         return "SurfacePlantAbsorptionChiller"
+
+    @staticmethod
+    def _as_series(values) -> np.ndarray:
+        series = np.asarray(values, dtype=float)
+        if series.ndim == 0:
+            series = series.reshape(1)
+        elif series.ndim == 2:
+            if series.shape[1] < 2:
+                raise ValueError("Time-series input must contain time-value pairs.")
+            series = series[:, 1]
+        elif series.ndim > 1:
+            series = series.reshape(-1)
+        return series
+
+    def _parameter_series_to_mw(self, parameter) -> np.ndarray:
+        series = self._as_series(parameter.value)
+        units = getattr(parameter, "CurrentYUnits", getattr(parameter, "CurrentUnits", EnergyUnit.KWH))
+        return self._series_to_mw(series, units, time_step_hours=1.0)
+
+    def _temperature_profile(self, parameter, default_value, hours: int, model: Model) -> np.ndarray:
+        if getattr(parameter, "value", None) is not None and len(getattr(parameter, "value", [])) > 0:
+            series = self._as_series(parameter.value)
+            source_name = parameter.Name
+            user_provided = True
+        else:
+            series = self._as_series(default_value)
+            source_name = "default temperature profile"
+            user_provided = False
+
+        if series.size == 0:
+            return np.full(hours, 0.0)
+        if series.size == 1:
+            return np.full(hours, float(series[0]))
+        if series.size == hours:
+            return series
+
+        if user_provided:
+            model.logger.warning(
+                f"{source_name} has {series.size} values, but the absorption chiller cooling demand has {hours}; "
+                "using its average value for all dispatch hours."
+            )
+        return np.full(hours, float(np.mean(series)))
+
+    def _advanced_absorption_enabled(self) -> bool:
+        try:
+            return bool(self.use_advanced_absorption_chiller.value)
+        except Exception:
+            return False
+
+    def _advanced_absorption_chiller(self):
+        from geophires_x.absorption.absorption_chiller import AbsorptionChiller
+        from geophires_x.absorption.catalog import Catalog
+
+        cache_key = (
+            str(self.absorption_chiller_catalog_path.value),
+            str(self.absorption_chiller_refrigerant_family.value),
+            str(self.absorption_chiller_effect_type.value),
+            float(self.absorption_chiller_cop.value),
+            float(self.absorption_chiller_min_plr.value),
+            float(self.absorption_chiller_turndown.value),
+            float(self.absorption_chiller_chilled_deltaT.value),
+            float(self.absorption_chiller_pump_head.value),
+            float(self.absorption_chiller_pump_efficiency.value),
+            bool(self.absorption_chiller_use_pint.value),
+            bool(self.absorption_chiller_use_coolprop.value),
+            self.absorption_chiller_effect_multiplier_override.value,
+            int(self.absorption_chiller_n_segments.value),
+            bool(self.absorption_chiller_use_hourly_temps.value),
+            str(self.absorption_chiller_dispatch_strategy.value),
+        )
+        cached_key = getattr(self, "_advanced_absorption_chiller_cache_key", None)
+        cached_chiller = getattr(self, "_advanced_absorption_chiller_cache", None)
+        if cached_key == cache_key and cached_chiller is not None:
+            return cached_chiller
+
+        chiller = AbsorptionChiller(
+            catalog=Catalog(str(self.absorption_chiller_catalog_path.value)),
+            refrigerant_family=str(self.absorption_chiller_refrigerant_family.value),
+            effect_type=str(self.absorption_chiller_effect_type.value),
+            rated_COP=float(self.absorption_chiller_cop.value),
+            min_part_load_ratio=float(self.absorption_chiller_min_plr.value),
+            turndown_ratio=float(self.absorption_chiller_turndown.value),
+            chilled_deltaT_K=float(self.absorption_chiller_chilled_deltaT.value),
+            pump_head_m=float(self.absorption_chiller_pump_head.value),
+            pump_efficiency=float(self.absorption_chiller_pump_efficiency.value),
+            use_pint=bool(self.absorption_chiller_use_pint.value),
+            use_coolprop=bool(self.absorption_chiller_use_coolprop.value),
+            effect_multiplier_override=self.absorption_chiller_effect_multiplier_override.value,
+            n_segments=int(self.absorption_chiller_n_segments.value),
+            use_hourly_temps=bool(self.absorption_chiller_use_hourly_temps.value),
+            dispatch_strategy=str(self.absorption_chiller_dispatch_strategy.value),
+        )
+        setattr(self, "_advanced_absorption_chiller_cache_key", cache_key)
+        setattr(self, "_advanced_absorption_chiller_cache", chiller)
+        setattr(self, "_absorption_chiller_dispatch_bank", None)
+        setattr(self, "_absorption_chiller_dispatch_bank_capacity_kW", 0.0)
+        return chiller
+
+    def _cooling_demand_peak_mw(self) -> float:
+        cooling_demand = getattr(self, "CoolingDemand", None)
+        if cooling_demand is not None and getattr(cooling_demand, "value", None) is not None:
+            try:
+                if len(cooling_demand.value) > 0:
+                    return float(np.max(self._parameter_series_to_mw(cooling_demand)))
+            except Exception:
+                pass
+        return 0.0
+
+    def advanced_dispatch_output(
+        self,
+        model: Model,
+        cooling_demand_mw: float,
+        generator_heat_available_mw: float,
+        generator_temperature_c: float,
+        timestep_index: int = 0,
+    ) -> dict[str, float]:
+        peak_cooling_mw = max(self._cooling_demand_peak_mw(), float(cooling_demand_mw), 0.0)
+        if peak_cooling_mw <= 0.0 or generator_heat_available_mw <= 0.0:
+            return {"cooling_produced_mw": 0.0, "q_gen_mw": 0.0, "cop": 0.0}
+
+        chiller = self._advanced_absorption_chiller()
+        required_capacity_kW = peak_cooling_mw * 1000.0
+        bank = getattr(self, "_absorption_chiller_dispatch_bank", None)
+        bank_capacity_kW = float(getattr(self, "_absorption_chiller_dispatch_bank_capacity_kW", 0.0) or 0.0)
+        if bank is None or bank_capacity_kW < required_capacity_kW:
+            bank = chiller.build_bank(required_capacity_kW)
+            setattr(self, "_absorption_chiller_dispatch_bank", bank)
+            setattr(self, "_absorption_chiller_dispatch_bank_capacity_kW", required_capacity_kW)
+
+        t_evap = self._temperature_profile(self.absorption_chiller_evaporator_temperature, 7.0, 1, model)[0]
+        t_cond = self._temperature_profile(self.absorption_chiller_condenser_temperature, 30.0, 1, model)[0]
+        if len(getattr(self.absorption_chiller_generator_temperature, "value", [])) > 0:
+            profile = self._as_series(self.absorption_chiller_generator_temperature.value)
+            if profile.size > 0:
+                generator_temperature_c = float(profile[timestep_index % profile.size])
+        temps = {
+            "t_gen": np.array([generator_temperature_c], dtype=float),
+            "t_evap": np.array([float(t_evap)], dtype=float),
+            "t_cond": np.array([float(t_cond)], dtype=float),
+        }
+        results = bank.dispatch_hourly(
+            np.array([float(cooling_demand_mw) * 1000.0], dtype=float),
+            generator_heat_available_kW_hourly=np.array([float(generator_heat_available_mw) * 1000.0], dtype=float),
+            temps=temps,
+            mode="dispatch",
+        )
+        return {
+            "cooling_produced_mw": float(results["cooling_produced_hourly"][0]) / 1000.0,
+            "q_gen_mw": float(results["q_gen_hourly"][0]) / 1000.0,
+            "cop": float(results["COP_hourly"][0]),
+            "pump_power_mw": float(results["pump_power_hourly"][0]) / 1000.0,
+        }
 
     def read_parameters(self, model: Model) -> None:
         """
@@ -264,7 +462,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
 
         # Use advanced AbsorptionChiller subsystem when enabled; otherwise keep legacy behavior
         try:
-            use_adv = bool(getattr(self.Use Advanced Absorption Chiller, "value", False))
+            use_adv = bool(getattr(self.use_advanced_absorption_chiller, "value", False))
         except Exception:
             use_adv = False
 
@@ -272,8 +470,25 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             try:
                 # Import here to avoid import-time dependency if not used
                 from geophires_x.absorption.absorption_chiller import AbsorptionChiller
+                from geophires_x.absorption.catalog import Catalog
 
-                ch = AbsorptionChiller()
+                ch = AbsorptionChiller(
+                    catalog=Catalog(str(self.absorption_chiller_catalog_path.value)),
+                    refrigerant_family=str(self.absorption_chiller_refrigerant_family.value),
+                    effect_type=str(self.absorption_chiller_effect_type.value),
+                    rated_COP=float(self.absorption_chiller_cop.value),
+                    min_part_load_ratio=float(self.absorption_chiller_min_plr.value),
+                    turndown_ratio=float(self.absorption_chiller_turndown.value),
+                    chilled_deltaT_K=float(self.absorption_chiller_chilled_deltaT.value),
+                    pump_head_m=float(self.absorption_chiller_pump_head.value),
+                    pump_efficiency=float(self.absorption_chiller_pump_efficiency.value),
+                    use_pint=bool(self.absorption_chiller_use_pint.value),
+                    use_coolprop=bool(self.absorption_chiller_use_coolprop.value),
+                    effect_multiplier_override=self.absorption_chiller_effect_multiplier_override.value,
+                    n_segments=int(self.absorption_chiller_n_segments.value),
+                    use_hourly_temps=bool(self.absorption_chiller_use_hourly_temps.value),
+                    dispatch_strategy=str(self.absorption_chiller_dispatch_strategy.value),
+                )
 
                 # Determine cooling demand time series: prefer user-provided CoolingDemand, else derive from available heat
                 cooling_series = None
@@ -282,9 +497,9 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     if cd is not None and getattr(cd, "value", None) is not None and len(getattr(cd, "value")) > 0:
                         # convert user series to MW if necessary
                         try:
-                            cooling_series = self._series_to_mw(cd.value, getattr(cd, "CurrentYUnits", None), time_step_hours=1.0)
+                            cooling_series = self._parameter_series_to_mw(cd)
                         except Exception:
-                            cooling_series = np.asarray(cd.value, dtype=float)
+                            cooling_series = self._as_series(cd.value)
                 except Exception:
                     cooling_series = None
 
@@ -292,11 +507,39 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     # Fallback: derive cooling demand from available heat (legacy-equivalent)
                     cooling_series = np.asarray(self.HeatProduced.value, dtype=float) * float(self.absorption_chiller_cop.value) * float(self.enduse_efficiency_factor.value)
 
+                hours = len(cooling_series)
+                t_gen = self._temperature_profile(
+                    self.absorption_chiller_generator_temperature,
+                    model.wellbores.ProducedTemperature.value,
+                    hours,
+                    model,
+                )
+                t_evap = self._temperature_profile(
+                    self.absorption_chiller_evaporator_temperature,
+                    7.0,
+                    hours,
+                    model,
+                )
+                t_cond = self._temperature_profile(
+                    self.absorption_chiller_condenser_temperature,
+                    30.0,
+                    hours,
+                    model,
+                )
+                temps = {"t_gen": t_gen, "t_evap": t_evap, "t_cond": t_cond}
+
                 # choose mode based on operating_mode parameter
                 op_mode = getattr(self.operating_mode, "value", "").__str__() if hasattr(self.operating_mode, "value") else str(getattr(self.operating_mode, "value", ""))
                 mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
 
-                results = ch.evaluate_hourly(cooling_series, model.wellbores.ProducedTemperature.value, chilled_supply_setpoint_c=7.0, ambient_temp_hourly=None, mode=mode)
+                results = ch.evaluate_hourly(
+                    cooling_series,
+                    t_gen,
+                    chilled_supply_setpoint_c=7.0,
+                    ambient_temp_hourly=t_cond,
+                    temps=temps,
+                    mode=mode,
+                )
 
                 # store key outputs into SurfacePlant outputs
                 self.cooling_produced.value = results.get("cooling_produced_hourly", np.asarray(cooling_series, dtype=float))

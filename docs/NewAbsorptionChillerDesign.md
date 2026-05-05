@@ -1,13 +1,13 @@
 # New Absorption Chiller Design - Detailed Specification
 
-Status: Implemented (features described below are implemented in the codebase)
+Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, and MILP/greedy hourly dispatch paths are present. Remaining work includes full-year performance validation, vendor-grade performance maps, richer baseload scheduling, and broader PEP 257/484 cleanup across the new modules.
 
 Author: (generated design)
 Date: 2026-05-04
 
 Purpose
 -------
-This document describes a complete, implementable design for a new, advanced Absorption Chiller subsystem for GEOPHIRES-X. It extends the previous design and adds requirements requested by the user: baseload/dispatch modes, Pint/CoolProp enabled by default, embedded manufacturer catalog with CSV + remote fallback, PEP 8/257/484 compliance, a UnitsManager, effect multipliers with override, expanded supplier catalog seed entries, and a concrete method/attribute signature list for all classes.
+This document describes the target design for a new, advanced Absorption Chiller subsystem for GEOPHIRES-X and notes the current implementation status. It extends the previous design and adds requirements requested by the user: baseload/dispatch modes, Pint/CoolProp enabled by default, embedded manufacturer catalog with CSV + remote fallback, PEP 8/257/484 compliance, a UnitsManager, effect multipliers with override, expanded supplier catalog seed entries, and a concrete method/attribute signature list for all classes.
 
 Design Principles
 -----------------
@@ -15,7 +15,7 @@ Design Principles
 - Opt-out/opt-in tradeoff: Pint and CoolProp are enabled by default to produce physically consistent units but the code supports a lightweight fallback mode for minimal installs.
 - Modular, object-oriented, testable, and documented to PEP8, PEP257, PEP484 standards.
 - Minimal new parameters with sensible defaults that reproduce current results.
-- Plant-level staging and dispatch as well as baseload operation modes are supported.
+- Plant-level staging and dispatch are supported. Baseload operation currently uses the same hourly dispatch machinery with an average-load target; richer cycling/startup scheduling remains future work.
 
 Top-level Checklist (Implementation tasks)
 ----------------------------------------
@@ -333,12 +333,14 @@ class AbsorptionChiller:
 
         New parameters added to configure MILP segmentation and temperature handling:
             - n_segments: number of PLR segments used to build piecewise-linear COP approximations (default 5)
-            - use_hourly_temps: if True and `temps` arrays are provided to `evaluate_hourly`, segment COPs will be evaluated using per-hour temperatures
+            - use_hourly_temps: if True, segment COPs will be evaluated using the configured per-hour temperature profiles
 
         Note on parameter labels: the human-facing parameter label for enabling per-hour temperature evaluation is
-        "Absorption Chiller Use Hourly Temperatures". The older dotted-key style (for example, "AbsorptionChiller Use Hourly Temperatures")
-        has been removed from the canonical input parser. Update input files to use the canonical human-friendly parameter
-        names documented in the project's Parameters Reference and examples.
+        "Absorption Chiller Use Hourly Temperatures". Hourly temperature inputs use the canonical list-parameter labels
+        "Absorption Chiller Generator Temperature Profile", "Absorption Chiller Evaporator Temperature Profile", and
+        "Absorption Chiller Condenser Temperature Profile". The older dotted-key style has been removed from the
+        canonical input parser. Update input files to use the canonical human-friendly parameter names documented in
+        the project's Parameters Reference and examples.
         """
 
     def evaluate_hourly(
@@ -594,8 +596,8 @@ Mixed-Integer Linear Programming (MILP)
   - q_k_s <= cap_k * (plr_high - plr_low)  (segment capacity upper bound)
 
 - Generator-heat constraint: when `generator_heat_available_kW_hourly` is
-  provided and dispatch strategy is `follow_heat`, the MILP enforces the
-  linear fuel constraint using the segment COPs:
+  provided, the MILP enforces the linear fuel constraint using the segment COPs
+  for all dispatch strategies:
 
   sum_k sum_s q_k_s / COP_seg(k,s) <= available_generator_heat_kW
 

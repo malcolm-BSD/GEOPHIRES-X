@@ -151,7 +151,8 @@ is strongly recommended to gain a working understanding of how to construct vali
 Compatibility notes
 -------------------
 Parameter labels use canonical, human-friendly names (for example, ``Absorption Chiller Use Hourly Temperatures``).
-The older dotted-key style (for example, ``AbsorptionChiller.*``) has been removed from the canonical parser
+Hourly absorption chiller temperature profiles are set with ordinary list parameters such as
+``Absorption Chiller Generator Temperature Profile``. The older dotted-key style has been removed from the canonical parser
 and is no longer accepted. Update any existing input files to use the canonical parameter names shown in the
 `Parameters Reference <https://softwareengineerprogrammer.github.io/GEOPHIRES/parameters.html>`__ and the examples in
 the `tests/examples` directory.

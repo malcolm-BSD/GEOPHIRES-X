@@ -57,7 +57,7 @@ def test_milp_dispatch_prefers_lower_cost_units_when_equal_heat():
 
     bank = ChillerBank(units=[(cheap, 1), (expensive, 1)], dispatch_strategy="min_cost", n_segments=5)
 
-    cooling = np.array([1500.0])
+    cooling = np.array([1000.0])
     # generous heat
     avail_heat = np.array([5000.0])
 
@@ -65,5 +65,38 @@ def test_milp_dispatch_prefers_lower_cost_units_when_equal_heat():
 
     # when both can meet load, cheap unit should be chosen first (installed-cost objective)
     ud = results["unit_dispatch"]
-    # naive packing in unit_dispatch marks first units on; ensure at least one unit reported on
-    assert ud.sum() >= 1
+    assert ud[0, 0] == 1
+    assert ud[1, 0] == 0
+
+
+def test_milp_min_cost_dispatch_respects_generator_heat():
+    unit = ChillerUnit("C1", "X", 1000.0, nominal_COP=1.0, min_PLR=0.2, installed_cost_USD=100000)
+    bank = ChillerBank(units=[(unit, 1)], dispatch_strategy="min_cost", n_segments=5)
+
+    results = bank.dispatch_hourly(
+        np.array([1000.0]),
+        generator_heat_available_kW_hourly=np.array([500.0]),
+    )
+
+    assert results["q_gen_hourly"][0] <= 500.0 + 1e-6
+    assert 0.0 < results["cooling_produced_hourly"][0] < 1000.0
+
+
+def test_milp_dispatch_does_not_overproduce_when_load_below_minimum_plr():
+    unit = ChillerUnit("C1", "X", 1000.0, nominal_COP=0.8, min_PLR=0.2, installed_cost_USD=100000)
+    bank = ChillerBank(units=[(unit, 1)], dispatch_strategy="min_cost", n_segments=5)
+
+    results = bank.dispatch_hourly(np.array([1.0]))
+
+    assert results["cooling_produced_hourly"][0] <= 1.0 + 1e-6
+    assert results["unit_dispatch"][0, 0] == 0
+
+
+def test_milp_dispatch_can_partially_load_above_minimum_plr_without_overproduction():
+    unit = ChillerUnit("C1", "X", 1000.0, nominal_COP=0.8, min_PLR=0.2, installed_cost_USD=100000)
+    bank = ChillerBank(units=[(unit, 1)], dispatch_strategy="min_cost", n_segments=5)
+
+    results = bank.dispatch_hourly(np.array([350.0]))
+
+    assert results["cooling_produced_hourly"][0] == pytest.approx(350.0)
+    assert results["unit_dispatch"][0, 0] == 1

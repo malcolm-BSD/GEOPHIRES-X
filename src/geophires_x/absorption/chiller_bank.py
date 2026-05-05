@@ -118,11 +118,13 @@ class ChillerBank:
                 "unit_dispatch": np.zeros((0, hours), dtype=int),
             }
 
+        unit_dispatch = np.zeros((len(unit_list_flat), hours), dtype=int)
+
         # Note: ordering used only by greedy fallback. For ILP dispatch we will use unit_types and counts.
         # Choose dispatch ordering depending on strategy for fallback greedy
-        unit_list = list(unit_list_flat)
+        unit_order = list(enumerate(unit_list_flat))
         if self.dispatch_strategy == "min_units":
-            unit_list.sort(key=lambda u: u.nominal_cooling_kW, reverse=True)
+            unit_order.sort(key=lambda item: item[1].nominal_cooling_kW, reverse=True)
         elif self.dispatch_strategy == "min_cost":
             # prefer lower installed cost per kW
             def cost_key(u):
@@ -131,7 +133,7 @@ class ChillerBank:
                 except Exception:
                     return float(u.nominal_cooling_kW) * 1.0
 
-            unit_list.sort(key=cost_key)
+            unit_order.sort(key=lambda item: cost_key(item[1]))
         else:
             # default: keep original order (first-fit)
             pass
@@ -152,6 +154,25 @@ class ChillerBank:
             requested = float(load if target_base is None else target_base)
             remaining = float(requested)
             units_on = 0
+            if use_hourly_temps_enabled:
+                try:
+                    t_gen_c = float(t_gen_arr[i])
+                except Exception:
+                    t_gen_c = 100.0
+                try:
+                    t_evap_c = float(t_evap_arr[i])
+                except Exception:
+                    t_evap_c = 7.0
+                try:
+                    t_cond_c = float(t_cond_arr[i])
+                except Exception:
+                    t_cond_c = 30.0
+            else:
+                t_gen_c = 100.0
+                t_evap_c = 7.0
+                t_cond_c = 30.0
+
+            milp_solved = False
             # If PuLP is available, solve a small MILP per-hour that uses binary
             # on/off variables for each unit instance and continuous PLR variables
             # to allow partial loading subject to unit minimum PLR constraints.
@@ -163,8 +184,8 @@ class ChillerBank:
                     # We'll use a piecewise-linear representation of COP(PLR).
                     # For each unit k create a binary y_k and cooling-by-segment q_k_s
                     # variables. This keeps the MILP linear because fuel = sum(q_k_s / COP_seg).
-                    plr_vars = {}
                     q_vars = {}
+                    unmet_demand = pulp.LpVariable(f"unmet_{i}", lowBound=0.0, cat=pulp.LpContinuous)
                     n_segments = int(self.n_segments)
                     for k, u in enumerate(unit_list_flat):
                         y_vars[k] = pulp.LpVariable(f"y_{i}_{k}", cat=pulp.LpBinary)
@@ -179,16 +200,21 @@ class ChillerBank:
                             return float(getattr(u, "installed_cost_USD", 0.0) or 0.0)
                         except Exception:
                             return 0.0
-                    prob += pulp.lpSum([_cost_of(unit_list_flat[k]) * y_vars[k] for k in range(len(unit_list_flat))])
 
-                    # Capacity constraint: sum_k sum_s q_k_s >= requested
-                    prob += pulp.lpSum([q_vars[k][s] for k in range(len(unit_list_flat)) for s in range(n_segments)]) >= requested
+                    unmet_penalty = max(sum(_cost_of(u) for u in unit_list_flat), 1.0e6)
+                    prob += (
+                        unmet_penalty * unmet_demand
+                        + pulp.lpSum([_cost_of(unit_list_flat[k]) * y_vars[k] for k in range(len(unit_list_flat))])
+                    )
 
-                    # If generator heat constraints are provided and strategy is follow_heat,
-                    # add a linear conservative constraint using each unit's COP at its
-                    # minimum PLR (this yields a conservative upper bound on required
-                    # generator heat because COP typically improves at higher PLR).
-                    if generator_heat_available_kW_hourly is not None and self.dispatch_strategy == "follow_heat":
+                    total_cooling = pulp.lpSum(
+                        [q_vars[k][s] for k in range(len(unit_list_flat)) for s in range(n_segments)]
+                    )
+                    prob += total_cooling + unmet_demand == requested
+
+                    # If generator heat constraints are provided, enforce them
+                    # regardless of the objective strategy.
+                    if generator_heat_available_kW_hourly is not None:
                         try:
                             available_heat = float(generator_heat_available_kW_hourly[i])
                         except Exception:
@@ -200,25 +226,6 @@ class ChillerBank:
                             # is linear: fuel = sum_s q_k_s / COP_seg.
                             cop_seg = {}
                             caps = {}
-                            # Determine temperature triplet for this hour. Use pre-validated arrays if available.
-                            if use_hourly_temps_enabled:
-                                try:
-                                    t_gen_c = float(t_gen_arr[i])
-                                except Exception:
-                                    t_gen_c = 100.0
-                                try:
-                                    t_evap_c = float(t_evap_arr[i])
-                                except Exception:
-                                    t_evap_c = 7.0
-                                try:
-                                    t_cond_c = float(t_cond_arr[i])
-                                except Exception:
-                                    t_cond_c = 30.0
-                            else:
-                                t_gen_c = 100.0
-                                t_evap_c = 7.0
-                                t_cond_c = 30.0
-
                             for k, u in enumerate(unit_list_flat):
                                 caps[k] = float(u.nominal_cooling_kW)
                                 cop_seg[k] = {}
@@ -259,6 +266,8 @@ class ChillerBank:
 
                     # Solve with default CBC solver (quiet)
                     prob.solve(pulp.PULP_CBC_CMD(msg=False))
+                    if pulp.LpStatus.get(prob.status) != "Optimal":
+                        raise RuntimeError(f"MILP dispatch did not find an optimal solution: {pulp.LpStatus.get(prob.status)}")
 
                     # Extract solution and compute performance (using per-unit aggregated q)
                     for k, u in enumerate(unit_list_flat):
@@ -281,46 +290,48 @@ class ChillerBank:
                         # compute PLR implied and actual performance
                         cap_k = float(u.nominal_cooling_kW)
                         plr = min(1.0, q_sum / cap_k)
-                        perf = u.performance_at_plr(plr, 100.0, 7.0, 30.0)
+                        perf = u.performance_at_plr(plr, t_gen_c, t_evap_c, t_cond_c)
                         # cooling should approximately equal q_sum; use perf cooling for consistency
                         cooling[i] += perf["cooling_kW"]
                         q_gen[i] += perf["fuel_input_kW"]
                         cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
                         units_on += 1
+                        unit_dispatch[k, i] = 1
                         remaining = max(0.0, remaining - perf["cooling_kW"])
-                    # finished MILP hour
-                    continue
+                    milp_solved = True
                 except Exception:
                     # If MILP solver fails for any reason fall through to greedy
                     pass
 
-            # Greedy per-unit dispatch fallback
-            for u in unit_list:
-                if remaining <= 0:
-                    break
-                # determine feasible plr (respecting min_PLR)
-                max_unit_cap = u.nominal_cooling_kW
-                desired_plr = min(1.0, remaining / max_unit_cap)
-                if desired_plr > 0 and desired_plr < u.min_PLR:
-                    # if below min PLR, either run at min_PLR (if helps) or skip
-                    if u.min_PLR * max_unit_cap <= remaining:
-                        plr = u.min_PLR
+            if not milp_solved:
+                # Greedy per-unit dispatch fallback
+                for unit_index, u in unit_order:
+                    if remaining <= 0:
+                        break
+                    # determine feasible plr (respecting min_PLR)
+                    max_unit_cap = u.nominal_cooling_kW
+                    desired_plr = min(1.0, remaining / max_unit_cap)
+                    if desired_plr > 0 and desired_plr < u.min_PLR:
+                        # if below min PLR, either run at min_PLR (if helps) or skip
+                        if u.min_PLR * max_unit_cap <= remaining:
+                            plr = u.min_PLR
+                        else:
+                            # skip this unit; it cannot operate effectively for remaining without overproducing
+                            continue
                     else:
-                        # skip this unit; it cannot operate effectively for remaining
-                        continue
-                else:
-                    plr = desired_plr
+                        plr = desired_plr
 
-                perf = u.performance_at_plr(plr, 100.0, 7.0, 30.0)
-                cooling[i] += perf["cooling_kW"]
-                q_gen[i] += perf["fuel_input_kW"]
-                # set cop as weighted average if multiple units used
-                cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
-                units_on += 1
-                remaining = max(0.0, remaining - perf["cooling_kW"])
+                    perf = u.performance_at_plr(plr, t_gen_c, t_evap_c, t_cond_c)
+                    cooling[i] += perf["cooling_kW"]
+                    q_gen[i] += perf["fuel_input_kW"]
+                    # set cop as weighted average if multiple units used
+                    cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
+                    units_on += 1
+                    unit_dispatch[unit_index, i] = 1
+                    remaining = max(0.0, remaining - perf["cooling_kW"])
 
-            # If generator heat constraint provided and strategy is follow_heat, limit q_gen
-            if generator_heat_available_kW_hourly is not None and self.dispatch_strategy == "follow_heat":
+            # If generator heat constraint provided, limit any fallback/rounding excess.
+            if generator_heat_available_kW_hourly is not None:
                 available = float(generator_heat_available_kW_hourly[i])
                 if q_gen[i] > available:
                     # scale down cooling and q_gen proportionally
@@ -334,22 +345,10 @@ class ChillerBank:
                 chilled_mdot[i] = (cooling[i] * 1000.0) / (cp * dT)
                 rho = 997.0
                 g = 9.81
-                H = unit_list[0].pump_head_m or 30.0
+                H = unit_list_flat[0].pump_head_m or 30.0
                 Vdot = chilled_mdot[i] / rho
                 P_hydrau = rho * g * H * Vdot
                 pump_power[i] = P_hydrau / 0.7 / 1000.0
-
-        unit_dispatch = np.zeros((len(unit_list), hours), dtype=int)
-        # naive: first N units considered "on" when used
-        # compute counts per hour
-        for i in range(hours):
-            remaining = float(cooling[i])
-            idx = 0
-            while remaining > 0 and idx < len(unit_list):
-                cap = unit_list[idx].nominal_cooling_kW
-                unit_dispatch[idx, i] = 1
-                remaining -= cap
-                idx += 1
 
         return {
             "cooling_produced_hourly": cooling,

@@ -8,6 +8,10 @@
 
 # Enable advanced absorption chiller
 Use Advanced Absorption Chiller,True,
+Reservoir Model,0,                 ---[-] Simple cylindrical reservoir model
+Number of Multilateral Sections,1,
+Power Plant Type,5,                 ---[-] Absorption Chiller
+End-Use Option,2,                   ---[-] Direct-use heat application
 
 # Catalog path
 Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
@@ -15,25 +19,25 @@ Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
 # Operating mode: dispatch (hour-by-hour optimization)
 Operating Mode,Dispatchable,
 Dispatch Demand Source,Annual Cooling Demand,
-Dispatch Strategy,min_cost,         ---[min_cost|min_units|follow_heat]
+Absorption Chiller Dispatch Strategy,min_cost,         ---[min_cost|min_units|follow_heat]
 
 # If available, provide generator heat availability (hourly series). In
 # many test harnesses this is provided via CSV; here we show the parameter
 # name to be used. The solver will enforce available_generator_heat.
-Annual Cooling Demand,D:/Work/malcolm-BSD/GEOPHIRES-X/tests/assets/params/nnual_cooling_demand.csv
+Annual Cooling Demand,tests/assets/params/annual_cooling_demand.csv
 
 # Optional: dispatch solver preferences (use canonical parameter names)
-# Use dispatch-related parameters (e.g. "Dispatch Strategy",
-# "Minimum On-Off Dwell Hours", "Minimum Dispatch Runtime Fraction", etc.).
+# Use dispatch-related parameters (e.g. "Absorption Chiller Dispatch Strategy",
+# "Minimum Dispatch Runtime Fraction", etc.).
 # The older dotted-key syntax (for example `Dispatch.UseMILP`) is deprecated; prefer
 # the canonical parameter names shown above and elsewhere in the examples/docs.
 Absorption Chiller PLR Segments,5,       ---[int] number of PLR segments used for piecewise-linear COP approximation in MILP
 Absorption Chiller Use Hourly Temperatures,True,  ---[bool] evaluate segment COPs using per-hour temps when provided
 
 # Provide an example inline hourly temperature series (short example). Real tests should supply full 8760 arrays or CSV references.
-Temps.t_gen,95.0,95.0,85.0,95.0,
-Temps.t_evap,7.0,7.0,7.0,7.0,
-Temps.t_cond,30.0,30.0,30.0,30.0,
+Absorption Chiller Generator Temperature Profile,95.0,95.0,85.0,95.0,  ---[deg.C]
+Absorption Chiller Evaporator Temperature Profile,7.0,7.0,7.0,7.0,     ---[deg.C]
+Absorption Chiller Condenser Temperature Profile,30.0,30.0,30.0,30.0,  ---[deg.C]
 
 # Output files for dispatch results (optional)
 Dispatch Profile Output File,example11_new_AC_dispatch_profile.csv,
