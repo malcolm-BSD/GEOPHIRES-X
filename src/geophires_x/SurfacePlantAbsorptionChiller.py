@@ -534,24 +534,28 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     dispatch_strategy=str(self.absorption_chiller_dispatch_strategy.value),
                 )
 
-                # Determine cooling demand time series: prefer user-provided CoolingDemand, else derive from available heat
-                cooling_series = None
+                # Determine cooling demand time series in GEOPHIRES units (MW).
+                cooling_series_mw = None
                 try:
                     cd = getattr(self, "CoolingDemand", None)
                     if cd is not None and getattr(cd, "value", None) is not None and len(getattr(cd, "value")) > 0:
                         # convert user series to MW if necessary
                         try:
-                            cooling_series = self._parameter_series_to_mw(cd)
+                            cooling_series_mw = self._parameter_series_to_mw(cd)
                         except Exception:
-                            cooling_series = self._as_series(cd.value)
+                            cooling_series_mw = self._as_series(cd.value)
                 except Exception:
-                    cooling_series = None
+                    cooling_series_mw = None
 
-                if cooling_series is None:
+                if cooling_series_mw is None:
                     # Fallback: derive cooling demand from available heat (legacy-equivalent)
-                    cooling_series = np.asarray(self.HeatProduced.value, dtype=float) * float(self.absorption_chiller_cop.value) * float(self.enduse_efficiency_factor.value)
+                    cooling_series_mw = (
+                        np.asarray(self.HeatProduced.value, dtype=float)
+                        * float(self.absorption_chiller_cop.value)
+                        * float(self.enduse_efficiency_factor.value)
+                    )
 
-                hours = len(cooling_series)
+                hours = len(cooling_series_mw)
                 t_gen = self._temperature_profile(
                     self.absorption_chiller_generator_temperature,
                     model.wellbores.ProducedTemperature.value,
@@ -576,17 +580,20 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                 op_mode = getattr(self.operating_mode, "value", "").__str__() if hasattr(self.operating_mode, "value") else str(getattr(self.operating_mode, "value", ""))
                 mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
 
+                cooling_series_kw = np.asarray(cooling_series_mw, dtype=float) * 1000.0
                 results = ch.evaluate_hourly(
-                    cooling_series,
+                    cooling_series_kw,
                     t_gen,
                     chilled_supply_setpoint_c=7.0,
                     ambient_temp_hourly=t_cond,
                     temps=temps,
                     mode=mode,
+                    use_milp=False,
                 )
 
                 # store key outputs into SurfacePlant outputs
-                self.cooling_produced.value = results.get("cooling_produced_hourly", np.asarray(cooling_series, dtype=float))
+                cooling_produced_kw = results.get("cooling_produced_hourly", cooling_series_kw)
+                self.cooling_produced.value = np.asarray(cooling_produced_kw, dtype=float) / 1000.0
                 # store additional chiller outputs for downstream use
                 setattr(self, "_absorption_chiller_results", results)
             except Exception as exc:  # pragma: no cover - liberal fallback

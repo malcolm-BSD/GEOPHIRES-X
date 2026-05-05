@@ -84,6 +84,7 @@ class AbsorptionChiller:
         ambient_temp_hourly: Optional["numpy.ndarray"] = None,
         temps: Optional[Dict[str, "numpy.ndarray"]] = None,
         mode: str = "dispatch",
+        use_milp: bool = True,
     ) -> Dict[str, Any]:
         """Evaluate plant performance over hourly timesteps.
 
@@ -103,7 +104,13 @@ class AbsorptionChiller:
         peak = float(np.max(cooling_demand_hourly))
         bank = self.build_bank(peak)
 
-        results = bank.dispatch_hourly(cooling_demand_hourly, generator_heat_available_kW_hourly=None, temps=temps, mode=mode)
+        results = bank.dispatch_hourly(
+            cooling_demand_hourly,
+            generator_heat_available_kW_hourly=None,
+            temps=temps,
+            mode=mode,
+            use_milp=use_milp,
+        )
 
         cop_arr = results.get("COP_hourly", np.zeros(hours))
         cooling = results.get("cooling_produced_hourly", np.zeros(hours))

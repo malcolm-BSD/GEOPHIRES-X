@@ -1,3 +1,5 @@
+import numpy as np
+
 from geophires_x.absorption.absorption_chiller import AbsorptionChiller
 from geophires_x.absorption.catalog import Catalog
 from geophires_x.absorption.catalog import CatalogEntry
@@ -112,3 +114,29 @@ def test_geophires_dispatch_integration_uses_fast_chiller_bank_path(monkeypatch)
     )
 
     assert calls == [False]
+
+
+def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):
+    captured = {}
+
+    def evaluate_tracking_chiller(self, cooling_demand_hourly, *args, **kwargs):
+        captured["cooling_demand_hourly"] = np.asarray(cooling_demand_hourly, dtype=float)
+        captured["use_milp"] = kwargs.get("use_milp")
+        return {
+            "cooling_produced_hourly": captured["cooling_demand_hourly"].copy(),
+            "q_gen_hourly": np.zeros_like(captured["cooling_demand_hourly"]),
+            "COP_hourly": np.ones_like(captured["cooling_demand_hourly"]),
+        }
+
+    monkeypatch.setattr(AbsorptionChiller, "evaluate_hourly", evaluate_tracking_chiller)
+    model = Model(input_file="tests/examples/example11_new_AC_baseload.txt", enable_geophires_logging_config=False)
+    model.read_parameters()
+    model.surfaceplant.CoolingDemand.value = [1000.0] * 8760
+
+    model.reserv.Calculate(model)
+    model.wellbores.Calculate(model)
+    model.surfaceplant.Calculate(model)
+
+    assert captured["cooling_demand_hourly"][0] == 1000.0
+    assert captured["use_milp"] is False
+    assert model.surfaceplant.cooling_produced.value[0] == 1.0
