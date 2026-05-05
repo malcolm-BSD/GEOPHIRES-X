@@ -249,8 +249,18 @@ class Catalog:
     def query(self, capacity_kW: float, refrigerant_family: Optional[str] = None, effect_type: Optional[str] = None) -> List[CatalogEntry]:
         """Return candidate entries matching constraints."""
 
-    def select_min_cost_set(self, required_capacity_kW: float, allow_staging: bool = True) -> Dict[str, Any]:
+    def select_min_cost_set(
+        self,
+        required_capacity_kW: float,
+        allow_staging: bool = True,
+        refrigerant_family: Optional[str] = None,
+        effect_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Return a selection of units and counts to meet capacity optimized by cost.
+
+        Optional refrigerant and effect filters are applied before optimization,
+        so a cheaper incompatible catalog entry is not selected for a configured
+        absorption chiller.
 
         Returns a dict containing keys: 'selected', 'total_capacity_kW', 'estimated_cost_USD'.
         """

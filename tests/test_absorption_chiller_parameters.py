@@ -54,6 +54,8 @@ def test_catalog_built_chiller_bank_preserves_installed_cost():
             manufacturer="Example",
             nominal_cooling_kW="1000",
             nominal_COP="0.8",
+            refrigerant_family="LiBr-water",
+            effect_type="single",
             installed_cost_USD="123456",
         )
     ]
@@ -62,6 +64,76 @@ def test_catalog_built_chiller_bank_preserves_installed_cost():
     bank = chiller.build_bank(500.0)
 
     assert bank.units[0][0].installed_cost_USD == 123456.0
+
+
+def test_catalog_selection_respects_refrigerant_and_effect_filters():
+    catalog = Catalog()
+    catalog.entries = [
+        CatalogEntry(
+            model_id="CHEAP-WRONG-EFFECT",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="1.0",
+            refrigerant_family="LiBr-water",
+            effect_type="double",
+            installed_cost_USD="1",
+        ),
+        CatalogEntry(
+            model_id="CHEAP-WRONG-REFRIGERANT",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="1.0",
+            refrigerant_family="NH3-water",
+            effect_type="single",
+            installed_cost_USD="1",
+        ),
+        CatalogEntry(
+            model_id="MATCH",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="0.8",
+            refrigerant_family="LiBr-water",
+            effect_type="single",
+            installed_cost_USD="100000",
+        ),
+    ]
+
+    selection = catalog.select_min_cost_set(
+        500.0,
+        refrigerant_family="LiBr-water",
+        effect_type="single",
+    )
+
+    assert selection["selected"] == [{"model_id": "MATCH", "count": 1, "nominal_kW": 1000.0}]
+
+
+def test_absorption_chiller_build_bank_uses_configured_catalog_filters():
+    catalog = Catalog()
+    catalog.entries = [
+        CatalogEntry(
+            model_id="CHEAP-DOUBLE",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="1.0",
+            refrigerant_family="LiBr-water",
+            effect_type="double",
+            installed_cost_USD="1",
+        ),
+        CatalogEntry(
+            model_id="SINGLE-LIBR",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="0.8",
+            refrigerant_family="LiBr-water",
+            effect_type="single",
+            installed_cost_USD="100000",
+        ),
+    ]
+    chiller = AbsorptionChiller(catalog=catalog, refrigerant_family="LiBr-water", effect_type="single")
+
+    bank = chiller.build_bank(500.0)
+
+    assert bank.units[0][0].model_id == "SINGLE-LIBR"
 
 
 def test_dispatch_absorption_chiller_uses_advanced_bank_for_cooling_output():

@@ -115,14 +115,36 @@ class Catalog:
             candidates.append(e)
         return candidates
 
-    def select_min_cost_set(self, required_capacity_kW: float, allow_staging: bool = True) -> Dict[str, Any]:
+    @staticmethod
+    def _entry_matches(
+        entry: CatalogEntry,
+        refrigerant_family: Optional[str] = None,
+        effect_type: Optional[str] = None,
+    ) -> bool:
+        if refrigerant_family and entry.get("refrigerant_family") != refrigerant_family:
+            return False
+        if effect_type and entry.get("effect_type") != effect_type:
+            return False
+        return True
+
+    def select_min_cost_set(
+        self,
+        required_capacity_kW: float,
+        allow_staging: bool = True,
+        refrigerant_family: Optional[str] = None,
+        effect_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Return a selected set of units and estimated cost.
 
         This is a naive greedy packer by descending nominal size that tries to
         reach the required capacity.
         """
         # Try to use an integer linear program to minimize installed cost while meeting capacity
-        entries = [e for e in self.entries]
+        entries = [
+            entry
+            for entry in self.entries
+            if self._entry_matches(entry, refrigerant_family=refrigerant_family, effect_type=effect_type)
+        ]
         if not entries:
             return {"selected": [], "total_capacity_kW": 0.0, "estimated_cost_USD": 0.0}
 
@@ -168,7 +190,7 @@ class Catalog:
             return {"selected": selection, "total_capacity_kW": total_capacity, "estimated_cost_USD": total_cost}
         except Exception:
             # Fall back to greedy packer by descending nominal size
-            sorted_entries = sorted(self.entries, key=lambda e: float(e.get("nominal_cooling_kW", 0)), reverse=True)
+            sorted_entries = sorted(entries, key=lambda e: float(e.get("nominal_cooling_kW", 0)), reverse=True)
             remaining = required_capacity_kW
             selection: List[Dict[str, Any]] = []
             total_capacity = 0.0
@@ -203,4 +225,3 @@ class Catalog:
         results locally.
         """
         return []
-

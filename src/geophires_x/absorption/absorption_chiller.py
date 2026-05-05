@@ -153,11 +153,15 @@ class AbsorptionChiller:
 
         Proxy to Catalog.select_min_cost_set.
         """
-        return self.catalog.select_min_cost_set(peak_cooling_kW)
+        return self.catalog.select_min_cost_set(
+            peak_cooling_kW,
+            refrigerant_family=self.refrigerant_family,
+            effect_type=self.effect_type,
+        )
 
     def build_bank(self, required_capacity_kW: float) -> ChillerBank:
         """Build a dispatchable chiller bank sized for the requested capacity."""
-        selection = self.catalog.select_min_cost_set(required_capacity_kW)
+        selection = self.size_for_capacity(required_capacity_kW)
         bank = ChillerBank(
             dispatch_strategy=self.dispatch_strategy,
             n_segments=self.n_segments,
