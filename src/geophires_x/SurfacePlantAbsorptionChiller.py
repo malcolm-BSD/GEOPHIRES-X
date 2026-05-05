@@ -1,5 +1,5 @@
 import numpy as np
-from .Parameter import floatParameter, OutputParameter, boolParameter
+from .Parameter import floatParameter, OutputParameter, boolParameter, strParameter, intParameter
 from .SurfacePlant import SurfacePlant
 from .Units import *
 import geophires_x.Model as Model
@@ -52,7 +52,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         # AbsorptionChiller subsystem (in src/geophires_x/absorption) will be
         # used. Default True for the new design; set to False to preserve
         # legacy behaviour exactly.
-        self.UseAdvancedAbsorptionChiller = self.ParameterDict[self.UseAdvancedAbsorptionChiller.Name] = boolParameter(
+        self.Use Advanced Absorption Chiller = self.ParameterDict[self.Use Advanced Absorption Chiller.Name] = boolParameter(
             "Use Advanced Absorption Chiller",
             DefaultValue=True,
             value=True,
@@ -60,6 +60,133 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             ErrMessage="Enable advanced absorption chiller subsystem (default: True)",
             ToolTipText="If True use the advanced AbsorptionChiller subsystem (opt-in)."
         )
+
+        # Canonical top-level absorption chiller configuration parameters
+        self.absorption_chiller_use_pint = self.ParameterDict["Absorption Chiller Use Pint"] = boolParameter(
+            "Absorption Chiller Use Pint",
+            DefaultValue=True,
+            value=True,
+            Required=False,
+            ErrMessage="Enable Pint units handling for Absorption Chiller (default: True)",
+            ToolTipText="Enable Pint units handling for the Absorption Chiller (recommended).",
+        )
+
+        self.absorption_chiller_use_coolprop = self.ParameterDict["Absorption Chiller Use CoolProp"] = boolParameter(
+            "Absorption Chiller Use CoolProp",
+            DefaultValue=True,
+            value=True,
+            Required=False,
+            ErrMessage="Enable CoolProp for fluid properties (default: True)",
+            ToolTipText="Enable CoolProp for fluid properties used by the Absorption Chiller (best-effort).",
+        )
+
+        self.absorption_chiller_refrigerant_family = self.ParameterDict["Absorption Chiller Refrigerant Family"] = strParameter(
+            "Absorption Chiller Refrigerant Family",
+            DefaultValue="LiBr-water",
+            Required=False,
+            ErrMessage="assume default refrigerant family (LiBr-water)",
+            ToolTipText="Refrigerant family for Absorption Chiller (e.g., 'LiBr-water' or 'NH3-water').",
+        )
+
+        self.absorption_chiller_effect_type = self.ParameterDict["Absorption Chiller Effect Type"] = strParameter(
+            "Absorption Chiller Effect Type",
+            DefaultValue="single",
+            Required=False,
+            ErrMessage="assume default effect type (single)",
+            ToolTipText="Absorption chiller effect type: 'single' | 'double' | 'triple'.",
+        )
+
+        self.absorption_chiller_effect_multiplier_override = self.ParameterDict["Absorption Chiller Effect Multiplier Override"] = floatParameter(
+            "Absorption Chiller Effect Multiplier Override",
+            DefaultValue=None,
+            value=None,
+            Required=False,
+            ErrMessage="optional override of effect multiplier (leave blank to use defaults)",
+            ToolTipText="Optional override of the effect multiplier used to scale COPs.",
+        )
+
+        self.absorption_chiller_min_plr = self.ParameterDict["Absorption Chiller Min Part Load Ratio"] = floatParameter(
+            "Absorption Chiller Min Part Load Ratio",
+            DefaultValue=0.2,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            ErrMessage="assume default min part-load ratio (0.2)",
+            ToolTipText="Minimum part-load ratio for Absorption Chiller operation.",
+        )
+
+        self.absorption_chiller_turndown = self.ParameterDict["Absorption Chiller Turndown Ratio"] = floatParameter(
+            "Absorption Chiller Turndown Ratio",
+            DefaultValue=3.0,
+            Min=1.0,
+            Required=False,
+            ErrMessage="assume default turndown ratio (3.0)",
+            ToolTipText="Turndown ratio for Absorption Chiller (max/min PLR ratio).",
+        )
+
+        self.absorption_chiller_chilled_deltaT = self.ParameterDict["Absorption Chiller Chilled DeltaT"] = floatParameter(
+            "Absorption Chiller Chilled DeltaT",
+            DefaultValue=5.0,
+            Min=0.1,
+            Required=False,
+            ErrMessage="assume default chilled deltaT (5.0 K)",
+            ToolTipText="Design chilled-water delta-T used to compute chilled mass flow.",
+        )
+
+        self.absorption_chiller_pump_head = self.ParameterDict["Absorption Chiller Pump Head"] = floatParameter(
+            "Absorption Chiller Pump Head",
+            DefaultValue=30.0,
+            Min=0.0,
+            Required=False,
+            ErrMessage="assume default pump head (30 m)",
+            ToolTipText="Pump head used for auxiliary pumping power estimates.",
+        )
+
+        self.absorption_chiller_pump_efficiency = self.ParameterDict["Absorption Chiller Pump Efficiency"] = floatParameter(
+            "Absorption Chiller Pump Efficiency",
+            DefaultValue=0.70,
+            Min=0.0,
+            Max=1.0,
+            Required=False,
+            ErrMessage="assume default pump efficiency (0.70)",
+            ToolTipText="Pump efficiency used for auxiliary power estimates.",
+        )
+
+        self.absorption_chiller_catalog_path = self.ParameterDict["Absorption Chiller Catalog Path"] = strParameter(
+            "Absorption Chiller Catalog Path",
+            DefaultValue="data/absorption_chiller_catalog_default.csv",
+            Required=False,
+            ErrMessage="assume default embedded catalog path",
+            ToolTipText="Path to user-supplied absorption chiller catalog CSV (optional).",
+        )
+
+        # Advanced chiller MILP tuning: number of PLR segments used in piecewise-linear COP approximation
+        self.absorption_chiller_n_segments = self.ParameterDict[self.absorption_chiller_n_segments.Name] = floatParameter(
+            "Absorption Chiller PLR Segments",
+            value=5,
+            Min=1,
+            Max=20,
+            UnitType=Units.NONE,
+            ErrMessage="number of PLR segments must be >=1",
+            ToolTipText="Number of PLR segments used for piecewise-linear COP approximation in MILP dispatch (default 5)",
+        )
+
+        # Whether to evaluate segment COPs using per-hour temperatures passed in 'temps'
+        self.absorption_chiller_use_hourly_temps = self.ParameterDict[self.absorption_chiller_use_hourly_temps.Name] = boolParameter(
+            "Absorption Chiller Use Hourly Temperatures",
+            DefaultValue=False,
+            value=False,
+            Required=False,
+            ErrMessage="If True, provide hourly 'temps' arrays to dispatch_hourly/evaluate_hourly",
+            ToolTipText="When True, the MILP will evaluate COP segments using per-hour temperatures supplied to the dispatcher.",
+        )
+
+        # NOTE: legacy dotted-key aliases (e.g. 'AbsorptionChiller.*') were removed
+        # in favour of the project's canonical human-friendly parameter names
+        # (e.g. 'Absorption Chiller Use Hourly Temperatures'). If you have input
+        # files that still use the dotted-key style, update them to the canonical
+        # parameter names in `tests/examples/*.txt` or add your own compatibility
+        # mapping at runtime prior to calling `read_parameters`.
 
         # Output Parameters
         self.cooling_produced = self.OutputParameterDict[self.cooling_produced.Name] = OutputParameter(
@@ -100,13 +227,13 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         The Calculate function is where all the calculations are done.
 
         Note about the advanced absorption chiller subsystem:
-        - If the parameter ``UseAdvancedAbsorptionChiller`` is True (default),
+        - If the parameter ``Use Advanced Absorption Chiller`` is True (default),
           this method will call into the new :mod:`geophires_x.absorption`
           subsystem. That subsystem will attempt to size and dispatch
           commercial absorption chillers; when PuLP is available the catalog
           selection uses integer programming and the per-hour dispatch will
           also try to solve a small integer program to minimize cost.
-        - If ``UseAdvancedAbsorptionChiller`` is False or if the advanced
+        - If ``Use Advanced Absorption Chiller`` is False or if the advanced
           subsystem fails, the method falls back to the legacy, scalar
           calculation that preserves previous behaviour.
 
@@ -137,7 +264,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
 
         # Use advanced AbsorptionChiller subsystem when enabled; otherwise keep legacy behavior
         try:
-            use_adv = bool(getattr(self.UseAdvancedAbsorptionChiller, "value", False))
+            use_adv = bool(getattr(self.Use Advanced Absorption Chiller, "value", False))
         except Exception:
             use_adv = False
 

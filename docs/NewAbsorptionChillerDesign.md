@@ -1,6 +1,6 @@
 # New Absorption Chiller Design - Detailed Specification
 
-Status: Draft
+Status: Implemented (features described below are implemented in the codebase)
 
 Author: (generated design)
 Date: 2026-05-04
@@ -32,11 +32,11 @@ Top-level Checklist (Implementation tasks)
 3. Add `docs/NewAbsorptionChillerDesign.md` (this document).
 4. Add embedded catalog file `data/absorption_chiller_catalog_default.csv` with seed entries.
 5. Implement unit tests under `tests/test_absorption_*` as described.
-6. Modify `src/geophires_x/SurfacePlantAbsorptionChiller.py` to call into new subsystem with opt-in flag `UseAdvancedAbsorptionChiller` (default True for new design; legacy compatibility preserved if false).
+6. Modify `src/geophires_x/SurfacePlantAbsorptionChiller.py` to call into new subsystem with opt-in flag `Use Advanced Absorption Chiller` (default True for new design; legacy compatibility preserved if false).
 7. Add README and usage examples in `docs/` and update `pyproject.toml`/`requirements-dev` to include Pint and CoolProp by default for development.
 8. Run test suite and ensure regression tests pass.
 
-New global default: Enable advanced Absorption Chiller subsystem by setting `UseAdvancedAbsorptionChiller = True` in the new configuration. This advanced subsystem will enable Pint and CoolProp by default; tests and CI should include these packages.
+New global default: Enable advanced Absorption Chiller subsystem by setting `Use Advanced Absorption Chiller = True` in the new configuration. This advanced subsystem will enable Pint and CoolProp by default; tests and CI should include these packages.
 
 PEP compliance
 --------------
@@ -330,6 +330,15 @@ class AbsorptionChiller:
         """Initialize AbsorptionChiller with sensible defaults.
 
         By default Pint and CoolProp are enabled for precise unit and property handling.
+
+        New parameters added to configure MILP segmentation and temperature handling:
+            - n_segments: number of PLR segments used to build piecewise-linear COP approximations (default 5)
+            - use_hourly_temps: if True and `temps` arrays are provided to `evaluate_hourly`, segment COPs will be evaluated using per-hour temperatures
+
+        Note on parameter labels: the human-facing parameter label for enabling per-hour temperature evaluation is
+        "Absorption Chiller Use Hourly Temperatures". The older dotted-key style (for example, "AbsorptionChiller Use Hourly Temperatures")
+        has been removed from the canonical input parser. Update input files to use the canonical human-friendly parameter
+        names documented in the project's Parameters Reference and examples.
         """
 
     def evaluate_hourly(
@@ -498,7 +507,7 @@ Implementation roadmap (step-wise)
 5. Implement `Catalog` with embedded CSV loader, user CSV loader, and remote query stub + cache.
 6. Implement `ChillerBank.dispatch_hourly` with simple greedy staging heuristic; expand to more advanced optimization later.
 7. Implement `AbsorptionChiller.evaluate_hourly` to call into `ChillerBank` and aggregate results.
-8. Add regression tests to verify legacy parity when `UseAdvancedAbsorptionChiller=False`.
+8. Add regression tests to verify legacy parity when `Use Advanced Absorption Chiller=False`.
 9. Populate `data/absorption_chiller_catalog_default.csv` with seed data and document sources and verifications.
 10. Ensure code passes flake8/black/mypy; add CI steps.
 
@@ -555,24 +564,44 @@ Integer Linear Programming (ILP)
 
 Mixed-Integer Linear Programming (MILP)
 --------------------------------------
+
 - Definition: MILP generalizes ILP by allowing both integer (often binary)
   variables and continuous variables; objectives and constraints remain
   linear. MILP lets us model both discrete decisions (which units are on)
   and continuous decisions (part-load ratios, PLR) in the same optimization.
 - What it does here: the per-hour dispatch MILP contains binary on/off
-  variables for each unit instance and continuous PLR variables in [0,1].
-  Constraints enforce minimum PLR when a unit is on (plr_k >= min_PLR * y_k),
-  and the sum of capacities times PLR must meet the hourly requested cooling.
-- Generator-heat linear constraint: we include a conservative linear
-  approximation that bounds generator heat input using a per-unit COP value
-  evaluated at the unit's minimum PLR (COP_min). This produces a linear
-  constraint of the form:
+  variables for each unit instance and a piecewise-linear representation of
+  part-load behaviour. Instead of a single continuous PLR variable per unit,
+  the implementation splits each unit's PLR domain into `n_segments` uniform
+  segments (configurable per `ChillerBank`, default `n_segments=5`). The MILP
+  creates continuous cooling variables `q_k_s` for each unit k and segment s
+  so that total cooling from a unit is sum_s q_k_s and the fraction of each
+  segment is implicitly represented by q_k_s / cap_k.
 
-  sum( nominal_kW_k * plr_k / COP_min_k ) <= available_generator_heat_kW
+- Piecewise-linear COP(PLR) handling: COP is nonlinear in PLR and would make
+  the model non-linear. To keep the problem linear the MILP evaluates COP at
+  the midpoint of each segment (plr_mid) and uses that constant COP value for
+  the segment. Generator heat (fuel) is then linearized as:
 
-  This is conservative because COP typically improves at higher PLR; using
-  COP_min ensures the modeled generator heat does not exceed available heat
-  for any feasible PLR >= min_PLR.
+  fuel ≈ sum_k sum_s q_k_s / COP_seg(k,s)
+
+  which is linear in the q_k_s variables and therefore compatible with MILP
+  solvers.
+
+- Constraints implemented per unit
+  - sum_s q_k_s <= cap_k * y_k  (no cooling when unit off)
+  - sum_s q_k_s >= cap_k * min_PLR * y_k  (enforce minimum part-load when on)
+  - q_k_s <= cap_k * (plr_high - plr_low)  (segment capacity upper bound)
+
+- Generator-heat constraint: when `generator_heat_available_kW_hourly` is
+  provided and dispatch strategy is `follow_heat`, the MILP enforces the
+  linear fuel constraint using the segment COPs:
+
+  sum_k sum_s q_k_s / COP_seg(k,s) <= available_generator_heat_kW
+
+  This piecewise-linear approximation is tighter than a single conservative
+  COP_min bound and typically yields better utilization of available heat
+  while remaining a linear MILP.
 
 What users must provide to enable MILP dispatch
 -----------------------------------------------
@@ -597,9 +626,10 @@ PuLP: solver library used by the implementation
   to solve quietly using the CBC solver if available.
 - Developer / CI notes: PuLP is an optional dependency in the runtime
   sense (the code falls back to greedy heuristics if PuLP is unavailable),
-  but including PuLP in CI / development requirements enables deterministic
-  unit tests that exercise the ILP/MILP paths. Add `pulp>=2.6.0` to CI or
-  dev requirements if you want these tests to run in continuous integration.
+  but the project test environment includes `pulp` for CI/dev so ILP/MILP
+  tests run deterministically. Dev/test configuration updated to include
+  `pulp>=2.6.0` in the `tox` test environment and in CI requirement manifests
+  so the MILP paths are exercised during continuous integration.
 
 PLR vs COP — brief explanation
 -------------------------------

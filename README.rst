@@ -148,6 +148,14 @@ Note that many parameters are interrelated and/or conditionally dependent on one
 reviewing the GEOPHIRES example(s) relevant to your use case in the following section
 is strongly recommended to gain a working understanding of how to construct valid sets of input parameters.
 
+Compatibility notes
+-------------------
+Parameter labels use canonical, human-friendly names (for example, ``Absorption Chiller Use Hourly Temperatures``).
+The older dotted-key style (for example, ``AbsorptionChiller.*``) has been removed from the canonical parser
+and is no longer accepted. Update any existing input files to use the canonical parameter names shown in the
+`Parameters Reference <https://softwareengineerprogrammer.github.io/GEOPHIRES/parameters.html>`__ and the examples in
+the `tests/examples` directory.
+
 
 Examples
 --------

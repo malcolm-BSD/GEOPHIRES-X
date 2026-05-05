@@ -1,0 +1,41 @@
+# Example 11a: New Absorption Chiller - Baseload mode
+# --------------------------------------------------
+# This small fixture demonstrates the input parameters needed to enable
+# and configure the new advanced Absorption Chiller subsystem in
+# GEOPHIRES-X. It shows baseload operation (steady/low-cycling output)
+# and references the embedded chiller catalog. Values are illustrative
+# and intended as a usage example for tests and documentation.
+
+# Enable the advanced Absorption Chiller subsystem (new default API)
+Use Advanced Absorption Chiller,True,
+
+# Absorption Chiller top-level options (canonical parameter names)
+Absorption Chiller Use Pint,True,                ---[bool] enable Pint units handling (recommended)
+Absorption Chiller Use CoolProp,True,            ---[bool] enable CoolProp for fluid properties (best-effort)
+Absorption Chiller Refrigerant Family,LiBr-water, ---[string] 'LiBr-water' | 'NH3-water'
+Absorption Chiller Effect Type,double,           ---[string] 'single' | 'double' | 'triple'
+Absorption Chiller Effect Multiplier Override,,   ---[float] optional override of effect multiplier (leave blank to use defaults)
+Absorption Chiller Min Part Load Ratio,0.2,        ---[fraction]
+Absorption Chiller Turndown Ratio,3.0,
+Absorption Chiller Chilled DeltaT,5.0,         ---[K]
+Absorption Chiller Pump Head,30.0,
+Absorption Chiller Pump Efficiency,0.70,
+
+# Catalog: use the embedded seeded CSV included with the repo. Tests may
+# override this with a user CSV by setting the Absorption Chiller Catalog Path.
+Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
+
+# Operation mode: baseload (minimize cycling; prefer steady unit schedules)
+Operating Mode,Baseload,
+
+# Dispatch-related options (baseload still accepts these to steer schedules)
+Dispatch Strategy,min_units,                        ---[min_cost|min_units|follow_heat]
+Minimum On-Off Dwell Hours,1,                       ---[hours] avoid excessive cycling
+
+# Supply the cooling demand time series used by chiller dispatch.
+Annual Cooling Demand,D:/Work/malcolm-BSD/GEOPHIRES-X/tests/assets/params/nnual_cooling_demand.csv
+
+# Output control (keep console output for small test runs)
+Print Output to Console,True,
+
+# End of example 11a

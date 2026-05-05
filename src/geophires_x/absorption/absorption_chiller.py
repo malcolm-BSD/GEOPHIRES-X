@@ -43,6 +43,8 @@ class AbsorptionChiller:
         use_pint: bool = True,
         use_coolprop: bool = True,
         effect_multiplier_override: Optional[float] = None,
+        n_segments: int = 5,
+        use_hourly_temps: bool = False,
     ) -> None:
         self.units_manager = units_manager or UnitsManager(enabled=use_pint)
         self.fluid_adapter = fluid_adapter or FluidPropsAdapter(use_coolprop=use_coolprop)
@@ -56,6 +58,9 @@ class AbsorptionChiller:
         self.pump_head_m = float(pump_head_m)
         self.pump_efficiency = float(pump_efficiency)
         self.effect_multiplier_override = effect_multiplier_override
+        # dispatch/solver tuning passed to ChillerBank
+        self.n_segments = int(n_segments)
+        self.use_hourly_temps = bool(use_hourly_temps)
 
     def _effect_multiplier(self) -> float:
         if self.effect_multiplier_override is not None:
@@ -86,7 +91,7 @@ class AbsorptionChiller:
         peak = float(np.max(cooling_demand_hourly))
         selection = self.catalog.select_min_cost_set(peak)
         # build chiller bank from selection (very naive)
-        bank = ChillerBank()
+        bank = ChillerBank(n_segments=self.n_segments, use_hourly_temps=self.use_hourly_temps)
         for s in selection.get("selected", []):
             # find matching entry
             entries = [e for e in self.catalog.entries if e.get("model_id") == s.get("model_id")]
