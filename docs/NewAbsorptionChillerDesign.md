@@ -149,11 +149,16 @@ class PerformanceMap:
 
         Parameters:
             rated_cop: Rated COP at PLR=1.0.
-            plr_curve_params: Optional params for PLR correction, keys: 'alpha', 'beta'.
+            plr_curve_params: Optional params for PLR and temperature correction,
+            including 'alpha', 'beta', '*_ref_c', and '*_slope_per_c'.
         """
 
     def evaluate(self, plr: float, t_gen_c: float, t_evap_c: float, t_cond_c: float) -> Dict[str, float]:
         """Evaluate map and return COP and auxiliary multipliers at the given conditions.
+
+        The fallback implementation applies a bounded temperature correction
+        around nominal generator, evaporator, and condenser conditions so hourly
+        temperature profiles affect COP even without a manufacturer lookup table.
 
         Returns dict with keys: 'cop', 'aux_power_factor'.
         """

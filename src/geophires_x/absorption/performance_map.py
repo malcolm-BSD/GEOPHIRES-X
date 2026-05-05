@@ -27,6 +27,16 @@ class PerformanceMap:
         params = plr_curve_params or {}
         self.alpha = float(params.get("alpha", 0.15))
         self.beta = float(params.get("beta", 1.2))
+        self.generator_ref_c = float(params.get("generator_ref_c", 95.0))
+        self.evaporator_ref_c = float(params.get("evaporator_ref_c", 7.0))
+        self.condenser_ref_c = float(params.get("condenser_ref_c", 30.0))
+        self.generator_slope_per_c = float(params.get("generator_slope_per_c", 0.006))
+        self.evaporator_slope_per_c = float(params.get("evaporator_slope_per_c", 0.010))
+        self.condenser_slope_per_c = float(params.get("condenser_slope_per_c", -0.008))
+
+    @staticmethod
+    def _clamp(value: float, lower: float, upper: float) -> float:
+        return max(lower, min(upper, value))
 
     def evaluate(self, plr: float, t_gen_c: float, t_evap_c: float, t_cond_c: float) -> Dict[str, float]:
         """Evaluate the performance map.
@@ -35,7 +45,15 @@ class PerformanceMap:
         parametric fallback reduces COP gently at low PLR.
         """
         plr_clamped = max(0.0, min(1.0, float(plr)))
-        cop = self.rated_cop * (1.0 - self.alpha * (1.0 - plr_clamped) ** self.beta)
+        part_load_factor = 1.0 - self.alpha * (1.0 - plr_clamped) ** self.beta
+        temperature_factor = (
+            1.0
+            + self.generator_slope_per_c * (float(t_gen_c) - self.generator_ref_c)
+            + self.evaporator_slope_per_c * (float(t_evap_c) - self.evaporator_ref_c)
+            + self.condenser_slope_per_c * (float(t_cond_c) - self.condenser_ref_c)
+        )
+        temperature_factor = self._clamp(temperature_factor, 0.50, 1.25)
+        cop = self.rated_cop * part_load_factor * temperature_factor
         return {"cop": float(cop), "aux_power_factor": 1.0}
 
     @classmethod
@@ -48,4 +66,3 @@ class PerformanceMap:
         # Placeholder: accept rated COP if provided
         rated = float(getattr(lookup_table, "rated_cop", 0.7))
         return cls(rated_cop=rated)
-
