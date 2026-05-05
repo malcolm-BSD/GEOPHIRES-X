@@ -47,6 +47,7 @@ class ChillerBank:
         generator_heat_available_kW_hourly: Optional["numpy.ndarray"] = None,
         temps: Optional[Dict[str, "numpy.ndarray"]] = None,
         mode: str = "dispatch",
+        use_milp: bool = True,
     ) -> Dict[str, Any]:
         """Dispatch units hourly.
 
@@ -176,7 +177,7 @@ class ChillerBank:
             # If PuLP is available, solve a small MILP per-hour that uses binary
             # on/off variables for each unit instance and continuous PLR variables
             # to allow partial loading subject to unit minimum PLR constraints.
-            if _HAS_PULP and unit_list_flat:
+            if use_milp and _HAS_PULP and unit_list_flat:
                 try:
                     # Build MILP
                     prob = pulp.LpProblem(f"dispatch_hour_{i}", pulp.LpMinimize)

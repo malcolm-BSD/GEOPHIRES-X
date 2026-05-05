@@ -80,3 +80,35 @@ def test_dispatch_absorption_chiller_uses_advanced_bank_for_cooling_output():
     assert state["dispatch_output_mw"] == state["cooling_produced_mw"]
     assert state["cooling_produced_mw"] > 0.0
     assert getattr(model.surfaceplant, "_absorption_chiller_dispatch_bank", None) is not None
+
+
+def test_geophires_dispatch_integration_uses_fast_chiller_bank_path(monkeypatch):
+    model = Model(input_file="tests/examples/example11_new_AC_dispatch.txt", enable_geophires_logging_config=False)
+    model.read_parameters()
+    model.reserv.cpwater.value = 4180.0
+    model.surfaceplant.CoolingDemand.value = [1000.0]
+
+    calls = []
+    original_build_bank = model.surfaceplant._advanced_absorption_chiller().build_bank
+
+    def build_tracking_bank(required_capacity_kW):
+        bank = original_build_bank(required_capacity_kW)
+        original_dispatch = bank.dispatch_hourly
+
+        def dispatch_tracking(*args, **kwargs):
+            calls.append(kwargs.get("use_milp"))
+            return original_dispatch(*args, **kwargs)
+
+        monkeypatch.setattr(bank, "dispatch_hourly", dispatch_tracking)
+        return bank
+
+    monkeypatch.setattr(model.surfaceplant._advanced_absorption_chiller(), "build_bank", build_tracking_bank)
+
+    model.surfaceplant.advanced_dispatch_output(
+        model,
+        cooling_demand_mw=1.0,
+        generator_heat_available_mw=10.0,
+        generator_temperature_c=95.0,
+    )
+
+    assert calls == [False]

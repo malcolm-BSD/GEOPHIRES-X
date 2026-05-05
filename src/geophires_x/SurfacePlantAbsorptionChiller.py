@@ -352,13 +352,46 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
 
     def _cooling_demand_peak_mw(self) -> float:
         cooling_demand = getattr(self, "CoolingDemand", None)
+        cache_source = getattr(cooling_demand, "value", None)
+        cached_source = getattr(self, "_absorption_chiller_peak_demand_cache_source", None)
+        if cached_source is cache_source and hasattr(self, "_absorption_chiller_peak_demand_cache_mw"):
+            return self._absorption_chiller_peak_demand_cache_mw
+
+        peak_demand_mw = 0.0
         if cooling_demand is not None and getattr(cooling_demand, "value", None) is not None:
             try:
                 if len(cooling_demand.value) > 0:
-                    return float(np.max(self._parameter_series_to_mw(cooling_demand)))
+                    peak_demand_mw = float(np.max(self._parameter_series_to_mw(cooling_demand)))
             except Exception:
                 pass
-        return 0.0
+
+        setattr(self, "_absorption_chiller_peak_demand_cache_source", cache_source)
+        setattr(self, "_absorption_chiller_peak_demand_cache_mw", peak_demand_mw)
+        return peak_demand_mw
+
+    def _dispatch_temperature_value(self, parameter, default_value: float, timestep_index: int) -> float:
+        cache = getattr(self, "_absorption_chiller_dispatch_temperature_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(self, "_absorption_chiller_dispatch_temperature_cache", cache)
+
+        cache_key = parameter.Name
+        cached_value = cache.get(cache_key)
+        source_value = getattr(parameter, "value", None)
+        if cached_value is None or cached_value[0] is not source_value:
+            if source_value is not None and len(source_value) > 0:
+                series = self._as_series(source_value)
+            else:
+                series = self._as_series(default_value)
+            cache[cache_key] = (source_value, series)
+        else:
+            series = cached_value[1]
+
+        if series.size == 0:
+            return float(default_value)
+        if series.size == 1:
+            return float(series[0])
+        return float(series[timestep_index % series.size])
 
     def advanced_dispatch_output(
         self,
@@ -381,12 +414,22 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             setattr(self, "_absorption_chiller_dispatch_bank", bank)
             setattr(self, "_absorption_chiller_dispatch_bank_capacity_kW", required_capacity_kW)
 
-        t_evap = self._temperature_profile(self.absorption_chiller_evaporator_temperature, 7.0, 1, model)[0]
-        t_cond = self._temperature_profile(self.absorption_chiller_condenser_temperature, 30.0, 1, model)[0]
+        t_evap = self._dispatch_temperature_value(
+            self.absorption_chiller_evaporator_temperature,
+            7.0,
+            timestep_index,
+        )
+        t_cond = self._dispatch_temperature_value(
+            self.absorption_chiller_condenser_temperature,
+            30.0,
+            timestep_index,
+        )
         if len(getattr(self.absorption_chiller_generator_temperature, "value", [])) > 0:
-            profile = self._as_series(self.absorption_chiller_generator_temperature.value)
-            if profile.size > 0:
-                generator_temperature_c = float(profile[timestep_index % profile.size])
+            generator_temperature_c = self._dispatch_temperature_value(
+                self.absorption_chiller_generator_temperature,
+                generator_temperature_c,
+                timestep_index,
+            )
         temps = {
             "t_gen": np.array([generator_temperature_c], dtype=float),
             "t_evap": np.array([float(t_evap)], dtype=float),
@@ -397,6 +440,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             generator_heat_available_kW_hourly=np.array([float(generator_heat_available_mw) * 1000.0], dtype=float),
             temps=temps,
             mode="dispatch",
+            use_milp=False,
         )
         return {
             "cooling_produced_mw": float(results["cooling_produced_hourly"][0]) / 1000.0,
