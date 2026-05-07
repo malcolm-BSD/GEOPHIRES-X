@@ -463,6 +463,12 @@ class OutputsTestCase(BaseTestCase):
         model = self._new_model(
             input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example11_new_AC_dispatch.txt")
         )
+        model.InputParameters.update(
+            {
+                "Dispatch Analysis Start Year": ParameterEntry(Name="Dispatch Analysis Start Year", sValue="5"),
+                "Dispatch Analysis End Year": ParameterEntry(Name="Dispatch Analysis End Year", sValue="6"),
+            }
+        )
         model.outputs.output_file = str(output_path)
         model.outputs.text_output_file.value = str(text_output_path)
         model.outputs.text_output_file.Provided = True
@@ -471,16 +477,34 @@ class OutputsTestCase(BaseTestCase):
 
         model.Calculate()
         model.outputs.PrintOutputs(model)
+        analysis_start_index = model.surfaceplant.dispatch_analysis_start_year.value - 1
+        analysis_end_index = model.surfaceplant.dispatch_analysis_end_year.value - 1
 
         result = GeophiresXResult(str(output_path))
         dispatch_results = result.result["DISPATCH RESULTS"]
         self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
-        self.assertTrue(all(value > 0.0 for value in model.surfaceplant.cooling_kWh_Produced.value))
-        self.assertGreater(model.economics.CoolingRevenue.value[-1], 0.0)
+        annual_cooling = model.surfaceplant.cooling_kWh_Produced.value
+        self.assertTrue(all(value > 0.0 for value in annual_cooling[analysis_start_index:analysis_end_index]))
+        self.assertTrue(all(value == 0.0 for value in annual_cooling[:analysis_start_index]))
+        self.assertTrue(all(value == 0.0 for value in annual_cooling[analysis_end_index:]))
         self.assertTrue(text_output_path.exists())
         with open(text_output_path, encoding="UTF-8") as f:
-            self.assertIn("***DISPATCH RESULTS***", f.read())
+            text_output = f.read()
+        self.assertIn("***DISPATCH RESULTS***", text_output)
+        annual_profile = text_output[
+            text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE") : text_output.index(
+                "REVENUE & CASHFLOW PROFILE"
+            )
+        ]
+        cashflow_profile = text_output[text_output.index("REVENUE & CASHFLOW PROFILE") : len(text_output)]
+        self.assertIn(r"\par", annual_profile)
+        annual_rows = [line.strip() for line in annual_profile.splitlines()]
+        cashflow_rows = [line.strip() for line in cashflow_profile.splitlines()]
+        self.assertTrue(any(line.startswith("5") for line in annual_rows))
+        self.assertFalse(any(line.startswith("6") for line in annual_rows))
+        self.assertTrue(any(line.startswith("5") for line in cashflow_rows))
+        self.assertFalse(any(line.startswith("6") for line in cashflow_rows))
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
         self.assertEqual(8760, len(rows))

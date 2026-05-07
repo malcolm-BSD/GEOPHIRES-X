@@ -4,7 +4,7 @@ import string
 import time
 import unicodedata
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -41,6 +41,48 @@ def _set_plot_xlim(ax, x: pd.array) -> None:
         ax.set_xlim(x_min - 0.5, x_max + 0.5)
     else:
         ax.set_xlim(x_min, x_max)
+
+
+def _dispatch_analysis_window(model: Model) -> Optional[Tuple[int, int]]:
+    dispatch_results = getattr(model, 'dispatch_results', None)
+    if dispatch_results is None:
+        return None
+
+    start_year = int(getattr(dispatch_results, 'analysis_start_year', 1))
+    end_year = int(getattr(dispatch_results, 'analysis_end_year', start_year + 1))
+    if end_year <= start_year:
+        return None
+    return start_year, end_year
+
+
+def _filter_dispatch_year_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+    dispatch_window = _dispatch_analysis_window(model)
+    if dispatch_window is None:
+        return table
+
+    year_column = next((column for column in table.columns if str(column).startswith('Year|')), None)
+    if year_column is None:
+        return table
+
+    start_year, end_year = dispatch_window
+    return table[table[year_column].isin(range(start_year, end_year))]
+
+
+def _filter_dispatch_cashflow_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+    dispatch_window = _dispatch_analysis_window(model)
+    if dispatch_window is None:
+        return table
+
+    start_year, end_year = dispatch_window
+    construction_years = int(model.surfaceplant.construction_years.value)
+    start_index = construction_years + start_year - 1
+    end_index = construction_years + end_year - 1
+    filtered_table = table.iloc[start_index:end_index].copy()
+    year_column = next((column for column in filtered_table.columns if str(column).startswith('Year|')), None)
+    if year_column is not None:
+        filtered_table[year_column] = list(range(start_year, end_year))
+    return filtered_table
+
 
 def print_outputs_rich(
         text_output_file: strParameter,
@@ -1074,7 +1116,7 @@ def print_outputs_rich(
         hce[f'First Law Efficiency (%)|:8.4f'] = ShortenArrayToAnnual(model.surfaceplant.FirstLawEfficiency.value,
                                                                       model.surfaceplant.plant_lifetime.value,
                                                                       model.economics.timestepsperyear.value) * 100
-    hce = hce.reset_index()
+    hce = _filter_dispatch_year_rows(hce, model).reset_index()
 
     # Build the data frame to hold the annual heating, cooling, and/or electricity production profile
     ahce: pd.DataFrame = pd.DataFrame()
@@ -1151,7 +1193,7 @@ def print_outputs_rich(
         (
                 model.reserv.InitialReservoirHeatContent.value - model.surfaceplant.RemainingReservoirHeatContent.value) * 100. \
         / model.reserv.InitialReservoirHeatContent.value
-    ahce = ahce.reset_index()
+    ahce = _filter_dispatch_year_rows(ahce, model).reset_index()
 
     # Build the data frame to hold the revenue and cashflow profile
     econ: Economics = model.economics
@@ -1188,7 +1230,7 @@ def print_outputs_rich(
     cashflow[f'Project:Net Rev. ({econ.TotalRevenue.CurrentUnits.value})|:5.2f'] = econ.TotalRevenue.value
     cashflow[
         f'Project:Net Cashflow ({econ.TotalCummRevenue.CurrentUnits.value})|:5.2f'] = econ.TotalCummRevenue.value
-    cashflow = cashflow.reset_index()
+    cashflow = _filter_dispatch_cashflow_rows(cashflow, model).reset_index()
 
     # Build the data frame to hold the pumping power profiles
     pumping_power_profiles: pd.DataFrame = pd.DataFrame()
