@@ -556,6 +556,16 @@ class OutputsTestCase(BaseTestCase):
             len(model.surfaceplant.cooling_produced.value),
         )
         self.assertGreater(summary_results["Average Cooling Production"]["value"], 0.0)
+        with open(output_path, encoding="UTF-8") as f:
+            legacy_text_output = f.read()
+        legacy_profile = legacy_text_output[
+            legacy_text_output.index(
+                "HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
+        ]
+        legacy_profile_rows = [line.strip() for line in legacy_profile.splitlines()]
+        self.assertTrue(any(line.startswith("0") for line in legacy_profile_rows))
+        self.assertTrue(any(line.startswith("29") for line in legacy_profile_rows))
 
     def test_district_heating_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")

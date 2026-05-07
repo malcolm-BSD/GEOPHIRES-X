@@ -744,6 +744,7 @@ class Outputs:
                             f'{hpce.value:10.2f} {model.surfaceplant.heat_to_power_conversion_efficiency.CurrentUnits.value}\n')
 
                 profile_year_count = self._dispatch_report_year_count(model)
+                legacy_profile_year_offset = 1 if getattr(model, 'dispatch_results', None) is not None else 0
 
                 f.write(NL)
                 f.write('                            ************************************************************\n')
@@ -765,7 +766,7 @@ class Outputs:
                     f.write('             DRAWDOWN             TEMPERATURE             POWER              HEAT\n')
                     f.write('                                   (deg C)                (MW)               (MW)\n')
                     for i in range(0, profile_year_count):
-                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i+1,
+                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i + legacy_profile_year_offset,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -776,7 +777,7 @@ class Outputs:
                     f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT         ELECTRICITY USE\n')
                     f.write('                                    (deg C)                (MWe)              (MWt)             (MWe)\n')
                     for i in range(0, profile_year_count):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i+1,
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i + legacy_profile_year_offset,
                                                                                                                                                        Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                       model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                       model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -787,7 +788,7 @@ class Outputs:
                     f.write('               DRAWDOWN            TEMPERATURE             POWER            HEAT OUTPUT\n')
                     f.write('                                    (deg C)                (MWe)               (MWt)\n')
                     for i in range(0, profile_year_count):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i+1,
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i + legacy_profile_year_offset,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -798,7 +799,7 @@ class Outputs:
                     f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT             COOLING\n')
                     f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
                     for i in range(0, profile_year_count):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i+1,
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i + legacy_profile_year_offset,
                                                                                                                                                       Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                      model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                      model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -809,7 +810,7 @@ class Outputs:
                     f.write('           DRAWDOWN           TEMPERATURE           POWER           POWER             HEAT            EFFICIENCY\n')
                     f.write('                                (deg C)             (MW)            (MW)              (MW)               (%)\n')
                     for i in range(0, profile_year_count):
-                        f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i+1,
+                        f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i + legacy_profile_year_offset,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                     model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
