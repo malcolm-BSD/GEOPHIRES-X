@@ -1520,7 +1520,12 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
         def _full_timeline(values: np.ndarray) -> np.ndarray:
             full_values = np.zeros(total_timesteps, dtype=float)
-            full_values[analysis_start_index:analysis_end_index] = values.copy()
+            source_values = np.asarray(values, dtype=float)
+            if analysis_start_index == 0 and 0 < len(source_values) < total_timesteps:
+                repetitions = int(np.ceil(total_timesteps / len(source_values)))
+                full_values[:] = np.tile(source_values, repetitions)[:total_timesteps]
+                return full_values
+            full_values[analysis_start_index:analysis_end_index] = source_values.copy()
             return full_values
 
         full_hourly_produced_temperature = _full_timeline(model.dispatch_results.hourly_produced_temperature)

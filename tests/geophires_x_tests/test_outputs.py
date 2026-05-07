@@ -476,6 +476,8 @@ class OutputsTestCase(BaseTestCase):
         dispatch_results = result.result["DISPATCH RESULTS"]
         self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
+        self.assertTrue(all(value > 0.0 for value in model.surfaceplant.cooling_kWh_Produced.value))
+        self.assertGreater(model.economics.CoolingRevenue.value[-1], 0.0)
         self.assertTrue(text_output_path.exists())
         with open(text_output_path, encoding="UTF-8") as f:
             self.assertIn("***DISPATCH RESULTS***", f.read())
