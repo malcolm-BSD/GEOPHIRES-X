@@ -350,6 +350,30 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         setattr(self, "_absorption_chiller_dispatch_bank_capacity_kW", 0.0)
         return chiller
 
+    def _heat_following_cooling_request_mw(self, available_generator_heat_mw, chiller) -> np.ndarray:
+        """Return a baseload cooling request high enough to use available geothermal heat."""
+        effective_cops = [
+            float(self.absorption_chiller_cop.value) * float(chiller._effect_multiplier())
+        ]
+        try:
+            refrigerant_family = str(self.absorption_chiller_refrigerant_family.value).strip().lower()
+            effect_type = str(self.absorption_chiller_effect_type.value).strip().lower()
+            for entry in getattr(chiller.catalog, "entries", []):
+                if str(entry.get("refrigerant_family", "")).strip().lower() != refrigerant_family:
+                    continue
+                if str(entry.get("effect_type", "")).strip().lower() != effect_type:
+                    continue
+                effective_cops.append(float(entry.get("nominal_COP")) * float(chiller._effect_multiplier()))
+        except Exception:
+            pass
+
+        cop_ceiling = max(effective_cops)
+        return (
+            np.asarray(available_generator_heat_mw, dtype=float)
+            * cop_ceiling
+            * float(self.enduse_efficiency_factor.value)
+        )
+
     def _cooling_demand_peak_mw(self) -> float:
         cooling_demand = getattr(self, "CoolingDemand", None)
         cache_source = getattr(cooling_demand, "value", None)
@@ -568,15 +592,16 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     op_mode = getattr(self.operating_mode, "value", "").__str__()
                 else:
                     op_mode = str(getattr(self.operating_mode, "value", ""))
-                mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
+                mode = "dispatch" if "dispatch" in str(op_mode).lower() else "baseload"
 
                 if mode == "baseload":
-                    heat_series_length = len(np.asarray(self.HeatProduced.value, dtype=float))
-                    if len(cooling_series_mw) != heat_series_length:
-                        cooling_series_mw = np.full(
-                            heat_series_length,
-                            float(np.average(np.asarray(cooling_series_mw, dtype=float))),
-                        )
+                    cooling_series_mw = self._heat_following_cooling_request_mw(
+                        available_generator_heat_mw,
+                        ch,
+                    )
+                    chiller_dispatch_mode = "dispatch"
+                else:
+                    chiller_dispatch_mode = mode
 
                 hours = len(cooling_series_mw)
                 t_gen = self._temperature_profile(
@@ -607,7 +632,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     ambient_temp_hourly=t_cond,
                     generator_heat_available_kW_hourly=available_generator_heat_mw * 1000.0,
                     temps=temps,
-                    mode=mode,
+                    mode=chiller_dispatch_mode,
                     use_milp=False,
                 )
 

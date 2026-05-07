@@ -6,6 +6,7 @@ from geophires_x.absorption.catalog import CatalogEntry
 from geophires_x.Dispatch import _dispatch_output_state
 from geophires_x.GeoPHIRESUtils import read_input_file
 from geophires_x.Model import Model
+from geophires_x.OptionList import OperatingMode
 from geophires_x.Parameter import ParameterEntry
 from geophires_x.SurfacePlantAbsorptionChiller import SurfacePlantAbsorptionChiller
 
@@ -203,6 +204,7 @@ def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):
     monkeypatch.setattr(AbsorptionChiller, "evaluate_hourly", evaluate_tracking_chiller)
     model = Model(input_file="tests/examples/example11_new_AC_baseload.txt", enable_geophires_logging_config=False)
     model.read_parameters()
+    model.surfaceplant.operating_mode.value = OperatingMode.DISPATCHABLE
     model.surfaceplant.CoolingDemand.value = [1000.0] * 8760
 
     model.reserv.Calculate(model)

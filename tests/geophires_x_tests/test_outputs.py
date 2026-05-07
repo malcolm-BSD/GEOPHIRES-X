@@ -567,6 +567,14 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreaterEqual(min(model.surfaceplant.HeatProduced.value), 0.0)
         self.assertGreaterEqual(min(model.surfaceplant.HeatExtracted.value), 0.0)
         self.assertGreater(
+            max(model.surfaceplant.HeatProduced.value),
+            min(model.surfaceplant.HeatProduced.value),
+        )
+        self.assertGreater(
+            max(model.surfaceplant.cooling_produced.value),
+            min(model.surfaceplant.cooling_produced.value),
+        )
+        self.assertGreater(
             max(model.wellbores.ProducedTemperature.value), min(model.wellbores.ProducedTemperature.value)
         )
         self.assertGreater(
