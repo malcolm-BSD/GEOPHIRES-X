@@ -559,6 +559,13 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(summary_results["Average Direct-Use Heat Production"]["value"], 0.0)
         self.assertGreaterEqual(min(model.surfaceplant.HeatProduced.value), 0.0)
         self.assertGreaterEqual(min(model.surfaceplant.HeatExtracted.value), 0.0)
+        self.assertGreater(
+            max(model.wellbores.ProducedTemperature.value), min(model.wellbores.ProducedTemperature.value)
+        )
+        self.assertGreater(
+            model.wellbores.ProducedTemperature.value[0],
+            model.wellbores.ProducedTemperature.value[-1],
+        )
         with open(output_path, encoding="UTF-8") as f:
             legacy_text_output = f.read()
         legacy_profile = legacy_text_output[

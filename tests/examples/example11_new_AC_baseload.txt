@@ -8,8 +8,13 @@
 
 # Enable the advanced Absorption Chiller subsystem (new default API)
 Use Advanced Absorption Chiller,True,
-Reservoir Model,0,                 ---[-] Simple cylindrical reservoir model
-Number of Multilateral Sections,1,
+Reservoir Model,4,                 ---[-] Annual percentage thermal drawdown model
+Drawdown Parameter,0.005,           ---[1/year]
+Reservoir Depth,3.0,                ---[km]
+Gradient 1,60.0,                    ---[deg.C/km]
+Injection Temperature,60.0,         ---[deg.C]
+Production Flow Rate per Well,40.0, ---[kg/s]
+Number of Production Wells,1,
 Power Plant Type,5,                 ---[-] Absorption Chiller
 End-Use Option,2,                   ---[-] Direct-use heat application
 
