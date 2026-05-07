@@ -212,3 +212,21 @@ def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):
     assert captured["cooling_demand_hourly"][0] == 1000.0
     assert captured["use_milp"] is False
     assert model.surfaceplant.cooling_produced.value[0] == 1.0
+
+
+def test_surfaceplant_advanced_chiller_opt_out_preserves_legacy_cop_calculation():
+    model = Model(input_file="tests/examples/example11_new_AC_baseload.txt", enable_geophires_logging_config=False)
+    model.read_parameters()
+    model.surfaceplant.use_advanced_absorption_chiller.value = False
+
+    model.reserv.Calculate(model)
+    model.wellbores.Calculate(model)
+    model.surfaceplant.Calculate(model)
+
+    expected_cooling = (
+        model.surfaceplant.HeatProduced.value
+        * model.surfaceplant.absorption_chiller_cop.value
+        * model.surfaceplant.enduse_efficiency_factor.value
+    )
+    np.testing.assert_allclose(model.surfaceplant.cooling_produced.value, expected_cooling)
+    assert not hasattr(model.surfaceplant, "_absorption_chiller_results")

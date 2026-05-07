@@ -1,6 +1,6 @@
 # New Absorption Chiller Design - Detailed Specification
 
-Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, MILP/greedy hourly dispatch paths, and full-year baseload/dispatch example regressions are present. Remaining work includes vendor-grade performance maps, richer baseload scheduling, catalog provenance cleanup, and broader PEP 257/484 cleanup across the new modules.
+Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, MILP/greedy hourly dispatch paths, full-year baseload/dispatch example regressions, and legacy opt-out COP parity regression are present. Remaining work includes vendor-grade performance maps, richer baseload scheduling, catalog provenance cleanup, and broader PEP 257/484 cleanup across the new modules.
 
 Author: (generated design)
 Date: 2026-05-04
@@ -525,7 +525,7 @@ Implementation roadmap (step-wise)
 5. Implement `Catalog` with embedded CSV loader, user CSV loader, and remote query stub + cache.
 6. Implement `ChillerBank.dispatch_hourly` with simple greedy staging heuristic; expand to more advanced optimization later.
 7. Implement `AbsorptionChiller.evaluate_hourly` to call into `ChillerBank` and aggregate results.
-8. Add regression tests to verify legacy parity when `Use Advanced Absorption Chiller=False`.
+8. Add regression tests to verify legacy parity when `Use Advanced Absorption Chiller=False`. Present coverage asserts the opt-out path preserves the legacy COP calculation.
 9. Populate `data/absorption_chiller_catalog_default.csv` with seed data and document sources and verifications.
 10. Ensure code passes flake8/black/mypy; add CI steps.
 
