@@ -487,6 +487,24 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(float(rows[0]["Thermal Demand (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
 
+    def test_new_absorption_chiller_baseload_example_outputs_are_parseable(self):
+        output_path = self._output_artifact_path("example11_new_AC_baseload_generated.out")
+        model = self._new_model(
+            input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example11_new_AC_baseload.txt")
+        )
+        model.outputs.output_file = str(output_path)
+
+        model.Calculate()
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        summary_results = result.result["SUMMARY OF RESULTS"]
+        self.assertEqual(
+            model.surfaceplant.plant_lifetime.value * model.economics.timestepsperyear.value,
+            len(model.surfaceplant.cooling_produced.value),
+        )
+        self.assertGreater(summary_results["Average Cooling Production"]["value"], 0.0)
+
     def test_district_heating_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
         output_path = self._output_artifact_path("dispatch_results_district_heating_test.out")

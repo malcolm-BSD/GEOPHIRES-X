@@ -555,6 +555,21 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                         * float(self.enduse_efficiency_factor.value)
                     )
 
+                # choose mode based on operating_mode parameter
+                if hasattr(self.operating_mode, "value"):
+                    op_mode = getattr(self.operating_mode, "value", "").__str__()
+                else:
+                    op_mode = str(getattr(self.operating_mode, "value", ""))
+                mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
+
+                if mode == "baseload":
+                    heat_series_length = len(np.asarray(self.HeatProduced.value, dtype=float))
+                    if len(cooling_series_mw) != heat_series_length:
+                        cooling_series_mw = np.full(
+                            heat_series_length,
+                            float(np.average(np.asarray(cooling_series_mw, dtype=float))),
+                        )
+
                 hours = len(cooling_series_mw)
                 t_gen = self._temperature_profile(
                     self.absorption_chiller_generator_temperature,
@@ -575,10 +590,6 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     model,
                 )
                 temps = {"t_gen": t_gen, "t_evap": t_evap, "t_cond": t_cond}
-
-                # choose mode based on operating_mode parameter
-                op_mode = getattr(self.operating_mode, "value", "").__str__() if hasattr(self.operating_mode, "value") else str(getattr(self.operating_mode, "value", ""))
-                mode = "dispatch" if str(op_mode).lower().startswith("dispatch") else "baseload"
 
                 cooling_series_kw = np.asarray(cooling_series_mw, dtype=float) * 1000.0
                 results = ch.evaluate_hourly(
