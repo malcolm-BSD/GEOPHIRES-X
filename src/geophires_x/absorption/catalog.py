@@ -1,42 +1,94 @@
 """Catalog utilities for commercial absorption chillers.
 
-Supports an embedded default CSV that ships with the package, user CSV
-overrides, and a stub for remote queries. CatalogEntry is a thin container
-for each row.
+The catalog supports the embedded GEOPHIRES seed CSV, user-provided CSV
+overrides, and best-effort remote JSON/CSV endpoints. Embedded rows are
+engineering-estimate seed data, not procurement-grade vendor quotes; provenance
+columns are preserved so callers can decide whether a row is sufficiently
+verified for their use case.
 """
-from typing import Any, Dict, List, Optional
+
 import csv
-import pkgutil
 import io
+import json
+import pkgutil
+import urllib.parse
+import urllib.request
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional
+
+
+PROVENANCE_COLUMNS = ("source", "source_url", "last_verified", "license_note")
 
 
 class CatalogEntry:
-    """Container for a single catalog record. Fields mirror CSV columns."""
+    """Container for a single catalog record.
 
-    def __init__(self, **kwargs) -> None:
+    Parameters
+    ----------
+    kwargs:
+        Catalog row fields. Keys mirror CSV columns and are intentionally kept
+        flexible so user and remote catalogs can add extra metadata without a
+        schema migration.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
         self.data: Dict[str, Any] = kwargs
 
     def __getitem__(self, key: str) -> Any:
+        """Return the value for ``key`` or ``None`` when absent."""
         return self.data.get(key)
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Return the value for ``key`` or ``default`` when absent."""
         return self.data.get(key, default)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a shallow dictionary copy of the catalog row."""
+        return dict(self.data)
 
 
 class Catalog:
     """Maintain an embedded default dataset, allow CSV import, and remote query.
 
-    The embedded CSV should be stored under the `data/` directory in the
-    package. If no embedded CSV is found the catalog is empty until a user CSV
-    or remote data is loaded.
+    Parameters
+    ----------
+    embedded_csv_path:
+        Optional path to the embedded/default CSV. Relative paths are resolved
+        against package resources and then the repository root.
+    remote_catalog_url:
+        Optional default endpoint used by :meth:`query_remote_catalog`.
+    cache_path:
+        Optional JSON cache file used for successful remote query results.
     """
 
-    def __init__(self, embedded_csv_path: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        embedded_csv_path: Optional[str] = None,
+        remote_catalog_url: Optional[str] = None,
+        cache_path: Optional[str] = None,
+    ) -> None:
         self.entries: List[CatalogEntry] = []
         self.embedded_path = embedded_csv_path or "data/absorption_chiller_catalog_default.csv"
+        self.remote_catalog_url = remote_catalog_url
+        self.cache_path = Path(cache_path) if cache_path else None
         self._load_embedded()
 
+    @staticmethod
+    def _clean_row(row: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize CSV/JSON row keys and string values."""
+        return {
+            (key.strip() if isinstance(key, str) else key): (value.strip() if isinstance(value, str) else value)
+            for key, value in row.items()
+            if key is not None
+        }
+
+    def _append_rows(self, rows: Iterable[Dict[str, Any]]) -> None:
+        """Append normalized rows to the catalog."""
+        for row in rows:
+            self.entries.append(CatalogEntry(**self._clean_row(row)))
+
     def _load_embedded(self) -> None:
+        """Load embedded seed data from package resources or repo-relative CSV."""
         # First try package resource (works for installed packages)
         try:
             data = pkgutil.get_data(__package__.split(".")[0], self.embedded_path)
@@ -47,9 +99,7 @@ class Catalog:
             try:
                 text = data.decode("utf-8")
                 reader = csv.DictReader(io.StringIO(text))
-                for row in reader:
-                    clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
-                    self.entries.append(CatalogEntry(**clean))
+                self._append_rows(reader)
                 return
             except Exception:
                 # If package resource present but parsing failed, continue to fallback
@@ -57,8 +107,6 @@ class Catalog:
 
         # Fallback: search upward from this file for a data directory containing the embedded CSV
         try:
-            from pathlib import Path
-
             current = Path(__file__).resolve().parent
             # walk up a reasonable number of parents looking for the data file
             for parent in [current] + list(current.parents)[:8]:
@@ -67,34 +115,31 @@ class Catalog:
                 if candidate.is_file():
                     with candidate.open("r", encoding="utf-8") as fh:
                         reader = csv.DictReader(fh)
-                        for row in reader:
-                            clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
-                            self.entries.append(CatalogEntry(**clean))
+                        self._append_rows(reader)
                     return
                 # also try common layout where 'data/' is at repo root
                 candidate2 = parent / "data" / Path(self.embedded_path).name
                 if candidate2.is_file():
                     with candidate2.open("r", encoding="utf-8") as fh:
                         reader = csv.DictReader(fh)
-                        for row in reader:
-                            clean = {(k.strip() if k else k): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
-                            self.entries.append(CatalogEntry(**clean))
+                        self._append_rows(reader)
                     return
         except Exception:
             # Embedded data not found or failed to load; catalog remains empty
             pass
 
     def load_user_csv(self, csv_path: str) -> None:
-        """Load user-provided CSV and append/override embedded entries."""
-        try:
-            with open(csv_path, "r", encoding="utf-8") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    self.entries.append(CatalogEntry(**row))
-        except Exception:
-            raise
+        """Load user-provided CSV rows and append them to the catalog."""
+        with open(csv_path, "r", encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            self._append_rows(reader)
 
-    def query(self, capacity_kW: float, refrigerant_family: Optional[str] = None, effect_type: Optional[str] = None) -> List[CatalogEntry]:
+    def query(
+        self,
+        capacity_kW: float,
+        refrigerant_family: Optional[str] = None,
+        effect_type: Optional[str] = None,
+    ) -> List[CatalogEntry]:
         """Return candidate entries matching constraints.
 
         This is a simple filter by nominal capacity and optional string matches.
@@ -126,6 +171,25 @@ class Catalog:
         if effect_type and entry.get("effect_type") != effect_type:
             return False
         return True
+
+    def provenance_issues(self) -> List[str]:
+        """Return human-readable provenance issues for catalog entries.
+
+        The default seed catalog should include enough provenance metadata for
+        users to understand that values are estimates derived from public
+        manufacturer literature rather than licensed vendor databases.
+        """
+        issues: List[str] = []
+        for index, entry in enumerate(self.entries, start=1):
+            model_id = entry.get("model_id", f"row {index}")
+            for column in PROVENANCE_COLUMNS:
+                if not entry.get(column):
+                    issues.append(f"{model_id}: missing {column}")
+        return issues
+
+    def has_complete_provenance(self) -> bool:
+        """Return ``True`` when every row has required provenance columns."""
+        return len(self.provenance_issues()) == 0
 
     def select_min_cost_set(
         self,
@@ -219,9 +283,96 @@ class Catalog:
             return {"selected": selection, "total_capacity_kW": total_capacity, "estimated_cost_USD": total_cost}
 
     def query_remote_catalog(self, query_params: Dict[str, Any], timeout_s: int = 10) -> List[CatalogEntry]:
-        """Best-effort remote query. Returns empty list by default.
+        """Query a remote JSON or CSV catalog endpoint.
 
-        Implementers can override this method to call real endpoints and cache
-        results locally.
+        Parameters
+        ----------
+        query_params:
+            Query-string parameters. The optional keys ``url`` or
+            ``remote_catalog_url`` override the catalog's configured default
+            endpoint for this call.
+        timeout_s:
+            Network timeout in seconds.
+
+        Returns
+        -------
+        list[CatalogEntry]
+            Remote catalog entries. Results are not appended to ``entries``
+            automatically; callers can decide whether to merge them.
+
+        Notes
+        -----
+        Supported response formats are a JSON list of row dictionaries, a JSON
+        object with an ``entries`` list, or CSV text with catalog-like columns.
+        On failure, a previously written cache is returned when available;
+        otherwise an empty list is returned.
         """
-        return []
+        endpoint = query_params.get("url") or query_params.get("remote_catalog_url") or self.remote_catalog_url
+        if not endpoint:
+            return self._load_remote_cache()
+
+        request_params = {
+            str(key): value
+            for key, value in query_params.items()
+            if key not in {"url", "remote_catalog_url"} and value is not None
+        }
+        url = self._url_with_query(str(endpoint), request_params)
+        try:
+            with urllib.request.urlopen(url, timeout=timeout_s) as response:
+                content_type = response.headers.get("Content-Type", "")
+                payload = response.read().decode("utf-8-sig")
+            entries = self._parse_remote_payload(payload, content_type)
+            if entries:
+                self._write_remote_cache(entries)
+            return entries
+        except Exception:
+            return self._load_remote_cache()
+
+    @staticmethod
+    def _url_with_query(url: str, params: Dict[str, Any]) -> str:
+        """Return ``url`` with ``params`` appended to its query string."""
+        if not params:
+            return url
+        parsed = urllib.parse.urlparse(url)
+        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        query.extend((key, str(value)) for key, value in params.items())
+        return urllib.parse.urlunparse(parsed._replace(query=urllib.parse.urlencode(query)))
+
+    def _parse_remote_payload(self, payload: str, content_type: str = "") -> List[CatalogEntry]:
+        """Parse remote JSON or CSV payload text into catalog entries."""
+        stripped = payload.lstrip()
+        rows: List[Dict[str, Any]]
+        if "json" in content_type.lower() or stripped.startswith(("[", "{")):
+            decoded = json.loads(payload)
+            if isinstance(decoded, dict):
+                decoded = decoded.get("entries", [])
+            if not isinstance(decoded, list):
+                return []
+            rows = [row for row in decoded if isinstance(row, dict)]
+        else:
+            rows = list(csv.DictReader(io.StringIO(payload)))
+        return [CatalogEntry(**self._clean_row(row)) for row in rows]
+
+    def _write_remote_cache(self, entries: List[CatalogEntry]) -> None:
+        """Write remote results to the optional JSON cache."""
+        if self.cache_path is None:
+            return
+        try:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.cache_path.open("w", encoding="utf-8") as cache_file:
+                json.dump([entry.to_dict() for entry in entries], cache_file, indent=2)
+        except Exception:
+            pass
+
+    def _load_remote_cache(self) -> List[CatalogEntry]:
+        """Load cached remote entries when a cache path exists and is readable."""
+        if self.cache_path is None or not self.cache_path.is_file():
+            return []
+        try:
+            with self.cache_path.open("r", encoding="utf-8") as cache_file:
+                cached = json.load(cache_file)
+            if not isinstance(cached, list):
+                return []
+            return [CatalogEntry(**self._clean_row(row)) for row in cached if isinstance(row, dict)]
+        except Exception:
+            return []

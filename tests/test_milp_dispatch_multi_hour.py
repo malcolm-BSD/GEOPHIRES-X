@@ -80,6 +80,7 @@ def test_milp_min_cost_dispatch_respects_generator_heat():
 
     assert results["q_gen_hourly"][0] <= 500.0 + 1e-6
     assert 0.0 < results["cooling_produced_hourly"][0] < 1000.0
+    assert results["unmet_cooling_hourly"][0] > 0.0
 
 
 def test_milp_dispatch_does_not_overproduce_when_load_below_minimum_plr():
@@ -90,6 +91,7 @@ def test_milp_dispatch_does_not_overproduce_when_load_below_minimum_plr():
 
     assert results["cooling_produced_hourly"][0] <= 1.0 + 1e-6
     assert results["unit_dispatch"][0, 0] == 0
+    assert results["unmet_cooling_hourly"][0] == pytest.approx(1.0)
 
 
 def test_milp_dispatch_can_partially_load_above_minimum_plr_without_overproduction():
@@ -100,3 +102,4 @@ def test_milp_dispatch_can_partially_load_above_minimum_plr_without_overproducti
 
     assert results["cooling_produced_hourly"][0] == pytest.approx(350.0)
     assert results["unit_dispatch"][0, 0] == 1
+    assert results["COP_hourly"][0] == pytest.approx(results["cooling_produced_hourly"][0] / results["q_gen_hourly"][0])

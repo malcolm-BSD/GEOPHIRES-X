@@ -3,10 +3,12 @@
 This file contains small helpers used by other modules. Keep utilities minimal
 and well-tested.
 """
-from typing import Iterable
+from typing import Iterable, Iterator, List, TypeVar
+
+T = TypeVar("T")
 
 
-def chunk_iterable(iterable: Iterable, size: int):
+def chunk_iterable(iterable: Iterable[T], size: int) -> Iterator[List[T]]:
     """Yield successive chunks from iterable of given size.
 
     Parameters
@@ -15,6 +17,11 @@ def chunk_iterable(iterable: Iterable, size: int):
         Any iterable.
     size:
         Chunk size (>0).
+
+    Yields
+    ------
+    list
+        Lists containing up to ``size`` items.
     """
     if size <= 0:
         raise ValueError("size must be > 0")
@@ -29,4 +36,3 @@ def chunk_iterable(iterable: Iterable, size: int):
                 yield chunk
             break
         yield chunk
-

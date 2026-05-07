@@ -1,8 +1,10 @@
-"""ChillerBank: coordinate multiple chiller units and perform dispatch.
+"""Chiller bank dispatch for absorption chiller units.
 
-This module provides a simple dispatch implementation as a starting point; it
-will be extended to support optimization strategies and baseload mode.
+The bank supports per-hour MILP dispatch when PuLP is available and a greedy
+fallback when it is not. Dispatch returns served cooling, generator heat,
+unmet cooling, COP, chilled-water flow, pump power, and unit on/off state.
 """
+
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import warnings
@@ -43,17 +45,36 @@ class ChillerBank:
 
     def dispatch_hourly(
         self,
-        cooling_load_kW_hourly: "numpy.ndarray",
-        generator_heat_available_kW_hourly: Optional["numpy.ndarray"] = None,
-        temps: Optional[Dict[str, "numpy.ndarray"]] = None,
+        cooling_load_kW_hourly: np.ndarray,
+        generator_heat_available_kW_hourly: Optional[np.ndarray] = None,
+        temps: Optional[Dict[str, np.ndarray]] = None,
         mode: str = "dispatch",
         use_milp: bool = True,
     ) -> Dict[str, Any]:
         """Dispatch units hourly.
 
-        This simple implementation assumes all units are identical for
-        simplicity and dispatchs them greedily. Returns a dictionary of
-        aggregated hourly arrays.
+        Parameters
+        ----------
+        cooling_load_kW_hourly:
+            Requested cooling load for each timestep, in kW.
+        generator_heat_available_kW_hourly:
+            Optional generator heat availability for each timestep, in kW.
+        temps:
+            Optional temperature arrays. Recognized keys include ``t_gen``,
+            ``t_evap``, and ``t_cond``.
+        mode:
+            ``dispatch`` follows hourly requested load. ``baseload`` uses the
+            average requested load as a steady target.
+        use_milp:
+            If true, use PuLP MILP dispatch when available; otherwise use the
+            deterministic greedy fallback.
+
+        Returns
+        -------
+        dict
+            Aggregated hourly arrays including served cooling, generator heat,
+            unmet cooling, COP, chilled mass flow, pump power, and unit
+            dispatch state.
         """
         hours = len(cooling_load_kW_hourly)
         cooling = np.zeros(hours)
@@ -61,6 +82,7 @@ class ChillerBank:
         cop = np.zeros(hours)
         chilled_mdot = np.zeros(hours)
         pump_power = np.zeros(hours)
+        unmet_cooling = np.zeros(hours)
 
         # Validate hourly temps arrays if requested
         use_hourly_temps_enabled = False
@@ -113,6 +135,7 @@ class ChillerBank:
             return {
                 "cooling_produced_hourly": cooling,
                 "q_gen_hourly": q_gen,
+                "unmet_cooling_hourly": unmet_cooling,
                 "COP_hourly": cop,
                 "chilled_mdot_hourly": chilled_mdot,
                 "pump_power_hourly": pump_power,
@@ -195,7 +218,8 @@ class ChillerBank:
                         for s in range(n_segments):
                             q_vars[k][s] = pulp.LpVariable(f"q_{i}_{k}_{s}", lowBound=0.0, cat=pulp.LpContinuous)
 
-                    # Objective: minimize sum(installed_cost * y_k) as a proxy for cost
+                    # Objective: minimize unmet demand first. The secondary
+                    # term depends on the configured strategy.
                     def _cost_of(u: ChillerUnit) -> float:
                         try:
                             return float(getattr(u, "installed_cost_USD", 0.0) or 0.0)
@@ -203,9 +227,19 @@ class ChillerBank:
                             return 0.0
 
                     unmet_penalty = max(sum(_cost_of(u) for u in unit_list_flat), 1.0e6)
+                    if self.dispatch_strategy == "min_units":
+                        secondary_objective = pulp.lpSum([y_vars[k] for k in range(len(unit_list_flat))])
+                    elif self.dispatch_strategy == "follow_heat":
+                        secondary_objective = -pulp.lpSum(
+                            [q_vars[k][s] for k in range(len(unit_list_flat)) for s in range(n_segments)]
+                        )
+                    else:
+                        secondary_objective = pulp.lpSum(
+                            [_cost_of(unit_list_flat[k]) * y_vars[k] for k in range(len(unit_list_flat))]
+                        )
                     prob += (
                         unmet_penalty * unmet_demand
-                        + pulp.lpSum([_cost_of(unit_list_flat[k]) * y_vars[k] for k in range(len(unit_list_flat))])
+                        + secondary_objective
                     )
 
                     total_cooling = pulp.lpSum(
@@ -295,7 +329,6 @@ class ChillerBank:
                         # cooling should approximately equal q_sum; use perf cooling for consistency
                         cooling[i] += perf["cooling_kW"]
                         q_gen[i] += perf["fuel_input_kW"]
-                        cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
                         units_on += 1
                         unit_dispatch[k, i] = 1
                         remaining = max(0.0, remaining - perf["cooling_kW"])
@@ -325,8 +358,6 @@ class ChillerBank:
                     perf = u.performance_at_plr(plr, t_gen_c, t_evap_c, t_cond_c)
                     cooling[i] += perf["cooling_kW"]
                     q_gen[i] += perf["fuel_input_kW"]
-                    # set cop as weighted average if multiple units used
-                    cop[i] = perf["cop"] if cop[i] == 0 else (cop[i] + perf["cop"]) / 2.0
                     units_on += 1
                     unit_dispatch[unit_index, i] = 1
                     remaining = max(0.0, remaining - perf["cooling_kW"])
@@ -339,6 +370,9 @@ class ChillerBank:
                     scale = available / q_gen[i] if q_gen[i] > 0 else 0.0
                     cooling[i] *= scale
                     q_gen[i] = available
+            unmet_cooling[i] = max(0.0, requested - cooling[i])
+            if q_gen[i] > 0:
+                cop[i] = cooling[i] / q_gen[i]
             # estimate chilled mdot and pump_power (approx)
             if cooling[i] > 0:
                 cp = 4186.0
@@ -354,6 +388,7 @@ class ChillerBank:
         return {
             "cooling_produced_hourly": cooling,
             "q_gen_hourly": q_gen,
+            "unmet_cooling_hourly": unmet_cooling,
             "COP_hourly": cop,
             "chilled_mdot_hourly": chilled_mdot,
             "pump_power_hourly": pump_power,

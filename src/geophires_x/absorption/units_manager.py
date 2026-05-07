@@ -41,7 +41,7 @@ class UnitsManager:
         else:
             self._ureg = None
 
-    def quantity(self, value: Any, units: str):
+    def quantity(self, value: Any, units: str) -> Any:
         """Return a quantity or raw value.
 
         If Pint is enabled returns a pint.Quantity otherwise the raw value.
@@ -50,7 +50,7 @@ class UnitsManager:
             return value * self._ureg(units)
         return value
 
-    def to(self, q: Any, units: str):
+    def to(self, q: Any, units: str) -> Any:
         """Convert quantity to target units; if disabled return numeric.
 
         If Pint is disabled this returns the input unchanged.
@@ -67,4 +67,3 @@ class UnitsManager:
         if self.enabled and hasattr(q, "magnitude"):
             return q.magnitude
         return q
-

@@ -78,18 +78,40 @@ class AbsorptionChiller:
 
     def evaluate_hourly(
         self,
-        cooling_demand_hourly: "numpy.ndarray",
-        geo_inlet_temp_hourly: "numpy.ndarray",
+        cooling_demand_hourly: np.ndarray,
+        geo_inlet_temp_hourly: np.ndarray,
         chilled_supply_setpoint_c: float = 7.0,
-        ambient_temp_hourly: Optional["numpy.ndarray"] = None,
-        temps: Optional[Dict[str, "numpy.ndarray"]] = None,
+        ambient_temp_hourly: Optional[np.ndarray] = None,
+        temps: Optional[Dict[str, np.ndarray]] = None,
         mode: str = "dispatch",
         use_milp: bool = True,
     ) -> Dict[str, Any]:
         """Evaluate plant performance over hourly timesteps.
 
-        This simple implementation will be expanded; for now it sizes a simple
-        bank using the catalog and runs a naive dispatch.
+        Parameters
+        ----------
+        cooling_demand_hourly:
+            Hourly cooling demand, in kW.
+        geo_inlet_temp_hourly:
+            Generator/hot-water inlet temperature profile, in degC.
+        chilled_supply_setpoint_c:
+            Chilled-water supply setpoint, in degC.
+        ambient_temp_hourly:
+            Optional condenser/ambient temperature profile, in degC.
+        temps:
+            Optional explicit temperature arrays passed through to
+            :class:`ChillerBank`.
+        mode:
+            ``dispatch`` follows hourly demand; ``baseload`` uses a steady
+            average target inside the bank.
+        use_milp:
+            Enable MILP dispatch when PuLP is installed.
+
+        Returns
+        -------
+        dict
+            Hourly arrays for cooling, generator heat, COP, mass flows, pump
+            power, unmet cooling, and unit dispatch state.
         """
         hours = len(cooling_demand_hourly)
         if temps is None and self.use_hourly_temps:

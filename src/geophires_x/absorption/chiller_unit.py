@@ -4,7 +4,7 @@ This module defines ChillerUnit which encapsulates nameplate data and a
 PerformanceMap. The implementation provides a small, well-documented API that
 will be extended as manufacturer data becomes available.
 """
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from .performance_map import PerformanceMap
 
@@ -93,4 +93,3 @@ class ChillerUnit:
         if self.effect_type == "triple":
             return t_gen_c >= 170.0
         return False
-

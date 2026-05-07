@@ -3,6 +3,8 @@
 Covers energy balance, part-load/performance map behavior, and catalog selection.
 """
 
+import json
+
 import numpy as np
 
 from geophires_x.absorption.absorption_chiller import AbsorptionChiller
@@ -49,3 +51,47 @@ def test_catalog_selection_meets_capacity():
     sel = catalog.select_min_cost_set(2500)
     assert sel["total_capacity_kW"] >= 2500
     assert isinstance(sel["selected"], list)
+
+
+def test_default_catalog_has_complete_provenance():
+    catalog = Catalog()
+
+    assert catalog.entries
+    assert catalog.has_complete_provenance(), catalog.provenance_issues()
+
+
+def test_remote_catalog_query_reads_json_and_caches(tmp_path):
+    remote_catalog = tmp_path / "remote_catalog.json"
+    cache_path = tmp_path / "remote_cache.json"
+    remote_catalog.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "model_id": "REMOTE-1",
+                        "manufacturer": "Remote Maker",
+                        "nominal_cooling_kW": "1250",
+                        "nominal_COP": "0.82",
+                        "effect_type": "single",
+                        "refrigerant_family": "LiBr-water",
+                        "installed_cost_USD": "1000000",
+                        "source": "remote test fixture",
+                        "source_url": "file://remote_catalog.json",
+                        "last_verified": "2026-05-07",
+                        "license_note": "test fixture",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    catalog = Catalog(cache_path=str(cache_path))
+
+    entries = catalog.query_remote_catalog({"url": remote_catalog.as_uri()})
+
+    assert entries[0].get("model_id") == "REMOTE-1"
+    assert cache_path.exists()
+
+    remote_catalog.unlink()
+    cached_entries = catalog.query_remote_catalog({"url": remote_catalog.as_uri()})
+    assert cached_entries[0].get("model_id") == "REMOTE-1"

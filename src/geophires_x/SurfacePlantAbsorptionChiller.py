@@ -445,6 +445,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         return {
             "cooling_produced_mw": float(results["cooling_produced_hourly"][0]) / 1000.0,
             "q_gen_mw": float(results["q_gen_hourly"][0]) / 1000.0,
+            "unmet_cooling_mw": float(results.get("unmet_cooling_hourly", [0.0])[0]) / 1000.0,
             "cop": float(results["COP_hourly"][0]),
             "pump_power_mw": float(results["pump_power_hourly"][0]) / 1000.0,
         }

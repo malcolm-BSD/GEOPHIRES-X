@@ -1,6 +1,6 @@
 # New Absorption Chiller Design - Detailed Specification
 
-Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, MILP/greedy hourly dispatch paths, full-year baseload/dispatch example regressions, and legacy opt-out COP parity regression are present. Remaining work includes vendor-grade performance maps, richer baseload scheduling, catalog provenance cleanup, and broader PEP 257/484 cleanup across the new modules.
+Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, MILP/greedy hourly dispatch paths, full-year baseload/dispatch example regressions, legacy opt-out COP parity regression, catalog provenance columns, and JSON/CSV remote catalog loading are present. Remaining work includes vendor-grade performance maps, richer baseload scheduling, and full static typing coverage across the broader GEOPHIRES integration layer.
 
 Author: (generated design)
 Date: 2026-05-04
@@ -435,11 +435,11 @@ Catalog population strategy
 We will ship an embedded default dataset `data/absorption_chiller_catalog_default.csv` containing seed entries for popular suppliers and representative models. The embedded dataset is intended to be a conservative, public-domain-like seed with estimated values that are safe for initial simulations. Users can override by supplying a CSV with the same schema or by enabling remote queries which will attempt to fetch manufacturer data.
 
 CSV schema (columns):
-- model_id, manufacturer, nominal_cooling_kW, nominal_COP, effect_type, refrigerant_family, recommended_generator_in_C, chilled_supply_C, chilled_deltaT_K, nominal_chilled_flow_kg_s, nominal_hot_flow_kg_s, min_PLR, turndown_ratio, pump_head_m, electrical_aux_kW, installed_cost_USD, footprint_m2
+- model_id, manufacturer, nominal_cooling_kW, nominal_COP, effect_type, refrigerant_family, recommended_generator_in_C, chilled_supply_C, chilled_deltaT_K, nominal_chilled_flow_kg_s, nominal_hot_flow_kg_s, min_PLR, turndown_ratio, pump_head_m, electrical_aux_kW, installed_cost_USD, footprint_m2, source, source_url, last_verified, license_note
 
 Embedded dataset (seed entries — estimated values)
 
-Note: values are indicative and should be verified against vendor datasheets before use in procurement calculations.
+Note: values are indicative and should be verified against vendor datasheets before use in procurement calculations. The default CSV now carries provenance metadata and a README in `data/absorption_chiller_catalog_README.md`; rows are public-literature-derived engineering estimates, not licensed vendor catalog data.
 
 Sample rows (CSV-style):
 - YZK-YNH-1000,Yazaki,1000,0.75,single,LiBr-water,90,7,5,12.0,10.0,0.25,3.0,30,6,900000,28
@@ -469,9 +469,10 @@ Provider list (non-exhaustive, to populate catalog):
 
 Remote catalog query
 --------------------
-- Provide a best-effort `Catalog.query_remote_catalog` implementation that attempts to access maintained JSON/CSV endpoints (if available) or scrapes publicly available manufacturer datasheets when permitted.
-- The remote query is optional and should be throttled and cache results locally.
-- If remote query fails, fall back to embedded + user CSV.
+- `Catalog.query_remote_catalog` supports best-effort JSON and CSV endpoints. JSON may be either a list of row dictionaries or an object with an `entries` list.
+- Remote rows are returned to the caller rather than automatically merged into the embedded catalog.
+- The remote query is optional and can cache successful responses to a caller-provided JSON cache path. If remote access fails, the cache is returned when available; otherwise an empty list is returned.
+- Remote scraping must respect site terms. Prefer manufacturer-provided APIs, documented CSV downloads, or manually curated user CSV files.
 
 Effect multipliers and overrides
 --------------------------------
@@ -493,6 +494,7 @@ Baseload & Dispatch operation specifics
     - 'min_units' minimizes number of units online
     - 'follow_heat' prioritize usage of available geothermal heat (when constrained)
 - Thermal constraints: if geothermal heat is limited, dispatch must respect generator_heat_available_kW_hourly.
+- Dispatch returns `unmet_cooling_hourly` so downstream code and tests can distinguish served cooling from requested cooling when unit minimum PLR or generator heat availability prevents full service.
 
 Part-load & turndown handling
 -----------------------------
@@ -501,7 +503,7 @@ Part-load & turndown handling
 
 Testing & validation
 --------------------
-- Unit tests listed earlier are mandatory. Current regression coverage includes full-year dispatch and baseload example runs using `tests/examples/example11_new_AC_dispatch.txt` and `tests/examples/example11_new_AC_baseload.txt`.
+- Unit tests listed earlier are mandatory. Current regression coverage includes full-year dispatch and baseload example runs using `tests/examples/example11_new_AC_dispatch.txt` and `tests/examples/example11_new_AC_baseload.txt`, catalog provenance checks, remote JSON catalog loading with cache fallback, generator-heat-constrained MILP dispatch, unmet cooling output, and legacy opt-out COP parity.
 - Add mypy checks and black/flake8 in CI.
 
 API examples (interface-level, no code)
@@ -526,7 +528,7 @@ Implementation roadmap (step-wise)
 6. Implement `ChillerBank.dispatch_hourly` with simple greedy staging heuristic; expand to more advanced optimization later.
 7. Implement `AbsorptionChiller.evaluate_hourly` to call into `ChillerBank` and aggregate results.
 8. Add regression tests to verify legacy parity when `Use Advanced Absorption Chiller=False`. Present coverage asserts the opt-out path preserves the legacy COP calculation.
-9. Populate `data/absorption_chiller_catalog_default.csv` with seed data and document sources and verifications.
+9. Populate `data/absorption_chiller_catalog_default.csv` with seed data and document sources and verifications. Present seed rows include `source`, `source_url`, `last_verified`, and `license_note`; procurement-grade replacement data remains a user responsibility.
 10. Ensure code passes flake8/black/mypy; add CI steps.
 
 Security & Licensing considerations
@@ -549,7 +551,7 @@ THX-TF-500,Thermax,500,0.72,single,LiBr-water,95,7,5,6.0,6.0,0.2,3.0,30,4,520000
 CRR-ABS-1500,Carrier,1500,0.70,double,LiBr-water,150,7,5,18.0,16.0,0.2,3.0,30,9,1800000,50
 BRD-BDA-2000,Broad,2000,1.1,double,LiBr-water,150,7,5,24.0,20.0,0.2,3.0,30,12,2200000,70
 
-Notes on catalog expansion: keep fields normalized (units, effect types uniform). Add a 'source' column and 'last_verified' date to track provenance.
+Notes on catalog expansion: keep fields normalized (units, effect types uniform). Keep `source`, `source_url`, `last_verified`, and `license_note` populated for every row.
 
 Closing notes
 -------------
