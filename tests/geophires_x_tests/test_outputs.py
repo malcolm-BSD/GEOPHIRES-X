@@ -485,9 +485,15 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
         self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
         annual_cooling = model.surfaceplant.cooling_kWh_Produced.value
+        report_end_index = model.surfaceplant.dispatch_analysis_end_year.value
+        self.assertTrue(all(value > 0.0 for value in annual_cooling[:report_end_index]))
+        self.assertTrue(all(value == 0.0 for value in annual_cooling[report_end_index:]))
         self.assertTrue(all(value > 0.0 for value in annual_cooling[analysis_start_index:analysis_end_index]))
-        self.assertTrue(all(value == 0.0 for value in annual_cooling[:analysis_start_index]))
-        self.assertTrue(all(value == 0.0 for value in annual_cooling[analysis_end_index:]))
+        self.assertAlmostEqual(
+            annual_cooling[analysis_start_index] / 1_000_000.0,
+            dispatch_results["Annual geothermal cooling delivered"]["value"],
+            places=2,
+        )
         self.assertTrue(text_output_path.exists())
         with open(text_output_path, encoding="UTF-8") as f:
             text_output = f.read()
@@ -501,10 +507,13 @@ class OutputsTestCase(BaseTestCase):
         self.assertIn(r"\par", annual_profile)
         annual_rows = [line.strip() for line in annual_profile.splitlines()]
         cashflow_rows = [line.strip() for line in cashflow_profile.splitlines()]
+        for reported_year in range(1, 7):
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in annual_rows))
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in cashflow_rows))
         self.assertTrue(any(line.startswith("5") for line in annual_rows))
-        self.assertFalse(any(line.startswith("6") for line in annual_rows))
+        self.assertFalse(any(line.startswith("7") for line in annual_rows))
         self.assertTrue(any(line.startswith("5") for line in cashflow_rows))
-        self.assertFalse(any(line.startswith("6") for line in cashflow_rows))
+        self.assertFalse(any(line.startswith("7") for line in cashflow_rows))
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
         self.assertEqual(8760, len(rows))

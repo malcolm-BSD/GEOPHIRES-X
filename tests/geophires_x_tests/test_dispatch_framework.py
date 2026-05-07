@@ -608,6 +608,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
         self.assertEqual([3, 4], model.dispatch_results.annual_aggregates["analysis_years"])
         self.assertEqual(3.0, model.dispatch_results.summary_metrics["dispatch_analysis_start_year"])
         self.assertEqual(5.0, model.dispatch_results.summary_metrics["dispatch_analysis_end_year"])
+        self.assertTrue(all(value > 0.0 for value in model.surfaceplant.HeatkWhExtracted.value[:5]))
 
     def test_cylindrical_recovery_restores_state_during_shut_in_period(self):
         model, recovering_adapter = self._new_cylindrical_dispatch_adapter()

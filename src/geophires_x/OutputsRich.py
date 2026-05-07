@@ -55,32 +55,39 @@ def _dispatch_analysis_window(model: Model) -> Optional[Tuple[int, int]]:
     return start_year, end_year
 
 
-def _filter_dispatch_year_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+def _dispatch_report_end_year(model: Model) -> Optional[int]:
     dispatch_window = _dispatch_analysis_window(model)
     if dispatch_window is None:
+        return None
+
+    _, end_year = dispatch_window
+    return min(end_year, int(model.surfaceplant.plant_lifetime.value))
+
+
+def _filter_dispatch_year_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+    report_end_year = _dispatch_report_end_year(model)
+    if report_end_year is None:
         return table
 
     year_column = next((column for column in table.columns if str(column).startswith('Year|')), None)
     if year_column is None:
         return table
 
-    start_year, end_year = dispatch_window
-    return table[table[year_column].isin(range(start_year, end_year))]
+    return table[table[year_column].isin(range(1, report_end_year + 1))]
 
 
 def _filter_dispatch_cashflow_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
-    dispatch_window = _dispatch_analysis_window(model)
-    if dispatch_window is None:
+    report_end_year = _dispatch_report_end_year(model)
+    if report_end_year is None:
         return table
 
-    start_year, end_year = dispatch_window
     construction_years = int(model.surfaceplant.construction_years.value)
-    start_index = construction_years + start_year - 1
-    end_index = construction_years + end_year - 1
+    start_index = construction_years
+    end_index = construction_years + report_end_year
     filtered_table = table.iloc[start_index:end_index].copy()
     year_column = next((column for column in filtered_table.columns if str(column).startswith('Year|')), None)
     if year_column is not None:
-        filtered_table[year_column] = list(range(start_year, end_year))
+        filtered_table[year_column] = list(range(1, report_end_year + 1))
     return filtered_table
 
 

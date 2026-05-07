@@ -1088,14 +1088,13 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         plant_lifetime_years = model.surfaceplant.plant_lifetime.value
         analysis_start_year = model.surfaceplant.dispatch_analysis_start_year.value
         analysis_end_year = model.surfaceplant.dispatch_analysis_end_year.value
-        dispatch_demand_mw = np.tile(demand_profile.series, plant_lifetime_years)[
-            (analysis_start_year - 1) * 8760:(analysis_end_year - 1) * 8760
-        ]
+        simulation_end_year = min(analysis_end_year, plant_lifetime_years)
+        dispatch_demand_mw = np.tile(demand_profile.series, plant_lifetime_years)[:simulation_end_year * 8760]
         model.dispatch_results = DispatchResults.initialize(
             len(dispatch_demand_mw),
             analysis_start_year=analysis_start_year,
             analysis_end_year=analysis_end_year,
-            simulation_start_hour=((analysis_start_year - 1) * 8760) + 1,
+            simulation_start_hour=1,
             demand_type=demand_profile.demand_type,
         )
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
@@ -1516,11 +1515,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         has_electric_component = _surfaceplant_has_electric_component(enduse_option)
         total_timesteps = plant_lifetime_years * timesteps_per_year
         analysis_start_index = (analysis_start_year - 1) * timesteps_per_year
-        analysis_end_index = analysis_start_index + len(model.dispatch_results.hourly_produced_temperature)
+        analysis_end_index = (analysis_end_year - 1) * timesteps_per_year
 
         def _full_timeline(values: np.ndarray) -> np.ndarray:
             full_values = np.zeros(total_timesteps, dtype=float)
-            full_values[analysis_start_index:analysis_end_index] = values.copy()
+            full_values[:len(values)] = values.copy()
             return full_values
 
         full_hourly_produced_temperature = _full_timeline(model.dispatch_results.hourly_produced_temperature)
@@ -1720,6 +1719,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
         analysis_year_slice = slice(analysis_start_year - 1, analysis_end_year - 1)
 
+        model.dispatch_results.simulation_start_hour = analysis_start_index + 1
         model.dispatch_results.hourly_produced_temperature = full_hourly_produced_temperature[
             analysis_start_index:analysis_end_index
         ].copy()
