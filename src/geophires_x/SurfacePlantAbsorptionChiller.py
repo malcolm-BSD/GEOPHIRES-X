@@ -363,7 +363,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     continue
                 if str(entry.get("effect_type", "")).strip().lower() != effect_type:
                     continue
-                effective_cops.append(float(entry.get("nominal_COP")) * float(chiller._effect_multiplier()))
+                effective_cops.append(float(chiller.nominal_cop_for_entry(entry)))
         except Exception:
             pass
 

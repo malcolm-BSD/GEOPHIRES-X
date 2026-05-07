@@ -137,6 +137,26 @@ def test_absorption_chiller_build_bank_uses_configured_catalog_filters():
     assert bank.units[0][0].model_id == "SINGLE-LIBR"
 
 
+def test_catalog_cop_is_not_multiplied_by_default_effect_multiplier():
+    catalog = Catalog()
+    catalog.entries = [
+        CatalogEntry(
+            model_id="DOUBLE-LIBR",
+            manufacturer="Example",
+            nominal_cooling_kW="1000",
+            nominal_COP="1.2",
+            refrigerant_family="LiBr-water",
+            effect_type="double",
+            installed_cost_USD="1",
+        )
+    ]
+    chiller = AbsorptionChiller(catalog=catalog, refrigerant_family="LiBr-water", effect_type="double")
+
+    bank = chiller.build_bank(500.0)
+
+    assert bank.units[0][0].nominal_COP == 1.2
+
+
 def test_dispatch_absorption_chiller_uses_advanced_bank_for_cooling_output():
     model = Model(input_file="tests/examples/example11_new_AC_dispatch.txt", enable_geophires_logging_config=False)
     model.read_parameters()

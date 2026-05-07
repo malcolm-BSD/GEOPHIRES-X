@@ -76,6 +76,22 @@ class AbsorptionChiller:
             return 2.0
         return 1.0
 
+    def nominal_cop_for_entry(self, entry: Any) -> float:
+        """Return the effective COP for a catalog entry.
+
+        Catalog rows are effect-specific, so their ``nominal_COP`` values are
+        used directly. The automatic effect multiplier applies only to fallback
+        COPs where no catalog COP is available. An explicit multiplier override
+        is treated as an intentional user scale factor.
+        """
+        raw_cop = entry.get("nominal_COP", None)
+        if raw_cop in (None, ""):
+            return self.rated_COP * self._effect_multiplier()
+        cop = float(raw_cop)
+        if self.effect_multiplier_override is not None:
+            cop *= float(self.effect_multiplier_override)
+        return cop
+
     def evaluate_hourly(
         self,
         cooling_demand_hourly: np.ndarray,
@@ -201,7 +217,7 @@ class AbsorptionChiller:
                 model_id=entry.get("model_id"),
                 manufacturer=entry.get("manufacturer"),
                 nominal_cooling_kW=float(entry.get("nominal_cooling_kW", 0)),
-                nominal_COP=float(entry.get("nominal_COP", self.rated_COP)) * self._effect_multiplier(),
+                nominal_COP=self.nominal_cop_for_entry(entry),
                 effect_type=entry.get("effect_type", self.effect_type),
                 refrigerant_family=entry.get("refrigerant_family", self.refrigerant_family),
                 min_PLR=float(entry.get("min_PLR", self.min_part_load_ratio)),
