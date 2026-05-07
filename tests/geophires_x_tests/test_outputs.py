@@ -456,6 +456,37 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(dispatch_results["Design cooling produced"]["value"], 0.0)
         self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
 
+    def test_new_absorption_chiller_dispatch_example_outputs_are_written_and_parseable(self):
+        output_path = self._output_artifact_path("example11_new_AC_dispatch_generated.out")
+        text_output_path = self._output_artifact_path("example11_new_AC_dispatch_generated_text.out")
+        dispatch_profile_path = self._output_artifact_path("example11_new_AC_dispatch_generated_profile.csv")
+        model = self._new_model(
+            input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example11_new_AC_dispatch.txt")
+        )
+        model.outputs.output_file = str(output_path)
+        model.outputs.text_output_file.value = str(text_output_path)
+        model.outputs.text_output_file.Provided = True
+        model.outputs.dispatch_profile_output_file.value = str(dispatch_profile_path)
+        model.outputs.dispatch_profile_output_file.Provided = True
+
+        model.Calculate()
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
+        self.assertTrue(text_output_path.exists())
+        with open(text_output_path, encoding="UTF-8") as f:
+            self.assertIn("***DISPATCH RESULTS***", f.read())
+        with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+        self.assertEqual(8760, len(rows))
+        self.assertIn("Thermal Demand (MW)", rows[0])
+        self.assertIn("Demand Served (MW)", rows[0])
+        self.assertGreater(float(rows[0]["Thermal Demand (MW)"]), 0.0)
+        self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+
     def test_district_heating_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
         output_path = self._output_artifact_path("dispatch_results_district_heating_test.out")

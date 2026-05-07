@@ -1,0 +1,240 @@
+{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern Courier New;}}
+\viewkind4\uc1\pard\f0\fs20
+                               *****************\par
+                               ***CASE REPORT***\par
+                               *****************\par
+\par
+Simulation Metadata\par
+----------------------\par
+GEOPHIRES Version: 3.12.1 \par
+Simulation Date: 2026-05-05 \par
+Simulation Time: 17:33 \par
+Calculation Time:     20.757 sec \par
+\par
+                           ***SUMMARY OF RESULTS***\par
+\par
+      End-Use Option                               : Direct-Use Heat \par
+      Average Direct-Use Heat Production           :       0.79 MW\par
+      Average Cooling Production                   :       0.59 MW\par
+      Direct-Use Cooling Breakeven Price (LCOC)    :     392.98 USD/MMBTU\par
+      Number of production wells                   :          2 \par
+      Number of injection wells                    :          2 \par
+      Flowrate per production well                 :       50.0 kg/sec\par
+      Well depth                                   :       10.0 kilometer\par
+      Geothermal gradient                          :         50 C/km\par
+\par
+                           ***ECONOMIC PARAMETERS***\par
+\par
+      Economic Model                               : Standard Levelized Cost \par
+      Interest Rate                                :       7.00 \par
+      Accrued financing during construction        :       0.00 %\par
+      Project lifetime                             :         30 yr\par
+      Capacity factor                              :        3.3 %\par
+      Project NPV                                  :    -195.30 MUSD\par
+      Project IRR                                  :       0.00 %\par
+      Project VIR=PI=PIR                           :      -0.18 \par
+      Project MOIC                                 :      -0.98 \par
+      Project Payback Period                       :    N/A     \par
+\par
+                           ***ENGINEERING PARAMETERS***\par
+\par
+      Number of Production Wells                   :          2 \par
+      Number of Injection Wells                    :          2 \par
+      Well depth                                   :       10.0 kilometer\par
+      Water loss rate                              :        0.0 \par
+      Pump efficiency                              :     7500.0 %\par
+      Injection temperature                        :       70.0 C\par
+      Production Wellbore heat transmission calculated with Rameys model:            \par
+      Average production well temperature drop     :        0.0 C\par
+      Flowrate per production well                 :       50.0 kg/sec\par
+      Injection well casing ID                     :      8.000 in\par
+      Production well casing ID                    :      8.000 in\par
+      Number of times redrilling                   :          0 \par
+\par
+                           ***RESOURCE CHARACTERISTICS***\par
+\par
+      Maximum reservoir temperature                :      400.0 C\par
+      Number of segments                           :          1 \par
+      Geothermal gradient                          :         50 C/km\par
+\par
+                           ***RESERVOIR PARAMETERS***\par
+\par
+      Reservoir Model                              : Simple cylindrical Model \par
+      Bottom-hole temperature                      :     165.00 C\par
+      Reservoir volume                             :   10505486 m\par
+      Average reservoir pressure                   :   91470.20 kPa\par
+      Plant outlet pressure                        :     976.68 kPa\par
+      Production wellhead pressure                 :    1045.63 kPa\par
+      Productivity Index                           :      10.00 kg/sec/bar\par
+      Injectivity Index                            :      10.00 kg/sec/bar\par
+      Reservoir density                            :    2700.00 kg/m\par
+      Reservoir thermal conductivity               :       3.00 W/m/K\par
+      Reservoir heat capacity                      :    1000.00 J/kg/K\par
+\par
+                           ***RESERVOIR STIMULATION RESULTS***\par
+\par
+      Maximum Production Temperature               :      165.0 C\par
+      Average Production Temperature               :        5.0 C\par
+      Minimum Production Temperature               :        0.0 C\par
+      Initial Production Temperature               :      165.0 C\par
+      Average Reservoir Heat Extraction            :       0.88 MW\par
+      Production Wellbore Heat Transmission Model  : Ramey Model \par
+      Average Production Well Temperature Drop     :        0.0 C\par
+      Average Injection Well Pump Pressure Drop    :    90894.8 kPa\par
+      Average Production Well Pump Pressure Drop   :   -89830.1 kPa\par
+\par
+                           ***CAPITAL COSTS***\par
+\par
+      Drilling and completion costs                :      97.39 MUSD\par
+      Drilling and completion costs per well       :      24.35 MUSD\par
+      Stimulation costs                            :       3.02 MUSD\par
+      Surface power plant costs                    :      36.34 MUSD\par
+      Absorption Chiller Cost                      :      23.87 MUSD\par
+      Field gathering system costs                 :       9.16 MUSD\par
+      Total surface equipment costs                :      45.50 MUSD\par
+      Exploration costs                            :      19.21 MUSD\par
+      Total capital costs                          :     165.11 MUSD\par
+\par
+                           ***OPERATING AND MAINTENANCE COSTS***\par
+\par
+      Wellfield maintenance costs                  :       1.31 MUSD/yr\par
+      Power plant maintenance costs                :       0.93 MUSD/yr\par
+      Water costs                                  :       0.00 MUSD/yr\par
+      Average Reservoir Pumping Cost               :       0.17 MUSD/yr\par
+      Absorption Chiller O&M Cost                  :       0.48 MUSD/yr\par
+      Total operating and maintenance costs        :       2.89 MUSD/yr\par
+\par
+                           ***SURFACE EQUIPMENT SIMULATION RESULTS***\par
+\par
+      Maximum Net Heat Production                  :      34.80 MW\par
+      Average Net Heat Production                  :       0.79 MW\par
+      Minimum Net Heat Production                  :       0.00 MW\par
+      Initial Net Heat Production                  :      20.00 MW\par
+      Average Annual Heat Production               :       6.95 \par
+      Maximum Cooling Production                   :      26.07 MW\par
+      Average Cooling Production                   :       0.59 MW\par
+      Minimum Cooling Production                   :       0.00 MW\par
+      Initial Cooling Production                   :      15.00 MW\par
+      Average Annual Cooling Production            :       5.13 \par
+      Average Pumping Power                        :       0.27 MW\par
+\par
+                           ***DISPATCH RESULTS***\par
+\par
+      Design heat produced                         :      34.86 MW\par
+      Design cooling produced                      :      25.96 MW\par
+      Annual geothermal cooling delivered          :     153.80 GWh/year\par
+      Annual unmet cooling demand                  :      38.97 GWh/year\par
+      Dispatch capacity factor                     :      67.35 %\par
+      Average runtime fraction                     :     100.00 %\par
+      Peak geothermal contribution                 :      26.07 MW\par
+      Peak unmet load                              :      25.75 MW\par
+      Peak hourly demand                           :      47.77 MW\par
+      Design flow rate                             :      50.00 kg/s\par
+      Observed peak flow rate                      :      50.00 kg/s\par
+\par
+                            ***************************************************************\par
+                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\par
+                            ***************************************************************\par
+              Year                      Thermal Drawdown (%)            Geofluid Temperature (C)              Pump Power (MW)                    Net Heat (MW)                   Net Cooling (MW)          \par
+                1                               1.0000                            165.00                            2.4120                           20.0000                           15.0000              \par
+                2                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                3                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                4                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                5                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                6                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                7                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                8                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+                9                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               10                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               11                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               12                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               13                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               14                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               15                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               16                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               17                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               18                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               19                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               20                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               21                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               22                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               23                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               24                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               25                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               26                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               27                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               28                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               29                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+               30                               0.0000                              0.00                            0.0000                            0.0000                            0.0000              \par
+\par
+                            ***************************************************************\par
+                            *ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE*\par
+                            ***************************************************************\par
+              Year                    Cooling Provided (kWh/yr)           Heat Extracted(GW/yr)          Reservoir Heat Content (MW)      Percentage of Total Heat Mined (%)   \par
+                1                                153.8                            232.07                              1.86                             31.00              \par
+                2                                  0.0                              0.00                              1.86                             31.00              \par
+                3                                  0.0                              0.00                              1.86                             31.00              \par
+                4                                  0.0                              0.00                              1.86                             31.00              \par
+                5                                  0.0                              0.00                              1.86                             31.00              \par
+                6                                  0.0                              0.00                              1.86                             31.00              \par
+                7                                  0.0                              0.00                              1.86                             31.00              \par
+                8                                  0.0                              0.00                              1.86                             31.00              \par
+                9                                  0.0                              0.00                              1.86                             31.00              \par
+               10                                  0.0                              0.00                              1.86                             31.00              \par
+               11                                  0.0                              0.00                              1.86                             31.00              \par
+               12                                  0.0                              0.00                              1.86                             31.00              \par
+               13                                  0.0                              0.00                              1.86                             31.00              \par
+               14                                  0.0                              0.00                              1.86                             31.00              \par
+               15                                  0.0                              0.00                              1.86                             31.00              \par
+               16                                  0.0                              0.00                              1.86                             31.00              \par
+               17                                  0.0                              0.00                              1.86                             31.00              \par
+               18                                  0.0                              0.00                              1.86                             31.00              \par
+               19                                  0.0                              0.00                              1.86                             31.00              \par
+               20                                  0.0                              0.00                              1.86                             31.00              \par
+               21                                  0.0                              0.00                              1.86                             31.00              \par
+               22                                  0.0                              0.00                              1.86                             31.00              \par
+               23                                  0.0                              0.00                              1.86                             31.00              \par
+               24                                  0.0                              0.00                              1.86                             31.00              \par
+               25                                  0.0                              0.00                              1.86                             31.00              \par
+               26                                  0.0                              0.00                              1.86                             31.00              \par
+               27                                  0.0                              0.00                              1.86                             31.00              \par
+               28                                  0.0                              0.00                              1.86                             31.00              \par
+               29                                  0.0                              0.00                              1.86                             31.00              \par
+               30                                  0.0                              0.00                              1.86                             31.00              \par
+\par
+                            ***************************************************************\par
+                            *                REVENUE & CASHFLOW PROFILE                *\par
+                            ***************************************************************\par
+              Year                   Electricity:Price (USD/kWh)      Electricity:Ann. Rev. (MUSD/yr)     Electricity:Cumm. Rev. (MUSD)         Heat:Price (USD/kWh)            Heat:Ann. Rev. (MUSD/yr)           Heat:Cumm. Rev. (MUSD)            Cooling:Price (USD/kWh)         Cooling:Ann. Rev. (MUSD/yr)        Cooling:Cumm. Rev. (MUSD)           Carbon:Price (USD/lb)          Carbon:Ann. Rev. (MUSD/yr)         Carbon:Cumm. Rev. (MUSD)           Project:OPEX (MUSD/yr)          Project:Net Rev. (MUSD/yr)        Project:Net Cashflow (MUSD)    \par
+                 1                              0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                             0.0000                             0.00                              0.00                              0.00                            -165.11                           -165.11              \par
+                 2                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             3.85                              3.85                             0.0000                             0.00                              0.00                              2.72                              1.12                            -163.99              \par
+                 3                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -166.71              \par
+                 4                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -169.43              \par
+                 5                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -172.16              \par
+                 6                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -174.88              \par
+                 7                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -177.60              \par
+                 8                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -180.32              \par
+                 9                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -183.04              \par
+                10                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -185.77              \par
+                11                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -188.49              \par
+                12                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -191.21              \par
+                13                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -193.93              \par
+                14                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -196.65              \par
+                15                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -199.37              \par
+                16                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -202.10              \par
+                17                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -204.82              \par
+                18                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -207.54              \par
+                19                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -210.26              \par
+                20                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -212.98              \par
+                21                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -215.71              \par
+                22                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -218.43              \par
+                23                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -221.15              \par
+                24                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -223.87              \par
+                25                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -226.59              \par
+                26                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -229.32              \par
+                27                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -232.04              \par
+                28                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -234.76              \par
+                29                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -237.48              \par
+                30                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -240.20              \par
+                31                              0.0550                             0.00                              0.00                             0.0250                             0.00                              0.00                             0.0250                             0.00                              3.85                             0.0000                             0.00                              0.00                              2.72                             -2.72                            -242.93              \par
+}
