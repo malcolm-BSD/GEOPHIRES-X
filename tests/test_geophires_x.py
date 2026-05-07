@@ -1223,6 +1223,37 @@ Print Output to Console, 1"""
 
             return result_cap_costs["Total capital costs"]["value"]
 
+        def _cost_value(result_cap_costs, cost_category: str) -> float:
+            parsed_cost = result_cap_costs.get(cost_category)
+            if parsed_cost is None:
+                return 0.0
+            return parsed_cost["value"]
+
+        def _fixed_surface_component_total(result_cap_costs) -> float:
+            return sum(
+                _cost_value(result_cap_costs, cost_category)
+                for cost_category in [
+                    "of which Absorption Chiller Cost",
+                    "of which Heat Pump Cost",
+                    "of which Peaking Boiler Cost",
+                ]
+            )
+
+        def _contingency_scaled_cost(
+            result_default,
+            result_different_contingency,
+            cost_category: str,
+            default_contingency_factor: float,
+            different_contingency_factor: float,
+        ) -> float:
+            default_cost = result_default[cost_category]["value"]
+            fixed_cost = 0.0
+            if cost_category in ["Surface power plant costs", "Total surface equipment costs"]:
+                fixed_cost = _fixed_surface_component_total(result_different_contingency)
+                default_cost -= _fixed_surface_component_total(result_default)
+
+            return (default_cost / default_contingency_factor * different_contingency_factor) + fixed_cost
+
         default_contingency_percent = 15
 
         for contingency_percent in range(5, 35, 5):
@@ -1280,10 +1311,12 @@ Print Output to Console, 1"""
                         default_contingency_factor = 1.0 + (default_contingency_percent / 100.0)
                         different_contingency_factor = 1.0 + (contingency_percent / 100.0)
 
-                        expected = (
-                            result_default[cost_category]["value"]
-                            / default_contingency_factor
-                            * different_contingency_factor
+                        expected = _contingency_scaled_cost(
+                            result_default,
+                            result_different_contingency,
+                            cost_category,
+                            default_contingency_factor,
+                            different_contingency_factor,
                         )
 
                         actual = result_different_contingency[cost_category]["value"]
