@@ -489,6 +489,13 @@ class OutputsTestCase(BaseTestCase):
         self.assertTrue(all(value > 0.0 for value in annual_cooling[:report_end_index]))
         self.assertTrue(all(value == 0.0 for value in annual_cooling[report_end_index:]))
         self.assertTrue(all(value > 0.0 for value in annual_cooling[analysis_start_index:analysis_end_index]))
+        reported_temperatures = model.wellbores.ProducedTemperature.value[: report_end_index * 8760]
+        self.assertGreater(max(reported_temperatures), min(reported_temperatures))
+        self.assertGreater(
+            model.wellbores.ProducedTemperature.value[0],
+            model.wellbores.ProducedTemperature.value[(report_end_index - 1) * 8760],
+        )
+        self.assertNotEqual(annual_cooling[0], annual_cooling[report_end_index - 1])
         self.assertAlmostEqual(
             annual_cooling[analysis_start_index] / 1_000_000.0,
             dispatch_results["Annual geothermal cooling delivered"]["value"],

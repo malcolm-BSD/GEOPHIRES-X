@@ -72,6 +72,34 @@ def _coerce_series_length(
     return series
 
 
+def _resample_series_length(
+    raw_series: Any,
+    target_length: int,
+    parameter_name: str,
+    default_value: float = 0.0,
+) -> np.ndarray:
+    series = np.asarray(raw_series, dtype=float)
+    if series.ndim == 0:
+        return np.full(target_length, float(series), dtype=float)
+
+    series = np.ravel(series).astype(float, copy=False)
+    if series.size == 0:
+        return np.full(target_length, default_value, dtype=float)
+
+    if series.size == 1:
+        return np.full(target_length, float(series[0]), dtype=float)
+
+    if target_length <= 0:
+        raise ValueError(f"Dispatchable mode expected `{parameter_name}` target length to be positive.")
+
+    if series.size == target_length:
+        return series.copy()
+
+    source_index = np.linspace(0.0, 1.0, series.size)
+    target_index = np.linspace(0.0, 1.0, target_length)
+    return np.interp(target_index, source_index, series)
+
+
 @dataclass
 class DemandProfile:
     series: np.ndarray
@@ -833,23 +861,24 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         self._cpwater = model.reserv.cpwater.value
         self._enduse_efficiency = model.surfaceplant.enduse_efficiency_factor.value
         self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
+        baseline_length = model.surfaceplant.plant_lifetime.value * 8760
 
-        self._baseline_produced_temperature = _as_baseline_series(
+        self._baseline_produced_temperature = _resample_series_length(
             model.wellbores.ProducedTemperature.value,
+            baseline_length,
             "ProducedTemperature",
         )
-        baseline_length = len(self._baseline_produced_temperature)
-        self._baseline_pumping_power_mw = _coerce_series_length(
+        self._baseline_pumping_power_mw = _resample_series_length(
             model.wellbores.PumpingPower.value,
             baseline_length,
             "PumpingPower",
         )
-        self._baseline_pumping_power_prod_mw = _coerce_series_length(
+        self._baseline_pumping_power_prod_mw = _resample_series_length(
             model.wellbores.PumpingPowerProd.value,
             baseline_length,
             "PumpingPowerProd",
         )
-        self._baseline_pumping_power_inj_mw = _coerce_series_length(
+        self._baseline_pumping_power_inj_mw = _resample_series_length(
             model.wellbores.PumpingPowerInj.value,
             baseline_length,
             "PumpingPowerInj",
@@ -1034,6 +1063,7 @@ class DispatchAdapterFactory:
         "MPFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("MPFReservoir"),
         "LHSReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("LHSReservoir"),
         "SFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("SFReservoir"),
+        "TDPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("TDPReservoir"),
         "UPPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("UPPReservoir"),
         "SBTReservoir": lambda: SBTDispatchPlantAdapter(),
     }

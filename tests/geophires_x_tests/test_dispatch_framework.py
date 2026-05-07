@@ -691,11 +691,13 @@ class DispatchFrameworkTestCase(BaseTestCase):
         from geophires_x.LHSReservoir import LHSReservoir
         from geophires_x.MPFReservoir import MPFReservoir
         from geophires_x.SFReservoir import SFReservoir
+        from geophires_x.TDPReservoir import TDPReservoir
 
         reservoir_models = {
             "MPFReservoir": (MPFReservoir, "1"),
             "LHSReservoir": (LHSReservoir, "2"),
             "SFReservoir": (SFReservoir, "3"),
+            "TDPReservoir": (TDPReservoir, "4"),
         }
         csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
 
