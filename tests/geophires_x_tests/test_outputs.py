@@ -505,6 +505,22 @@ class OutputsTestCase(BaseTestCase):
         )
         with open(output_path, encoding="UTF-8") as f:
             legacy_text_output = f.read()
+        legacy_profile = legacy_text_output[
+            legacy_text_output.index(
+                "HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
+        ]
+        legacy_profile_rows = [
+            line.split() for line in legacy_profile.splitlines() if line.strip() and line.strip()[0].isdigit()
+        ]
+        self.assertNotEqual(
+            float(legacy_profile_rows[0][-2]),
+            float(legacy_profile_rows[-1][-2]),
+        )
+        self.assertNotEqual(
+            float(legacy_profile_rows[0][-1]),
+            float(legacy_profile_rows[-1][-1]),
+        )
         legacy_annual_profile = legacy_text_output[
             legacy_text_output.index(
                 "ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"

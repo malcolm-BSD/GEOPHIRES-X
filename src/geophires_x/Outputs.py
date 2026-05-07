@@ -798,12 +798,23 @@ class Outputs:
                     f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET              NET\n')
                     f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT             COOLING\n')
                     f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
+                    use_dispatch_profile_averages = getattr(model, 'dispatch_results', None) is not None
+
+                    def _profile_year_value(series, year_index):
+                        first_index = year_index * model.economics.timestepsperyear.value
+                        if not use_dispatch_profile_averages:
+                            return series[first_index]
+                        last_index = min(first_index + model.economics.timestepsperyear.value, len(series))
+                        if first_index >= last_index:
+                            return 0.0
+                        return float(np.mean(np.asarray(series[first_index:last_index], dtype=float)))
+
                     for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i + legacy_profile_year_offset,
                                                                                                                                                       Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
-                                                                                                                                                     model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                     model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
-                                                                                                                                                     model.surfaceplant.HeatProduced.value[i*model.economics.timestepsperyear.value], model.surfaceplant.cooling_produced.value[i * model.economics.timestepsperyear.value], ) + NL)
+                                                                                                                                                     _profile_year_value(model.wellbores.ProducedTemperature.value, i),
+                                                                                                                                                     _profile_year_value(model.wellbores.PumpingPower.value, i),
+                                                                                                                                                     _profile_year_value(model.surfaceplant.HeatProduced.value, i), _profile_year_value(model.surfaceplant.cooling_produced.value, i), ) + NL)
 
                 elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT, EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY, EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT, EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:  # co-gen
                     f.write('  YEAR     THERMAL             GEOFLUID             PUMP             NET              NET             FIRST LAW\n')
