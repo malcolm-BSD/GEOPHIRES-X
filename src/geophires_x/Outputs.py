@@ -743,7 +743,9 @@ class Outputs:
                     f.write(f'      {Outputs._field_label(hpce.Name, 50)}'
                             f'{hpce.value:10.2f} {model.surfaceplant.heat_to_power_conversion_efficiency.CurrentUnits.value}\n')
 
-                profile_year_count = self._dispatch_report_year_count(model)
+                profile_year_count = self._dispatch_report_year_count(
+                    model, default=model.surfaceplant.plant_lifetime.value
+                )
                 legacy_profile_year_offset = 1 if getattr(model, 'dispatch_results', None) is not None else 0
 
                 f.write(NL)
@@ -1092,7 +1094,7 @@ class Outputs:
     def _dispatch_report_year_count(model: Model, default: int | None = None) -> int | None:
         dispatch_results = getattr(model, 'dispatch_results', None)
         if dispatch_results is None:
-            return model.surfaceplant.plant_lifetime.value if default is None else default
+            return default
 
         analysis_end_year = int(getattr(dispatch_results, 'analysis_end_year', model.surfaceplant.plant_lifetime.value))
         return min(analysis_end_year, model.surfaceplant.plant_lifetime.value)

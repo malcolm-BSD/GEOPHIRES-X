@@ -115,6 +115,20 @@ class OutputsTestCase(BaseTestCase):
         self.assertIn("Extended Electricity Breakeven Price (XLCOE Market)", output_content)
         self.assertIn("Extended Electricity Breakeven Price (XLCOE Market + Social)", output_content)
 
+    def test_non_dispatch_cashflow_profile_includes_construction_year(self):
+        result = GeophiresXClient().get_geophires_result(
+            self._geophires_input_parameters(
+                "example1_cashflow_profile.out",
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+            )
+        )
+
+        cashflow_rows = result.result["REVENUE & CASHFLOW PROFILE"]
+
+        self.assertEqual(0, cashflow_rows[1][0])
+        self.assertLess(cashflow_rows[1][-1], 0.0)
+        self.assertEqual(1, cashflow_rows[2][0])
+
     def test_text_output_file_contains_xlcoh_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
             self._geophires_input_parameters(
