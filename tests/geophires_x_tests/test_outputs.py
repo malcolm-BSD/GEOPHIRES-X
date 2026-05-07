@@ -494,6 +494,23 @@ class OutputsTestCase(BaseTestCase):
             dispatch_results["Annual geothermal cooling delivered"]["value"],
             places=2,
         )
+        with open(output_path, encoding="UTF-8") as f:
+            legacy_text_output = f.read()
+        legacy_annual_profile = legacy_text_output[
+            legacy_text_output.index(
+                "ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("REVENUE & CASHFLOW PROFILE")
+        ]
+        legacy_cashflow_profile = legacy_text_output[
+            legacy_text_output.index("REVENUE & CASHFLOW PROFILE") : len(legacy_text_output)
+        ]
+        legacy_annual_rows = [line.strip() for line in legacy_annual_profile.splitlines()]
+        legacy_cashflow_rows = [line.strip() for line in legacy_cashflow_profile.splitlines()]
+        for reported_year in range(1, 7):
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in legacy_annual_rows))
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in legacy_cashflow_rows))
+        self.assertFalse(any(line.startswith("7") for line in legacy_annual_rows))
+        self.assertFalse(any(line.startswith("7") for line in legacy_cashflow_rows))
         self.assertTrue(text_output_path.exists())
         with open(text_output_path, encoding="UTF-8") as f:
             text_output = f.read()

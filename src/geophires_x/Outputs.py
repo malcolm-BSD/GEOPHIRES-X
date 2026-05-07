@@ -743,6 +743,8 @@ class Outputs:
                     f.write(f'      {Outputs._field_label(hpce.Name, 50)}'
                             f'{hpce.value:10.2f} {model.surfaceplant.heat_to_power_conversion_efficiency.CurrentUnits.value}\n')
 
+                profile_year_count = self._dispatch_report_year_count(model)
+
                 f.write(NL)
                 f.write('                            ************************************************************\n')
                 f.write('                            *  HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE  *\n')
@@ -751,7 +753,7 @@ class Outputs:
                     f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET               FIRST LAW\n')
                     f.write('             DRAWDOWN             TEMPERATURE             POWER             POWER              EFFICIENCY\n')
                     f.write('                                     (' + model.wellbores.ProducedTemperature.CurrentUnits.value+')               (' + model.wellbores.PumpingPower.CurrentUnits.value + ')              (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}              {5:8.4f}'.format(i+1,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
@@ -762,8 +764,8 @@ class Outputs:
                     f.write('  YEAR       THERMAL               GEOFLUID               PUMP               NET\n')
                     f.write('             DRAWDOWN             TEMPERATURE             POWER              HEAT\n')
                     f.write('                                   (deg C)                (MW)               (MW)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i,
+                    for i in range(0, profile_year_count):
+                        f.write('  {0:2.0f}         {1:8.4f}              {2:8.2f}             {3:8.4f}          {4:8.4f}'.format(i+1,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -773,8 +775,8 @@ class Outputs:
                     f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET             HEAT PUMP\n')
                     f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT         ELECTRICITY USE\n')
                     f.write('                                    (deg C)                (MWe)              (MWt)             (MWe)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i,
+                    for i in range(0, profile_year_count):
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}          {5:8.4f}'.format(i+1,
                                                                                                                                                        Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                       model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                       model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -784,8 +786,8 @@ class Outputs:
                     f.write('  YEAR         THERMAL              GEOFLUID               PUMP              GEOTHERMAL\n')
                     f.write('               DRAWDOWN            TEMPERATURE             POWER            HEAT OUTPUT\n')
                     f.write('                                    (deg C)                (MWe)               (MWt)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i,
+                    for i in range(0, profile_year_count):
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}            {4:8.4f}'.format(i+1,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                         model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -795,8 +797,8 @@ class Outputs:
                     f.write('  YEAR         THERMAL              GEOFLUID               PUMP               NET              NET\n')
                     f.write('               DRAWDOWN            TEMPERATURE             POWER              HEAT             COOLING\n')
                     f.write('                                    (deg C)                (MWe)              (MWt)            (MWt)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i,
+                    for i in range(0, profile_year_count):
+                        f.write('  {0:2.0f}          {1:8.4f}             {2:8.2f}              {3:8.4f}           {4:8.4f}         {5:8.4f}'.format(i+1,
                                                                                                                                                       Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                                                                                                      model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                                                                      model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -806,8 +808,8 @@ class Outputs:
                     f.write('  YEAR     THERMAL             GEOFLUID             PUMP             NET              NET             FIRST LAW\n')
                     f.write('           DRAWDOWN           TEMPERATURE           POWER           POWER             HEAT            EFFICIENCY\n')
                     f.write('                                (deg C)             (MW)            (MW)              (MW)               (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
-                        f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i,
+                    for i in range(0, profile_year_count):
+                        f.write('  {0:2.0f}       {1:8.4f}            {2:8.2f}           {3:8.4f}        {4:8.4f}            {5:8.4f}             {6:8.4f}'.format(i+1,
                                                 Outputs._thermal_drawdown_ratio(model, i*model.economics.timestepsperyear.value),
                                                                         model.wellbores.ProducedTemperature.value[i*model.economics.timestepsperyear.value],
                                                                                                     model.wellbores.PumpingPower.value[i*model.economics.timestepsperyear.value],
@@ -824,7 +826,7 @@ class Outputs:
                     f.write('  YEAR             ELECTRICITY                   HEAT                RESERVOIR            PERCENTAGE OF\n')
                     f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
                     f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
                                                 model.surfaceplant.NetkWhProduced.value[i]/1E6,
                                                                             model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
@@ -834,7 +836,7 @@ class Outputs:
                     f.write('  YEAR              COOLING                 HEAT                RESERVOIR            PERCENTAGE OF\n')
                     f.write('                    PROVIDED              EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
                     f.write('                   (GWh/year)             (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i + 1,
                                                                                                                                               model.surfaceplant.cooling_kWh_Produced.value[i] / 1E6,
                                                                                                                                               model.surfaceplant.HeatkWhExtracted.value[i] / 1E6,
@@ -845,7 +847,7 @@ class Outputs:
                     f.write('  YEAR              HEATING             RESERVOIR HEAT          HEAT PUMP          RESERVOIR           PERCENTAGE OF\n')
                     f.write('                    PROVIDED              EXTRACTED          ELECTRICITY USE      HEAT CONTENT        TOTAL HEAT MINED\n')
                     f.write('                   (GWh/year)             (GWh/year)           (GWh/year)           (10^15 J)                (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}              {1:8.1f}               {2:8.1f}             {3:8.2f}             {4:8.2f}              {5:8.2f}'.format(i + 1,
                                                                                                                                                                  model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
                                                                                                                                                                  model.surfaceplant.HeatkWhExtracted.value[i] / 1E6, model.surfaceplant.heat_pump_electricity_kwh_used.value[i] / 1E6,
@@ -856,7 +858,7 @@ class Outputs:
                     f.write('  YEAR             HEAT                 ELECTRICITY                HEAT              RESERVOIR        PERCENTAGE OF\n')
                     f.write('                  PROVIDED               PROVIDED                EXTRACTED          HEAT CONTENT    TOTAL HEAT MINED\n')
                     f.write('                 (GWh/year)             (GWh/year)               (GWh/year)          (10^15 J)           (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}            {1:8.1f}               {2:8.1f}                  {3:8.2f}            {4:8.2f}             {5:8.2f}'.format(i+1,
                                             model.surfaceplant.HeatkWhProduced.value[i]/1E6,
                                                                         model.surfaceplant.NetkWhProduced.value[i]/1E6,
@@ -868,7 +870,7 @@ class Outputs:
                     f.write('  YEAR           GEOTHERMAL          PEAKING BOILER       RESERVOIR HEAT          RESERVOIR         PERCENTAGE OF\n')
                     f.write('              HEATING PROVIDED      HEATING PROVIDED        EXTRACTED            HEAT CONTENT     TOTAL HEAT MINED\n')
                     f.write('                 (GWh/year)            (GWh/year)           (GWh/year)            (10^15 J)              (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}            {1:8.1f}              {2:8.1f}              {3:8.2f}             {4:8.2f}            {5:8.2f}'.format(i + 1,
                                                                                                                                                              model.surfaceplant.HeatkWhProduced.value[i] / 1E6,
                                                                                                                                                              model.surfaceplant.annual_ng_demand.value[i] / 1E3,
@@ -879,7 +881,7 @@ class Outputs:
                     f.write('  YEAR               HEAT                       HEAT                RESERVOIR            PERCENTAGE OF\n')
                     f.write('                    PROVIDED                   EXTRACTED            HEAT CONTENT        TOTAL HEAT MINED\n')
                     f.write('                   (GWh/year)                  (GWh/year)            (10^15 J)                 (%)\n')
-                    for i in range(0, model.surfaceplant.plant_lifetime.value):
+                    for i in range(0, profile_year_count):
                         f.write('  {0:2.0f}              {1:8.1f}                    {2:8.1f}              {3:8.2f}               {4:8.2f}'.format(i+1,
                                                 model.surfaceplant.HeatkWhProduced.value[i]/1E6,
                                                                             model.surfaceplant.HeatkWhExtracted.value[i]/1E6,
@@ -1008,15 +1010,22 @@ class Outputs:
                 ')    (' + o(econ.TotalCummRevenue).CurrentUnits.value + ')\n')
         f.write(
             '________________________________________________________________________________________________________________________________________________________________________________________' + NL)
+        dispatch_report_year_count = self._dispatch_report_year_count(model, default=None)
+        if dispatch_report_year_count is None:
+            cashflow_indices = range(0, model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value)
+        else:
+            construction_years = model.surfaceplant.construction_years.value
+            cashflow_indices = range(construction_years, construction_years + dispatch_report_year_count)
+
         # running years...
-        for ii in range(0, (
-            model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value), 1):
+        for ii in cashflow_indices:
             if ii < model.surfaceplant.construction_years.value:
                 opex = 0.0  # zero out the OPEX during construction years
             else:
                 opex = o(econ.Coam).value
+            display_year = ii if dispatch_report_year_count is None else ii - model.surfaceplant.construction_years.value + 1
             f.write(
-                f'{ii:3.0f}     {o(econ.ElecPrice).value[ii]:5.2f}          {o(econ.ElecRevenue).value[ii]:5.2f}  {o(econ.ElecCummRevenue).value[ii]:5.2f}     |   {o(econ.HeatPrice).value[ii]:5.2f}    {o(econ.HeatRevenue).value[ii]:5.2f}        {o(econ.HeatCummRevenue).value[ii]:5.2f}    |   {o(econ.CoolingPrice).value[ii]:5.2f}    {o(econ.CoolingRevenue).value[ii]:5.2f}        {o(econ.CoolingCummRevenue).value[ii]:5.2f}     |   {o(econ.CarbonPrice).value[ii]:5.2f}    {o(econ.CarbonRevenue).value[ii]:5.2f}        {o(econ.CarbonCummCashFlow).value[ii]:5.2f}     | {opex:5.2f}     {o(econ.TotalRevenue).value[ii]:5.2f}     {o(econ.TotalCummRevenue).value[ii]:5.2f}\n')
+                f'{display_year:3.0f}     {o(econ.ElecPrice).value[ii]:5.2f}          {o(econ.ElecRevenue).value[ii]:5.2f}  {o(econ.ElecCummRevenue).value[ii]:5.2f}     |   {o(econ.HeatPrice).value[ii]:5.2f}    {o(econ.HeatRevenue).value[ii]:5.2f}        {o(econ.HeatCummRevenue).value[ii]:5.2f}    |   {o(econ.CoolingPrice).value[ii]:5.2f}    {o(econ.CoolingRevenue).value[ii]:5.2f}        {o(econ.CoolingCummRevenue).value[ii]:5.2f}     |   {o(econ.CarbonPrice).value[ii]:5.2f}    {o(econ.CarbonRevenue).value[ii]:5.2f}        {o(econ.CarbonCummCashFlow).value[ii]:5.2f}     | {opex:5.2f}     {o(econ.TotalRevenue).value[ii]:5.2f}     {o(econ.TotalCummRevenue).value[ii]:5.2f}\n')
         f.write(NL)
 
     # noinspection PyMethodMayBeStatic
@@ -1066,6 +1075,15 @@ class Outputs:
     @staticmethod
     def _field_label(field_name: str, print_width_before_value: int) -> str:
         return f'{field_name}:{" " * (print_width_before_value - len(field_name) - 1)}'
+
+    @staticmethod
+    def _dispatch_report_year_count(model: Model, default: int | None = None) -> int | None:
+        dispatch_results = getattr(model, 'dispatch_results', None)
+        if dispatch_results is None:
+            return model.surfaceplant.plant_lifetime.value if default is None else default
+
+        analysis_end_year = int(getattr(dispatch_results, 'analysis_end_year', model.surfaceplant.plant_lifetime.value))
+        return min(analysis_end_year, model.surfaceplant.plant_lifetime.value)
 
     @staticmethod
     def _dispatch_output_rows(model: Model) -> list[tuple[str, float, str]]:
