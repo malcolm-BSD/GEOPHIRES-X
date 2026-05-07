@@ -556,6 +556,9 @@ class OutputsTestCase(BaseTestCase):
             len(model.surfaceplant.cooling_produced.value),
         )
         self.assertGreater(summary_results["Average Cooling Production"]["value"], 0.0)
+        self.assertGreater(summary_results["Average Direct-Use Heat Production"]["value"], 0.0)
+        self.assertGreaterEqual(min(model.surfaceplant.HeatProduced.value), 0.0)
+        self.assertGreaterEqual(min(model.surfaceplant.HeatExtracted.value), 0.0)
         with open(output_path, encoding="UTF-8") as f:
             legacy_text_output = f.read()
         legacy_profile = legacy_text_output[

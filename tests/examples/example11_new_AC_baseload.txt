@@ -8,6 +8,8 @@
 
 # Enable the advanced Absorption Chiller subsystem (new default API)
 Use Advanced Absorption Chiller,True,
+Reservoir Model,0,                 ---[-] Simple cylindrical reservoir model
+Number of Multilateral Sections,1,
 Power Plant Type,5,                 ---[-] Absorption Chiller
 End-Use Option,2,                   ---[-] Direct-use heat application
 

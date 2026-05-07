@@ -501,9 +501,16 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         # calculate produced electricity/direct-use heat
         # absorption chiller: we don't consider end-use efficiency factor here.
         # All extracted heat will go to absorption chiller and there is the end-use efficiency factor. [MWth]
-        self.HeatExtracted.value = model.wellbores.nprod.value * model.wellbores.prodwellflowrate.value * model.reserv.cpwater.value * (
-            model.wellbores.ProducedTemperature.value - model.wellbores.Tinj.value) / 1E6  # heat extracted from geofluid [MWth]
-        self.HeatProduced.value = self.HeatExtracted.value
+        available_generator_heat_mw = (
+            model.wellbores.nprod.value
+            * model.wellbores.prodwellflowrate.value
+            * model.reserv.cpwater.value
+            * (model.wellbores.ProducedTemperature.value - model.wellbores.Tinj.value)
+            / 1E6
+        )
+        available_generator_heat_mw = np.maximum(np.asarray(available_generator_heat_mw, dtype=float), 0.0)
+        self.HeatExtracted.value = available_generator_heat_mw.copy()
+        self.HeatProduced.value = available_generator_heat_mw.copy()
 
         # Use advanced AbsorptionChiller subsystem when enabled; otherwise keep legacy behavior
         try:
@@ -598,6 +605,7 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                     t_gen,
                     chilled_supply_setpoint_c=7.0,
                     ambient_temp_hourly=t_cond,
+                    generator_heat_available_kW_hourly=available_generator_heat_mw * 1000.0,
                     temps=temps,
                     mode=mode,
                     use_milp=False,
@@ -606,11 +614,17 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
                 # store key outputs into SurfacePlant outputs
                 cooling_produced_kw = results.get("cooling_produced_hourly", cooling_series_kw)
                 self.cooling_produced.value = np.asarray(cooling_produced_kw, dtype=float) / 1000.0
+                generator_heat_used_kw = results.get("q_gen_hourly", available_generator_heat_mw * 1000.0)
+                generator_heat_used_mw = np.asarray(generator_heat_used_kw, dtype=float) / 1000.0
+                self.HeatExtracted.value = generator_heat_used_mw.copy()
+                self.HeatProduced.value = generator_heat_used_mw.copy()
                 # store additional chiller outputs for downstream use
                 setattr(self, "_absorption_chiller_results", results)
             except Exception as exc:  # pragma: no cover - liberal fallback
                 model.logger.exception("Advanced AbsorptionChiller failed; falling back to legacy calculation: %s", exc)
-                self.cooling_produced.value = self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value
+                self.cooling_produced.value = (
+                    self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value
+                )
         else:
             self.cooling_produced.value = self.HeatProduced.value * self.absorption_chiller_cop.value * self.enduse_efficiency_factor.value  # MW
 

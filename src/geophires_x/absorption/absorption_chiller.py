@@ -82,6 +82,7 @@ class AbsorptionChiller:
         geo_inlet_temp_hourly: np.ndarray,
         chilled_supply_setpoint_c: float = 7.0,
         ambient_temp_hourly: Optional[np.ndarray] = None,
+        generator_heat_available_kW_hourly: Optional[np.ndarray] = None,
         temps: Optional[Dict[str, np.ndarray]] = None,
         mode: str = "dispatch",
         use_milp: bool = True,
@@ -98,6 +99,8 @@ class AbsorptionChiller:
             Chilled-water supply setpoint, in degC.
         ambient_temp_hourly:
             Optional condenser/ambient temperature profile, in degC.
+        generator_heat_available_kW_hourly:
+            Optional available generator heat profile, in kW.
         temps:
             Optional explicit temperature arrays passed through to
             :class:`ChillerBank`.
@@ -128,7 +131,7 @@ class AbsorptionChiller:
 
         results = bank.dispatch_hourly(
             cooling_demand_hourly,
-            generator_heat_available_kW_hourly=None,
+            generator_heat_available_kW_hourly=generator_heat_available_kW_hourly,
             temps=temps,
             mode=mode,
             use_milp=use_milp,
