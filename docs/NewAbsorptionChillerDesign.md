@@ -32,11 +32,11 @@ Top-level Checklist (Implementation tasks)
 3. Add `docs/NewAbsorptionChillerDesign.md` (this document).
 4. Add embedded catalog file `data/absorption_chiller_catalog_default.csv` with seed entries.
 5. Implement unit tests under `tests/test_absorption_*` as described.
-6. Modify `src/geophires_x/SurfacePlantAbsorptionChiller.py` to call into new subsystem with opt-in flag `Use Advanced Absorption Chiller` (default True for new design; legacy compatibility preserved if false).
+6. Modify `src/geophires_x/SurfacePlantAbsorptionChiller.py` to call into new subsystem with opt-in flag `Use Advanced Absorption Chiller` (default false so legacy absorption chiller inputs preserve historical scalar-COP behaviour).
 7. Add README and usage examples in `docs/` and update `pyproject.toml`/`requirements-dev` to include Pint and CoolProp by default for development.
 8. Run test suite and ensure regression tests pass.
 
-New global default: Enable advanced Absorption Chiller subsystem by setting `Use Advanced Absorption Chiller = True` in the new configuration. This advanced subsystem will enable Pint and CoolProp by default; tests and CI should include these packages.
+Advanced Absorption Chiller configurations enable the new subsystem by setting `Use Advanced Absorption Chiller = True`. The global default remains false for backward compatibility with legacy Absorption Chiller inputs; the advanced subsystem enables Pint and CoolProp by default when it is explicitly selected.
 
 PEP compliance
 --------------

@@ -6,7 +6,7 @@
 # and references the embedded chiller catalog. Values are illustrative
 # and intended as a usage example for tests and documentation.
 
-# Enable the advanced Absorption Chiller subsystem (new default API)
+# Enable the advanced Absorption Chiller subsystem
 Use Advanced Absorption Chiller,True,
 Reservoir Model,4,                 ---[-] Annual percentage thermal drawdown model
 Drawdown Parameter,0.005,           ---[1/year]

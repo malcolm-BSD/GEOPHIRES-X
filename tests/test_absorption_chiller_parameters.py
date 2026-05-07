@@ -252,3 +252,21 @@ def test_surfaceplant_advanced_chiller_opt_out_preserves_legacy_cop_calculation(
     )
     np.testing.assert_allclose(model.surfaceplant.cooling_produced.value, expected_cooling)
     assert not hasattr(model.surfaceplant, "_absorption_chiller_results")
+
+
+def test_legacy_absorption_chiller_example_defaults_to_legacy_cop_calculation():
+    model = Model(input_file="tests/examples/example11_AC.txt", enable_geophires_logging_config=False)
+    model.read_parameters()
+
+    model.reserv.Calculate(model)
+    model.wellbores.Calculate(model)
+    model.surfaceplant.Calculate(model)
+
+    expected_cooling = (
+        model.surfaceplant.HeatProduced.value
+        * model.surfaceplant.absorption_chiller_cop.value
+        * model.surfaceplant.enduse_efficiency_factor.value
+    )
+    assert model.surfaceplant.use_advanced_absorption_chiller.value is False
+    np.testing.assert_allclose(model.surfaceplant.cooling_produced.value, expected_cooling)
+    assert not hasattr(model.surfaceplant, "_absorption_chiller_results")

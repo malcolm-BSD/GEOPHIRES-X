@@ -48,16 +48,14 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             ToolTipText="Specify the coefficient of performance (COP) of the absorption chiller"
         )
 
-        # Opt-in advanced absorption chiller subsystem. When True the new
-        # AbsorptionChiller subsystem (in src/geophires_x/absorption) will be
-        # used. Default True for the new design; set to False to preserve
-        # legacy behaviour exactly.
+        # Opt-in advanced absorption chiller subsystem. Legacy absorption
+        # chiller inputs keep the scalar COP calculation unless this is enabled.
         self.use_advanced_absorption_chiller = self.ParameterDict["Use Advanced Absorption Chiller"] = boolParameter(
             "Use Advanced Absorption Chiller",
-            DefaultValue=True,
-            value=True,
+            DefaultValue=False,
+            value=False,
             Required=False,
-            ErrMessage="Enable advanced absorption chiller subsystem (default: True)",
+            ErrMessage="Enable advanced absorption chiller subsystem (default: False)",
             ToolTipText="If True use the advanced AbsorptionChiller subsystem (opt-in)."
         )
 
@@ -494,14 +492,14 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
         The Calculate function is where all the calculations are done.
 
         Note about the advanced absorption chiller subsystem:
-        - If the parameter ``Use Advanced Absorption Chiller`` is True (default),
+        - If the parameter ``Use Advanced Absorption Chiller`` is True,
           this method will call into the new :mod:`geophires_x.absorption`
           subsystem. That subsystem will attempt to size and dispatch
           commercial absorption chillers; when PuLP is available the catalog
           selection uses integer programming and the per-hour dispatch will
           also try to solve a small integer program to minimize cost.
-        - If ``Use Advanced Absorption Chiller`` is False or if the advanced
-          subsystem fails, the method falls back to the legacy, scalar
+        - If ``Use Advanced Absorption Chiller`` is False (default) or if the
+          advanced subsystem fails, the method falls back to the legacy, scalar
           calculation that preserves previous behaviour.
 
         The advanced dispatch supports strategies including ``min_cost``,
