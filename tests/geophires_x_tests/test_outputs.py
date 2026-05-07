@@ -491,9 +491,11 @@ class OutputsTestCase(BaseTestCase):
         self.assertTrue(all(value > 0.0 for value in annual_cooling[analysis_start_index:analysis_end_index]))
         reported_temperatures = model.wellbores.ProducedTemperature.value[: report_end_index * 8760]
         self.assertGreater(max(reported_temperatures), min(reported_temperatures))
+        first_report_year_temperatures = reported_temperatures[:8760]
+        final_report_year_temperatures = reported_temperatures[(report_end_index - 1) * 8760 : report_end_index * 8760]
         self.assertGreater(
-            model.wellbores.ProducedTemperature.value[0],
-            model.wellbores.ProducedTemperature.value[(report_end_index - 1) * 8760],
+            sum(first_report_year_temperatures) / len(first_report_year_temperatures),
+            sum(final_report_year_temperatures) / len(final_report_year_temperatures),
         )
         self.assertNotEqual(annual_cooling[0], annual_cooling[report_end_index - 1])
         self.assertAlmostEqual(

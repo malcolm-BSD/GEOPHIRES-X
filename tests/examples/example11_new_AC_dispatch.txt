@@ -6,7 +6,7 @@
 # dispatch strategies, and reference the embedded catalog. Values are
 # illustrative and meant for test/demo usage.
 
-# Enable advanced absorption chiller
+# Enable the advanced Absorption Chiller subsystem (new default API)
 Use Advanced Absorption Chiller,True,
 Reservoir Model,4,                 ---[-] Annual percentage thermal drawdown model
 Drawdown Parameter,0.005,           ---[1/year]
@@ -18,7 +18,20 @@ Number of Production Wells,1,
 Power Plant Type,5,                 ---[-] Absorption Chiller
 End-Use Option,2,                   ---[-] Direct-use heat application
 
-# Catalog path
+# Absorption Chiller top-level options (canonical parameter names)
+Absorption Chiller Use Pint,True,                ---[bool] enable Pint units handling (recommended)
+Absorption Chiller Use CoolProp,True,            ---[bool] enable CoolProp for fluid properties (best-effort)
+Absorption Chiller Refrigerant Family,LiBr-water, ---[string] 'LiBr-water' | 'NH3-water'
+Absorption Chiller Effect Type,double,           ---[string] 'single' | 'double' | 'triple'
+# Absorption Chiller Effect Multiplier Override,1.0,   ---[float] optional override of effect multiplier
+Absorption Chiller Min Part Load Ratio,0.2,        ---[fraction]
+Absorption Chiller Turndown Ratio,3.0,
+Absorption Chiller Chilled DeltaT,5.0,         ---[K]
+Absorption Chiller Pump Head,30.0,
+Absorption Chiller Pump Efficiency,0.70,
+
+# Catalog: use the embedded seeded CSV included with the repo. Tests may
+# override this with a user CSV by setting the Absorption Chiller Catalog Path.
 Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
 
 # Operating mode: dispatch (hour-by-hour optimization)
