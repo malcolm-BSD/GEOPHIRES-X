@@ -1,6 +1,6 @@
 # New Absorption Chiller Design - Detailed Specification
 
-Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, and MILP/greedy hourly dispatch paths are present. Remaining work includes full-year performance validation, vendor-grade performance maps, richer baseload scheduling, and broader PEP 257/484 cleanup across the new modules.
+Status: Partially implemented. The absorption chiller package, canonical GEOPHIRES parameter integration, catalog-based bank sizing, MILP/greedy hourly dispatch paths, and full-year baseload/dispatch example regressions are present. Remaining work includes vendor-grade performance maps, richer baseload scheduling, catalog provenance cleanup, and broader PEP 257/484 cleanup across the new modules.
 
 Author: (generated design)
 Date: 2026-05-04
@@ -15,7 +15,7 @@ Design Principles
 - Opt-out/opt-in tradeoff: Pint and CoolProp are enabled by default to produce physically consistent units but the code supports a lightweight fallback mode for minimal installs.
 - Modular, object-oriented, testable, and documented to PEP8, PEP257, PEP484 standards.
 - Minimal new parameters with sensible defaults that reproduce current results.
-- Plant-level staging and dispatch are supported. Baseload operation currently uses the same hourly dispatch machinery with an average-load target; richer cycling/startup scheduling remains future work.
+- Plant-level staging and dispatch are supported. Dispatchable operation follows the configured hourly cooling demand profile. Baseload operation currently evaluates the advanced chiller at a steady average-load target aligned to the standard GEOPHIRES plant timesteps; richer cycling/startup scheduling remains future work.
 
 Top-level Checklist (Implementation tasks)
 ----------------------------------------
@@ -423,7 +423,7 @@ Concrete algorithms and numerical details
 Baseload vs Dispatch modes
 --------------------------
 - Dispatch mode (default): the system meets hourly load and staging algorithm minimizes operating cost subject to min_PLR, startup/shutdown penalties and available thermal input.
-- Baseload mode: the chiller(s) run a schedule to provide steady output (or follow a profile chosen to minimize cycling). The controller computes a baseload schedule (e.g., constant output during daytime) and either curtails or stores excess heat if allowed. Modes are implemented inside `ChillerBank.dispatch_hourly` with `mode` parameter.
+- Baseload mode: the current GEOPHIRES integration converts any provided annual cooling demand profile to a steady average-load target and evaluates the advanced chiller on the model's standard plant timesteps. This keeps baseload output arrays consistent with GEOPHIRES annual output tables. More detailed cycling, startup/shutdown, curtailment, and storage-aware schedules remain future work.
 
 Pint and CoolProp by default
 ----------------------------
@@ -483,8 +483,9 @@ Baseload & Dispatch operation specifics
 --------------------------------------
 - Mode switchable via call to `AbsorptionChiller.evaluate_hourly(..., mode='baseload'|'dispatch')`.
 - `baseload` mode options:
-  - Provide schedule type: constant output, daily profile, or custom array.
-  - Minimize cycling by keeping units at steady PLR where possible.
+  - Current implementation uses a constant average-load target for GEOPHIRES baseload output integration.
+  - Future implementation should add schedule type selection: constant output, daily profile, or custom array.
+  - Future implementation should minimize cycling by keeping units at steady PLR where possible.
 - `dispatch` mode:
   - Hourly optimization implemented in `ChillerBank.dispatch_hourly`.
   - Dispatch objective depends on `dispatch_strategy`:
@@ -500,7 +501,7 @@ Part-load & turndown handling
 
 Testing & validation
 --------------------
-- Unit tests listed earlier are mandatory. Additional integration tests should run full-year examples with both baseload and dispatch modes.
+- Unit tests listed earlier are mandatory. Current regression coverage includes full-year dispatch and baseload example runs using `tests/examples/example11_new_AC_dispatch.txt` and `tests/examples/example11_new_AC_baseload.txt`.
 - Add mypy checks and black/flake8 in CI.
 
 API examples (interface-level, no code)
@@ -513,7 +514,7 @@ API examples (interface-level, no code)
 - Call `AbsorptionChiller.evaluate_hourly(..., mode='dispatch')` → returns hourly outputs described in the data model.
 
 3) Baseload: steady schedule
-- Call `evaluate_hourly(..., mode='baseload')` with baseload schedule parameters; chiller bank will deliver steady output unless constrained.
+- In the GEOPHIRES baseload integration, provide `Annual Cooling Demand` if available; the current implementation uses the profile average as a steady target and reports timestep-aligned cooling output. Direct `evaluate_hourly(..., mode='baseload')` calls still accept arrays for subsystem-level experiments.
 
 Implementation roadmap (step-wise)
 ---------------------------------
