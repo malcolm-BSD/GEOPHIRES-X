@@ -421,7 +421,9 @@ class OutputsTestCase(BaseTestCase):
         self.assertIn("*  DISPATCH PROFILE  *", output_text)
         self.assertLess(output_text.index("REVENUE & CASHFLOW PROFILE"), output_text.index("DISPATCH PROFILE"))
         dispatch_profile_text = output_text.split("*  DISPATCH PROFILE  *", 1)[1]
-        self.assertIn("Year,Hour of Year", dispatch_profile_text)
+        self.assertIn("Yr|", dispatch_profile_text)
+        self.assertRegex(dispatch_profile_text, r"(Cool|Elec|Heat) Dem")
+        self.assertIn("___|", dispatch_profile_text)
         self.assertIn("Maximum Flowrate per production well", output_text)
         self.assertIn("Average Pumping Power", output_text)
         self.assertNotIn("Average Direct-Use Heat Production", output_text)

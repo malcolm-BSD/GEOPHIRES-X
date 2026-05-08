@@ -902,6 +902,34 @@ class GeophiresXResult:
     def dispatch_profile(self) -> list[list[str | float]]:
         return self.result["DISPATCH PROFILE"]
 
+    _DISPATCH_PROFILE_COMPACT_HEADERS: ClassVar[dict[str, str]] = {
+        "Yr": "Year",
+        "Hr": "Hour of Year",
+        "Sim Hr": "Simulation Hour",
+        "Cool Dem MW": "Cooling Demand (MW)",
+        "Elec Dem MW": "Electricity Demand (MW)",
+        "Heat Dem MW": "Thermal Demand (MW)",
+        "Geo Cool MW": "Geothermal Cooling Output (MW)",
+        "Geo Elec MW": "Geothermal Electric Output (MW)",
+        "Geo Heat MW": "Geothermal Thermal Output (MW)",
+        "Served MW": "Demand Served (MW)",
+        "Unmet MW": "Unmet Demand (MW)",
+        "Prod T degC": "Produced Temperature (degC)",
+        "Amb T degC": "Ambient Temperature (degC)",
+        "Flow kg/s": "Flow Rate (kg/s)",
+        "Run Frac": "Runtime Fraction",
+        "Pump MW": "Pumping Power (MW)",
+        "TESS T degC": "TESS Temperature (degC)",
+        "TESS SOC": "TESS State of Charge (-)",
+        "TESS MWh": "TESS Stored Energy (MWh)",
+        "TESS Dis MW": "TESS Discharge to Load (MW)",
+        "TESS Chg MW": "TESS Charge from Geothermal (MW)",
+        "TESS Curt MW": "TESS Charge Curtailed (MW)",
+        "Standby MW": "TESS Standby Loss (MW)",
+        "Eff Loss MW": "TESS Efficiency Loss (MW)",
+        "Geo Chg MW": "Geothermal Charge Command (MW)",
+    }
+
     def _get_dispatch_profile(self):
         try:
             lines = self._get_profile_lines("DISPATCH PROFILE")
@@ -919,15 +947,31 @@ class GeophiresXResult:
             table_lines = [
                 line.strip()
                 for line in lines
-                if line.strip() and "*" not in line and not re.fullmatch(r"[_\-\s]+", line)
+                if line.strip() and "*" not in line and not re.fullmatch(r"[_\-\|\s]+", line)
             ]
             if len(table_lines) < 2:
                 return None
 
-            headers = re.split(r"\s{2,}", table_lines[0].strip())
+            if "|" in table_lines[0]:
+                table_rows = [[cell.strip() for cell in line.split("|")] for line in table_lines if "|" in line]
+                if len(table_rows) >= 2 and re.search(r"[A-Za-z]", " ".join(table_rows[1])):
+                    compact_headers = [
+                        " ".join(part for part in parts if part).strip() for parts in zip(table_rows[0], table_rows[1])
+                    ]
+                    headers = [self._DISPATCH_PROFILE_COMPACT_HEADERS.get(header, header) for header in compact_headers]
+                    data_lines = table_lines[2:]
+                else:
+                    headers = [header.strip() for header in table_lines[0].split("|")]
+                    data_lines = table_lines[1:]
+
+                data_lines = [line for line in data_lines if "|" in line]
+            else:
+                headers = re.split(r"\s{2,}", table_lines[0].strip())
+                data_lines = table_lines[1:]
+
             rows = [headers]
-            for line in table_lines[1:]:
-                cells = line.split()
+            for line in data_lines:
+                cells = [cell.strip() for cell in line.split("|")] if "|" in line else line.split()
                 if len(cells) != len(headers):
                     continue
 

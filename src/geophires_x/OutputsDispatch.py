@@ -178,15 +178,56 @@ def _dispatch_profile_cell(column_name: str, value: str | int | float) -> str:
     return f"{value:.4f}"
 
 
+_DISPATCH_PROFILE_REPORT_LABELS = {
+    "Year": ("Yr", ""),
+    "Hour of Year": ("Hr", ""),
+    "Simulation Hour": ("Sim", "Hr"),
+    "Cooling Demand (MW)": ("Cool Dem", "MW"),
+    "Electricity Demand (MW)": ("Elec Dem", "MW"),
+    "Thermal Demand (MW)": ("Heat Dem", "MW"),
+    "Geothermal Cooling Output (MW)": ("Geo Cool", "MW"),
+    "Geothermal Electric Output (MW)": ("Geo Elec", "MW"),
+    "Geothermal Thermal Output (MW)": ("Geo Heat", "MW"),
+    "Demand Served (MW)": ("Served", "MW"),
+    "Unmet Demand (MW)": ("Unmet", "MW"),
+    "Produced Temperature (degC)": ("Prod T", "degC"),
+    "Ambient Temperature (degC)": ("Amb T", "degC"),
+    "Flow Rate (kg/s)": ("Flow", "kg/s"),
+    "Runtime Fraction": ("Run", "Frac"),
+    "Pumping Power (MW)": ("Pump", "MW"),
+    "TESS Temperature (degC)": ("TESS T", "degC"),
+    "TESS State of Charge (-)": ("TESS", "SOC"),
+    "TESS Stored Energy (MWh)": ("TESS", "MWh"),
+    "TESS Discharge to Load (MW)": ("TESS Dis", "MW"),
+    "TESS Charge from Geothermal (MW)": ("TESS Chg", "MW"),
+    "TESS Charge Curtailed (MW)": ("TESS Curt", "MW"),
+    "TESS Standby Loss (MW)": ("Standby", "MW"),
+    "TESS Efficiency Loss (MW)": ("Eff Loss", "MW"),
+    "Geothermal Charge Command (MW)": ("Geo Chg", "MW"),
+}
+
+
+def _dispatch_profile_report_labels(column_name: str) -> tuple[str, str]:
+    return _DISPATCH_PROFILE_REPORT_LABELS.get(column_name, (column_name, ""))
+
+
 def dispatch_profile_report_text(category_name: str, table: list[list[str | int | float]]) -> str:
-    """Return the hourly dispatch profile as compact rounded report CSV."""
+    """Return the hourly dispatch profile as a pipe-delimited report table."""
     if len(table) == 0:
         return ""
 
     columns = [str(column_name) for column_name in table[0]]
+    header_rows = list(zip(*[_dispatch_profile_report_labels(column_name) for column_name in columns]))
     rows = [
         [_dispatch_profile_cell(column_name, value) for column_name, value in zip(columns, row)]
         for row in table[1:]
+    ]
+    widths = [
+        max(
+            *(len(header_row[column_index]) for header_row in header_rows),
+            *(len(row[column_index]) for row in rows),
+        )
+        for column_index, column_name in enumerate(columns)
     ]
 
     buffer = io.StringIO()
@@ -195,9 +236,11 @@ def dispatch_profile_report_text(category_name: str, table: list[list[str | int 
     buffer.write("                            **********************\n")
     buffer.write(f"                            *  {category_name}  *\n")
     buffer.write("                            **********************\n")
-    writer = csv.writer(buffer, lineterminator=NL)
-    writer.writerow(columns)
-    writer.writerows(rows)
+    for header_row in header_rows:
+        buffer.write("|".join(label.center(widths[index]) for index, label in enumerate(header_row)).rstrip() + NL)
+    buffer.write("|".join("_" * width for width in widths) + NL)
+    for row in rows:
+        buffer.write("|".join(value.rjust(widths[index]) for index, value in enumerate(row)) + NL)
     buffer.write(NL)
     return buffer.getvalue()
 
