@@ -28,7 +28,11 @@ from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
 from geophires_x.OutputsResource import write_resource_characteristics
-from geophires_x.OutputsReservoir import write_reservoir_parameters, write_reservoir_simulation_results
+from geophires_x.OutputsReservoir import (
+    write_reservoir_parameters,
+    write_reservoir_power_required_profiles,
+    write_reservoir_simulation_results,
+)
 from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.OutputsSurface import write_surface_equipment_simulation_results
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
@@ -521,26 +525,7 @@ class Outputs:
 
     @staticmethod
     def _write_reservoir_power_required_profiles(model: Model, f: TextIOWrapper) -> None:
-        # if we are dealing with overpressure and two different reservoirs, show a table reporting the values
-        if model.wellbores.overpressure_percentage.Provided:
-            f.write(NL)
-            f.write('                            ***************************************\n')
-            f.write('                            *  RESERVOIR POWER REQUIRED PROFILES  *\n')
-            f.write('                            ***************************************\n')
-            f.write('  YEAR     PROD PUMP     INJECT PUMP     TOTAL PUMP\n')
-            f.write('             POWER          POWER           POWER\n')
-            f.write(
-                '             (' + model.wellbores.PumpingPowerProd.CurrentUnits.value + ')           (' + model.wellbores.PumpingPowerInj.CurrentUnits.value + ')            (' + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ')                  \n')
-            for i in range(0, model.surfaceplant.plant_lifetime.value):
-                f.write('  {0:2.0f}     {1:8.4f}        {2:8.4f}       {3:8.4f}'.format(i + 1,
-                                                                                model.wellbores.PumpingPowerProd.value[
-                                                                                    i * model.economics.timestepsperyear.value],
-                                                                                model.wellbores.PumpingPowerInj.value[
-                                                                                    i * model.economics.timestepsperyear.value],
-                                                                                model.wellbores.PumpingPower.value[
-                                                                                    i * model.economics.timestepsperyear.value]))
-                f.write(NL)
-            f.write(NL)
+        write_reservoir_power_required_profiles(model, f)
 
     @staticmethod
     def _is_sam_econ_model(model: Model) -> bool:

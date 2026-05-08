@@ -131,3 +131,26 @@ def write_reservoir_simulation_results(model: Model, f: TextIOWrapper, dispatch_
                 f.write(f"      Average Injection Well Pump Pressure Drop:       {np.average(model.wellbores.DPInjWell.value):10.1f} " + model.wellbores.DPInjWell.PreferredUnits.value + NL)
                 if model.wellbores.productionwellpumping.value:
                     f.write(f"      Average Production Well Pump Pressure Drop:      {np.average(model.wellbores.DPProdWell.value):10.1f} " + model.wellbores.DPProdWell.PreferredUnits.value + NL)
+
+
+def write_reservoir_power_required_profiles(model: Model, f: TextIOWrapper) -> None:
+    # if we are dealing with overpressure and two different reservoirs, show a table reporting the values
+    if model.wellbores.overpressure_percentage.Provided:
+        f.write(NL)
+        f.write("                            ***************************************\n")
+        f.write("                            *  RESERVOIR POWER REQUIRED PROFILES  *\n")
+        f.write("                            ***************************************\n")
+        f.write("  YEAR     PROD PUMP     INJECT PUMP     TOTAL PUMP\n")
+        f.write("             POWER          POWER           POWER\n")
+        f.write(
+            "             (" + model.wellbores.PumpingPowerProd.CurrentUnits.value + ")           (" + model.wellbores.PumpingPowerInj.CurrentUnits.value + ")            (" + model.surfaceplant.NetElectricityProduced.CurrentUnits.value + ")                  \n")
+        for i in range(0, model.surfaceplant.plant_lifetime.value):
+            f.write("  {0:2.0f}     {1:8.4f}        {2:8.4f}       {3:8.4f}".format(i + 1,
+                                                                            model.wellbores.PumpingPowerProd.value[
+                                                                                i * model.economics.timestepsperyear.value],
+                                                                            model.wellbores.PumpingPowerInj.value[
+                                                                                i * model.economics.timestepsperyear.value],
+                                                                            model.wellbores.PumpingPower.value[
+                                                                                i * model.economics.timestepsperyear.value]))
+            f.write(NL)
+        f.write(NL)
