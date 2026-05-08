@@ -24,6 +24,7 @@ from geophires_x.OutputsDispatch import tess_output_rows
 from geophires_x.OutputsDispatch import write_dispatch_profile_output
 from geophires_x.OutputsDispatch import write_dispatch_profile_report_table
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
+from geophires_x.OutputsReport import write_scalar_section
 from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
     OutputParameter, ReadParameter, ParameterEntry
@@ -1035,19 +1036,7 @@ class Outputs:
         return weather_output_rows(model)
 
     def _write_weather_data_results(self, model: Model, f) -> None:
-        weather_rows = self._weather_output_rows(model)
-        if len(weather_rows) == 0:
-            return
-
-        f.write(NL)
-        f.write(NL)
-        f.write(f'                           ***{self.WEATHER_DATA_RESULTS_CATEGORY_NAME}***\n')
-        f.write(NL)
-        for field_name, value, units in weather_rows:
-            if isinstance(value, str):
-                f.write(f'      {self._field_label(field_name, 49)}{value}\n')
-            else:
-                f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+        write_scalar_section(f, self.WEATHER_DATA_RESULTS_CATEGORY_NAME, self._weather_output_rows(model))
 
     @staticmethod
     def _dispatch_output_rows(model: Model) -> list[tuple[str, float, str]]:
@@ -1064,27 +1053,11 @@ class Outputs:
             return
 
         tess_rows = self._tess_output_rows(model, dispatch_results.summary_metrics)
-        if len(tess_rows) == 0:
-            return
-
-        f.write(NL)
-        f.write(NL)
-        f.write(f'                           ***{self.TESS_RESULTS_CATEGORY_NAME}***\n')
-        f.write(NL)
-        for field_name, value, units in tess_rows:
-            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+        write_scalar_section(f, self.TESS_RESULTS_CATEGORY_NAME, tess_rows)
 
     def _write_dispatch_results(self, model: Model, f) -> None:
         dispatch_rows = self._dispatch_output_rows(model)
-        if len(dispatch_rows) == 0:
-            return
-
-        f.write(NL)
-        f.write(NL)
-        f.write(f'                           ***{self.DISPATCH_RESULTS_CATEGORY_NAME}***\n')
-        f.write(NL)
-        for field_name, value, units in dispatch_rows:
-            f.write(f'      {self._field_label(field_name, 49)}{value:10.2f} {units}\n')
+        write_scalar_section(f, self.DISPATCH_RESULTS_CATEGORY_NAME, dispatch_rows)
 
     @staticmethod
     def _dispatch_profile_tess_columns(dispatch_results: Any) -> list[str]:
