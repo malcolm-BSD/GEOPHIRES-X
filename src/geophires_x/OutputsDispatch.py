@@ -179,7 +179,7 @@ def _dispatch_profile_cell(column_name: str, value: str | int | float) -> str:
 
 
 def dispatch_profile_report_text(category_name: str, table: list[list[str | int | float]]) -> str:
-    """Return the hourly dispatch profile as a fixed-width report table."""
+    """Return the hourly dispatch profile as compact rounded report CSV."""
     if len(table) == 0:
         return ""
 
@@ -188,10 +188,6 @@ def dispatch_profile_report_text(category_name: str, table: list[list[str | int 
         [_dispatch_profile_cell(column_name, value) for column_name, value in zip(columns, row)]
         for row in table[1:]
     ]
-    widths = [
-        max(len(column_name), *(len(row[column_index]) for row in rows))
-        for column_index, column_name in enumerate(columns)
-    ]
 
     buffer = io.StringIO()
     buffer.write(NL)
@@ -199,10 +195,9 @@ def dispatch_profile_report_text(category_name: str, table: list[list[str | int 
     buffer.write("                            **********************\n")
     buffer.write(f"                            *  {category_name}  *\n")
     buffer.write("                            **********************\n")
-    buffer.write("  ".join(column_name.ljust(widths[index]) for index, column_name in enumerate(columns)) + NL)
-    buffer.write("  ".join("_" * width for width in widths) + NL)
-    for row in rows:
-        buffer.write("  ".join(value.rjust(widths[index]) for index, value in enumerate(row)) + NL)
+    writer = csv.writer(buffer, lineterminator=NL)
+    writer.writerow(columns)
+    writer.writerows(rows)
     buffer.write(NL)
     return buffer.getvalue()
 
