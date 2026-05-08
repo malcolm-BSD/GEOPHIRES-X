@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+from io import TextIOWrapper
+from typing import TYPE_CHECKING
+
+from geophires_x.Economics import Economics
+from geophires_x.OptionList import EconomicModel, PlantType
+from geophires_x.OutputsReport import field_label
+from geophires_x.Parameter import Parameter
+
+if TYPE_CHECKING:
+    from geophires_x.Model import Model
+
+NL = "\n"
+
+
+def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
+    econ: Economics = model.economics
+
+    f.write("\n\n                          ***CAPITAL COSTS (M$)***\n\n")
+    if not model.economics.totalcapcost.Valid:
+        f.write(f"         {econ.Cexpl.display_name}:                             {econ.Cexpl.value:10.2f} {econ.Cexpl.CurrentUnits.value}\n")
+
+        f.write(f"         {model.economics.Cwell.display_name}:                 {model.economics.Cwell.value:10.2f} {model.economics.Cwell.CurrentUnits.value}\n")
+
+        if econ.cost_lateral_section.value > 0.0:
+            f.write(f"             Drilling and completion costs per vertical production well:   {econ.cost_one_production_well.value:10.2f} " + econ.cost_one_production_well.CurrentUnits.value + NL)
+            f.write(f"             Drilling and completion costs per vertical injection well:    {econ.cost_one_injection_well.value:10.2f} " + econ.cost_one_injection_well.CurrentUnits.value + NL)
+            f.write(f"             {econ.cost_per_lateral_section.Name}:       {econ.cost_per_lateral_section.value:10.2f} {econ.cost_lateral_section.CurrentUnits.value}\n")
+        elif round(econ.cost_one_production_well.value, 4) != round(econ.cost_one_injection_well.value, 4) \
+            and model.economics.cost_one_injection_well.value != -1:
+            f.write(f"             Drilling and completion costs per production well:   {econ.cost_one_production_well.value:10.2f} " + econ.cost_one_production_well.CurrentUnits.value + NL)
+            f.write(f"             Drilling and completion costs per injection well:    {econ.cost_one_injection_well.value:10.2f} " + econ.cost_one_injection_well.CurrentUnits.value + NL)
+        else:
+            cpw_label = field_label(econ.drilling_and_completion_costs_per_well.display_name, 47)
+            f.write(f"         {cpw_label}{econ.drilling_and_completion_costs_per_well.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")
+
+        f.write(f"         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n")
+
+        f.write(f"         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n")
+        if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+            f.write(f"            of which Absorption Chiller Cost:           {model.economics.chillercapex.value:10.2f} " + model.economics.Cplant.CurrentUnits.value + NL)
+        if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+            f.write(f"            of which Heat Pump Cost:                    {model.economics.heatpumpcapex.value:10.2f} " + model.economics.Cplant.CurrentUnits.value + NL)
+        if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            f.write(f"            of which Peaking Boiler Cost:               {model.economics.peakingboilercost.value:10.2f} " + model.economics.peakingboilercost.CurrentUnits.value + NL)
+        f.write(f"         {model.economics.Cgath.display_name}:                  {model.economics.Cgath.value:10.2f} {model.economics.Cgath.CurrentUnits.value}\n")
+
+        if model.surfaceplant.piping_length.value > 0:
+            f.write(f"         {model.economics.Cpiping.display_name}:                    {model.economics.Cpiping.value:10.2f} {model.economics.Cpiping.CurrentUnits.value}\n")
+
+        if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+            f.write(f"         District Heating System Cost:                  {model.economics.dhdistrictcost.value:10.2f} {model.economics.dhdistrictcost.CurrentUnits.value}\n")
+
+        f.write(f"         Total surface equipment costs:                 {(model.economics.Cplant.value + model.economics.Cgath.value):10.2f} " + model.economics.Cplant.CurrentUnits.value + NL)
+
+    if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
+        f.write(f"         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")
+        f.write(f"      Drilling and completion costs per redrilled well: {(econ.Cwell.value / (model.wellbores.nprod.value + model.wellbores.ninj.value)):10.2f} {econ.Cwell.CurrentUnits.value}\n")
+        f.write(f"         Stimulation costs (for redrilling):            {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n")
+
+    if model.economics.RITCValue.value and not is_sam_econ_model:
+        # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)
+        f.write(f"         {econ.RITCValue.display_name}:                         {-1 * econ.RITCValue.value:10.2f} {econ.RITCValue.CurrentUnits.value}\n")
+
+    additional_capex_modifiers: list[tuple[Parameter, int]] = [
+        (econ.FlatLicenseEtc, 1),
+        (econ.OtherIncentives, -1),
+        (econ.TotalGrant, -1),
+    ]
+    for additional_capex_modifier_entry in additional_capex_modifiers:
+        additional_capex_modifier_param: Parameter = additional_capex_modifier_entry[0]
+        additional_capex_modifier_multiplier: int = additional_capex_modifier_entry[1]
+
+        acm_render_value = additional_capex_modifier_param.value * additional_capex_modifier_multiplier
+
+        if additional_capex_modifier_param.Provided:
+            acm_label = field_label(additional_capex_modifier_param.Name, 47)
+            f.write(f"         {acm_label}{acm_render_value:10.2f} {additional_capex_modifier_param.CurrentUnits.value}\n")
+
+    if is_sam_econ_model and econ.DoAddOnCalculations.value:
+        # Non-SAM econ models print this in Extended Economics profile
+        aoc_label = field_label(model.addeconomics.AddOnCAPEXTotal.display_name, 47)
+        f.write(f"         {aoc_label}{model.addeconomics.AddOnCAPEXTotal.value:10.2f} {model.addeconomics.AddOnCAPEXTotal.CurrentUnits.value}\n")
+
+    display_occ_and_inflation_during_construction_in_capital_costs = is_sam_econ_model
+    if display_occ_and_inflation_during_construction_in_capital_costs:
+        occ_label = field_label(econ.overnight_capital_cost.display_name, 47)
+        f.write(f"         {occ_label}{econ.overnight_capital_cost.value:10.2f} {econ.overnight_capital_cost.CurrentUnits.value}\n")
+
+        icc_label = field_label(econ.inflation_cost_during_construction.display_name, 47)
+        f.write(f"         {icc_label}{econ.inflation_cost_during_construction.value:10.2f} {econ.inflation_cost_during_construction.CurrentUnits.value}\n")
+
+    if econ.royalty_supplemental_payments.Provided:
+        rsp_label = field_label(econ.royalty_supplemental_payments_cost_during_construction.display_name, 41)
+        f.write(f"         {rsp_label}   {econ.royalty_supplemental_payments_cost_during_construction.value:.2f} {econ.royalty_supplemental_payments_cost_during_construction.CurrentUnits.value}\n")
+
+    display_idc_in_capital_costs = is_sam_econ_model and model.surfaceplant.construction_years.value > 1
+    if display_idc_in_capital_costs:
+        idc_label = field_label(econ.interest_during_construction.display_name, 47)
+        f.write(f"         {idc_label}{econ.interest_during_construction.value:10.2f} {econ.interest_during_construction.CurrentUnits.value}\n")
+
+    capex_param = econ.CCap if not is_sam_econ_model else econ.capex_total
+    capex_label = field_label(capex_param.display_name, 50)
+    f.write(f"      {capex_label}{capex_param.value:10.2f} {capex_param.CurrentUnits.value}\n")
+
+    if model.economics.econmodel.value == EconomicModel.FCR:
+        f.write(f"      Annualized capital costs:                         {(model.economics.CCap.value * (1 + model.economics.inflrateconstruction.value) * model.economics.FCR.value):10.2f} " + model.economics.CCap.CurrentUnits.value + NL)
