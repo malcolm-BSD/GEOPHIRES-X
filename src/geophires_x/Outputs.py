@@ -27,7 +27,7 @@ from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
 from geophires_x.OutputsResource import write_resource_characteristics
-from geophires_x.OutputsReservoir import write_reservoir_parameters
+from geophires_x.OutputsReservoir import write_reservoir_parameters, write_reservoir_simulation_results
 from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
     OutputParameter, ReadParameter, ParameterEntry
@@ -469,34 +469,7 @@ class Outputs:
 
     @staticmethod
     def _write_reservoir_simulation_results(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:
-        if not dispatch_report:
-            f.write(NL)
-            f.write(NL)
-            f.write('                           ***RESERVOIR SIMULATION RESULTS***\n')
-            f.write(NL)
-            f.write(f'      Maximum Production Temperature:                  {np.max(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-            f.write(f'      Average Production Temperature:                  {np.average(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-            f.write(f'      Minimum Production Temperature:                  {np.min(model.wellbores.ProducedTemperature.value):10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-            f.write(f'      Initial Production Temperature:                  {model.wellbores.ProducedTemperature.value[0]:10.1f} ' + model.wellbores.ProducedTemperature.PreferredUnits.value + NL)
-            if model.wellbores.IsAGS.value:
-                f.write('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.\n')
-            else:
-                f.write(f'      Average Reservoir Heat Extraction:                {np.average(model.surfaceplant.HeatExtracted.value):10.2f} ' + model.surfaceplant.HeatExtracted.PreferredUnits.value + NL)
-                if model.wellbores.rameyoptionprod.value:
-                    f.write('      Production Wellbore Heat Transmission Model = Ramey Model\n')
-                    f.write(f'      Average Production Well Temperature Drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
-                else:
-                    f.write(f'      Wellbore Heat Transmission Model = Constant Temperature Drop:{model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
-                if model.wellbores.impedancemodelused.value:
-                    f.write(f'      Total Average Pressure Drop:                     {np.average(model.wellbores.DPOverall.value):10.1f} ' + model.wellbores.DPOverall.PreferredUnits.value + NL)
-                    f.write(f'      Average Injection Well Pressure Drop:            {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
-                    f.write(f'      Average Reservoir Pressure Drop:                 {np.average(model.wellbores.DPReserv.value):10.1f} ' + model.wellbores.DPReserv.PreferredUnits.value + NL)
-                    f.write(f'      Average Production Well Pressure Drop:           {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
-                    f.write(f'      Average Buoyancy Pressure Drop:                  {np.average(model.wellbores.DPBouyancy.value):10.1f} ' + model.wellbores.DPBouyancy.PreferredUnits.value + NL)
-                else:
-                    f.write(f'      Average Injection Well Pump Pressure Drop:       {np.average(model.wellbores.DPInjWell.value):10.1f} ' + model.wellbores.DPInjWell.PreferredUnits.value + NL)
-                    if model.wellbores.productionwellpumping.value:
-                        f.write(f'      Average Production Well Pump Pressure Drop:      {np.average(model.wellbores.DPProdWell.value):10.1f} ' + model.wellbores.DPProdWell.PreferredUnits.value + NL)
+        write_reservoir_simulation_results(model, f, dispatch_report)
 
     @staticmethod
     def _write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
