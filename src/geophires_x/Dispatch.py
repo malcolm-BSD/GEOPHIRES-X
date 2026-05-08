@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 
@@ -72,6 +72,34 @@ def _coerce_series_length(
         )
 
     return series
+
+
+def _resample_series_length(
+    raw_series: Any,
+    target_length: int,
+    parameter_name: str,
+    default_value: float = 0.0,
+) -> np.ndarray:
+    series = np.asarray(raw_series, dtype=float)
+    if series.ndim == 0:
+        return np.full(target_length, float(series), dtype=float)
+
+    series = np.ravel(series).astype(float, copy=False)
+    if series.size == 0:
+        return np.full(target_length, default_value, dtype=float)
+
+    if series.size == 1:
+        return np.full(target_length, float(series[0]), dtype=float)
+
+    if target_length <= 0:
+        raise ValueError(f"Dispatchable mode expected `{parameter_name}` target length to be positive.")
+
+    if series.size == target_length:
+        return series.copy()
+
+    source_index = np.linspace(0.0, 1.0, series.size)
+    target_index = np.linspace(0.0, 1.0, target_length)
+    return np.interp(target_index, source_index, series)
 
 
 @dataclass
@@ -375,6 +403,7 @@ def _dispatch_output_state(
     produced_temperature_c: float,
     actual_flow_kg_per_sec: float,
     pumping_power_mw: float,
+    cooling_demand_mw: Optional[float] = None,
     timestep_index: int | None = None,
 ) -> dict[str, float]:
     enduse_option = model.surfaceplant.enduse_option.value
@@ -403,11 +432,28 @@ def _dispatch_output_state(
             )
         elif plant_type == PlantType.ABSORPTION_CHILLER:
             useful_heat_mw = extracted_heat_mw
-            cooling_produced_mw = (
-                useful_heat_mw
-                * model.surfaceplant.absorption_chiller_cop.value
-                * model.surfaceplant.enduse_efficiency_factor.value
-            )
+            advanced_enabled = False
+            if hasattr(model.surfaceplant, "_advanced_absorption_enabled"):
+                advanced_enabled = model.surfaceplant._advanced_absorption_enabled()
+            if advanced_enabled and hasattr(model.surfaceplant, "advanced_dispatch_output"):
+                dispatch_demand_mw = cooling_demand_mw
+                if dispatch_demand_mw is None:
+                    dispatch_demand_mw = model.surfaceplant._cooling_demand_peak_mw()
+                advanced_output = model.surfaceplant.advanced_dispatch_output(
+                    model,
+                    float(dispatch_demand_mw),
+                    useful_heat_mw * model.surfaceplant.enduse_efficiency_factor.value,
+                    produced_temperature_c,
+                    timestep_index,
+                )
+                cooling_produced_mw = advanced_output["cooling_produced_mw"]
+                useful_heat_mw = advanced_output["q_gen_mw"]
+            else:
+                cooling_produced_mw = (
+                    useful_heat_mw
+                    * model.surfaceplant.absorption_chiller_cop.value
+                    * model.surfaceplant.enduse_efficiency_factor.value
+                )
 
         return {
             "dispatch_output_mw": cooling_produced_mw if target_mode == "cooling" else useful_heat_mw,
@@ -753,11 +799,23 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
         scaled_temp_drop = self._base_temp_drop_c / max(flow_fraction, 0.25)
         return min(max(scaled_temp_drop, 0.0), max(current_reservoir_temperature_c - self._tinj, 0.0))
 
-    def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
+    def thermal_state_for_flow_fraction(
+        self,
+        flow_fraction: float,
+        target_demand_mw: Optional[float] = None,
+        timestep_index: int | None = None,
+    ) -> dict[str, float]:
         """Return plant state at a requested production flow fraction."""
         if flow_fraction <= 0:
             current_reservoir_temperature_c = self._current_reservoir_temperature()
-            state = _dispatch_output_state(self._model, current_reservoir_temperature_c, 0.0, 0.0, timestep_index)
+            state = _dispatch_output_state(
+                self._model,
+                current_reservoir_temperature_c,
+                0.0,
+                0.0,
+                target_demand_mw,
+                timestep_index,
+            )
             state.update({
                 "produced_temperature_c": current_reservoir_temperature_c,
                 "pumping_power_mw": 0.0,
@@ -781,6 +839,7 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
             produced_temperature_c,
             actual_flow_kg_per_sec,
             pumping_power_mw,
+            target_demand_mw,
             timestep_index,
         )
         state.update({
@@ -806,7 +865,11 @@ class CylindricalDispatchPlantAdapter(DispatchPlantAdapter):
                 runtime_fraction=0.0,
             )
 
-        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction, timestep_index)
+        thermal_state = self.thermal_state_for_flow_fraction(
+            dispatch_command.target_flow_fraction,
+            dispatch_command.target_demand_mw,
+            timestep_index,
+        )
         potential_output_mw = thermal_state["dispatch_output_mw"] * dispatch_command.runtime_fraction
         served_demand_mw = min(dispatch_command.target_demand_mw, potential_output_mw)
         unmet_demand_mw = max(dispatch_command.target_demand_mw - served_demand_mw, 0.0)
@@ -887,23 +950,24 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         self._cpwater = model.reserv.cpwater.value
         self._enduse_efficiency = model.surfaceplant.enduse_efficiency_factor.value
         self._maximum_dispatch_flow_fraction = model.surfaceplant.maximum_dispatch_flow_fraction.value
+        baseline_length = model.surfaceplant.plant_lifetime.value * 8760
 
-        self._baseline_produced_temperature = _as_baseline_series(
+        self._baseline_produced_temperature = _resample_series_length(
             model.wellbores.ProducedTemperature.value,
+            baseline_length,
             "ProducedTemperature",
         )
-        baseline_length = len(self._baseline_produced_temperature)
-        self._baseline_pumping_power_mw = _coerce_series_length(
+        self._baseline_pumping_power_mw = _resample_series_length(
             model.wellbores.PumpingPower.value,
             baseline_length,
             "PumpingPower",
         )
-        self._baseline_pumping_power_prod_mw = _coerce_series_length(
+        self._baseline_pumping_power_prod_mw = _resample_series_length(
             model.wellbores.PumpingPowerProd.value,
             baseline_length,
             "PumpingPowerProd",
         )
-        self._baseline_pumping_power_inj_mw = _coerce_series_length(
+        self._baseline_pumping_power_inj_mw = _resample_series_length(
             model.wellbores.PumpingPowerInj.value,
             baseline_length,
             "PumpingPowerInj",
@@ -936,7 +1000,12 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         depletion_fraction = min(max(self._cumulative_extracted_kwh / self._baseline_total_extracted_kwh, 0.0), 1.0)
         return min(int(round(depletion_fraction * (len(self._baseline_produced_temperature) - 1))), len(self._baseline_produced_temperature) - 1)
 
-    def thermal_state_for_flow_fraction(self, flow_fraction: float, timestep_index: int | None = None) -> dict[str, float]:
+    def thermal_state_for_flow_fraction(
+        self,
+        flow_fraction: float,
+        target_demand_mw: Optional[float] = None,
+        timestep_index: int | None = None,
+    ) -> dict[str, float]:
         """Return plant state for an analytical reservoir flow fraction."""
         baseline_index = self._baseline_index_for_depletion()
         baseline_temperature_c = self._baseline_produced_temperature[baseline_index]
@@ -946,7 +1015,14 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
         baseline_pumping_power_inj_mw = self._baseline_pumping_power_inj_mw[baseline_index]
 
         if flow_fraction <= 0:
-            state = _dispatch_output_state(self._model, baseline_temperature_c, 0.0, 0.0, timestep_index)
+            state = _dispatch_output_state(
+                self._model,
+                baseline_temperature_c,
+                0.0,
+                0.0,
+                target_demand_mw,
+                timestep_index,
+            )
             state.update({
                 "produced_temperature_c": baseline_temperature_c,
                 "pumping_power_mw": 0.0,
@@ -964,6 +1040,7 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
             baseline_temperature_c,
             actual_flow_kg_per_sec,
             baseline_pumping_power_mw * flow_scale,
+            target_demand_mw,
             timestep_index,
         )
         state.update({
@@ -992,7 +1069,11 @@ class AnalyticalReservoirDispatchPlantAdapter(DispatchPlantAdapter):
                 runtime_fraction=0.0,
             )
 
-        thermal_state = self.thermal_state_for_flow_fraction(dispatch_command.target_flow_fraction, timestep_index)
+        thermal_state = self.thermal_state_for_flow_fraction(
+            dispatch_command.target_flow_fraction,
+            dispatch_command.target_demand_mw,
+            timestep_index,
+        )
         potential_output_mw = thermal_state["dispatch_output_mw"] * dispatch_command.runtime_fraction
         served_demand_mw = min(dispatch_command.target_demand_mw, potential_output_mw)
         unmet_demand_mw = max(dispatch_command.target_demand_mw - served_demand_mw, 0.0)
@@ -1083,6 +1164,7 @@ class DispatchAdapterFactory:
         "MPFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("MPFReservoir"),
         "LHSReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("LHSReservoir"),
         "SFReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("SFReservoir"),
+        "TDPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("TDPReservoir"),
         "UPPReservoir": lambda: AnalyticalReservoirDispatchPlantAdapter("UPPReservoir"),
         "SBTReservoir": lambda: SBTDispatchPlantAdapter(),
     }
@@ -1148,14 +1230,13 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         plant_lifetime_years = model.surfaceplant.plant_lifetime.value
         analysis_start_year = model.surfaceplant.dispatch_analysis_start_year.value
         analysis_end_year = model.surfaceplant.dispatch_analysis_end_year.value
-        dispatch_demand_mw = np.tile(demand_profile.series, plant_lifetime_years)[
-            (analysis_start_year - 1) * 8760:(analysis_end_year - 1) * 8760
-        ]
+        simulation_end_year = min(analysis_end_year, plant_lifetime_years)
+        dispatch_demand_mw = np.tile(demand_profile.series, plant_lifetime_years)[:simulation_end_year * 8760]
         model.dispatch_results = DispatchResults.initialize(
             len(dispatch_demand_mw),
             analysis_start_year=analysis_start_year,
             analysis_end_year=analysis_end_year,
-            simulation_start_hour=((analysis_start_year - 1) * 8760) + 1,
+            simulation_start_hour=1,
             demand_type=demand_profile.demand_type,
         )
         model.dispatch_adapter = DispatchAdapterFactory.create(model)
@@ -1191,7 +1272,10 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
     def _run_demand_following_dispatch(self, model: "Model", dispatch_demand_mw: np.ndarray) -> None:
         for timestep_index, timestep_demand_mw in enumerate(dispatch_demand_mw):
-            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
+            nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(
+                1.0,
+                timestep_index=timestep_index,
+            )
             timestep_state = {
                 "nominal_output_mw": nominal_state["dispatch_output_mw"],
                 "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
@@ -1349,7 +1433,10 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
     @staticmethod
     def _tess_demand_to_storage_ratio(model: "Model", timestep_index: int | None = None) -> float:
-        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(
+            1.0,
+            timestep_index=timestep_index,
+        )
         storage_basis_mw = DispatchableOperatingModeStrategy._tess_storage_basis_mw(model, nominal_state)
         if storage_basis_mw <= 0.0:
             return 0.0
@@ -1370,7 +1457,10 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
                 target_demand_mw=0.0,
             )
 
-        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(1.0, timestep_index)
+        nominal_state = model.dispatch_adapter.thermal_state_for_flow_fraction(
+            1.0,
+            timestep_index=timestep_index,
+        )
         timestep_state = {
             "nominal_output_mw": self._tess_storage_basis_mw(model, nominal_state),
             "maximum_dispatch_flow_fraction": model.surfaceplant.maximum_dispatch_flow_fraction.value,
@@ -1589,11 +1679,11 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
         has_electric_component = _surfaceplant_has_electric_component(enduse_option)
         total_timesteps = plant_lifetime_years * timesteps_per_year
         analysis_start_index = (analysis_start_year - 1) * timesteps_per_year
-        analysis_end_index = analysis_start_index + len(model.dispatch_results.hourly_produced_temperature)
+        analysis_end_index = (analysis_end_year - 1) * timesteps_per_year
 
         def _full_timeline(values: np.ndarray) -> np.ndarray:
             full_values = np.zeros(total_timesteps, dtype=float)
-            full_values[analysis_start_index:analysis_end_index] = values.copy()
+            full_values[:len(values)] = values.copy()
             return full_values
 
         full_hourly_produced_temperature = _full_timeline(model.dispatch_results.hourly_produced_temperature)
@@ -1794,6 +1884,7 @@ class DispatchableOperatingModeStrategy(OperatingModeStrategy):
 
         analysis_year_slice = slice(analysis_start_year - 1, analysis_end_year - 1)
 
+        model.dispatch_results.simulation_start_hour = analysis_start_index + 1
         model.dispatch_results.hourly_produced_temperature = full_hourly_produced_temperature[
             analysis_start_index:analysis_end_index
         ].copy()

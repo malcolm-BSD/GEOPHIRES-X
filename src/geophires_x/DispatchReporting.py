@@ -61,12 +61,15 @@ def dispatch_profile_tess_row(dispatch_results: Any, timestep_index: int) -> lis
 
 def dispatch_profile_columns(dispatch_results: Any) -> list[str]:
     demand_type = getattr(dispatch_results, "demand_type", "thermal")
-    demand_column = "Electricity Demand (MW)" if demand_type == "electric" else "Thermal Demand (MW)"
-    output_column = (
-        "Geothermal Electric Output (MW)"
-        if demand_type == "electric"
-        else "Geothermal Thermal Output (MW)"
-    )
+    if demand_type == "electric":
+        demand_column = "Electricity Demand (MW)"
+        output_column = "Geothermal Electric Output (MW)"
+    elif demand_type == "cooling":
+        demand_column = "Cooling Demand (MW)"
+        output_column = "Geothermal Cooling Output (MW)"
+    else:
+        demand_column = "Thermal Demand (MW)"
+        output_column = "Geothermal Thermal Output (MW)"
     return [
         "Year",
         "Hour of Year",
@@ -89,17 +92,19 @@ def dispatch_profile_row(dispatch_results: Any, timestep_index: int) -> list[int
     simulation_start_hour = getattr(dispatch_results, "simulation_start_hour", 1)
     analysis_start_year = getattr(dispatch_results, "analysis_start_year", 1)
     demand_type = getattr(dispatch_results, "demand_type", "thermal")
+    if demand_type == "electric":
+        geothermal_output = dispatch_results.hourly_geothermal_electric_output[timestep_index]
+    elif demand_type == "cooling":
+        geothermal_output = dispatch_results.hourly_cooling_output[timestep_index]
+    else:
+        geothermal_output = dispatch_results.hourly_geothermal_thermal_output[timestep_index]
 
     return [
         analysis_start_year + (timestep_index // timesteps_per_year),
         timestep_index % timesteps_per_year + 1,
         simulation_start_hour + timestep_index,
         float(dispatch_results.hourly_thermal_demand[timestep_index]),
-        float(
-            dispatch_results.hourly_geothermal_electric_output[timestep_index]
-            if demand_type == "electric"
-            else dispatch_results.hourly_geothermal_thermal_output[timestep_index]
-        ),
+        float(geothermal_output),
         float(dispatch_results.hourly_demand_served[timestep_index] / 1000.0),
         float(dispatch_results.hourly_unmet_demand[timestep_index] / 1000.0),
         float(dispatch_results.hourly_produced_temperature[timestep_index]),
