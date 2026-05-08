@@ -825,12 +825,8 @@ class Outputs:
         self,
         model: Model,
         f: TextIOWrapper,
-        dispatch_report: bool,
         is_sam_econ_model: bool,
     ) -> None:
-        if dispatch_report:
-            self._write_dispatch_profile_report_table(model, f)
-
         if not is_sam_econ_model:
             self.write_revenue_and_cashflow_profile_output(model, f)
 
@@ -892,8 +888,10 @@ class Outputs:
         self._write_surface_equipment_simulation_results(model, f, dispatch_report)
         self._write_production_profile(model, f, dispatch_report)
         self._write_annual_production_profile(model, f, dispatch_report)
-        self._write_cashflow_profile_sections(model, f, dispatch_report, is_sam_econ_model)
+        self._write_cashflow_profile_sections(model, f, is_sam_econ_model)
         self._write_reservoir_power_required_profiles(model, f)
+        if dispatch_report:
+            self._write_dispatch_profile_report_table(model, f)
 
     @staticmethod
     def _write_addon_outputs(model: Model, is_sam_econ_model: bool) -> tuple[pd.DataFrame, list, bool]:

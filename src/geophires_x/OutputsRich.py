@@ -24,6 +24,7 @@ from geophires_x.GeoPHIRESUtils import UpgradeSymbologyOfUnits, render_default, 
 from geophires_x.MatplotlibUtils import plt_subplots
 from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel, ReservoirModel, FractureShape, \
     ReservoirVolume
+from geophires_x.OutputsDispatch import dispatch_output_rows, tess_output_rows
 from geophires_x.OutputsUtils import OutputTableItem
 
 from geophires_x.Parameter import intParameter, strParameter
@@ -406,179 +407,14 @@ def print_outputs_rich(
         summary = _filter_dispatch_summary(summary, model)
 
     if getattr(model, 'dispatch_results', None) is not None:
-        dispatch_metrics = model.dispatch_results.summary_metrics
-        demand_type = getattr(model.dispatch_results, 'demand_type', 'thermal')
-        enduse_option = model.surfaceplant.enduse_option.value
-        has_heat_component = enduse_option in [
-            EndUseOptions.HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
-        ]
-        has_electric_component = enduse_option in [
-            EndUseOptions.ELECTRICITY,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-            EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
-        ]
-        plant_type = model.surfaceplant.plant_type.value
-        dispatch_summary_items = []
-        if demand_type == 'electric':
-            if has_heat_component:
-                dispatch_summary_items.append(
-                    OutputTableItem('Design heat produced', '{0:10.2f}'.format(
-                        dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW')
-                )
-            if has_electric_component:
-                dispatch_summary_items.extend([
-                    OutputTableItem('Design net electricity produced', '{0:10.2f}'.format(
-                        dispatch_metrics.get('design_net_electricity_produced_mw', 0.0)), 'MW'),
-                    OutputTableItem('Annual geothermal electricity delivered', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                ])
-            if has_heat_component:
-                dispatch_summary_items.append(
-                    OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year')
-                )
-            dispatch_summary_items.extend([
-                OutputTableItem('Annual unmet electricity demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_unmet_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
-                    dispatch_metrics.get('dispatch_capacity_factor', 0.0) * 100.0), '%'),
-                OutputTableItem('Average runtime fraction', '{0:10.2f}'.format(
-                    dispatch_metrics.get('average_runtime_fraction', 0.0) * 100.0), '%'),
-                OutputTableItem('Peak geothermal contribution', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_served_electricity_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_unmet_electricity_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
-                OutputTableItem('Design flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_flow_kg_per_sec', 0.0)), 'kg/s'),
-                OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
-            ])
-        elif demand_type == 'cooling':
-            dispatch_summary_items.extend([
-                OutputTableItem('Design heat produced', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
-                OutputTableItem('Design cooling produced', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_cooling_produced_mw', 0.0)), 'MW'),
-                OutputTableItem('Annual geothermal cooling delivered', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_served_cooling_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('Annual unmet cooling demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_unmet_cooling_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
-                    dispatch_metrics.get('dispatch_capacity_factor', 0.0) * 100.0), '%'),
-                OutputTableItem('Average runtime fraction', '{0:10.2f}'.format(
-                    dispatch_metrics.get('average_runtime_fraction', 0.0) * 100.0), '%'),
-                OutputTableItem('Peak geothermal contribution', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_served_cooling_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_unmet_cooling_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
-                OutputTableItem('Design flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_flow_kg_per_sec', 0.0)), 'kg/s'),
-                OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
-            ])
-        else:
-            if has_heat_component:
-                dispatch_summary_items.extend([
-                    OutputTableItem('Design heat produced', '{0:10.2f}'.format(
-                        dispatch_metrics.get('design_heat_produced_mw', 0.0)), 'MW'),
-                    OutputTableItem('Annual geothermal heat delivered', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_served_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                ])
-            if has_electric_component:
-                dispatch_summary_items.extend([
-                    OutputTableItem('Design net electricity produced', '{0:10.2f}'.format(
-                        dispatch_metrics.get('design_net_electricity_produced_mw', 0.0)), 'MW'),
-                    OutputTableItem('Annual geothermal electricity delivered', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_served_electricity_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                ])
-            dispatch_summary_items.extend([
-                OutputTableItem('Annual unmet thermal demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('annual_unmet_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('Dispatch capacity factor', '{0:10.2f}'.format(
-                    dispatch_metrics.get('dispatch_capacity_factor', 0.0) * 100.0), '%'),
-                OutputTableItem('Average runtime fraction', '{0:10.2f}'.format(
-                    dispatch_metrics.get('average_runtime_fraction', 0.0) * 100.0), '%'),
-                OutputTableItem('Peak geothermal contribution', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_served_heat_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak unmet load', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_unmet_heat_kwh', 0.0) / 1000.0), 'MW'),
-                OutputTableItem('Peak hourly demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_hourly_demand_mw', 0.0)), 'MW'),
-                OutputTableItem('Design flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('design_flow_kg_per_sec', 0.0)), 'kg/s'),
-                OutputTableItem('Observed peak flow rate', '{0:10.2f}'.format(
-                    dispatch_metrics.get('observed_peak_flow_kg_per_sec', 0.0)), 'kg/s'),
-            ])
-            if plant_type == PlantType.HEAT_PUMP:
-                dispatch_summary_items.append(
-                    OutputTableItem('Annual heat pump electricity consumed', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_heat_pump_electricity_kwh', 0.0) / 1.0e6), 'GWh/year')
-                )
-            if plant_type == PlantType.DISTRICT_HEATING:
-                dispatch_summary_items.extend([
-                    OutputTableItem('Annual peaking boiler heat delivered', '{0:10.2f}'.format(
-                        dispatch_metrics.get('annual_district_heating_boiler_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                    OutputTableItem('Peak peaking boiler demand', '{0:10.2f}'.format(
-                        dispatch_metrics.get('peak_district_heating_boiler_mw', 0.0)), 'MW'),
-                ])
-        if dispatch_metrics.get('tess_enabled', 0.0) > 0.0:
-            tess_results.extend([
-                OutputTableItem('TESS volume', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_volume_m3', 0.0)), 'm3'),
-                OutputTableItem('TESS usable capacity', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_usable_capacity_mwh', 0.0)), 'MWh'),
-                OutputTableItem('TESS capital cost', '{0:10.2f}'.format(
-                    model.economics.tess_capital_cost.value), model.economics.tess_capital_cost.CurrentUnits.value),
-                OutputTableItem('TESS fixed O&M cost', '{0:10.2f}'.format(
-                    model.economics.tess_o_and_m_cost.value), model.economics.tess_o_and_m_cost.CurrentUnits.value),
-                OutputTableItem('TESS average SOC', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_average_soc', 0.0) * 100.0), '%'),
-                OutputTableItem('TESS minimum SOC', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_min_soc', 0.0) * 100.0), '%'),
-                OutputTableItem('TESS maximum SOC', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_max_soc', 0.0) * 100.0), '%'),
-                OutputTableItem('TESS annual charge', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_annual_charge_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('TESS annual discharge', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_annual_discharge_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('TESS annual standby loss', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_annual_standby_loss_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('TESS annual efficiency loss', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_annual_efficiency_loss_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('TESS curtailed geothermal heat', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_annual_curtailed_heat_kwh', 0.0) / 1.0e6), 'GWh/year'),
-                OutputTableItem('TESS equivalent full cycles', '{0:10.2f}'.format(
-                    dispatch_metrics.get('tess_equivalent_full_cycles', 0.0)), 'cycles/year'),
-                OutputTableItem('Peak customer demand', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_customer_demand_mw', 0.0)), 'MW'),
-                OutputTableItem('Peak geothermal charge', '{0:10.2f}'.format(
-                    dispatch_metrics.get('peak_geothermal_charge_mw', 0.0)), 'MW'),
-                OutputTableItem('Customer demand standard deviation', '{0:10.2f}'.format(
-                    dispatch_metrics.get('customer_demand_standard_deviation_mw', 0.0)), 'MW'),
-                OutputTableItem('Geothermal output standard deviation', '{0:10.2f}'.format(
-                    dispatch_metrics.get('geothermal_output_standard_deviation_mw', 0.0)), 'MW'),
-                OutputTableItem('Geothermal output smoothing ratio', '{0:10.2f}'.format(
-                    dispatch_metrics.get('geothermal_output_smoothing_ratio', 0.0)), '-'),
-                OutputTableItem('Geothermal peak reduction ratio', '{0:10.2f}'.format(
-                    dispatch_metrics.get('geothermal_peak_reduction_fraction', 0.0)), '-'),
-                OutputTableItem('Geothermal variability reduction ratio', '{0:10.2f}'.format(
-                    dispatch_metrics.get('geothermal_output_variability_reduction_fraction', 0.0)), '-'),
-            ])
-        dispatch_results.extend(dispatch_summary_items)
+        dispatch_results.extend(
+            OutputTableItem(field_name, '{0:10.2f}'.format(value), units)
+            for field_name, value, units in dispatch_output_rows(model)
+        )
+        tess_results.extend(
+            OutputTableItem(field_name, '{0:10.2f}'.format(value), units)
+            for field_name, value, units in tess_output_rows(model, model.dispatch_results.summary_metrics)
+        )
 
     if model.economics.econmodel.value == EconomicModel.FCR:
         economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))
@@ -1560,8 +1396,6 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
         Write_Complex_Text_table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, buffer)
     if len(ahce) > 0:
         Write_Complex_Text_table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, buffer)
-    if len(dispatch_profile_rows_table) > 0:
-        Write_CSV_Text_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, buffer)
     Write_Complex_Text_table('REVENUE & CASHFLOW PROFILE', cashflow, 1, buffer)
     if len(pumping_power_profiles) > 0:
         Write_Complex_Text_table('PUMPING POWER PROFILES', pumping_power_profiles, 1, buffer)
@@ -1569,6 +1403,8 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
         Write_Complex_Text_table('ADD-ON PROFILE', addon_df, 1, buffer)
     if len(sdac_df) > 0:
         Write_Complex_Text_table('S_DAC_GT PROFILE', sdac_df, 1, buffer)
+    if len(dispatch_profile_rows_table) > 0:
+        Write_CSV_Text_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, buffer)
 
     return buffer.getvalue()
 
@@ -1741,8 +1577,6 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
         Write_Complex_HTML_Table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, console)
     if len(ahce) > 0:
         Write_Complex_HTML_Table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, console)
-    if len(dispatch_profile_rows_table) > 0:
-        Write_CSV_HTML_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, console)
     Write_Complex_HTML_Table('REVENUE & CASHFLOW PROFILE', cashflow, 1, console)
     if len(pumping_power_profiles) > 0:
         Write_Complex_HTML_Table('PUMPING POWER PROFILES', pumping_power_profiles, 1, console)
@@ -1750,6 +1584,8 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
         Write_Complex_HTML_Table('ADD-ON PROFILE', addon_df, 1, console)
     if len(sdac_df) > 0:
         Write_Complex_HTML_Table('S_DAC_GT PROFILE', sdac_df, 1, console)
+    if len(dispatch_profile_rows_table) > 0:
+        Write_CSV_HTML_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, console)
 
     if html_path is not None:
         console.save_html(html_path)
