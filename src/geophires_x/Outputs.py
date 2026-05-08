@@ -23,6 +23,7 @@ from geophires_x.OutputsDispatch import dispatch_profile_tess_row
 from geophires_x.OutputsDispatch import tess_output_rows
 from geophires_x.OutputsDispatch import write_dispatch_profile_output
 from geophires_x.OutputsDispatch import write_dispatch_profile_report_table
+from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
 from geophires_x.OutputsRich import print_outputs_rich
@@ -455,31 +456,7 @@ class Outputs:
 
     @staticmethod
     def _write_engineering_parameters(model: Model, f: TextIOWrapper) -> None:
-        f.write(NL)
-        f.write('                          ***ENGINEERING PARAMETERS***\n')
-        f.write(NL)
-        f.write(f'      Number of Production Wells:                    {model.wellbores.nprod.value:10.0f}' + NL)
-        f.write(f'      Number of Injection Wells:                     {model.wellbores.ninj.value:10.0f}' + NL)
-        f.write(f'      {Outputs._field_label(Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME, 49)}{model.reserv.depth.value:10.1f} ' + model.reserv.depth.CurrentUnits.value + NL)
-        f.write(f'      Water loss rate:                                 {model.reserv.waterloss.value:10.1f} {model.reserv.waterloss.CurrentUnits.value}\n')
-        f.write(f'      Pump efficiency:                                 {model.surfaceplant.pump_efficiency.value:10.1f} ' + model.surfaceplant.pump_efficiency.CurrentUnits.value + NL)
-        f.write(f'      Injection temperature:                           {model.wellbores.Tinj.value:10.1f} ' + model.wellbores.Tinj.CurrentUnits.value + NL)
-        if model.wellbores.rameyoptionprod.value:
-            f.write('      Production Wellbore heat transmission calculated with Ramey\'s model\n')
-            f.write(f'      Average production well temperature drop:        {np.average(model.wellbores.ProdTempDrop.value):10.1f} ' + model.wellbores.ProdTempDrop.PreferredUnits.value + NL)
-        else:
-            f.write('      User-provided production well temperature drop\n')
-            f.write(f'      Constant production well temperature drop:       {model.wellbores.tempdropprod.value:10.1f} ' + model.wellbores.tempdropprod.PreferredUnits.value + NL)
-        f.write(f'      Flowrate per production well:                    {model.wellbores.prodwellflowrate.value:10.1f} ' + model.wellbores.prodwellflowrate.CurrentUnits.value + NL)
-        f.write(f'      {model.wellbores.injection_well_casing_inner_diameter.display_name}:                          {model.wellbores.injection_well_casing_inner_diameter.value:10.3f} {model.wellbores.injection_well_casing_inner_diameter.CurrentUnits.value}\n')
-        f.write(f'      {model.wellbores.production_well_casing_inner_diameter.display_name}:                         {model.wellbores.production_well_casing_inner_diameter.value:10.3f} {model.wellbores.production_well_casing_inner_diameter.CurrentUnits.value}\n')
-        if model.wellbores.IsAGS.value and model.wellbores.tot_vert_m.value > 0:
-            f.write(f'      Vertical length of wellbore (per vertical):         {(model.wellbores.tot_vert_m.value/(model.wellbores.nprod.value+model.wellbores.ninj.value)):10.1f} ' + model.wellbores.tot_vert_m.CurrentUnits.value + NL)
-        if model.wellbores.IsAGS.value and model.wellbores.tot_lateral_m.value > 0:
-            f.write(f'      Lateral length of wellbore (per lateral):           {(model.wellbores.tot_lateral_m.value/model.wellbores.numnonverticalsections.value):10.1f} ' + model.wellbores.tot_lateral_m.CurrentUnits.value + NL)
-        f.write(f'      {model.wellbores.redrill.display_name}:                    {model.wellbores.redrill.value:10.0f}\n')
-        if Outputs._has_electricity_component(model.surfaceplant.enduse_option.value):
-            f.write('      Power plant type:                                       ' + str(model.surfaceplant.plant_type.value.value) + NL)
+        write_engineering_parameters(model, f)
 
     @staticmethod
     def _write_resource_characteristics(model: Model, f: TextIOWrapper) -> None:
