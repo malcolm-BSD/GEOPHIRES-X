@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import io
 from io import TextIOWrapper
 from typing import TYPE_CHECKING, Any
 
@@ -161,19 +162,57 @@ def tess_output_rows(model: Model, metrics: dict[str, float]) -> list[tuple[str,
     ]
 
 
+def _dispatch_profile_cell(column_name: str, value: str | int | float) -> str:
+    if isinstance(value, str):
+        return value
+
+    if column_name in {"Year", "Hour of Year", "Simulation Hour"}:
+        return f"{value:.0f}"
+
+    if "Temperature" in column_name:
+        return f"{value:.2f}"
+
+    if "Runtime Fraction" in column_name:
+        return f"{value:.4f}"
+
+    return f"{value:.4f}"
+
+
+def dispatch_profile_report_text(category_name: str, table: list[list[str | int | float]]) -> str:
+    """Return the hourly dispatch profile as a fixed-width report table."""
+    if len(table) == 0:
+        return ""
+
+    columns = [str(column_name) for column_name in table[0]]
+    rows = [
+        [_dispatch_profile_cell(column_name, value) for column_name, value in zip(columns, row)]
+        for row in table[1:]
+    ]
+    widths = [
+        max(len(column_name), *(len(row[column_index]) for row in rows))
+        for column_index, column_name in enumerate(columns)
+    ]
+
+    buffer = io.StringIO()
+    buffer.write(NL)
+    buffer.write(NL)
+    buffer.write("                            **********************\n")
+    buffer.write(f"                            *  {category_name}  *\n")
+    buffer.write("                            **********************\n")
+    buffer.write("  ".join(column_name.ljust(widths[index]) for index, column_name in enumerate(columns)) + NL)
+    buffer.write("  ".join("_" * width for width in widths) + NL)
+    for row in rows:
+        buffer.write("  ".join(value.rjust(widths[index]) for index, value in enumerate(row)) + NL)
+    buffer.write(NL)
+    return buffer.getvalue()
+
+
 def write_dispatch_profile_report_table(model: Model, f: TextIOWrapper, category_name: str) -> None:
     table = dispatch_profile_table(model)
     if len(table) == 0:
         return
 
-    f.write(NL)
-    f.write(NL)
-    f.write("                            **********************\n")
-    f.write(f"                            *  {category_name}  *\n")
-    f.write("                            **********************\n")
-    writer = csv.writer(f, lineterminator=NL)
-    writer.writerows(table)
-    f.write(NL)
+    f.write(dispatch_profile_report_text(category_name, table))
 
 
 def dispatch_profile_tess_columns(dispatch_results: Any) -> list[str]:

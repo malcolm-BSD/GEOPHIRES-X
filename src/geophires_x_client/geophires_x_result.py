@@ -906,16 +906,32 @@ class GeophiresXResult:
         try:
             lines = self._get_profile_lines("DISPATCH PROFILE")
             csv_lines = [line.strip() for line in lines if "," in line]
-            if len(csv_lines) < 2:
+            if len(csv_lines) >= 2:
+                rows = []
+                reader = csv.reader(StringIO("\n".join(csv_lines)))
+                for idx, row in enumerate(reader):
+                    if idx == 0:
+                        rows.append(row)
+                    else:
+                        rows.append([self._parse_number(cell, field="dispatch profile") for cell in row])
+                return rows
+
+            table_lines = [
+                line.strip()
+                for line in lines
+                if line.strip() and "*" not in line and not re.fullmatch(r"[_\-\s]+", line)
+            ]
+            if len(table_lines) < 2:
                 return None
 
-            rows = []
-            reader = csv.reader(StringIO("\n".join(csv_lines)))
-            for idx, row in enumerate(reader):
-                if idx == 0:
-                    rows.append(row)
-                else:
-                    rows.append([self._parse_number(cell, field="dispatch profile") for cell in row])
+            headers = re.split(r"\s{2,}", table_lines[0].strip())
+            rows = [headers]
+            for line in table_lines[1:]:
+                cells = line.split()
+                if len(cells) != len(headers):
+                    continue
+
+                rows.append([self._parse_number(cell, field="dispatch profile") for cell in cells])
             return rows
         except BaseException as e:
             self._logger.debug(f"Failed to get dispatch profile: {e}")

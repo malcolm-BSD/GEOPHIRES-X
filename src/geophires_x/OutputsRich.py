@@ -24,7 +24,7 @@ from geophires_x.GeoPHIRESUtils import UpgradeSymbologyOfUnits, render_default, 
 from geophires_x.MatplotlibUtils import plt_subplots
 from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel, ReservoirModel, FractureShape, \
     ReservoirVolume
-from geophires_x.OutputsDispatch import dispatch_output_rows, tess_output_rows
+from geophires_x.OutputsDispatch import dispatch_output_rows, dispatch_profile_report_text, tess_output_rows
 from geophires_x.OutputsUtils import OutputTableItem
 
 from geophires_x.Parameter import intParameter, strParameter
@@ -1280,6 +1280,9 @@ def Write_Complex_Text_table(title: str, df_table: pd.DataFrame, time_steps_per_
 
 
 def _csv_table_to_text(title: str, table_rows: list[list]) -> str:
+    if title == DISPATCH_PROFILE_CATEGORY_NAME:
+        return dispatch_profile_report_text(title, table_rows)
+
     buffer = io.StringIO()
     buffer.write(f'{NL}')
     buffer.write(f'                            **********************{NL}')
