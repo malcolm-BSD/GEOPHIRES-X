@@ -26,6 +26,7 @@ from geophires_x.OutputsDispatch import write_dispatch_profile_report_table
 from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
+from geophires_x.OutputsResource import write_resource_characteristics
 from geophires_x.OutputsRich import print_outputs_rich
 from geophires_x.Parameter import ConvertUnitsBack, ConvertOutputUnits, LookupUnits, strParameter, boolParameter, \
     OutputParameter, ReadParameter, ParameterEntry
@@ -460,19 +461,7 @@ class Outputs:
 
     @staticmethod
     def _write_resource_characteristics(model: Model, f: TextIOWrapper) -> None:
-        f.write(NL)
-        f.write(NL)
-        f.write('                         ***RESOURCE CHARACTERISTICS***\n')
-        f.write(NL)
-        f.write(f'      Maximum reservoir temperature:                   {model.reserv.Tmax.value:10.1f} {model.reserv.Tmax.CurrentUnits.value}\n')
-        f.write(f'      Number of segments:                            {model.reserv.numseg.value:10.0f}\n')
-        if model.reserv.numseg.value == 1:
-            f.write(f'      Geothermal gradient:                                {model.reserv.gradient.value[0]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
-        else:
-            for i in range(1, model.reserv.numseg.value):
-                f.write(f'      Segment {str(i):s}   Geothermal gradient:                    {model.reserv.gradient.value[i-1]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
-                f.write(f'      Segment {str(i):s}   Thickness:                         {round(model.reserv.layerthickness.value[i-1], 10)} {model.reserv.layerthickness.CurrentUnits.value}\n')
-            f.write(f'      Segment {str(i+1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n')
+        write_resource_characteristics(model, f)
 
     @staticmethod
     def _write_reservoir_parameters(model: Model, f: TextIOWrapper) -> None:
