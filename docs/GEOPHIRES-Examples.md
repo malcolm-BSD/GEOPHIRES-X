@@ -34,6 +34,19 @@ Important validation boundary:
 - `XLCOH` and `XLCOC` are GEOPHIRES-native extensions of the same market/social methodology, validated through
   direct-use, cooling, and mixed-output regression tests rather than a published external paper target
 
+## Advanced Absorption Chiller Examples
+
+Two advanced absorption chiller examples are available in `tests/examples/`:
+
+- baseload example:
+  [`tests/examples/example11_new_AC_baseload.txt`](../tests/examples/example11_new_AC_baseload.txt)
+- dispatch example:
+  [`tests/examples/example11_new_AC_dispatch.txt`](../tests/examples/example11_new_AC_dispatch.txt)
+
+The dispatch example writes a full-year dispatch profile CSV and improved text output. The baseload example uses the
+annual cooling demand profile average as a steady target aligned to the standard GEOPHIRES plant timesteps. Both paths
+are covered by output regression tests.
+
 ## Value-Adjusted Levelized Cost Examples
 
 `VALCO*` examples are available in `tests/examples/`:

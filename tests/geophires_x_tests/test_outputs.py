@@ -115,6 +115,20 @@ class OutputsTestCase(BaseTestCase):
         self.assertIn("Extended Electricity Breakeven Price (XLCOE Market)", output_content)
         self.assertIn("Extended Electricity Breakeven Price (XLCOE Market + Social)", output_content)
 
+    def test_non_dispatch_cashflow_profile_includes_construction_year(self):
+        result = GeophiresXClient().get_geophires_result(
+            self._geophires_input_parameters(
+                "example1_cashflow_profile.out",
+                from_file_path=self._get_test_file_path("../examples/example1.txt"),
+            )
+        )
+
+        cashflow_rows = result.result["REVENUE & CASHFLOW PROFILE"]
+
+        self.assertEqual(0, cashflow_rows[1][0])
+        self.assertLess(cashflow_rows[1][-1], 0.0)
+        self.assertEqual(1, cashflow_rows[2][0])
+
     def test_text_output_file_contains_xlcoh_summary_lines(self):
         result = GeophiresXClient().get_geophires_result(
             self._geophires_input_parameters(
@@ -455,6 +469,160 @@ class OutputsTestCase(BaseTestCase):
         self.assertIsNotNone(dispatch_results["Annual unmet cooling demand"])
         self.assertGreater(dispatch_results["Design cooling produced"]["value"], 0.0)
         self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
+
+    def test_new_absorption_chiller_dispatch_example_outputs_are_written_and_parseable(self):
+        output_path = self._output_artifact_path("example11_new_AC_dispatch_generated.out")
+        text_output_path = self._output_artifact_path("example11_new_AC_dispatch_generated_text.out")
+        dispatch_profile_path = self._output_artifact_path("example11_new_AC_dispatch_generated_profile.csv")
+        model = self._new_model(
+            input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example11_new_AC_dispatch.txt")
+        )
+        model.InputParameters.update(
+            {
+                "Dispatch Analysis Start Year": ParameterEntry(Name="Dispatch Analysis Start Year", sValue="5"),
+                "Dispatch Analysis End Year": ParameterEntry(Name="Dispatch Analysis End Year", sValue="6"),
+            }
+        )
+        model.outputs.output_file = str(output_path)
+        model.outputs.text_output_file.value = str(text_output_path)
+        model.outputs.text_output_file.Provided = True
+        model.outputs.dispatch_profile_output_file.value = str(dispatch_profile_path)
+        model.outputs.dispatch_profile_output_file.Provided = True
+
+        model.Calculate()
+        model.outputs.PrintOutputs(model)
+        analysis_start_index = model.surfaceplant.dispatch_analysis_start_year.value - 1
+        analysis_end_index = model.surfaceplant.dispatch_analysis_end_year.value - 1
+
+        result = GeophiresXResult(str(output_path))
+        dispatch_results = result.result["DISPATCH RESULTS"]
+        self.assertGreater(dispatch_results["Annual geothermal cooling delivered"]["value"], 0.0)
+        self.assertGreater(dispatch_results["Peak hourly demand"]["value"], 0.0)
+        annual_cooling = model.surfaceplant.cooling_kWh_Produced.value
+        report_end_index = model.surfaceplant.dispatch_analysis_end_year.value
+        self.assertTrue(all(value > 0.0 for value in annual_cooling[:report_end_index]))
+        self.assertTrue(all(value == 0.0 for value in annual_cooling[report_end_index:]))
+        self.assertTrue(all(value > 0.0 for value in annual_cooling[analysis_start_index:analysis_end_index]))
+        reported_temperatures = model.wellbores.ProducedTemperature.value[: report_end_index * 8760]
+        self.assertGreater(max(reported_temperatures), min(reported_temperatures))
+        first_report_year_temperatures = reported_temperatures[:8760]
+        final_report_year_temperatures = reported_temperatures[(report_end_index - 1) * 8760 : report_end_index * 8760]
+        self.assertGreater(
+            sum(first_report_year_temperatures) / len(first_report_year_temperatures),
+            sum(final_report_year_temperatures) / len(final_report_year_temperatures),
+        )
+        self.assertNotEqual(annual_cooling[0], annual_cooling[report_end_index - 1])
+        self.assertAlmostEqual(
+            annual_cooling[analysis_start_index] / 1_000_000.0,
+            dispatch_results["Annual geothermal cooling delivered"]["value"],
+            places=2,
+        )
+        with open(output_path, encoding="UTF-8") as f:
+            legacy_text_output = f.read()
+        legacy_profile = legacy_text_output[
+            legacy_text_output.index(
+                "HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
+        ]
+        legacy_profile_rows = [
+            line.split() for line in legacy_profile.splitlines() if line.strip() and line.strip()[0].isdigit()
+        ]
+        self.assertNotEqual(
+            float(legacy_profile_rows[0][-2]),
+            float(legacy_profile_rows[-1][-2]),
+        )
+        self.assertNotEqual(
+            float(legacy_profile_rows[0][-1]),
+            float(legacy_profile_rows[-1][-1]),
+        )
+        legacy_annual_profile = legacy_text_output[
+            legacy_text_output.index(
+                "ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("REVENUE & CASHFLOW PROFILE")
+        ]
+        legacy_cashflow_profile = legacy_text_output[
+            legacy_text_output.index("REVENUE & CASHFLOW PROFILE") : len(legacy_text_output)
+        ]
+        legacy_annual_rows = [line.strip() for line in legacy_annual_profile.splitlines()]
+        legacy_cashflow_rows = [line.strip() for line in legacy_cashflow_profile.splitlines()]
+        for reported_year in range(1, 7):
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in legacy_annual_rows))
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in legacy_cashflow_rows))
+        self.assertFalse(any(line.startswith("7") for line in legacy_annual_rows))
+        self.assertFalse(any(line.startswith("7") for line in legacy_cashflow_rows))
+        self.assertTrue(text_output_path.exists())
+        with open(text_output_path, encoding="UTF-8") as f:
+            text_output = f.read()
+        self.assertIn("***DISPATCH RESULTS***", text_output)
+        annual_profile = text_output[
+            text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE") : text_output.index(
+                "REVENUE & CASHFLOW PROFILE"
+            )
+        ]
+        cashflow_profile = text_output[text_output.index("REVENUE & CASHFLOW PROFILE") : len(text_output)]
+        self.assertIn(r"\par", annual_profile)
+        annual_rows = [line.strip() for line in annual_profile.splitlines()]
+        cashflow_rows = [line.strip() for line in cashflow_profile.splitlines()]
+        for reported_year in range(1, 7):
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in annual_rows))
+            self.assertTrue(any(line.startswith(str(reported_year)) for line in cashflow_rows))
+        self.assertTrue(any(line.startswith("5") for line in annual_rows))
+        self.assertFalse(any(line.startswith("7") for line in annual_rows))
+        self.assertTrue(any(line.startswith("5") for line in cashflow_rows))
+        self.assertFalse(any(line.startswith("7") for line in cashflow_rows))
+        with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
+            rows = list(DictReader(f))
+        self.assertEqual(8760, len(rows))
+        self.assertIn("Thermal Demand (MW)", rows[0])
+        self.assertIn("Demand Served (MW)", rows[0])
+        self.assertGreater(float(rows[0]["Thermal Demand (MW)"]), 0.0)
+        self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+
+    def test_new_absorption_chiller_baseload_example_outputs_are_parseable(self):
+        output_path = self._output_artifact_path("example11_new_AC_baseload_generated.out")
+        model = self._new_model(
+            input_file=str(Path(__file__).resolve().parents[1] / "examples" / "example11_new_AC_baseload.txt")
+        )
+        model.outputs.output_file = str(output_path)
+
+        model.Calculate()
+        model.outputs.PrintOutputs(model)
+
+        result = GeophiresXResult(str(output_path))
+        summary_results = result.result["SUMMARY OF RESULTS"]
+        self.assertEqual(
+            model.surfaceplant.plant_lifetime.value * model.economics.timestepsperyear.value,
+            len(model.surfaceplant.cooling_produced.value),
+        )
+        self.assertGreater(summary_results["Average Cooling Production"]["value"], 0.0)
+        self.assertGreater(summary_results["Average Direct-Use Heat Production"]["value"], 0.0)
+        self.assertGreaterEqual(min(model.surfaceplant.HeatProduced.value), 0.0)
+        self.assertGreaterEqual(min(model.surfaceplant.HeatExtracted.value), 0.0)
+        self.assertGreater(
+            max(model.surfaceplant.HeatProduced.value),
+            min(model.surfaceplant.HeatProduced.value),
+        )
+        self.assertGreater(
+            max(model.surfaceplant.cooling_produced.value),
+            min(model.surfaceplant.cooling_produced.value),
+        )
+        self.assertGreater(
+            max(model.wellbores.ProducedTemperature.value), min(model.wellbores.ProducedTemperature.value)
+        )
+        self.assertGreater(
+            model.wellbores.ProducedTemperature.value[0],
+            model.wellbores.ProducedTemperature.value[-1],
+        )
+        with open(output_path, encoding="UTF-8") as f:
+            legacy_text_output = f.read()
+        legacy_profile = legacy_text_output[
+            legacy_text_output.index(
+                "HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE"
+            ) : legacy_text_output.index("ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE")
+        ]
+        legacy_profile_rows = [line.strip() for line in legacy_profile.splitlines()]
+        self.assertTrue(any(line.startswith("0") for line in legacy_profile_rows))
+        self.assertTrue(any(line.startswith("29") for line in legacy_profile_rows))
 
     def test_district_heating_dispatch_results_are_written_and_parseable(self):
         demand_csv_file = str(Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv")
