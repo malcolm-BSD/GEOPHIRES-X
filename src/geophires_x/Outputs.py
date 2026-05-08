@@ -23,7 +23,7 @@ from geophires_x.OutputsDispatch import dispatch_profile_tess_row
 from geophires_x.OutputsDispatch import tess_output_rows
 from geophires_x.OutputsDispatch import write_dispatch_profile_output
 from geophires_x.OutputsDispatch import write_dispatch_profile_report_table
-from geophires_x.OutputsEconomics import write_capital_costs
+from geophires_x.OutputsEconomics import write_capital_costs, write_operation_and_maintenance_costs
 from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
@@ -478,42 +478,7 @@ class Outputs:
 
     @staticmethod
     def _write_operation_and_maintenance_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
-        econ: Economics = model.economics
-
-        f.write(NL)
-        f.write(NL)
-        f.write('                ***OPERATING AND MAINTENANCE COSTS (M$/yr)***\n')
-        f.write(NL)
-        if not model.economics.oamtotalfixed.Valid:
-            f.write(f'         {model.economics.Coamwell.display_name}:                   {model.economics.Coamwell.value:10.2f} {model.economics.Coamwell.CurrentUnits.value}\n')
-            f.write(f'         {model.economics.Coamplant.display_name}:                 {model.economics.Coamplant.value:10.2f} {model.economics.Coamplant.CurrentUnits.value}\n')
-            f.write(f'         {model.economics.Coamwater.display_name}:                                   {model.economics.Coamwater.value:10.2f} {model.economics.Coamwater.CurrentUnits.value}\n')
-            if model.surfaceplant.plant_type.value in [PlantType.INDUSTRIAL, PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-                f.write(f'         Average Reservoir Pumping Cost:                {model.economics.averageannualpumpingcosts.value:10.2f} {model.economics.averageannualpumpingcosts.CurrentUnits.value}\n')
-            if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-                f.write(f'         Absorption Chiller O&M Cost:                   {model.economics.chilleropex.value:10.2f} {model.economics.chilleropex.CurrentUnits.value}\n')
-            if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-                f.write(f'         Average Heat Pump Electricity Cost:            {model.economics.averageannualheatpumpelectricitycost.value:10.2f} {model.economics.averageannualheatpumpelectricitycost.CurrentUnits.value}\n')
-            if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-                f.write(f'         Annual District Heating O&M Cost:              {model.economics.dhdistrictoandmcost.value:10.2f} {model.economics.dhdistrictoandmcost.CurrentUnits.value}\n')
-                f.write(f'         Average Annual Peaking Fuel Cost:              {model.economics.averageannualngcost.value:10.2f} {model.economics.averageannualngcost.CurrentUnits.value}\n')
-
-            if model.wellbores.redrill.value > 0:
-                redrill_label = Outputs._field_label(econ.redrilling_annual_cost.display_name, 47)
-                f.write(f'         {redrill_label}{econ.redrilling_annual_cost.value:10.2f} {econ.redrilling_annual_cost.CurrentUnits.value}\n')
-
-            if econ.DoAddOnCalculations.value and is_sam_econ_model:
-                # Non-SAM econ models print this in Extended Economics profile
-                aoc_label = Outputs._field_label(model.addeconomics.AddOnOPEXTotalPerYear.display_name, 47)
-                f.write(f'         {aoc_label}{model.addeconomics.AddOnOPEXTotalPerYear.value:10.2f} {model.addeconomics.AddOnOPEXTotalPerYear.CurrentUnits.value}\n')
-
-            if econ.has_production_based_royalties:
-                royalties_label = Outputs._field_label(econ.royalties_average_annual_cost.display_name, 47)
-                f.write(f'         {royalties_label}{econ.royalties_average_annual_cost.value:10.2f} {econ.royalties_average_annual_cost.CurrentUnits.value}\n')
-
-            f.write(f'      {econ.Coam.display_name}:            {(econ.Coam.value + econ.averageannualpumpingcosts.value + econ.averageannualheatpumpelectricitycost.value):10.2f} {econ.Coam.CurrentUnits.value}\n')
-        else:
-            f.write(f'      {econ.Coam.display_name}:            {econ.Coam.value:10.2f} {econ.Coam.CurrentUnits.value}\n')
+        write_operation_and_maintenance_costs(model, f, is_sam_econ_model)
 
     @staticmethod
     def _write_surface_equipment_simulation_results(
