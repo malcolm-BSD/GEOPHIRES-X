@@ -3,6 +3,9 @@ from __future__ import annotations
 from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+
 from geophires_x.OptionList import EndUseOptions, PlantType
 
 if TYPE_CHECKING:
@@ -37,6 +40,19 @@ def _thermal_drawdown_ratio(model: Model, idx: int) -> float:
     return float(model.wellbores.ProducedTemperature.value[idx] / initial_temp)
 
 
+def shorten_array_to_annual(array_to_shorten: pd.array, new_length: int, time_steps_per_year: int) -> pd.array:
+    if len(array_to_shorten) == new_length:
+        return array_to_shorten
+
+    new_array = np.zeros(new_length)
+    j = 0
+    for i in range(0, len(array_to_shorten), time_steps_per_year):
+        new_array[j] = array_to_shorten[i]
+        j = j + 1
+
+    return new_array
+
+
 def _dispatch_report_year_count(model: Model, default: int | None = None) -> int | None:
     dispatch_results = getattr(model, "dispatch_results", None)
     if dispatch_results is None:
@@ -46,6 +62,240 @@ def _dispatch_report_year_count(model: Model, default: int | None = None) -> int
         getattr(dispatch_results, "analysis_end_year", model.surfaceplant.plant_lifetime.value)
     )
     return min(analysis_end_year, model.surfaceplant.plant_lifetime.value)
+
+
+def _filter_dispatch_year_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+    report_end_year = _dispatch_report_year_count(model)
+    if report_end_year is None:
+        return table
+
+    year_column = next((column for column in table.columns if str(column).startswith("Year|")), None)
+    if year_column is None:
+        return table
+
+    return table[table[year_column].isin(range(1, report_end_year + 1))]
+
+
+def production_profile_table(model: Model, dispatch_report: bool) -> pd.DataFrame:
+    if dispatch_report:
+        return pd.DataFrame()
+
+    hce = pd.DataFrame()
+    hce[f"Year|:2.0f"] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
+    short_pt = shorten_array_to_annual(
+        model.wellbores.ProducedTemperature.value,
+        model.surfaceplant.plant_lifetime.value,
+        model.economics.timestepsperyear.value,
+    )
+    if short_pt[0] == 0:
+        hce[f"Thermal Drawdown (%)|:8.4f"] = np.zeros_like(short_pt)
+    else:
+        hce[f"Thermal Drawdown (%)|:8.4f"] = short_pt / short_pt[0]
+
+    hce[
+        f"Geofluid Temperature ({model.wellbores.ProducedTemperature.CurrentUnits.value})|:8.2f"
+    ] = shorten_array_to_annual(
+        model.wellbores.ProducedTemperature.value,
+        model.surfaceplant.plant_lifetime.value,
+        model.economics.timestepsperyear.value,
+    )
+    hce[f"Pump Power ({model.wellbores.PumpingPower.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+        model.wellbores.PumpingPower.value,
+        model.surfaceplant.plant_lifetime.value,
+        model.economics.timestepsperyear.value,
+    )
+
+    if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+        hce[
+            f"Net Power ({model.surfaceplant.NetElectricityProduced.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.surfaceplant.NetElectricityProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        hce[f"First Law Efficiency (%)|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.FirstLawEfficiency.value * 100,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+    elif (
+        model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
+        and model.surfaceplant.plant_type.value not in SPECIAL_HEAT_PLANT_TYPES
+    ):
+        hce[f"Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.HeatProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+    elif (
+        model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
+        and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP
+    ):
+        hce[f"Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.HeatProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        hce[
+            f"Heat Pump Electricity Used ({model.surfaceplant.heat_pump_electricity_used.CurrentUnits.value}|:8.4f"
+        ] = shorten_array_to_annual(
+            model.surfaceplant.heat_pump_electricity_used.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+    elif (
+        model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
+        and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING
+    ):
+        hce[
+            f"Geothermal Heat Output ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.surfaceplant.HeatProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+    elif (
+        model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
+        and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER
+    ):
+        hce[f"Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.HeatProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        hce[f"Net Cooling ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.cooling_produced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+    elif _is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+        hce[
+            f"Net Power ({model.surfaceplant.NetElectricityProduced.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.surfaceplant.NetElectricityProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        hce[f"Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f"] = shorten_array_to_annual(
+            model.surfaceplant.HeatProduced.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        hce[f"First Law Efficiency (%)|:8.4f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.FirstLawEfficiency.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            * 100
+        )
+
+    return _filter_dispatch_year_rows(hce, model).reset_index()
+
+
+def annual_production_profile_table(model: Model, dispatch_report: bool) -> pd.DataFrame:
+    if dispatch_report:
+        return pd.DataFrame()
+
+    ahce = pd.DataFrame()
+    ahce[f"Year|:2.0f"] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
+
+    if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+        ahce[f"Electricity Provided ({model.surfaceplant.NetkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            model.surfaceplant.NetkWhProduced.value / 1E6
+        )
+    elif model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
+        ahce[f"Cooling Provided ({model.surfaceplant.cooling_kWh_Produced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.cooling_kWh_Produced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+    elif model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
+        ahce[f"Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.HeatkWhProduced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+        ahce[f"Reservoir Heat Extracted ({model.surfaceplant.HeatkWhExtracted.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.HeatkWhExtracted.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+        ahce[
+            f"Heat Pump Electricity Used ({model.surfaceplant.heat_pump_electricity_kwh_used.CurrentUnits.value})|:8.1f"
+        ] = (
+            shorten_array_to_annual(
+                model.surfaceplant.heat_pump_electricity_kwh_used.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+    elif _is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+        ahce[f"Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.HeatkWhProduced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+        ahce[f"Electricity Provided ({model.surfaceplant.NetkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.NetkWhProduced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+    elif model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+        ahce[f"Electricity Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.HeatkWhProduced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+        ahce[f"Peaking Boiler Heat Provided ({model.surfaceplant.annual_ng_demand.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.annual_ng_demand.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E3
+        )
+    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
+        ahce[f"Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f"] = (
+            shorten_array_to_annual(
+                model.surfaceplant.HeatkWhProduced.value,
+                model.surfaceplant.plant_lifetime.value,
+                model.economics.timestepsperyear.value,
+            )
+            / 1E6
+        )
+
+    ahce[f"Heat Extracted({model.surfaceplant.HeatkWhExtracted.CurrentUnits.value})|:8.2f"] = (
+        model.surfaceplant.HeatkWhExtracted.value / 1E6
+    )
+    ahce[f"Reservoir Heat Content ({model.surfaceplant.RemainingReservoirHeatContent.CurrentUnits.value})|:8.2f"] = (
+        model.surfaceplant.RemainingReservoirHeatContent.value
+    )
+    ahce[f"Percentage of Total Heat Mined (%)|:8.2f"] = (
+        (model.reserv.InitialReservoirHeatContent.value - model.surfaceplant.RemainingReservoirHeatContent.value)
+        * 100.0
+        / model.reserv.InitialReservoirHeatContent.value
+    )
+    return _filter_dispatch_year_rows(ahce, model).reset_index()
 
 
 def write_production_profile(model: Model, f: TextIOWrapper, dispatch_report: bool) -> None:

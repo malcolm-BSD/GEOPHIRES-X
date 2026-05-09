@@ -5,29 +5,44 @@ import string
 import time
 import unicodedata
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import pandas as pd
-import rich
 from matplotlib import pyplot as plt
 from rich.console import Console
 from rich.table import Table
 
 import geophires_x
-from geophires_x.DispatchReporting import DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_table, is_dispatch_report, \
-    weather_output_rows
 from geophires_x import Model as Model
-from geophires_x.Economics import Economics
-
-from geophires_x.GeoPHIRESUtils import UpgradeSymbologyOfUnits, render_default, InsertImagesIntoHTML
+from geophires_x.DispatchReporting import (
+    DISPATCH_PROFILE_CATEGORY_NAME,
+    dispatch_profile_table,
+    is_dispatch_report,
+    weather_output_rows,
+)
+from geophires_x.GeoPHIRESUtils import InsertImagesIntoHTML, UpgradeSymbologyOfUnits, render_default
 from geophires_x.MatplotlibUtils import plt_subplots
-from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel, ReservoirModel, FractureShape, \
-    ReservoirVolume
+from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel
+from geophires_x.OutputsCashFlow import revenue_and_cashflow_profile_table
 from geophires_x.OutputsDispatch import dispatch_output_rows, dispatch_profile_report_text, tess_output_rows
-from geophires_x.OutputsEconomics import economic_parameter_output_items
+from geophires_x.OutputsEconomics import (
+    capital_cost_output_items,
+    economic_parameter_output_items,
+    operation_and_maintenance_cost_output_items,
+)
 from geophires_x.OutputsEngineering import engineering_parameter_output_items
+from geophires_x.OutputsProfiles import (
+    annual_production_profile_table,
+    production_profile_table,
+)
+from geophires_x.OutputsReservoir import (
+    pumping_power_profile_table,
+    reservoir_parameter_output_items,
+    reservoir_simulation_result_output_items,
+)
 from geophires_x.OutputsResource import resource_characteristic_output_items
+from geophires_x.OutputsSurface import surface_equipment_simulation_result_output_items
 from geophires_x.OutputsSummary import summary_output_items
 from geophires_x.OutputsUtils import OutputTableItem
 
@@ -35,9 +50,6 @@ from geophires_x.Parameter import intParameter, strParameter
 
 NL = '\n'
 validFilenameChars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-
-# Duplicative of Outputs.VERTICAL_WELL_DEPTH_OUTPUT_NAME to avoid circular import
-VERTICAL_WELL_DEPTH_OUTPUT_NAME = 'Well depth'
 
 _GRAPH_FIGSIZE = (12, 6)
 
@@ -49,54 +61,6 @@ def _set_plot_xlim(ax, x: pd.array) -> None:
         ax.set_xlim(x_min - 0.5, x_max + 0.5)
     else:
         ax.set_xlim(x_min, x_max)
-
-
-def _dispatch_analysis_window(model: Model) -> Optional[Tuple[int, int]]:
-    dispatch_results = getattr(model, 'dispatch_results', None)
-    if dispatch_results is None:
-        return None
-
-    start_year = int(getattr(dispatch_results, 'analysis_start_year', 1))
-    end_year = int(getattr(dispatch_results, 'analysis_end_year', start_year + 1))
-    if end_year <= start_year:
-        return None
-    return start_year, end_year
-
-
-def _dispatch_report_end_year(model: Model) -> Optional[int]:
-    dispatch_window = _dispatch_analysis_window(model)
-    if dispatch_window is None:
-        return None
-
-    _, end_year = dispatch_window
-    return min(end_year, int(model.surfaceplant.plant_lifetime.value))
-
-
-def _filter_dispatch_year_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
-    report_end_year = _dispatch_report_end_year(model)
-    if report_end_year is None:
-        return table
-
-    year_column = next((column for column in table.columns if str(column).startswith('Year|')), None)
-    if year_column is None:
-        return table
-
-    return table[table[year_column].isin(range(1, report_end_year + 1))]
-
-
-def _filter_dispatch_cashflow_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
-    report_end_year = _dispatch_report_end_year(model)
-    if report_end_year is None:
-        return table
-
-    construction_years = int(model.surfaceplant.construction_years.value)
-    start_index = construction_years
-    end_index = construction_years + report_end_year
-    filtered_table = table.iloc[start_index:end_index].copy()
-    year_column = next((column for column in filtered_table.columns if str(column).startswith('Year|')), None)
-    if year_column is not None:
-        filtered_table[year_column] = list(range(1, report_end_year + 1))
-    return filtered_table
 
 
 def print_outputs_rich(
@@ -118,29 +82,20 @@ def print_outputs_rich(
     competitiveness metrics for each active commodity.
     """
 
-    # data structures and assignments for HTML and Improved Text Output formats
-    simulation_metadata = []
-    summary = []
-    economic_parameters = []
-    engineering_parameters = []
-    resource_characteristics = []
-    reservoir_parameters = []
-    reservoir_stimulation_results = []
-    CAPEX = []
-    OPEX = []
-    surface_equipment_results = []
     weather_results = []
     tess_results = []
     dispatch_results = []
     dispatch_report = is_dispatch_report(model)
     dispatch_profile_rows_table = dispatch_profile_table(model)
+    is_sam_econ_model = model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA
     # addon_results = []
 
-    simulation_metadata.append(OutputTableItem('GEOPHIRES Version', geophires_x.__version__))
-    simulation_metadata.append(OutputTableItem('Simulation Date', datetime.datetime.now().strftime('%Y-%m-%d')))
-    simulation_metadata.append(OutputTableItem('Simulation Time', datetime.datetime.now().strftime('%H:%M')))
-    simulation_metadata.append(
-        OutputTableItem('Calculation Time', '{0:10.3f}'.format((time.time() - model.tic)) + ' sec'))
+    simulation_metadata = [
+        OutputTableItem('GEOPHIRES Version', geophires_x.__version__),
+        OutputTableItem('Simulation Date', datetime.datetime.now().strftime('%Y-%m-%d')),
+        OutputTableItem('Simulation Time', datetime.datetime.now().strftime('%H:%M')),
+        OutputTableItem('Calculation Time', '{0:10.3f}'.format((time.time() - model.tic)) + ' sec'),
+    ]
 
     if dispatch_report:
         for field_name, value, units in weather_output_rows(model):
@@ -151,7 +106,7 @@ def print_outputs_rich(
     summary = summary_output_items(
         model,
         dispatch_report,
-        model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA,
+        is_sam_econ_model,
     )
 
     if getattr(model, 'dispatch_results', None) is not None:
@@ -164,660 +119,30 @@ def print_outputs_rich(
             for field_name, value, units in tess_output_rows(model, model.dispatch_results.summary_metrics)
         )
 
-    economic_parameters = economic_parameter_output_items(
-        model,
-        model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA,
-    )
-
+    economic_parameters = economic_parameter_output_items(model, is_sam_econ_model)
     engineering_parameters = engineering_parameter_output_items(model)
     resource_characteristics = resource_characteristic_output_items(model)
-    if model.wellbores.IsAGS.value:
-        reservoir_parameters.append(
-            OutputTableItem('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.'))
-    else:
-        reservoir_parameters.append(
-            OutputTableItem('Reservoir Model', str(model.reserv.resoption.value.value) + ' Model'))
-        if model.reserv.resoption.value is ReservoirModel.SINGLE_FRACTURE:
-            reservoir_parameters.append(
-                OutputTableItem('m/A Drawdown Parameter', '{0:.5f}'.format(model.reserv.drawdp.value),
-                                model.reserv.drawdp.CurrentUnits.value))
-        elif model.reserv.resoption.value is ReservoirModel.ANNUAL_PERCENTAGE:
-            reservoir_parameters.append(
-                OutputTableItem('Annual Thermal Drawdown', '{0:.3f}'.format(model.reserv.drawdp.value * 100),
-                                model.reserv.drawdp.CurrentUnits.value))
-        reservoir_parameters.append(
-            OutputTableItem('Bottom-hole temperature', '{0:10.2f}'.format(model.reserv.Trock.value),
-                            model.reserv.Trock.CurrentUnits.value))
-        if model.reserv.resoption.value in [ReservoirModel.ANNUAL_PERCENTAGE, ReservoirModel.USER_PROVIDED_PROFILE,
-                                            ReservoirModel.TOUGH2_SIMULATOR]:
-            reservoir_parameters.append(
-                OutputTableItem('Warning: the reservoir dimensions and thermo-physical properties'))
-            reservoir_parameters.append(
-                OutputTableItem('listed below are default values if not provided by the user.'))
-            reservoir_parameters.append(
-                OutputTableItem('They are only used for calculating remaining heat content.'))
-
-        if model.reserv.resoption.value in [ReservoirModel.MULTIPLE_PARALLEL_FRACTURES,
-                                            ReservoirModel.LINEAR_HEAT_SWEEP]:
-            reservoir_parameters.append(OutputTableItem('Fracture model', model.reserv.fracshape.value.value))
-            if model.reserv.fracshape.value == FractureShape.CIRCULAR_AREA:
-                reservoir_parameters.append(OutputTableItem('Well separation: fracture diameter',
-                                                            '{0:10.2f}'.format(model.reserv.fracheightcalc.value),
-                                                            model.reserv.fracheight.CurrentUnits.value))
-            elif model.reserv.fracshape.value == FractureShape.CIRCULAR_DIAMETER:
-                reservoir_parameters.append(OutputTableItem('Well separation: fracture diameter',
-                                                            '{0:10.2f}'.format(model.reserv.fracheightcalc.value),
-                                                            model.reserv.fracheight.CurrentUnits.value))
-            elif model.reserv.fracshape.value == FractureShape.SQUARE:
-                reservoir_parameters.append(OutputTableItem('Well separation: fracture height',
-                                                            '{0:10.2f}'.format(model.reserv.fracheightcalc.value),
-                                                            model.reserv.fracheight.CurrentUnits.value))
-            elif model.reserv.fracshape.value == FractureShape.RECTANGULAR:
-                reservoir_parameters.append(OutputTableItem('Well separation: fracture height',
-                                                            '{0:10.2f}'.format(model.reserv.fracheightcalc.value),
-                                                            model.reserv.fracheight.CurrentUnits.value))
-                reservoir_parameters.append(
-                    OutputTableItem('Fracture width', '{0:10.2f}'.format(model.reserv.fracwidthcalc.value),
-                                    model.reserv.fracwidth.CurrentUnits.value))
-            reservoir_parameters.append(
-                OutputTableItem('Fracture area', '{0:10.2f}'.format(model.reserv.fracareacalc.value),
-                                model.reserv.fracarea.CurrentUnits.value))
-        if model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir volume calculated with fracture separation and number of fractures as input'))
-        elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_FRAC_SEP:
-            reservoir_parameters.append(
-                OutputTableItem('Number of fractures calculated with reservoir volume and fracture separation as input'))
-        elif model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
-            reservoir_parameters.append(
-                OutputTableItem('Fracture separation calculated with reservoir volume and number of fractures as input'))
-        elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_ONLY:
-            reservoir_parameters.append(OutputTableItem('Reservoir volume provided as input'))
-        if model.reserv.resvoloption.value in [ReservoirVolume.FRAC_NUM_SEP, ReservoirVolume.RES_VOL_FRAC_SEP,
-                                               ReservoirVolume.FRAC_NUM_SEP]:
-            reservoir_parameters.append(
-                OutputTableItem('Number of fractures', '{0:10.2f}'.format(model.reserv.fracnumbcalc.value)))
-            reservoir_parameters.append(
-                OutputTableItem('Fracture separation', '{0:10.2f}'.format(model.reserv.fracsepcalc.value),
-                                model.reserv.fracsep.CurrentUnits.value))
-        reservoir_parameters.append(
-            OutputTableItem('Reservoir volume', '{0:10.0f}'.format(model.reserv.resvolcalc.value),
-                            model.reserv.resvol.CurrentUnits.value))
-        if model.wellbores.impedancemodelused.value:
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir impedance', '{0:10.2f}'.format(model.wellbores.impedance.value / 1000),
-                                model.wellbores.impedance.CurrentUnits.value))
-        else:
-            reservoir_parameters.append(OutputTableItem('Average reservoir pressure',
-                                                        '{0:10.2f}'.format(model.wellbores.average_production_reservoir_pressure.value),
-                                                        model.wellbores.average_production_reservoir_pressure.CurrentUnits.value))
-            reservoir_parameters.append(OutputTableItem('Plant outlet pressure', '{0:10.2f}'.format(
-                model.surfaceplant.plant_outlet_pressure.value),
-                                                        model.surfaceplant.plant_outlet_pressure.CurrentUnits.value))
-            if model.wellbores.productionwellpumping.value:
-                reservoir_parameters.append(OutputTableItem('Production wellhead pressure',
-                                                            '{0:10.2f}'.format(model.wellbores.Pprodwellhead.value),
-                                                            model.wellbores.Pprodwellhead.CurrentUnits.value))
-                reservoir_parameters.append(
-                    OutputTableItem('Productivity Index', '{0:10.2f}'.format(model.wellbores.PI.value),
-                                    model.wellbores.PI.CurrentUnits.value))
-            reservoir_parameters.append(
-                OutputTableItem('Injectivity Index', '{0:10.2f}'.format(model.wellbores.II.value),
-                                model.wellbores.II.CurrentUnits.value))
-        reservoir_parameters.append(
-            OutputTableItem('Reservoir density', '{0:10.2f}'.format(model.reserv.rhorock.value),
-                            model.reserv.rhorock.CurrentUnits.value))
-        if model.wellbores.rameyoptionprod.value or model.reserv.resoption.value in [
-            ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP,
-            ReservoirModel.SINGLE_FRACTURE, ReservoirModel.TOUGH2_SIMULATOR]:
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir thermal conductivity', '{0:10.2f}'.format(model.reserv.krock.value),
-                                model.reserv.krock.CurrentUnits.value))
-        reservoir_parameters.append(
-            OutputTableItem('Reservoir heat capacity', '{0:10.2f}'.format(model.reserv.cprock.value),
-                            model.reserv.cprock.CurrentUnits.value))
-        if model.reserv.resoption.value is ReservoirModel.LINEAR_HEAT_SWEEP or (
-            model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model):
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir porosity', '{0:10.2f}'.format(model.reserv.porrock.value * 100),
-                                model.reserv.porrock.CurrentUnits.value))
-        if model.reserv.resoption.value is ReservoirModel.TOUGH2_SIMULATOR and model.reserv.usebuiltintough2model:
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir permeability', '{0:10.2E}'.format(model.reserv.permrock.value),
-                                model.reserv.permrock.CurrentUnits.value))
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir thickness', '{0:10.2f}'.format(model.reserv.resthickness.value),
-                                model.reserv.resthickness.CurrentUnits.value))
-            reservoir_parameters.append(
-                OutputTableItem('Reservoir width', '{0:10.2f}'.format(model.reserv.reswidth.value),
-                                model.reserv.reswidth.CurrentUnits.value))
-            reservoir_parameters.append(
-                OutputTableItem('Well separation', '{0:10.2f}'.format(model.wellbores.wellsep.value),
-                                model.wellbores.wellsep.CurrentUnits.value))
-
-    reservoir_stimulation_results.append(OutputTableItem('Maximum Production Temperature', '{0:10.1f}'.format(
-        np.max(model.wellbores.ProducedTemperature.value)), model.wellbores.ProducedTemperature.PreferredUnits.value))
-    reservoir_stimulation_results.append(OutputTableItem('Average Production Temperature', '{0:10.1f}'.format(
-        np.average(model.wellbores.ProducedTemperature.value)), model.wellbores.ProducedTemperature.PreferredUnits.value))
-    reservoir_stimulation_results.append(OutputTableItem('Minimum Production Temperature', '{0:10.1f}'.format(
-        np.min(model.wellbores.ProducedTemperature.value)), model.wellbores.ProducedTemperature.PreferredUnits.value))
-    reservoir_stimulation_results.append(OutputTableItem('Initial Production Temperature', '{0:10.1f}'.format(
-        model.wellbores.ProducedTemperature.value[0]), model.wellbores.ProducedTemperature.PreferredUnits.value))
-    if model.wellbores.IsAGS.value:
-        reservoir_stimulation_results.append(
-            OutputTableItem('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.'))
-    else:
-        reservoir_stimulation_results.append(OutputTableItem('Average Reservoir Heat Extraction',
-                                                             '{0:10.2f}'.format(np.average(
-                                                                 model.surfaceplant.HeatExtracted.value)),
-                                                             model.surfaceplant.HeatExtracted.PreferredUnits.value))
-        if model.wellbores.rameyoptionprod.value:
-            reservoir_stimulation_results.append(
-                OutputTableItem('Production Wellbore Heat Transmission Model', 'Ramey Model'))
-            reservoir_stimulation_results.append(OutputTableItem('Average Production Well Temperature Drop',
-                                                                 '{0:10.1f}'.format(np.average(
-                                                                     model.wellbores.ProdTempDrop.value)),
-                                                                 model.wellbores.ProdTempDrop.PreferredUnits.value))
-        else:
-            reservoir_stimulation_results.append(
-                OutputTableItem('Wellbore Heat Transmission Model = Constant Temperature Drop',
-                                '{0:10.1f}'.format(model.wellbores.tempdropprod.value),
-                                model.wellbores.tempdropprod.PreferredUnits.value))
-        if model.wellbores.impedancemodelused.value:
-            reservoir_stimulation_results.append(OutputTableItem('Total Average Pressure Drop', '{0:10.1f}'.format(
-                np.average(model.wellbores.DPOverall.value)), model.wellbores.DPOverall.PreferredUnits.value))
-            reservoir_stimulation_results.append(OutputTableItem('Average Injection Well Pressure Drop',
-                                                                 '{0:10.1f}'.format(
-                                                                     np.average(model.wellbores.DPInjWell.value)),
-                                                                 model.wellbores.DPInjWell.PreferredUnits.value))
-            reservoir_stimulation_results.append(OutputTableItem('Average Reservoir Pressure Drop',
-                                                                 '{0:10.1f}'.format(
-                                                                     np.average(model.wellbores.DPReserv.value)),
-                                                                 model.wellbores.DPReserv.PreferredUnits.value))
-            reservoir_stimulation_results.append(OutputTableItem('Average Production Well Pressure Drop',
-                                                                 '{0:10.1f}'.format(
-                                                                     np.average(model.wellbores.DPProdWell.value)),
-                                                                 model.wellbores.DPProdWell.PreferredUnits.value))
-            reservoir_stimulation_results.append(OutputTableItem('Average Buoyancy Pressure Drop',
-                                                                 '{0:10.1f}'.format(
-                                                                     np.average(model.wellbores.DPBouyancy.value)),
-                                                                 model.wellbores.DPBouyancy.PreferredUnits.value))
-        else:
-            reservoir_stimulation_results.append(OutputTableItem('Average Injection Well Pump Pressure Drop',
-                                                                 '{0:10.1f}'.format(
-                                                                     np.average(model.wellbores.DPInjWell.value)),
-                                                                 model.wellbores.DPInjWell.PreferredUnits.value))
-            if model.wellbores.productionwellpumping.value:
-                reservoir_stimulation_results.append(OutputTableItem('Average Production Well Pump Pressure Drop',
-                                                                     '{0:10.1f}'.format(np.average(
-                                                                         model.wellbores.DPProdWell.value)),
-                                                                     model.wellbores.DPProdWell.PreferredUnits.value))
-    if dispatch_report:
-        reservoir_stimulation_results = []
-    if not model.economics.totalcapcost.Valid:
-        CAPEX.append(
-            OutputTableItem('Drilling and completion costs', '{0:10.2f}'.format(model.economics.Cwell.value),
-                            model.economics.Cwell.CurrentUnits.value))
-
-        if model.economics.cost_one_production_well.value != model.economics.cost_one_injection_well.value and \
-            model.economics.cost_one_injection_well.value != -1:
-            CAPEX.append(OutputTableItem('Drilling and completion costs per production well',
-                                         '{0:10.2f}'.format(model.economics.cost_one_production_well.value,
-                                          model.economics.cost_one_production_well.CurrentUnits.value)))
-            CAPEX.append(OutputTableItem('Drilling and completion costs per injection well, '
-                                         '{0:10.2f}'.format(model.economics.cost_one_injection_well.value,
-                                         model.economics.cost_one_injection_well.CurrentUnits.value)))
-        else:
-            CAPEX.append(OutputTableItem('Drilling and completion costs per well', '{0:10.2f}'.format(
-                model.economics.Cwell.value / (model.wellbores.nprod.value + model.wellbores.ninj.value)),
-                                         model.economics.Cwell.CurrentUnits.value))
-        CAPEX.append(OutputTableItem('Stimulation costs', '{0:10.2f}'.format(model.economics.Cstim.value),
-                                     model.economics.Cstim.CurrentUnits.value))
-        CAPEX.append(OutputTableItem('Surface power plant costs', '{0:10.2f}'.format(model.economics.Cplant.value),
-                                     model.economics.Cplant.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-            CAPEX.append(
-                OutputTableItem('Absorption Chiller Cost', '{0:10.2f}'.format(model.economics.chillercapex.value),
-                                model.economics.Cplant.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-            CAPEX.append(OutputTableItem('Heat Pump Cost', '{0:10.2f}'.format(model.economics.heatpumpcapex.value),
-                                         model.economics.Cplant.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            CAPEX.append(
-                OutputTableItem('Peaking Boiler Cost', '{0:10.2f}'.format(model.economics.peakingboilercost.value),
-                                model.economics.peakingboilercost.CurrentUnits.value))
-        CAPEX.append(
-            OutputTableItem('Field gathering system costs', '{0:10.2f}'.format(model.economics.Cgath.value),
-                            model.economics.Cgath.CurrentUnits.value))
-        if model.surfaceplant.piping_length.value > 0:
-            CAPEX.append(
-                OutputTableItem('Transmission/pipeline Cost', '{0:10.2f}'.format(model.economics.Cpiping.value),
-                                model.economics.Cpiping.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            CAPEX.append(OutputTableItem('District Heating System Cost',
-                                         '{0:10.2f}'.format(model.economics.dhdistrictcost.value),
-                                         model.economics.dhdistrictcost.CurrentUnits.value))
-        CAPEX.append(OutputTableItem('Total surface equipment costs',
-                                     '{0:10.2f}'.format(model.economics.Cplant.value + model.economics.Cgath.value),
-                                     model.economics.Cplant.CurrentUnits.value))
-        CAPEX.append(OutputTableItem('Exploration costs', '{0:10.2f}'.format(model.economics.Cexpl.value),
-                                     model.economics.Cexpl.CurrentUnits.value))
-    if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
-        CAPEX.append(OutputTableItem('Drilling and completion costs (for redrilling)',
-                                     '{0:10.2f}'.format(model.economics.Cwell.value),
-                                     model.economics.Cwell.CurrentUnits.value))
-        CAPEX.append(OutputTableItem('Drilling and completion costs per redrilled well', '{0:10.2f}'.format(
-            model.economics.Cwell.value / (model.wellbores.nprod.value + model.wellbores.ninj.value)),
-                                     model.economics.Cwell.CurrentUnits.value))
-        CAPEX.append(
-            OutputTableItem('Stimulation costs (for redrilling)', '{0:10.2f}'.format(model.economics.Cstim.value),
-                            model.economics.Cstim.CurrentUnits.value))
-    if model.economics.RITC.Provided:
-        CAPEX.append(
-            OutputTableItem('Investment tax Credit', '{0:10.2f}'.format(-1 * model.economics.RITCValue.value),
-                            model.economics.RITCValue.CurrentUnits.value))
-    CAPEX.append(OutputTableItem('Total capital costs', '{0:10.2f}'.format(model.economics.CCap.value),
-                                 model.economics.CCap.CurrentUnits.value))
-    if model.economics.econmodel.value == EconomicModel.FCR:
-        CAPEX.append(OutputTableItem('Annualized capital costs', '{0:10.2f}'.format(model.economics.CCap.value * (
-                1 + model.economics.inflrateconstruction.value) * model.economics.FCR.value),
-                                     model.economics.CCap.CurrentUnits.value))
-
-    if not model.economics.oamtotalfixed.Valid:
-        OPEX.append(
-            OutputTableItem('Wellfield maintenance costs', '{0:10.2f}'.format(model.economics.Coamwell.value),
-                            model.economics.Coamwell.CurrentUnits.value))
-        OPEX.append(
-            OutputTableItem('Power plant maintenance costs', '{0:10.2f}'.format(model.economics.Coamplant.value),
-                            model.economics.Coamplant.CurrentUnits.value))
-        OPEX.append(OutputTableItem('Water costs', '{0:10.2f}'.format(model.economics.Coamwater.value),
-                                    model.economics.Coamwater.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value in [PlantType.INDUSTRIAL, PlantType.ABSORPTION_CHILLER,
-                                                   PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-            OPEX.append(OutputTableItem('Average Reservoir Pumping Cost',
-                                        '{0:10.2f}'.format(model.economics.averageannualpumpingcosts.value),
-                                        model.economics.averageannualpumpingcosts.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-            OPEX.append(OutputTableItem('Absorption Chiller O&M Cost',
-                                        '{0:10.2f}'.format(model.economics.chilleropex.value),
-                                        model.economics.chilleropex.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-            OPEX.append(OutputTableItem('Average Heat Pump Electricity Cost', '{0:10.2f}'.format(
-                model.economics.averageannualheatpumpelectricitycost.value),
-                                        model.economics.averageannualheatpumpelectricitycost.CurrentUnits.value))
-        if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            OPEX.append(OutputTableItem('Annual District Heating O&M Cost',
-                                        '{0:10.2f}'.format(model.economics.dhdistrictoandmcost.value),
-                                        model.economics.dhdistrictoandmcost.CurrentUnits.value))
-            OPEX.append(OutputTableItem('Average Annual Peaking Fuel Cost',
-                                        '{0:10.2f}'.format(model.economics.averageannualngcost.value),
-                                        model.economics.averageannualngcost.CurrentUnits.value))
-        OPEX.append(OutputTableItem('Total operating and maintenance costs', '{0:10.2f}'.format(
-            model.economics.Coam.value + model.economics.averageannualpumpingcosts.value + model.economics.averageannualheatpumpelectricitycost.value),
-                                    model.economics.Coam.CurrentUnits.value))
-    else:
-        OPEX.append(
-            OutputTableItem('Total operating and maintenance costs', '{0:10.2f}'.format(model.economics.Coam.value),
-                            model.economics.Coam.CurrentUnits.value))
-
-    if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:  # there is an electricity componenent:
-        surface_equipment_results.append(OutputTableItem('Initial geofluid availability', '{0:10.2f}'.format(
-            model.surfaceplant.Availability.value[0]), model.surfaceplant.Availability.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Maximum Total Electricity Generation', '{0:10.2f}'.format(
-            np.max(model.surfaceplant.ElectricityProduced.value)), model.surfaceplant.ElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Total Electricity Generation', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.ElectricityProduced.value)), model.surfaceplant.ElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Total Electricity Generation', '{0:10.2f}'.format(
-            np.min(model.surfaceplant.ElectricityProduced.value)), model.surfaceplant.ElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Initial Total Electricity Generation', '{0:10.2f}'.format(
-            model.surfaceplant.ElectricityProduced.value[0]), model.surfaceplant.ElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Maximum Net Electricity Generation', '{0:10.2f}'.format(
-            np.max(model.surfaceplant.NetElectricityProduced.value)), model.surfaceplant.NetElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Net Electricity Generation', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.NetElectricityProduced.value)), model.surfaceplant.NetElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Net Electricity Generation', '{0:10.2f}'.format(
-            np.min(model.surfaceplant.NetElectricityProduced.value)), model.surfaceplant.NetElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Initial Net Electricity Generation', '{0:10.2f}'.format(
-            model.surfaceplant.NetElectricityProduced.value[0]), model.surfaceplant.NetElectricityProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Annual Total Electricity Generation',
-                                                         f'{0:10.2f}'.format(np.average(model.surfaceplant.TotalkWhProduced.value / 1E6)),
-                                                         f'GWh'))
-        surface_equipment_results.append(OutputTableItem('Average Annual Net Electricity Generation',
-                                                         f'{0:10.2f}'.format(np.average(model.surfaceplant.NetkWhProduced.value / 1E6)),
-                                                         f'GWh'))
-
-        if model.wellbores.PumpingPower.value[0] > 0.0:
-            ipp_nip = model.wellbores.PumpingPower.value[0] / model.surfaceplant.NetElectricityProduced.value[0]
-            surface_equipment_results.append(
-                OutputTableItem('Initial pumping power/net installed power', '{0:10.2f}'.format(ipp_nip * 100),
-                                '%'))
-
-    if model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT, PlantType.ABSORPTION_CHILLER,
-                                                  PlantType.HEAT_PUMP,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:  # geothermal heating component:
-        surface_equipment_results.append(OutputTableItem('Maximum Net Heat Production', '{0:10.2f}'.format(
-            np.max(model.surfaceplant.HeatProduced.value)), model.surfaceplant.HeatProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Net Heat Production', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.HeatProduced.value)), model.surfaceplant.HeatProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Net Heat Production', '{0:10.2f}'.format(
-            np.min(model.surfaceplant.HeatProduced.value)), model.surfaceplant.HeatProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Initial Net Heat Production', '{0:10.2f}'.format(
-            model.surfaceplant.HeatProduced.value[0]), model.surfaceplant.HeatProduced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Annual Heat Production', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.HeatkWhProduced.value / 1E6), 'GWh')))
-
-    if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-        surface_equipment_results.append(OutputTableItem('Average Annual Heat Pump Electricity Use',
-                                                         '{0:10.2f}'.format(np.average(model.surfaceplant.heat_pump_electricity_kwh_used.value / 1E6),
-                                                                            'GWh/year')))
-    if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-        surface_equipment_results.append(OutputTableItem('Maximum Cooling Production', '{0:10.2f}'.format(
-            np.max(model.surfaceplant.cooling_produced.value)), model.surfaceplant.cooling_produced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Cooling Production', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.cooling_produced.value)),
-                                                         model.surfaceplant.cooling_produced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Cooling Production', '{0:10.2f}'.format(
-            np.min(model.surfaceplant.cooling_produced.value)),
-                                                         model.surfaceplant.cooling_produced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Initial Cooling Production', '{0:10.2f}'.format(
-            model.surfaceplant.cooling_produced.value[0]),
-                                                         model.surfaceplant.cooling_produced.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Annual Cooling Production', '{0:10.2f}'.format(
-            np.average(model.surfaceplant.cooling_kWh_Produced.value / 1E6), 'GWh/year')))
-
-    if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-        surface_equipment_results.append(OutputTableItem('Annual District Heating Demand', '{0:10.2f}'.format(
-            model.surfaceplant.annual_heating_demand.value), model.surfaceplant.annual_heating_demand.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Maximum Daily District Heating Demand',
-                                                         '{0:10.2f}'.format(np.max(model.surfaceplant.daily_heating_demand.value)),
-                                                         model.surfaceplant.daily_heating_demand.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Daily District Heating Demand',
-                                                         '{0:10.2f}'.format(np.average(model.surfaceplant.daily_heating_demand.value)),
-                                                         model.surfaceplant.daily_heating_demand.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Daily District Heating Demand',
-                                                         '{0:10.2f}'.format(np.min(model.surfaceplant.daily_heating_demand.value)),
-                                                         model.surfaceplant.daily_heating_demand.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Maximum Geothermal Heating Production',
-                                                         '{0:10.2f}'.format(np.max(model.surfaceplant.dh_geothermal_heating.value)),
-                                                         model.surfaceplant.dh_geothermal_heating.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Geothermal Heating Production',
-                                                         '{0:10.2f}'.format(np.average(model.surfaceplant.dh_geothermal_heating.value)),
-                                                         model.surfaceplant.dh_geothermal_heating.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Geothermal Heating Production',
-                                                         '{0:10.2f}'.format(np.min(model.surfaceplant.dh_geothermal_heating.value)),
-                                                         model.surfaceplant.dh_geothermal_heating.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Maximum Peaking Boiler Heat Production',
-                                                         '{0:10.2f}'.format(np.max(model.surfaceplant.dh_natural_gas_heating.value)),
-                                                         model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Average Peaking Boiler Heat Production',
-                                                         '{0:10.2f}'.format(np.average(model.surfaceplant.dh_natural_gas_heating.value)),
-                                                         model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value))
-        surface_equipment_results.append(OutputTableItem('Minimum Peaking Boiler Heat Production',
-                                                         '{0:10.2f}'.format(np.min(model.surfaceplant.dh_natural_gas_heating.value)),
-                                                         model.surfaceplant.dh_natural_gas_heating.PreferredUnits.value))
-    surface_equipment_results.append(
-        OutputTableItem('Average Pumping Power', '{0:10.2f}'.format(np.average(model.wellbores.PumpingPower.value)),
-                        model.wellbores.PumpingPower.CurrentUnits.value))
-
-    if dispatch_report:
-        surface_equipment_results = [
-            OutputTableItem(
-                'Average Pumping Power',
-                '{0:10.2f}'.format(np.average(model.wellbores.PumpingPower.value)),
-                model.wellbores.PumpingPower.CurrentUnits.value,
-            )
-        ]
-
-    # Build the data frame to hold the heating, cooling, and/or electricity production profile
-    hce: pd.DataFrame = pd.DataFrame()
-
-    # add the columns as needed based on the output.
-    # Note that the correct format for that column is stashed in the title of that column
-    # so that it can be used in the write statement.
-    hce[f'Year|:2.0f'] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
-    short_pt = ShortenArrayToAnnual(model.wellbores.ProducedTemperature.value,
-                                    model.surfaceplant.plant_lifetime.value,
-                                    model.economics.timestepsperyear.value)
-    if short_pt[0] == 0:
-        hce[f'Thermal Drawdown (%)|:8.4f'] = np.zeros_like(short_pt)
-    else:
-        hce[f'Thermal Drawdown (%)|:8.4f'] = short_pt / short_pt[0]
-
-    hce[
-        f'Geofluid Temperature ({model.wellbores.ProducedTemperature.CurrentUnits.value})|:8.2f'] = ShortenArrayToAnnual(
-        model.wellbores.ProducedTemperature.value,
-        model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-    hce[f'Pump Power ({model.wellbores.PumpingPower.CurrentUnits.value})|:8.4f'] = ShortenArrayToAnnual(
-        model.wellbores.PumpingPower.value,
-        model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    # only electricity
-    if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
-        hce[
-            f'Net Power ({model.surfaceplant.NetElectricityProduced.CurrentUnits.value})|:8.4f'] = ShortenArrayToAnnual(
-            model.surfaceplant.NetElectricityProduced.value,
-            model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-        hce[f'First Law Efficiency (%)|:8.4f'] = ShortenArrayToAnnual(
-            model.surfaceplant.FirstLawEfficiency.value * 100,
-            model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    # only direct-use
-    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and \
-        model.surfaceplant.plant_type.value not in \
-        [PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING, PlantType.ABSORPTION_CHILLER]:
-        hce[f'Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatProduced.value,
-                                 model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    # heat pump
-    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and \
-        model.surfaceplant.plant_type.value in [PlantType.HEAT_PUMP]:
-        hce[f'Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatProduced.value,
-                                 model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-        hce[
-            f'Heat Pump Electricity Used ({model.surfaceplant.heat_pump_electricity_used.CurrentUnits.value}|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.heat_pump_electricity_used.value,
-                                 model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    # district heating
-    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT \
-        and model.surfaceplant.plant_type.value in [PlantType.DISTRICT_HEATING]:
-        hce[f'Geothermal Heat Output ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatProduced.value,
-                                 model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    # absorption chiller
-    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and \
-        model.surfaceplant.plant_type.value in [PlantType.ABSORPTION_CHILLER]:
-        hce[f'Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatProduced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value)
-        hce[f'Net Cooling ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.cooling_produced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value)
-
-    # co-generation
-    elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-        hce[f'Net Power ({model.surfaceplant.NetElectricityProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.NetElectricityProduced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value)
-        hce[f'Net Heat ({model.surfaceplant.HeatProduced.CurrentUnits.value})|:8.4f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatProduced.value, model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value)
-        hce[f'First Law Efficiency (%)|:8.4f'] = ShortenArrayToAnnual(model.surfaceplant.FirstLawEfficiency.value,
-                                                                      model.surfaceplant.plant_lifetime.value,
-                                                                      model.economics.timestepsperyear.value) * 100
-    hce = _filter_dispatch_year_rows(hce, model).reset_index()
-
-    # Build the data frame to hold the annual heating, cooling, and/or electricity production profile
-    ahce: pd.DataFrame = pd.DataFrame()
-
-    # add the columns as needed based on the output.
-    # Note that the correct format for that column is stashed in the title of that column
-    # so that it can be used in the write statement.
-    ahce[f'Year|:2.0f'] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
-
-    # only electricity
-    if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
-        ahce[f'Electricity Provided ({model.surfaceplant.NetkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            model.surfaceplant.NetkWhProduced.value / 1E6
-
-    # absorption chiller
-    elif model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-        ahce[f'Cooling Provided ({model.surfaceplant.cooling_kWh_Produced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.cooling_kWh_Produced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-
-    # heat pump
-    elif model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-        ahce[f'Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatkWhProduced.value, model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-        ahce[f'Reservoir Heat Extracted ({model.surfaceplant.HeatkWhExtracted.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatkWhExtracted.value, model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-        ahce[
-            f'Heat Pump Electricity Used ({model.surfaceplant.heat_pump_electricity_kwh_used.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.heat_pump_electricity_kwh_used.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-
-    # co-generation
-    elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                    EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-        ahce[f'Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatkWhProduced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-        ahce[f'Electricity Provided ({model.surfaceplant.NetkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.NetkWhProduced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-
-    # district-heating
-    elif model.surfaceplant.plant_type.value in [PlantType.DISTRICT_HEATING]:
-        ahce[f'Electricity Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatkWhProduced.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-        ahce[f'Peaking Boiler Heat Provided ({model.surfaceplant.annual_ng_demand.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.annual_ng_demand.value,
-                                 model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E3
-
-    elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:  # only direct-use
-        ahce[f'Heating Provided ({model.surfaceplant.HeatkWhProduced.CurrentUnits.value})|:8.1f'] = \
-            ShortenArrayToAnnual(model.surfaceplant.HeatkWhProduced.value, model.surfaceplant.plant_lifetime.value,
-                                 model.economics.timestepsperyear.value) / 1E6
-
-    # three columns always at the end of each style of table
-    ahce[f'Heat Extracted({model.surfaceplant.HeatkWhExtracted.CurrentUnits.value})|:8.2f'] = \
-        model.surfaceplant.HeatkWhExtracted.value / 1E6
-    ahce[f'Reservoir Heat Content ({model.surfaceplant.RemainingReservoirHeatContent.CurrentUnits.value})|:8.2f'] = \
-        model.surfaceplant.RemainingReservoirHeatContent.value
-    ahce[f'Percentage of Total Heat Mined (%)|:8.2f'] = \
-        (
-                model.reserv.InitialReservoirHeatContent.value - model.surfaceplant.RemainingReservoirHeatContent.value) * 100. \
-        / model.reserv.InitialReservoirHeatContent.value
-    ahce = _filter_dispatch_year_rows(ahce, model).reset_index()
-
-    if dispatch_report:
-        hce = pd.DataFrame()
-        ahce = pd.DataFrame()
-
-    # Build the data frame to hold the revenue and cashflow profile
-    econ: Economics = model.economics
-    # create a Coam array and zero out the OPEX during construction years
-    construction_years_zeros = np.zeros(model.surfaceplant.construction_years.value)
-    Coam = np.zeros(model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value)
-    for ii in range(model.surfaceplant.construction_years.value, model.surfaceplant.plant_lifetime.value + 1):
-        Coam[ii] = econ.Coam.value
-
-    cashflow: pd.DataFrame = pd.DataFrame()
-
-    # add the columns as needed based on the output.
-    # Note that the correct format for that column is stashed in the title of that column
-    # so that it can be used in the write statement.
-    # note that the price arrays need to be extended by the number of construction years. with price = 0
-    cashflow[f'Year|:3.0f'] = [i for i in range(1,
-                                                model.surfaceplant.plant_lifetime.value + model.surfaceplant.construction_years.value + 1)]
-    cashflow[f'Electricity:Price ({econ.ElecPrice.CurrentUnits.value})|:7.4f'] = econ.ElecPrice.value
-    cashflow[f'Electricity:Ann. Rev. ({econ.ElecRevenue.CurrentUnits.value})|:5.2f'] = econ.ElecRevenue.value
-    cashflow[
-        f'Electricity:Cumm. Rev. ({econ.ElecCummRevenue.CurrentUnits.value})|:5.2f'] = econ.ElecCummRevenue.value
-    cashflow[f'Heat:Price ({econ.HeatPrice.CurrentUnits.value})|:7.4f'] = econ.HeatPrice.value
-    cashflow[f'Heat:Ann. Rev. ({econ.HeatRevenue.CurrentUnits.value})|:5.2f'] = econ.HeatRevenue.value
-    cashflow[f'Heat:Cumm. Rev. ({econ.HeatCummRevenue.CurrentUnits.value})|:5.2f'] = econ.HeatCummRevenue.value
-    cashflow[f'Cooling:Price ({econ.CoolingPrice.CurrentUnits.value})|:7.4f'] = econ.CoolingPrice.value
-    cashflow[f'Cooling:Ann. Rev. ({econ.CoolingRevenue.CurrentUnits.value})|:5.2f'] = econ.CoolingRevenue.value
-    cashflow[
-        f'Cooling:Cumm. Rev. ({econ.CoolingCummRevenue.CurrentUnits.value})|:5.2f'] = econ.CoolingCummRevenue.value
-    cashflow[f'Carbon:Price ({econ.CarbonPrice.CurrentUnits.value})|:7.4f'] = econ.CarbonPrice.value
-    cashflow[f'Carbon:Ann. Rev. ({econ.CarbonRevenue.CurrentUnits.value})|:5.2f'] = econ.CarbonRevenue.value
-    cashflow[
-        f'Carbon:Cumm. Rev. ({econ.CarbonCummCashFlow.CurrentUnits.value})|:5.2f'] = econ.CarbonCummCashFlow.value
-    cashflow[f'Project:OPEX ({econ.Coam.CurrentUnits.value})|:5.2f'] = Coam
-    cashflow[f'Project:Net Rev. ({econ.TotalRevenue.CurrentUnits.value})|:5.2f'] = econ.TotalRevenue.value
-    cashflow[
-        f'Project:Net Cashflow ({econ.TotalCummRevenue.CurrentUnits.value})|:5.2f'] = econ.TotalCummRevenue.value
-    cashflow = _filter_dispatch_cashflow_rows(cashflow, model).reset_index()
-
-    # Build the data frame to hold the pumping power profiles
-    pumping_power_profiles: pd.DataFrame = pd.DataFrame()
-
-    if model.wellbores.overpressure_percentage.Provided and model.wellbores.injection_reservoir_depth.Provided:
-        # add the columns as needed based on the output.
-        # Note that the correct format for that column is stashed in the title of that column
-        # so that it can be used in the write statement.
-        pumping_power_profiles[f'Year|:2.0f'] = [i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))]
-        pumping_power_profiles[f'Prod Pump Power ({model.wellbores.PumpingPowerProd.CurrentUnits.value})|:8.4f'] = ShortenArrayToAnnual(
-            model.wellbores.PumpingPowerProd.value,
-            model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-        pumping_power_profiles[f'Inject Pump Power ({model.wellbores.PumpingPowerInj.CurrentUnits.value})|:8.4f'] = ShortenArrayToAnnual(
-            model.wellbores.PumpingPowerInj.value,
-            model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-        pumping_power_profiles[f'Pump Power ({model.wellbores.PumpingPower.CurrentUnits.value})|:8.4f'] = ShortenArrayToAnnual(
-            model.wellbores.PumpingPower.value,
-            model.surfaceplant.plant_lifetime.value, model.economics.timestepsperyear.value)
-
-    pumping_power_profiles = pumping_power_profiles.reset_index()
+    reservoir_parameters = reservoir_parameter_output_items(model)
+    reservoir_stimulation_results = reservoir_simulation_result_output_items(model, dispatch_report)
+    capex = capital_cost_output_items(model, is_sam_econ_model)
+    opex = operation_and_maintenance_cost_output_items(model, is_sam_econ_model)
+    surface_equipment_results = surface_equipment_simulation_result_output_items(model, dispatch_report)
+    hce = production_profile_table(model, dispatch_report)
+    ahce = annual_production_profile_table(model, dispatch_report)
+    cashflow = revenue_and_cashflow_profile_table(model)
+    pumping_power_profiles = pumping_power_profile_table(model)
 
     if text_output_file.Provided:
         Write_RTF_Output(text_output_file.value, simulation_metadata, summary, economic_parameters,
                          engineering_parameters, resource_characteristics, reservoir_parameters,
-                         reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, weather_results,
+                         reservoir_stimulation_results, capex, opex, surface_equipment_results, weather_results,
                          tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results, hce,
                          ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
     if html_output_file.Provided:
         Write_HTML_Output(html_output_file.value, simulation_metadata, summary, economic_parameters,
                           engineering_parameters, resource_characteristics, reservoir_parameters,
-                          reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results, weather_results,
+                          reservoir_stimulation_results, capex, opex, surface_equipment_results, weather_results,
                           tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results, hce,
                           ahce, cashflow, pumping_power_profiles, sdac_df, addon_df)
 
@@ -833,7 +158,8 @@ def print_outputs_rich(
             MakeDistrictHeatingPlot(html_output_file.value, model.surfaceplant.dh_geothermal_heating.value,
                                     model.surfaceplant.daily_heating_demand.value)
 
-def removeDisallowedFilenameChars(filename):
+
+def remove_disallowed_filename_chars(filename: str) -> str:
     """
      This function removes disallowed filename characters
      :param filename: the filename
@@ -841,33 +167,12 @@ def removeDisallowedFilenameChars(filename):
      :return: the cleaned filename
      :rtype: str
      """
-    cleanedFilename = unicodedata.normalize('NFKD', filename).encode('ASCII', 'ignore')
-    return ''.join(chr(c) for c in cleanedFilename if chr(c) in validFilenameChars)
+    cleaned_filename = unicodedata.normalize('NFKD', filename).encode('ASCII', 'ignore')
+    return ''.join(chr(c) for c in cleaned_filename if chr(c) in validFilenameChars)
 
 
-def ShortenArrayToAnnual(array_to_shorten: pd.array, new_length:int, time_steps_per_year: int) -> pd.array:
-    """
-    This function shortens the array to the number of years in the model
-    :param array_to_shorten: the array to shorten
-    :type array_to_shorten: pd.array
-    :param new_length: the new length
-    :type new_length: int
-    :param time_steps_per_year: the number of time steps per year
-    :type time_steps_per_year: int
-    :return: the new array
-    :rtype: pd.array
-    """
-    if len(array_to_shorten) == new_length:
-        return array_to_shorten
-
-    new_array = np.zeros(new_length)
-
-    j = 0
-    for i in range(0, len(array_to_shorten), time_steps_per_year):
-        new_array[j] = array_to_shorten[i]
-        j = j + 1
-
-    return new_array
+def removeDisallowedFilenameChars(filename):
+    return remove_disallowed_filename_chars(filename)
 
 
 def Write_Simple_Text_Table(title: str, items: list, f) -> None:
@@ -939,13 +244,13 @@ def Write_CSV_Text_Table(title: str, table_rows: list[list], f) -> None:
     f.write(_csv_table_to_text(title, table_rows))
 
 
-def Write_CSV_HTML_Table(title: str, table_rows: list[list], console: rich.console) -> None:
+def Write_CSV_HTML_Table(title: str, table_rows: list[list], console: Console) -> None:
     console.print(_csv_table_to_text(title, table_rows))
 
 
 def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
-                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
+                      reservoir_stimulation_results: list, capex: list, opex: list, surface_equipment_results: list,
                       weather_results: list, tess_results: list, dispatch_results: list, dispatch_profile_rows_table: list,
                       sdac_results: list, addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame,
                       cashflow: pd.DataFrame, pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame,
@@ -968,10 +273,10 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
     :type reservoir_parameters: list
     :param reservoir_stimulation_results: the reservoir stimulation results
     :type reservoir_stimulation_results: list
-    :param CAPEX: the capital costs
-    :type CAPEX: list
-    :param OPEX: the operating and maintenance costs
-    :type OPEX: list
+    :param capex: the capital costs
+    :type capex: list
+    :param opex: the operating and maintenance costs
+    :type opex: list
     :param surface_equipment_results: the surface equipment simulation results
     :type surface_equipment_results: list
     :param dispatch_results: the dispatch results
@@ -991,7 +296,7 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
     with open(output_path, 'w', encoding='UTF-8') as f:
         f.write(Build_Text_Output(
             simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
-            reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
+            reservoir_parameters, reservoir_stimulation_results, capex, opex, surface_equipment_results,
             weather_results, tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results,
             hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df
         ))
@@ -999,7 +304,7 @@ def Write_Text_Output(output_path: str, simulation_metadata: list, summary: list
 
 def Build_Text_Output(simulation_metadata: list, summary: list, economic_parameters: list, engineering_parameters: list,
                       resource_characteristics: list, reservoir_parameters: list,
-                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list,
+                      reservoir_stimulation_results: list, capex: list, opex: list,
                       surface_equipment_results: list, weather_results: list, tess_results: list,
                       dispatch_results: list, dispatch_profile_rows_table: list, sdac_results: list,
                       addon_results: list, hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
@@ -1022,8 +327,8 @@ def Build_Text_Output(simulation_metadata: list, summary: list, economic_paramet
     Write_Simple_Text_Table('RESERVOIR PARAMETERS', reservoir_parameters, buffer)
     if len(reservoir_stimulation_results) > 0:
         Write_Simple_Text_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, buffer)
-    Write_Simple_Text_Table('CAPITAL COSTS', CAPEX, buffer)
-    Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', OPEX, buffer)
+    Write_Simple_Text_Table('CAPITAL COSTS', capex, buffer)
+    Write_Simple_Text_Table('OPERATING AND MAINTENANCE COSTS', opex, buffer)
     Write_Simple_Text_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, buffer)
     if len(weather_results) > 0:
         Write_Simple_Text_Table('WEATHER DATA RESULTS', weather_results, buffer)
@@ -1059,14 +364,14 @@ def _escape_rtf(text: str) -> str:
 
 def Write_RTF_Output(output_path: str, simulation_metadata: list, summary: list, economic_parameters: list,
                      engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
-                     reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
+                     reservoir_stimulation_results: list, capex: list, opex: list, surface_equipment_results: list,
                      weather_results: list, tess_results: list, dispatch_results: list,
                      dispatch_profile_rows_table: list, sdac_results: list, addon_results: list,
                      hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
                      pumping_power_profiles: pd.DataFrame, sdac_df: pd.DataFrame, addon_df: pd.DataFrame) -> None:
     plain_text = Build_Text_Output(
         simulation_metadata, summary, economic_parameters, engineering_parameters, resource_characteristics,
-        reservoir_parameters, reservoir_stimulation_results, CAPEX, OPEX, surface_equipment_results,
+        reservoir_parameters, reservoir_stimulation_results, capex, opex, surface_equipment_results,
         weather_results, tess_results, dispatch_results, dispatch_profile_rows_table, sdac_results, addon_results,
         hce, ahce, cashflow, pumping_power_profiles, sdac_df, addon_df
     )
@@ -1079,7 +384,7 @@ def Write_RTF_Output(output_path: str, simulation_metadata: list, summary: list,
         f.write('}\n')
 
 
-def Write_Simple_HTML_Table(title: str, items: list, console: rich.console) -> None:
+def Write_Simple_HTML_Table(title: str, items: list, console: Console) -> None:
     """
     This function writes out the simple tables as HTML. The console object is used to write out the HTML.
     :param title: the title of the table
@@ -1098,7 +403,11 @@ def Write_Simple_HTML_Table(title: str, items: list, console: rich.console) -> N
     console.print(table)
 
 
-def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_year: int, console: rich.console)-> None:
+def Write_Complex_HTML_Table(
+        title: str,
+        df_table: pd.DataFrame,
+        time_steps_per_year: int,
+        console: Console) -> None:
     """
     This function writes out the complex tables
     :param title: the title of the table
@@ -1125,9 +434,102 @@ def Write_Complex_HTML_Table(title: str, df_table: pd.DataFrame, time_steps_per_
     console.print(table)
 
 
+def _new_html_console() -> Console:
+    return Console(
+        style='bold black on white',
+        force_terminal=True,
+        record=True,
+        width=500,
+        file=io.StringIO(),
+    )
+
+
+def _write_html_case_report_header(console: Console, simulation_metadata: list) -> None:
+    console.print('*****************')
+    console.print('***CASE REPORT***')
+    console.print('*****************')
+    console.print('Simulation Metadata')
+    console.print('----------------------')
+
+    for item in simulation_metadata:
+        console.print(f'{str(item.parameter)}: {str(item.value)} {str(item.units)}')
+
+
+def _simple_html_sections(
+        summary: list,
+        economic_parameters: list,
+        engineering_parameters: list,
+        resource_characteristics: list,
+        reservoir_parameters: list,
+        reservoir_stimulation_results: list,
+        capex: list,
+        opex: list,
+        surface_equipment_results: list,
+        weather_results: list,
+        tess_results: list,
+        dispatch_results: list,
+        addon_results: list,
+        sdac_results: list) -> list[tuple[str, list, bool]]:
+    return [
+        ('SUMMARY OF RESULTS', summary, False),
+        ('ECONOMIC PARAMETERS', economic_parameters, False),
+        ('ENGINEERING PARAMETERS', engineering_parameters, False),
+        ('RESOURCE CHARACTERISTICS', resource_characteristics, False),
+        ('RESERVOIR PARAMETERS', reservoir_parameters, False),
+        ('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, True),
+        ('CAPITAL COSTS', capex, False),
+        ('OPERATING AND MAINTENANCE COSTS', opex, False),
+        ('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, False),
+        ('WEATHER DATA RESULTS', weather_results, True),
+        ('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, True),
+        ('DISPATCH RESULTS', dispatch_results, True),
+        ('ADD-ON ECONOMICS', addon_results, True),
+        ('S_DAC_GT ECONOMICS', sdac_results, True),
+    ]
+
+
+def _write_html_simple_sections(console: Console, sections: list[tuple[str, list, bool]]) -> None:
+    for title, items, skip_empty in sections:
+        if skip_empty and len(items) == 0:
+            continue
+        Write_Simple_HTML_Table(title, items, console)
+
+
+def _complex_html_sections(
+        hce: pd.DataFrame,
+        ahce: pd.DataFrame,
+        cashflow: pd.DataFrame,
+        pumping_power_profiles: pd.DataFrame,
+        addon_df: pd.DataFrame,
+        sdac_df: pd.DataFrame) -> list[tuple[str, pd.DataFrame, int, bool]]:
+    return [
+        ('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, True),
+        ('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, True),
+        ('REVENUE & CASHFLOW PROFILE', cashflow, 1, False),
+        ('PUMPING POWER PROFILES', pumping_power_profiles, 1, True),
+        ('ADD-ON PROFILE', addon_df, 1, True),
+        ('S_DAC_GT PROFILE', sdac_df, 1, True),
+    ]
+
+
+def _write_html_complex_sections(console: Console, sections: list[tuple[str, pd.DataFrame, int, bool]]) -> None:
+    for title, table, time_steps_per_year, skip_empty in sections:
+        if skip_empty and len(table) == 0:
+            continue
+        Write_Complex_HTML_Table(title, table, time_steps_per_year, console)
+
+
+def _write_html_dispatch_profile_section(
+        console: Console,
+        dispatch_profile_rows_table: list[list]) -> None:
+    if len(dispatch_profile_rows_table) == 0:
+        return
+    Write_CSV_HTML_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, console)
+
+
 def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summary: list, economic_parameters: list,
                       engineering_parameters: list, resource_characteristics: list, reservoir_parameters: list,
-                      reservoir_stimulation_results: list, CAPEX: list, OPEX: list, surface_equipment_results: list,
+                      reservoir_stimulation_results: list, capex: list, opex: list, surface_equipment_results: list,
                       weather_results: list, tess_results: list, dispatch_results: list,
                       dispatch_profile_rows_table: list, sdac_results: list, addon_results: list,
                       hce: pd.DataFrame, ahce: pd.DataFrame, cashflow: pd.DataFrame,
@@ -1150,10 +552,10 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
     :type reservoir_parameters: list
     :param reservoir_stimulation_results: the reservoir stimulation results
     :type reservoir_stimulation_results: list
-    :param CAPEX: the capital costs
-    :type CAPEX: list
-    :param OPEX: the operating and maintenance costs
-    :type OPEX: list
+    :param capex: the capital costs
+    :type capex: list
+    :param opex: the operating and maintenance costs
+    :type opex: list
     :param surface_equipment_results: the surface equipment simulation results
     :type surface_equipment_results: list
     :param dispatch_results: the dispatch results
@@ -1176,78 +578,50 @@ def Write_HTML_Output(html_path: Optional[str], simulation_metadata: list, summa
 
     """
 
-    console = Console(
-        style='bold black on white',
-        force_terminal=True,
-        record=True,
-        width=500,
-        file=io.StringIO(),
+    console = _new_html_console()
+    _write_html_case_report_header(console, simulation_metadata)
+    _write_html_simple_sections(
+        console,
+        _simple_html_sections(
+            summary,
+            economic_parameters,
+            engineering_parameters,
+            resource_characteristics,
+            reservoir_parameters,
+            reservoir_stimulation_results,
+            capex,
+            opex,
+            surface_equipment_results,
+            weather_results,
+            tess_results,
+            dispatch_results,
+            addon_results,
+            sdac_results,
+        )
     )
-
-    # write out the simulation metadata
-    console.print('*****************')
-    console.print('***CASE REPORT***')
-    console.print('*****************')
-    console.print('Simulation Metadata')
-    console.print('----------------------')
-
-    for item in simulation_metadata:
-        console.print(f'{str(item.parameter)}: {str(item.value)} {str(item.units)}')
-
-    # write out the simple tables
-    Write_Simple_HTML_Table('SUMMARY OF RESULTS', summary, console)
-    Write_Simple_HTML_Table('ECONOMIC PARAMETERS', economic_parameters, console)
-    Write_Simple_HTML_Table('ENGINEERING PARAMETERS', engineering_parameters, console)
-    Write_Simple_HTML_Table('RESOURCE CHARACTERISTICS', resource_characteristics, console)
-    Write_Simple_HTML_Table('RESERVOIR PARAMETERS', reservoir_parameters, console)
-    if len(reservoir_stimulation_results) > 0:
-        Write_Simple_HTML_Table('RESERVOIR STIMULATION RESULTS', reservoir_stimulation_results, console)
-    Write_Simple_HTML_Table('CAPITAL COSTS', CAPEX, console)
-    Write_Simple_HTML_Table('OPERATING AND MAINTENANCE COSTS', OPEX, console)
-    Write_Simple_HTML_Table('SURFACE EQUIPMENT SIMULATION RESULTS', surface_equipment_results, console)
-    if len(weather_results) > 0:
-        Write_Simple_HTML_Table('WEATHER DATA RESULTS', weather_results, console)
-    if len(tess_results) > 0:
-        Write_Simple_HTML_Table('THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS', tess_results, console)
-    if len(dispatch_results) > 0:
-        Write_Simple_HTML_Table('DISPATCH RESULTS', dispatch_results, console)
-    if len(addon_results) > 0:
-        Write_Simple_HTML_Table('ADD-ON ECONOMICS', addon_results, console)
-    if len(sdac_results) > 0:
-        Write_Simple_HTML_Table('S_DAC_GT ECONOMICS', sdac_results, console)
-
-    # write out the complex tables
-    if len(hce) > 0:
-        Write_Complex_HTML_Table('HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', hce, 1, console)
-    if len(ahce) > 0:
-        Write_Complex_HTML_Table('ANNUAL HEATING, COOLING AND/OR ELECTRICITY PRODUCTION PROFILE', ahce, 1, console)
-    Write_Complex_HTML_Table('REVENUE & CASHFLOW PROFILE', cashflow, 1, console)
-    if len(pumping_power_profiles) > 0:
-        Write_Complex_HTML_Table('PUMPING POWER PROFILES', pumping_power_profiles, 1, console)
-    if len(addon_df) > 0:
-        Write_Complex_HTML_Table('ADD-ON PROFILE', addon_df, 1, console)
-    if len(sdac_df) > 0:
-        Write_Complex_HTML_Table('S_DAC_GT PROFILE', sdac_df, 1, console)
-    if len(dispatch_profile_rows_table) > 0:
-        Write_CSV_HTML_Table(DISPATCH_PROFILE_CATEGORY_NAME, dispatch_profile_rows_table, console)
+    _write_html_complex_sections(
+        console,
+        _complex_html_sections(hce, ahce, cashflow, pumping_power_profiles, addon_df, sdac_df),
+    )
+    _write_html_dispatch_profile_section(console, dispatch_profile_rows_table)
 
     if html_path is not None:
         console.save_html(html_path)
 
 
-def profile_title_adjusted_for_figure(title:str) -> str:
+def profile_title_adjusted_for_figure(title: str) -> str:
     return title.replace('PROFILE: ', 'PROFILE:\n').replace('PROFILES: ', 'PROFILES:\n')
 
 
 def _graph_file_stem(title: str, filename_prefix: Optional[str] = None) -> str:
-    title_stem = removeDisallowedFilenameChars(title.replace(' ', '_'))
+    title_stem = remove_disallowed_filename_chars(title.replace(' ', '_'))
     if filename_prefix in [None, '']:
         return title_stem
     return f'{filename_prefix}_{title_stem}'
 
 
 def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: pd.array,
-                    x_label: str, y1_label: str, y2_label:str, filename_prefix: Optional[str] = None) -> None:
+                    x_label: str, y1_label: str, y2_label: str, filename_prefix: Optional[str] = None) -> None:
     """
     This function plots the twin graph
     :param title: the title of the graph
@@ -1273,7 +647,7 @@ def Plot_Twin_Graph(title: str, html_path: str, x: pd.array, y1: pd.array, y2: p
     fig, ax1 = plt_subplots(figsize=_GRAPH_FIGSIZE)
 
     ax1.plot(x, y1, label=UpgradeSymbologyOfUnits(y1_label), color=COLOR_PRICE, lw=3)
-    ax1.set_xlabel(UpgradeSymbologyOfUnits(x_label), color = COLOR_PRICE, fontsize=14)
+    ax1.set_xlabel(UpgradeSymbologyOfUnits(x_label), color=COLOR_PRICE, fontsize=14)
     ax1.set_ylabel(UpgradeSymbologyOfUnits(y1_label), color=COLOR_PRICE, fontsize=14)
     ax1.tick_params(axis="y", labelcolor=COLOR_PRICE)
     _set_plot_xlim(ax1, x)
@@ -1321,7 +695,7 @@ def Plot_Single_Graph(title: str, html_path: str, x: pd.array, y: pd.array, x_la
 #    plt.plot(x, y, color=COLOR_PRICE)
     fig, ax = plt_subplots(figsize=_GRAPH_FIGSIZE)
     ax.plot(x, y, label=UpgradeSymbologyOfUnits(y_label), color=COLOR_PRICE)
-    ax.set_xlabel(UpgradeSymbologyOfUnits(x_label), color = COLOR_PRICE, fontsize=14)
+    ax.set_xlabel(UpgradeSymbologyOfUnits(x_label), color=COLOR_PRICE, fontsize=14)
     ax.set_ylabel(UpgradeSymbologyOfUnits(y_label), color=COLOR_PRICE, fontsize=14)
     ax.tick_params(axis="y", labelcolor=COLOR_PRICE)
     _set_plot_xlim(ax, x)
@@ -1382,7 +756,7 @@ def Plot_Dispatch_Graphs_Into_HTML(model: Model, html_path: str) -> None:
         return
 
     demand_type = getattr(dispatch_results, 'demand_type', 'thermal')
-    filename_prefix = removeDisallowedFilenameChars(Path(html_path).stem)
+    filename_prefix = remove_disallowed_filename_chars(Path(html_path).stem)
     if demand_type == 'electric':
         profile_title = 'DISPATCH PROFILE: Demand, Served, and Unmet Electricity'
         y_label = 'Electric Power (MW)'
@@ -1617,7 +991,7 @@ def Plot_Tables_Into_HTML(enduse_option: intParameter, plant_type: intParameter,
                             pumping_power_profiles.values[0:, 0], pumping_power_profiles.values[0:, 3], pumping_power_profiles.columns[0].split('|')[0],
                             pumping_power_profiles.columns[3].split('|')[0])
 
-    if len (addon_df) > 0:
+    if len(addon_df) > 0:
         Plot_Twin_Graph('ADD-ON PROFILE: Electricity Annual Price vs. Revenue',
                         html_path, addon_df.values[0:, 0], addon_df.values[0:, 1], addon_df.values[0:, 2],
                         addon_df.columns[0].split('|')[0], addon_df.columns[1].split('|')[0], addon_df.columns[2].split('|')[0])
@@ -1670,7 +1044,7 @@ def MakeDistrictHeatingPlot(html_path: str, dh_geothermal_heating: pd.array, dai
     plt.title('Geothermal district heating system with peaking boilers')
     full_names: set = set()
     short_names: set = set()
-    title = removeDisallowedFilenameChars('Geothermal district heating system with peaking boilers'.replace(' ', '_'))
+    title = remove_disallowed_filename_chars('Geothermal district heating system with peaking boilers'.replace(' ', '_'))
     save_path = Path(Path(html_path).parent, f'{title}.png')
     plt.savefig(save_path)
     short_names.add(title)

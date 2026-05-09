@@ -3,6 +3,9 @@ from __future__ import annotations
 from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+
 from geophires_x.EconomicsSam import get_sam_cash_flow_profile_tabulated_output
 
 if TYPE_CHECKING:
@@ -20,6 +23,67 @@ def _dispatch_report_year_count(model: Model, default: int | None = None) -> int
         getattr(dispatch_results, "analysis_end_year", model.surfaceplant.plant_lifetime.value)
     )
     return min(analysis_end_year, model.surfaceplant.plant_lifetime.value)
+
+
+def _filter_dispatch_cashflow_rows(table: pd.DataFrame, model: Model) -> pd.DataFrame:
+    report_end_year = _dispatch_report_year_count(model)
+    if report_end_year is None:
+        return table
+
+    construction_years = int(model.surfaceplant.construction_years.value)
+    start_index = construction_years
+    end_index = construction_years + report_end_year
+    filtered_table = table.iloc[start_index:end_index].copy()
+    year_column = next((column for column in filtered_table.columns if str(column).startswith("Year|")), None)
+    if year_column is not None:
+        filtered_table[year_column] = list(range(1, report_end_year + 1))
+    return filtered_table
+
+
+def revenue_and_cashflow_profile_table(model: Model) -> pd.DataFrame:
+    econ = model.economics
+    coam = np.zeros(model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value)
+    for ii in range(model.surfaceplant.construction_years.value, model.surfaceplant.plant_lifetime.value + 1):
+        coam[ii] = econ.Coam.value
+
+    cashflow = pd.DataFrame()
+    cashflow[f"Year|:3.0f"] = [
+        i
+        for i in range(
+            1,
+            model.surfaceplant.plant_lifetime.value + model.surfaceplant.construction_years.value + 1,
+        )
+    ]
+    cashflow[f"Electricity:Price ({econ.ElecPrice.CurrentUnits.value})|:7.4f"] = econ.ElecPrice.value
+    cashflow[f"Electricity:Ann. Rev. ({econ.ElecRevenue.CurrentUnits.value})|:5.2f"] = econ.ElecRevenue.value
+    cashflow[
+        f"Electricity:Cumm. Rev. ({econ.ElecCummRevenue.CurrentUnits.value})|:5.2f"
+    ] = econ.ElecCummRevenue.value
+    cashflow[f"Heat:Price ({econ.HeatPrice.CurrentUnits.value})|:7.4f"] = econ.HeatPrice.value
+    cashflow[f"Heat:Ann. Rev. ({econ.HeatRevenue.CurrentUnits.value})|:5.2f"] = econ.HeatRevenue.value
+    cashflow[f"Heat:Cumm. Rev. ({econ.HeatCummRevenue.CurrentUnits.value})|:5.2f"] = (
+        econ.HeatCummRevenue.value
+    )
+    cashflow[f"Cooling:Price ({econ.CoolingPrice.CurrentUnits.value})|:7.4f"] = econ.CoolingPrice.value
+    cashflow[f"Cooling:Ann. Rev. ({econ.CoolingRevenue.CurrentUnits.value})|:5.2f"] = (
+        econ.CoolingRevenue.value
+    )
+    cashflow[
+        f"Cooling:Cumm. Rev. ({econ.CoolingCummRevenue.CurrentUnits.value})|:5.2f"
+    ] = econ.CoolingCummRevenue.value
+    cashflow[f"Carbon:Price ({econ.CarbonPrice.CurrentUnits.value})|:7.4f"] = econ.CarbonPrice.value
+    cashflow[f"Carbon:Ann. Rev. ({econ.CarbonRevenue.CurrentUnits.value})|:5.2f"] = (
+        econ.CarbonRevenue.value
+    )
+    cashflow[
+        f"Carbon:Cumm. Rev. ({econ.CarbonCummCashFlow.CurrentUnits.value})|:5.2f"
+    ] = econ.CarbonCummCashFlow.value
+    cashflow[f"Project:OPEX ({econ.Coam.CurrentUnits.value})|:5.2f"] = coam
+    cashflow[f"Project:Net Rev. ({econ.TotalRevenue.CurrentUnits.value})|:5.2f"] = econ.TotalRevenue.value
+    cashflow[f"Project:Net Cashflow ({econ.TotalCummRevenue.CurrentUnits.value})|:5.2f"] = (
+        econ.TotalCummRevenue.value
+    )
+    return _filter_dispatch_cashflow_rows(cashflow, model).reset_index()
 
 
 def write_revenue_and_cashflow_profile_output(model: Model, f: TextIOWrapper) -> None:

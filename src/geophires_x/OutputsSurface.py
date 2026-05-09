@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+from io import StringIO
 from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
@@ -7,6 +9,7 @@ import numpy as np
 
 from geophires_x.OptionList import EndUseOptions, PlantType
 from geophires_x.OutputsReport import field_label
+from geophires_x.OutputsUtils import OutputTableItem
 
 if TYPE_CHECKING:
     from geophires_x.Model import Model
@@ -34,6 +37,44 @@ def has_electricity_component(enduse_option: EndUseOptions) -> bool:
 
 def writes_surface_heat_results(enduse_option: EndUseOptions) -> bool:
     return enduse_option in SURFACE_HEAT_RESULT_OPTIONS
+
+
+def surface_equipment_simulation_result_output_items(
+    model: Model,
+    dispatch_report: bool,
+) -> list[OutputTableItem]:
+    section_text = StringIO()
+    write_surface_equipment_simulation_results(model, section_text, dispatch_report)
+    return _surface_equipment_simulation_result_output_items_from_text(section_text.getvalue())
+
+
+_SURFACE_VALUE_PATTERN = re.compile(
+    r"^(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][-+]?\d+)?|NaN|N/A)(?:\s+(?P<units>.+))?$"
+)
+
+
+def _surface_equipment_simulation_result_output_items_from_text(section_text: str) -> list[OutputTableItem]:
+    items = []
+    for line in section_text.splitlines():
+        stripped_line = line.strip()
+        if not stripped_line or stripped_line == "***SURFACE EQUIPMENT SIMULATION RESULTS***":
+            continue
+
+        if ":" not in stripped_line:
+            items.append(OutputTableItem(stripped_line))
+            continue
+
+        parameter, raw_value = stripped_line.split(":", 1)
+        value = raw_value.strip()
+        units = ""
+        value_match = _SURFACE_VALUE_PATTERN.match(value)
+        if value_match is not None:
+            value = value_match.group("value")
+            units = value_match.group("units") or ""
+
+        items.append(OutputTableItem(parameter.strip(), value, units))
+
+    return items
 
 
 def write_surface_equipment_simulation_results(

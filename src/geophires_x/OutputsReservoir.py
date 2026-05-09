@@ -1,18 +1,134 @@
 from __future__ import annotations
 
 import math
+import re
+from io import StringIO
 from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 
 from geophires_x.OptionList import FractureShape, ReservoirModel, ReservoirVolume
+from geophires_x.OutputsProfiles import shorten_array_to_annual
 from geophires_x.OutputsReport import field_label
+from geophires_x.OutputsUtils import OutputTableItem
 
 if TYPE_CHECKING:
     from geophires_x.Model import Model
 
 NL = "\n"
+
+
+def reservoir_parameter_output_items(model: Model) -> list[OutputTableItem]:
+    section_text = StringIO()
+    write_reservoir_parameters(model, section_text)
+    return _reservoir_parameter_output_items_from_text(section_text.getvalue())
+
+
+_RESERVOIR_VALUE_PATTERN = re.compile(
+    r"^(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][-+]?\d+)?|NaN|N/A)(?:\s+(?P<units>.+))?$"
+)
+
+
+def _reservoir_parameter_output_items_from_text(section_text: str) -> list[OutputTableItem]:
+    items = []
+    for line in section_text.splitlines():
+        stripped_line = line.strip()
+        if not stripped_line or stripped_line == "***RESERVOIR PARAMETERS***":
+            continue
+
+        if " = " in stripped_line and ":" not in stripped_line.split(" = ", 1)[0]:
+            parameter, value = stripped_line.split(" = ", 1)
+            items.append(OutputTableItem(parameter.strip(), value.strip()))
+            continue
+
+        if ":" not in stripped_line:
+            items.append(OutputTableItem(stripped_line))
+            continue
+
+        parameter, raw_value = stripped_line.split(":", 1)
+        value = raw_value.strip()
+        units = ""
+        value_match = _RESERVOIR_VALUE_PATTERN.match(value)
+        if value_match is not None:
+            value = value_match.group("value")
+            units = value_match.group("units") or ""
+
+        items.append(OutputTableItem(parameter.strip(), value, units))
+
+    return items
+
+
+def reservoir_simulation_result_output_items(model: Model, dispatch_report: bool) -> list[OutputTableItem]:
+    section_text = StringIO()
+    write_reservoir_simulation_results(model, section_text, dispatch_report)
+    return _reservoir_simulation_result_output_items_from_text(section_text.getvalue())
+
+
+_RESERVOIR_SIMULATION_VALUE_PATTERN = re.compile(
+    r"^(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][-+]?\d+)?|NaN|N/A)(?:\s+(?P<units>.+))?$"
+)
+
+
+def _reservoir_simulation_result_output_items_from_text(section_text: str) -> list[OutputTableItem]:
+    items = []
+    for line in section_text.splitlines():
+        stripped_line = line.strip()
+        if not stripped_line or stripped_line == "***RESERVOIR SIMULATION RESULTS***":
+            continue
+
+        if ":" in stripped_line:
+            parameter, raw_value = stripped_line.split(":", 1)
+            value = raw_value.strip()
+            units = ""
+            value_match = _RESERVOIR_SIMULATION_VALUE_PATTERN.match(value)
+            if value_match is not None:
+                value = value_match.group("value")
+                units = value_match.group("units") or ""
+            items.append(OutputTableItem(parameter.strip(), value, units))
+            continue
+
+        if " = " in stripped_line:
+            parameter, value = stripped_line.split(" = ", 1)
+            items.append(OutputTableItem(parameter.strip(), value.strip()))
+            continue
+
+        items.append(OutputTableItem(stripped_line))
+
+    return items
+
+
+def pumping_power_profile_table(model: Model) -> pd.DataFrame:
+    pumping_power_profiles = pd.DataFrame()
+
+    if model.wellbores.overpressure_percentage.Provided and model.wellbores.injection_reservoir_depth.Provided:
+        pumping_power_profiles[f"Year|:2.0f"] = [
+            i for i in range(1, (model.surfaceplant.plant_lifetime.value + 1))
+        ]
+        pumping_power_profiles[
+            f"Prod Pump Power ({model.wellbores.PumpingPowerProd.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.wellbores.PumpingPowerProd.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        pumping_power_profiles[
+            f"Inject Pump Power ({model.wellbores.PumpingPowerInj.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.wellbores.PumpingPowerInj.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+        pumping_power_profiles[
+            f"Pump Power ({model.wellbores.PumpingPower.CurrentUnits.value})|:8.4f"
+        ] = shorten_array_to_annual(
+            model.wellbores.PumpingPower.value,
+            model.surfaceplant.plant_lifetime.value,
+            model.economics.timestepsperyear.value,
+        )
+
+    return pumping_power_profiles.reset_index()
 
 
 def write_reservoir_parameters(model: Model, f: TextIOWrapper) -> None:

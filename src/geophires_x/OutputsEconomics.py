@@ -23,7 +23,7 @@ NL = "\n"
 def economic_parameter_output_items(model: Model, is_sam_econ_model: bool) -> list[OutputTableItem]:
     section_text = StringIO()
     write_economic_parameters(model, section_text, is_sam_econ_model)
-    return _economic_parameter_output_items_from_text(section_text.getvalue())
+    return _economic_output_items_from_text(section_text.getvalue(), include_text_rows=False)
 
 
 _ECONOMIC_VALUE_PATTERN = re.compile(
@@ -32,10 +32,26 @@ _ECONOMIC_VALUE_PATTERN = re.compile(
 
 
 def _economic_parameter_output_items_from_text(section_text: str) -> list[OutputTableItem]:
+    return _economic_output_items_from_text(section_text, include_text_rows=False)
+
+
+def capital_cost_output_items(model: Model, is_sam_econ_model: bool) -> list[OutputTableItem]:
+    section_text = StringIO()
+    write_capital_costs(model, section_text, is_sam_econ_model)
+    return _economic_output_items_from_text(section_text.getvalue(), include_text_rows=True)
+
+
+def operation_and_maintenance_cost_output_items(model: Model, is_sam_econ_model: bool) -> list[OutputTableItem]:
+    section_text = StringIO()
+    write_operation_and_maintenance_costs(model, section_text, is_sam_econ_model)
+    return _economic_output_items_from_text(section_text.getvalue(), include_text_rows=True)
+
+
+def _economic_output_items_from_text(section_text: str, *, include_text_rows: bool) -> list[OutputTableItem]:
     items = []
     for line in section_text.splitlines():
         stripped_line = line.strip()
-        if not stripped_line or stripped_line == "***ECONOMIC PARAMETERS***":
+        if not stripped_line or (stripped_line.startswith("***") and stripped_line.endswith("***")):
             continue
 
         if " = " in stripped_line and ":" not in stripped_line.split(" = ", 1)[0]:
@@ -44,6 +60,8 @@ def _economic_parameter_output_items_from_text(section_text: str) -> list[Output
             continue
 
         if ":" not in stripped_line:
+            if include_text_rows:
+                items.append(OutputTableItem(stripped_line))
             continue
 
         parameter, raw_value = stripped_line.split(":", 1)
