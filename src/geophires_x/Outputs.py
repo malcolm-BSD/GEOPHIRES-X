@@ -45,6 +45,25 @@ from geophires_x.Parameter import Parameter
 NL = '\n'
 
 
+def _resolve_output_path(output_path: str, model: Model) -> str:
+    path = Path(output_path).expanduser()
+    if path.is_absolute():
+        return str(path)
+
+    candidate_bases = [Path.cwd(), Path(__file__).resolve().parents[2]]
+    input_file_path = getattr(model, 'input_file_path', None)
+    if input_file_path is not None:
+        candidate_bases.append(Path(input_file_path).resolve().parent)
+
+    parent = path.parent
+    for base in candidate_bases:
+        candidate = base / path
+        if parent == Path('.') or candidate.parent.exists():
+            return str(candidate.resolve())
+
+    return str((Path.cwd() / path).resolve())
+
+
 class Outputs:
     """
     This class handles all the outputs for the GEOPHIRESv3 model.
@@ -206,8 +225,16 @@ class Outputs:
                     if key in self.filepath_parameter_names:
                         if not Path(ParameterReadIn.sValue).is_absolute() and default_output_path is not None:
                             original_val = ParameterReadIn.sValue
-                            ParameterReadIn.sValue = str(
-                                default_output_path.joinpath(Path(ParameterReadIn.sValue)).absolute())
+                            output_path = Path(ParameterReadIn.sValue)
+                            resolved_output_path = default_output_path.joinpath(output_path).absolute()
+                            repo_output_path = Path(__file__).resolve().parents[2].joinpath(output_path).absolute()
+                            if (
+                                output_path.parent != Path('.')
+                                and not resolved_output_path.parent.exists()
+                                and repo_output_path.parent.exists()
+                            ):
+                                resolved_output_path = repo_output_path
+                            ParameterReadIn.sValue = str(resolved_output_path)
                             model.logger.info(f'Adjusted {key} path to {ParameterReadIn.sValue} because original value '
                                               f'({original_val}) was not an absolute path.')
 
@@ -438,9 +465,11 @@ class Outputs:
     ) -> None:
         if self.text_output_file.Provided:
             self.text_output_file.Valid = True
+            self.text_output_file.value = _resolve_output_path(self.text_output_file.value, model)
 
         if self.html_output_file.Provided:
             self.html_output_file.Valid = True
+            self.html_output_file.value = _resolve_output_path(self.html_output_file.value, model)
 
         print_outputs_rich(
             self.text_output_file,
@@ -566,5 +595,6 @@ class Outputs:
         dispatch_results = getattr(model, 'dispatch_results', None)
         if dispatch_results is None or not self.dispatch_profile_output_file.Provided:
             return
-        write_dispatch_profile_output(model, self.dispatch_profile_output_file.value)
+        dispatch_profile_output_file = _resolve_output_path(self.dispatch_profile_output_file.value, model)
+        write_dispatch_profile_output(model, dispatch_profile_output_file)
 
