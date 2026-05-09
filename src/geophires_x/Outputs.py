@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import math
 import time
 import sys
 from io import TextIOWrapper
@@ -21,7 +20,11 @@ from geophires_x.OutputsDispatch import dispatch_profile_tess_row
 from geophires_x.OutputsDispatch import tess_output_rows
 from geophires_x.OutputsDispatch import write_dispatch_profile_output
 from geophires_x.OutputsDispatch import write_dispatch_profile_report_table
-from geophires_x.OutputsEconomics import write_capital_costs, write_operation_and_maintenance_costs
+from geophires_x.OutputsEconomics import (
+    write_capital_costs,
+    write_economic_parameters,
+    write_operation_and_maintenance_costs,
+)
 from geophires_x.OutputsEngineering import write_engineering_parameters
 from geophires_x.OutputsProfiles import write_annual_production_profile, write_production_profile
 from geophires_x.OutputsReport import write_scalar_section
@@ -276,90 +279,7 @@ class Outputs:
 
     @staticmethod
     def _write_economic_parameters(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
-        econ: Economics = model.economics
-
-        f.write(NL)
-        f.write(NL)
-        f.write('                           ***ECONOMIC PARAMETERS***\n')
-        f.write(NL)
-        if model.economics.econmodel.value == EconomicModel.FCR:
-            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-            f.write(f'      Fixed Charge Rate (FCR):                          {model.economics.FCR.value*100.0:10.2f} {model.economics.FCR.CurrentUnits.value}\n')
-        elif model.economics.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
-            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-            # TODO disambiguate interest rate for all economic models - see
-            #  https://github.com/softwareengineerprogrammer/GEOPHIRES/commit/535c02d4adbeeeca553b61e9b996fccf00016529
-            f.write(f'      {model.economics.interest_rate.Name}:                                    {model.economics.interest_rate.value:10.2f} {model.economics.interest_rate.CurrentUnits.value}\n')
-
-        elif is_sam_econ_model or model.economics.econmodel.value == EconomicModel.BICYCLE:
-            f.write(f'      Economic Model = {model.economics.econmodel.value.value}\n')
-
-        if is_sam_econ_model:
-            sam_econ_fields: list[OutputParameter] = [
-                econ.real_discount_rate,
-                econ.nominal_discount_rate,
-                econ.wacc,
-            ]
-
-            for field in sam_econ_fields:
-                label = Outputs._field_label(field.Name, 49)
-                f.write(f'      {label}{field.value:10.2f} {field.CurrentUnits.value}\n')
-
-        if econ.RITCValue.value and is_sam_econ_model:
-            # Non-SAM-EMs (inaccurately) treat ITC as a capital cost and thus are displayed in the capital
-            # costs category rather than here.
-            f.write(
-                f'      {econ.RITCValue.display_name}:                           {abs(econ.RITCValue.value):10.2f} {econ.RITCValue.CurrentUnits.value}\n')
-
-        if not is_sam_econ_model:  # (parameter is ambiguous to the point of meaninglessness for SAM-EM)
-            acf: OutputParameter = econ.accrued_financing_during_construction_percentage
-            acf_label = Outputs._field_label(acf.display_name, 49)
-            f.write(f'      {acf_label}{acf.value:10.2f} {acf.CurrentUnits.value}\n')
-
-        display_inflation_costs_in_economic_parameters: bool = (
-            econ.econmodel.value in [EconomicModel.BICYCLE,
-                                     EconomicModel.FCR,
-                                     EconomicModel.STANDARDIZED_LEVELIZED_COST]
-            and
-            econ.inflation_cost_during_construction.value != 0.
-        )
-        if display_inflation_costs_in_economic_parameters:
-            # Inflation cost is displayed here for economic models that don't treat inflation cost as a
-            # capital cost
-            icc: OutputParameter = econ.inflation_cost_during_construction
-            icc_label = Outputs._field_label(icc.display_name, 49)
-            f.write(f'      {icc_label}{icc.value:10.2f} {icc.CurrentUnits.value}\n')
-
-        f.write(f'      Project lifetime:                              {model.surfaceplant.plant_lifetime.value:10.0f} {model.surfaceplant.plant_lifetime.CurrentUnits.value}\n')
-        f.write(f'      Capacity factor:                                 {model.surfaceplant.utilization_factor.value * 100:10.1f} %\n')
-
-        e_npv: OutputParameter = model.economics.ProjectNPV
-        npv_field_label = Outputs._field_label(e_npv.display_name, 49)
-        # TODO should use CurrentUnits instead of PreferredUnits
-        f.write(f'      {npv_field_label}{e_npv.value:10.2f} {e_npv.PreferredUnits.value}\n')
-
-        irr_output_param: OutputParameter = econ.ProjectIRR \
-            if not is_sam_econ_model else econ.after_tax_irr
-        irr_field_label = Outputs._field_label(irr_output_param.display_name, 49)
-        irr_display_value = f'{irr_output_param.value:10.2f}' \
-            if not math.isnan(irr_output_param.value) else 'NaN'
-        f.write(f'      {irr_field_label}{irr_display_value} {irr_output_param.CurrentUnits.value}\n')
-
-        f.write(f'      {econ.ProjectVIR.display_name}:                              {econ.ProjectVIR.value:10.2f}\n')
-        f.write(f'      {econ.ProjectMOIC.display_name}:                                    {econ.ProjectMOIC.value:10.2f}\n')
-
-        payback_period_val = model.economics.ProjectPaybackPeriod.value
-        project_payback_period_display = (f'{payback_period_val:10.2f} '
-                                          f'{econ.ProjectPaybackPeriod.PreferredUnits.value}') \
-            if payback_period_val > 0.0 else 'N/A'
-        project_payback_period_label = Outputs._field_label(model.economics.ProjectPaybackPeriod.display_name, 56)
-        f.write(f'      {project_payback_period_label}{project_payback_period_display}\n')
-
-        if Outputs._is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
-            f.write(f'      CHP: Percent cost allocation for electrical plant: {model.economics.CAPEX_heat_electricity_plant_ratio.value*100.0:10.2f} %\n')
-
-        if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY]:
-            f.write(f'      Estimated Jobs Created:                                 {model.economics.jobs_created.value}\n')
+        write_economic_parameters(model, f, is_sam_econ_model)
 
     @staticmethod
     def _write_engineering_parameters(model: Model, f: TextIOWrapper) -> None:

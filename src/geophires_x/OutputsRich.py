@@ -25,6 +25,7 @@ from geophires_x.MatplotlibUtils import plt_subplots
 from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel, ReservoirModel, FractureShape, \
     ReservoirVolume
 from geophires_x.OutputsDispatch import dispatch_output_rows, dispatch_profile_report_text, tess_output_rows
+from geophires_x.OutputsEconomics import economic_parameter_output_items
 from geophires_x.OutputsSummary import summary_output_items
 from geophires_x.OutputsUtils import OutputTableItem
 
@@ -161,51 +162,10 @@ def print_outputs_rich(
             for field_name, value, units in tess_output_rows(model, model.dispatch_results.summary_metrics)
         )
 
-    if model.economics.econmodel.value == EconomicModel.FCR:
-        economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))
-        economic_parameters.append(
-            OutputTableItem('Fixed Charge Rate (FCR)', '{0:10.2f}'.format(model.economics.FCR.value * 100.0),
-                            model.economics.FCR.CurrentUnits.value))
-    elif model.economics.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
-        economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))
-        economic_parameters.append(
-            OutputTableItem('Interest Rate', '{0:10.2f}'.format(model.economics.discountrate.value * 100.0),
-                            model.economics.discountrate.CurrentUnits.value))
-    elif model.economics.econmodel.value == EconomicModel.BICYCLE:
-        economic_parameters.append(OutputTableItem('Economic Model', model.economics.econmodel.value.value))
-    economic_parameters.append(OutputTableItem('Accrued financing during construction',
-                                               '{0:10.2f}'.format(model.economics.inflrateconstruction.value * 100),
-                                               model.economics.inflrateconstruction.CurrentUnits.value))
-    economic_parameters.append(
-        OutputTableItem('Project lifetime', '{0:10.0f}'.format(model.surfaceplant.plant_lifetime.value),
-                        model.surfaceplant.plant_lifetime.CurrentUnits.value))
-    economic_parameters.append(
-        OutputTableItem('Capacity factor', '{0:10.1f}'.format(model.surfaceplant.utilization_factor.value * 100),
-                        '%'))
-    economic_parameters.append(OutputTableItem('Project NPV', '{0:10.2f}'.format(model.economics.ProjectNPV.value),
-                                               model.economics.ProjectNPV.PreferredUnits.value))
-    economic_parameters.append(OutputTableItem('Project IRR', '{0:10.2f}'.format(model.economics.ProjectIRR.value),
-                                               model.economics.ProjectIRR.PreferredUnits.value))
-    economic_parameters.append(
-        OutputTableItem('Project VIR=PI=PIR', '{0:10.2f}'.format(model.economics.ProjectVIR.value)))
-    economic_parameters.append(
-        OutputTableItem('Project MOIC', '{0:10.2f}'.format(model.economics.ProjectMOIC.value)))
-
-    payback_period_val = model.economics.ProjectPaybackPeriod.value
-    project_payback_period_display = f'{payback_period_val:10.2f} {model.economics.ProjectPaybackPeriod.PreferredUnits.value}' \
-        if payback_period_val > 0.0 else 'N/A'
-    economic_parameters.append(OutputTableItem('Project Payback Period', project_payback_period_display))
-
-    if model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-        economic_parameters.append(OutputTableItem('CHP: Percent cost allocation for electrical plant',
-                                                   '{0:10.2f}'.format(
-                                                       model.economics.CAPEX_heat_electricity_plant_ratio.value * 100.0),
-                                                   '%'))
+    economic_parameters = economic_parameter_output_items(
+        model,
+        model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA,
+    )
 
     engineering_parameters.append(
         OutputTableItem('Number of Production Wells', '{0:10.0f}'.format(model.wellbores.nprod.value)))
