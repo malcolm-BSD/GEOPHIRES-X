@@ -26,6 +26,8 @@ from geophires_x.OptionList import EndUseOptions, PlantType, EconomicModel, Rese
     ReservoirVolume
 from geophires_x.OutputsDispatch import dispatch_output_rows, dispatch_profile_report_text, tess_output_rows
 from geophires_x.OutputsEconomics import economic_parameter_output_items
+from geophires_x.OutputsEngineering import engineering_parameter_output_items
+from geophires_x.OutputsResource import resource_characteristic_output_items
 from geophires_x.OutputsSummary import summary_output_items
 from geophires_x.OutputsUtils import OutputTableItem
 
@@ -167,74 +169,8 @@ def print_outputs_rich(
         model.economics.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA,
     )
 
-    engineering_parameters.append(
-        OutputTableItem('Number of Production Wells', '{0:10.0f}'.format(model.wellbores.nprod.value)))
-    engineering_parameters.append(
-        OutputTableItem('Number of Injection Wells', '{0:10.0f}'.format(model.wellbores.ninj.value)))
-    engineering_parameters.append(OutputTableItem(VERTICAL_WELL_DEPTH_OUTPUT_NAME,
-                                                  '{0:10.1f}'.format(model.reserv.depth.value),
-                                                  model.reserv.depth.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Water loss rate', '{0:10.1f}'.format(model.reserv.waterloss.value * 100),
-                        model.reserv.waterloss.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Pump efficiency', '{0:10.1f}'.format(model.surfaceplant.pump_efficiency.value * 100),
-                        model.surfaceplant.pump_efficiency.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Injection temperature', '{0:10.1f}'.format(model.wellbores.Tinj.value),
-                        model.wellbores.Tinj.CurrentUnits.value))
-    if model.wellbores.rameyoptionprod.value:
-        engineering_parameters.append(
-            OutputTableItem('Production Wellbore heat transmission calculated with Rameys model'))
-        engineering_parameters.append(OutputTableItem('Average production well temperature drop',
-                                                      '{0:10.1f}'.format(
-                                                          np.average(model.wellbores.ProdTempDrop.value)),
-                                                      model.wellbores.ProdTempDrop.PreferredUnits.value))
-    else:
-        engineering_parameters.append(OutputTableItem('User-provided production well temperature drop'))
-        engineering_parameters.append(OutputTableItem('Constant production well temperature drop',
-                                                      '{0:10.1f}'.format(model.wellbores.tempdropprod.value),
-                                                      model.wellbores.tempdropprod.PreferredUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Flowrate per production well', '{0:10.1f}'.format(model.wellbores.prodwellflowrate.value),
-                        model.wellbores.prodwellflowrate.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Injection well casing ID', '{0:10.3f}'.format(model.wellbores.injwelldiam.value),
-                        model.wellbores.injwelldiam.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Production well casing ID', '{0:10.3f}'.format(model.wellbores.prodwelldiam.value),
-                        model.wellbores.prodwelldiam.CurrentUnits.value))
-    engineering_parameters.append(
-        OutputTableItem('Number of times redrilling', '{0:10.0f}'.format(model.wellbores.redrill.value)))
-    if model.surfaceplant.enduse_option.value in [EndUseOptions.ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
-                                                  EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
-                                                  EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY]:
-        engineering_parameters.append(
-            OutputTableItem('Power plant type', model.surfaceplant.plant_type.value.value))
-    resource_characteristics.append(
-        OutputTableItem('Maximum reservoir temperature', '{0:10.1f}'.format(model.reserv.Tmax.value),
-                        model.reserv.Tmax.CurrentUnits.value))
-    resource_characteristics.append(
-        OutputTableItem('Number of segments', '{0:10.0f}'.format(model.reserv.numseg.value)))
-    if model.reserv.numseg.value == 1:
-        resource_characteristics.append(
-            OutputTableItem('Geothermal gradient', '{0:10.4g}'.format(model.reserv.gradient.value[0]),
-                            model.reserv.gradient.CurrentUnits.value))
-    else:
-        for i in range(1, model.reserv.numseg.value):
-            resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Geothermal gradient',
-                                                            '{0:10.4g}'.format(
-                                                                model.reserv.gradient.value[i - 1]),
-                                                            model.reserv.gradient.CurrentUnits.value))
-            resource_characteristics.append(OutputTableItem(f'Segment {str(i)} Thickness', '{0:10.0f}'.format(
-                model.reserv.layerthickness.value[i - 1]), model.reserv.layerthickness.CurrentUnits.value))
-        resource_characteristics.append(OutputTableItem(f'Segment {str(i + 1)} Geothermal gradient',
-                                                        '{0:10.4g}'.format(model.reserv.gradient.value[i]),
-                                                        model.reserv.gradient.CurrentUnits.value))
+    engineering_parameters = engineering_parameter_output_items(model)
+    resource_characteristics = resource_characteristic_output_items(model)
     if model.wellbores.IsAGS.value:
         reservoir_parameters.append(
             OutputTableItem('The AGS models contain an intrinsic reservoir model that doesn\'t expose values that can be used in extensive reporting.'))
