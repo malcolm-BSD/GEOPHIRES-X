@@ -16,6 +16,20 @@ if TYPE_CHECKING:
 
 NL = "\n"
 
+SURFACE_HEAT_RESULT_OPTIONS = (
+    EndUseOptions.HEAT,
+    EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
+    EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+    EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY,
+    EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT,
+    EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+    PlantType.ABSORPTION_CHILLER,
+    PlantType.HEAT_PUMP,
+    PlantType.DISTRICT_HEATING,
+)
+
+
 def has_electricity_component(enduse_option: EndUseOptions) -> bool:
     return enduse_option in (
         EndUseOptions.ELECTRICITY,
@@ -29,7 +43,7 @@ def has_electricity_component(enduse_option: EndUseOptions) -> bool:
 
 
 def writes_surface_heat_results(enduse_option: EndUseOptions) -> bool:
-    return enduse_option != EndUseOptions.ELECTRICITY
+    return enduse_option in SURFACE_HEAT_RESULT_OPTIONS
 
 
 def surface_equipment_simulation_result_output_items(
