@@ -30,7 +30,32 @@ SURFACE_HEAT_RESULT_OPTIONS = (
 )
 
 
-def has_electricity_component(enduse_option: EndUseOptions) -> bool:
+def _surface_output_option(option: object) -> object:
+    if isinstance(option, (EndUseOptions, PlantType)):
+        return option
+
+    for option_type in (EndUseOptions, PlantType):
+        if isinstance(option, int):
+            try:
+                return option_type.from_int(option)
+            except ValueError:
+                continue
+
+        if isinstance(option, str):
+            try:
+                return option_type.from_input_string(option.strip())
+            except ValueError:
+                pass
+
+            for member in option_type:
+                if option in (member.value, member.name):
+                    return member
+
+    return option
+
+
+def has_electricity_component(enduse_option: EndUseOptions | int | str) -> bool:
+    enduse_option = _surface_output_option(enduse_option)
     return enduse_option in (
         EndUseOptions.ELECTRICITY,
         EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT,
@@ -42,8 +67,8 @@ def has_electricity_component(enduse_option: EndUseOptions) -> bool:
     )
 
 
-def writes_surface_heat_results(enduse_option: EndUseOptions) -> bool:
-    return enduse_option in SURFACE_HEAT_RESULT_OPTIONS
+def writes_surface_heat_results(enduse_option: EndUseOptions | PlantType | int | str) -> bool:
+    return _surface_output_option(enduse_option) in SURFACE_HEAT_RESULT_OPTIONS
 
 
 def surface_equipment_simulation_result_output_items(
