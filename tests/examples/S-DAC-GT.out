@@ -5,9 +5,9 @@
 Simulation Metadata
 ----------------------
  GEOPHIRES Version: 3.12.1
- Simulation Date: 2026-04-07
- Simulation Time:  10:46
- Calculation Time:      0.135 sec
+ Simulation Date: 2026-04-26
+ Simulation Time:  15:31
+ Calculation Time:      0.512 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -15,7 +15,7 @@ Simulation Metadata
       Average Net Electricity Production:                    19.62 MW
       Average Direct-Use Heat Production:                    13.19 MW
       Electricity breakeven price:                           10.68 cents/kWh
-      Direct-Use heat breakeven price (LCOH):               -56.08 USD/MMBTU
+      Direct-Use heat breakeven price (LCOH):                 0.00 USD/MMBTU
       Number of production wells:                             3
       Number of injection wells:                              3
       Flowrate per production well:                          70.0 kg/sec

@@ -1,0 +1,66 @@
+# Example 11b: New Absorption Chiller - Dispatch mode
+# ---------------------------------------------------
+# This fixture demonstrates how to enable and configure the advanced
+# Absorption Chiller subsystem for hourly dispatch operation. The
+# dispatch example shows how to prefer geothermal heat, use MILP/heuristic
+# dispatch strategies, and reference the embedded catalog. Values are
+# illustrative and meant for test/demo usage.
+
+# Enable the advanced Absorption Chiller subsystem
+Use Advanced Absorption Chiller,True,
+Reservoir Model,4,                 ---[-] Annual percentage thermal drawdown model
+Drawdown Parameter,0.005,           ---[1/year]
+Reservoir Depth,3.0,                ---[km]
+Gradient 1,60.0,                    ---[deg.C/km]
+Injection Temperature,60.0,         ---[deg.C]
+Production Flow Rate per Well,40.0, ---[kg/s]
+Number of Production Wells,1,
+Power Plant Type,5,                 ---[-] Absorption Chiller
+End-Use Option,2,                   ---[-] Direct-use heat application
+
+# Absorption Chiller top-level options (canonical parameter names)
+Absorption Chiller Use Pint,True,                ---[bool] enable Pint units handling (recommended)
+Absorption Chiller Use CoolProp,True,            ---[bool] enable CoolProp for fluid properties (best-effort)
+Absorption Chiller Refrigerant Family,LiBr-water, ---[string] 'LiBr-water' | 'NH3-water'
+Absorption Chiller Effect Type,double,           ---[string] 'single' | 'double' | 'triple'
+# Absorption Chiller Effect Multiplier Override,1.0,   ---[float] optional override of effect multiplier
+Absorption Chiller Min Part Load Ratio,0.2,        ---[fraction]
+Absorption Chiller Turndown Ratio,3.0,
+Absorption Chiller Chilled DeltaT,5.0,         ---[K]
+Absorption Chiller Pump Head,30.0,
+Absorption Chiller Pump Efficiency,0.70,
+
+# Catalog: use the embedded seeded CSV included with the repo. Tests may
+# override this with a user CSV by setting the Absorption Chiller Catalog Path.
+Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
+
+# Operating mode: dispatch (hour-by-hour optimization)
+Operating Mode,Dispatchable,
+Dispatch Demand Source,Annual Cooling Demand,
+Absorption Chiller Dispatch Strategy,min_cost,         ---[min_cost|min_units|follow_heat]
+Dispatch Analysis Start Year, 5
+Dispatch Analysis End Year, 6
+
+# If available, provide generator heat availability (hourly series). In
+# many test harnesses this is provided via CSV; here we show the parameter
+# name to be used. The solver will enforce available_generator_heat.
+Annual Cooling Demand,tests/assets/params/annual_cooling_demand.csv
+
+# Optional: dispatch solver preferences (use canonical parameter names)
+# Use dispatch-related parameters (e.g. "Absorption Chiller Dispatch Strategy",
+# "Minimum Dispatch Runtime Fraction", etc.).
+# The older dotted-key syntax (for example `Dispatch.UseMILP`) is deprecated; prefer
+# the canonical parameter names shown above and elsewhere in the examples/docs.
+Absorption Chiller PLR Segments,5,       ---[int] number of PLR segments used for piecewise-linear COP approximation in MILP
+Absorption Chiller Use Hourly Temperatures,True,  ---[bool] evaluate segment COPs using per-hour temps when provided
+
+# Provide an example inline hourly temperature series (short example). Real tests should supply full 8760 arrays or CSV references.
+Absorption Chiller Generator Temperature Profile,95.0,95.0,85.0,95.0,  ---[deg.C]
+Absorption Chiller Evaporator Temperature Profile,7.0,7.0,7.0,7.0,     ---[deg.C]
+Absorption Chiller Condenser Temperature Profile,30.0,30.0,30.0,30.0,  ---[deg.C]
+
+# Output files for dispatch results (optional)
+Dispatch Profile Output File,example11_new_AC_dispatch_profile.csv,
+Improved Text Output File,example11_new_AC_dispatch_text.out,
+
+# End of example 11b

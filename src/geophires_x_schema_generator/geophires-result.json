@@ -22,6 +22,96 @@
           "description": "LCOE. For SAM economic models, this is the nominal LCOE value (as opposed to real).",
           "units": "cents/kWh"
         },
+        "Extended Electricity Breakeven Price (XLCOE Market)": {
+          "type": "number",
+          "description": "XLCOE_Market",
+          "units": "cents/kWh"
+        },
+        "Extended Electricity Breakeven Price (XLCOE Market + Social)": {
+          "type": "number",
+          "description": "XLCOE_MarketSocial",
+          "units": "cents/kWh"
+        },
+        "Value-Adjusted Electricity Breakeven Price (VALCOE)": {
+          "type": "number",
+          "description": "VALCOE",
+          "units": "cents/kWh"
+        },
+        "VALCOE Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOE_EnergyAdjustment",
+          "units": "cents/kWh"
+        },
+        "VALCOE Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOE_CapacityAdjustment",
+          "units": "cents/kWh"
+        },
+        "VALCOE Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOE_FlexibilityAdjustment",
+          "units": "cents/kWh"
+        },
+        "Extended Heat Breakeven Price (XLCOH Market)": {
+          "type": "number",
+          "description": "XLCOH_Market",
+          "units": "USD/MMBTU"
+        },
+        "Extended Heat Breakeven Price (XLCOH Market + Social)": {
+          "type": "number",
+          "description": "XLCOH_MarketSocial",
+          "units": "USD/MMBTU"
+        },
+        "Value-Adjusted Heat Breakeven Price (VALCOH)": {
+          "type": "number",
+          "description": "VALCOH",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOH_EnergyAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOH_CapacityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOH Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOH_FlexibilityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "Extended Cooling Breakeven Price (XLCOC Market)": {
+          "type": "number",
+          "description": "XLCOC_Market",
+          "units": "USD/MMBTU"
+        },
+        "Extended Cooling Breakeven Price (XLCOC Market + Social)": {
+          "type": "number",
+          "description": "XLCOC_MarketSocial",
+          "units": "USD/MMBTU"
+        },
+        "Value-Adjusted Cooling Breakeven Price (VALCOC)": {
+          "type": "number",
+          "description": "VALCOC",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Energy Adjustment": {
+          "type": "number",
+          "description": "VALCOC_EnergyAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Capacity Adjustment": {
+          "type": "number",
+          "description": "VALCOC_CapacityAdjustment",
+          "units": "USD/MMBTU"
+        },
+        "VALCOC Flexibility Adjustment": {
+          "type": "number",
+          "description": "VALCOC_FlexibilityAdjustment",
+          "units": "USD/MMBTU"
+        },
         "Total CAPEX": {
           "type": "number",
           "description": "The total capital expenditure (CAPEX) required to construct the plant. This value includes all direct and indirect costs, and contingency. For SAM Economic models, it also includes any cost escalation from inflation during construction. It is used as the total installed cost input for SAM Economic Models.",
@@ -62,6 +152,7 @@
         "Number of production wells": {},
         "Number of injection wells": {},
         "Flowrate per production well": {},
+        "Maximum Flowrate per production well": {},
         "Well depth": {},
         "Well depth (or total length, if not vertical)": {},
         "Geothermal gradient": {},
@@ -455,9 +546,9 @@
         "of which Absorption Chiller Cost": {},
         "of which Heat Pump Cost": {},
         "of which Peaking Boiler Cost": {},
-        "Transmission pipeline cost": {
+        "Transmission/pipeline Cost": {
           "type": "number",
-          "description": "Transmission pipeline costs",
+          "description": "",
           "units": "MUSD"
         },
         "District Heating System Cost": {
@@ -467,7 +558,7 @@
         },
         "Field gathering system costs": {
           "type": "number",
-          "description": "Field gathering system cost. The built-in cost correlation for estimating the field gathering system cost includes the cost for surface piping from each well to the plant and pumps for production and injection wells. The length of the surface piping is assumed 750 m per well at a cost of $500 per meter. The pumping cost for each pump in the production wells (line-shaft pumps) and a single pump for the injection wells is calculated with the same correlation as GETEM. Contingency (default: 15%). and indirect costs (default: 12%) are added. The built-in cost correlation does not include the cost of pipelines to an off-site heat user or a district-heating system. These costs are estimated at $750 per meter pipeline length and can be manually added by the user to the pipeline distribution costs.",
+          "description": "Field gathering system cost. The built-in cost correlation for estimating the field gathering system cost includes the cost for surface piping from each well to the plant and pumps for production and injection wells. The length of the surface piping is assumed 750 m per well at a cost of $500 per meter. The pumping cost for each pump in the production wells (line-shaft pumps) and a single pump for the injection wells is calculated with the same correlation as GETEM. Contingency (default: 15%). and indirect costs (default: 12%) are added. The built-in cost correlation does not include the cost of pipelines to an off-site heat user or a district-heating system. Those transmission pipeline costs are calculated from Transmission/pipeline Cost multiplied by the specified pipeline length.",
           "units": "MUSD"
         },
         "Total surface equipment costs": {
@@ -648,6 +739,65 @@
         "Average Annual Electricity Use for Pumping": {}
       }
     },
+    "THERMAL ENERGY STORAGE SYSTEM (TESS) RESULTS": {
+      "type": "object",
+      "properties": {
+        "TESS volume": {},
+        "TESS usable capacity": {},
+        "TESS capital cost": {},
+        "TESS fixed O&M cost": {},
+        "TESS average SOC": {},
+        "TESS minimum SOC": {},
+        "TESS maximum SOC": {},
+        "TESS annual charge": {},
+        "TESS annual discharge": {},
+        "TESS annual standby loss": {},
+        "TESS annual efficiency loss": {},
+        "TESS curtailed geothermal heat": {},
+        "TESS equivalent full cycles": {},
+        "Peak customer demand": {},
+        "Peak geothermal charge": {},
+        "Customer demand standard deviation": {},
+        "Geothermal output standard deviation": {},
+        "Geothermal output smoothing ratio": {},
+        "Geothermal peak reduction ratio": {},
+        "Geothermal variability reduction ratio": {}
+      }
+    },
+    "WEATHER DATA RESULTS": {
+      "type": "object",
+      "properties": {
+        "Annual average temperature (from Open-Meteo)": {},
+        "Minimum hourly temperature (from Open-Meteo)": {},
+        "Maximum hourly temperature (from Open-Meteo)": {}
+      }
+    },
+    "DISPATCH RESULTS": {
+      "type": "object",
+      "properties": {
+        "Dispatch analysis start year": {},
+        "Dispatch analysis end year": {},
+        "Design heat produced": {},
+        "Design cooling produced": {},
+        "Design net electricity produced": {},
+        "Annual geothermal heat delivered": {},
+        "Annual geothermal cooling delivered": {},
+        "Annual geothermal electricity delivered": {},
+        "Annual unmet thermal demand": {},
+        "Annual unmet cooling demand": {},
+        "Annual unmet electricity demand": {},
+        "Annual heat pump electricity consumed": {},
+        "Annual peaking boiler heat delivered": {},
+        "Dispatch capacity factor": {},
+        "Average runtime fraction": {},
+        "Peak geothermal contribution": {},
+        "Peak unmet load": {},
+        "Peak hourly demand": {},
+        "Peak peaking boiler demand": {},
+        "Design flow rate": {},
+        "Observed peak flow rate": {}
+      }
+    },
     "Simulation Metadata": {
       "type": "object",
       "properties": {
@@ -655,6 +805,302 @@
         "Simulation Date": {},
         "Calculation Time": {}
       }
+    },
+    "Dispatch Summary": {
+      "type": "object",
+      "description": "Structured dispatchable-operation summary emitted for dispatch runs. Includes dispatch settings, the analyzed operating-year window, scalar summary metrics, and annual aggregate arrays.",
+      "required": [
+        "schema_version",
+        "demand_type",
+        "surfaceplant_mode",
+        "dispatch_settings",
+        "analysis_window",
+        "summary_metrics",
+        "annual_aggregates"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "demand_type": {
+          "type": "string",
+          "enum": [
+            "thermal",
+            "cooling",
+            "electric"
+          ]
+        },
+        "surfaceplant_mode": {
+          "type": "string",
+          "enum": [
+            "thermal",
+            "electric",
+            "chp"
+          ]
+        },
+        "dispatch_settings": {
+          "type": "object",
+          "required": [
+            "demand_source",
+            "flow_strategy"
+          ],
+          "properties": {
+            "demand_source": {
+              "type": "string",
+              "enum": [
+                "Annual Heat Demand",
+                "Annual Electricity Demand",
+                "Annual Cooling Demand"
+              ]
+            },
+            "flow_strategy": {
+              "type": "string",
+              "enum": [
+                "Demand Following"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "analysis_window": {
+          "type": "object",
+          "required": [
+            "start_year",
+            "end_year",
+            "year_count",
+            "simulation_start_hour"
+          ],
+          "properties": {
+            "start_year": {
+              "type": "integer"
+            },
+            "end_year": {
+              "type": "integer"
+            },
+            "year_count": {
+              "type": "integer"
+            },
+            "simulation_start_hour": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "summary_metrics": {
+          "type": "object",
+          "properties": {
+            "dispatch_analysis_start_year": {
+              "type": "number"
+            },
+            "dispatch_analysis_end_year": {
+              "type": "number"
+            },
+            "peak_hourly_demand_mw": {
+              "type": "number"
+            },
+            "average_runtime_fraction": {
+              "type": "number"
+            },
+            "dispatch_capacity_factor": {
+              "type": "number"
+            },
+            "observed_peak_flow_kg_per_sec": {
+              "type": "number"
+            },
+            "annual_served_heat_kwh": {
+              "type": "number"
+            },
+            "annual_served_cooling_kwh": {
+              "type": "number"
+            },
+            "annual_served_electricity_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_cooling_kwh": {
+              "type": "number"
+            },
+            "annual_unmet_electricity_kwh": {
+              "type": "number"
+            },
+            "peak_served_heat_kwh": {
+              "type": "number"
+            },
+            "peak_served_cooling_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_heat_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_cooling_kwh": {
+              "type": "number"
+            },
+            "peak_served_electricity_kwh": {
+              "type": "number"
+            },
+            "peak_unmet_electricity_kwh": {
+              "type": "number"
+            },
+            "design_heat_extracted_mw": {
+              "type": "number"
+            },
+            "design_heat_produced_mw": {
+              "type": "number"
+            },
+            "design_cooling_produced_mw": {
+              "type": "number"
+            },
+            "design_heat_pump_electricity_consumed_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_prod_mw": {
+              "type": "number"
+            },
+            "design_pumping_power_inj_mw": {
+              "type": "number"
+            },
+            "design_flow_kg_per_sec": {
+              "type": "number"
+            },
+            "design_gross_electricity_produced_mw": {
+              "type": "number"
+            },
+            "design_net_electricity_produced_mw": {
+              "type": "number"
+            },
+            "annual_heat_pump_electricity_kwh": {
+              "type": "number"
+            },
+            "annual_district_heating_boiler_kwh": {
+              "type": "number"
+            },
+            "peak_district_heating_boiler_mw": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "annual_aggregates": {
+          "type": "object",
+          "properties": {
+            "analysis_years": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "annual_served_heat_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_served_cooling_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_served_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_unmet_heat_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_unmet_cooling_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_heat_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_cooling_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_unmet_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_electricity_demand_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_heat_pump_electricity_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "annual_district_heating_boiler_kwh": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Dispatch Profile": {
+      "type": "object",
+      "description": "Hourly dispatch profile emitted for dispatch runs.",
+      "required": [
+        "schema_version",
+        "columns",
+        "rows"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

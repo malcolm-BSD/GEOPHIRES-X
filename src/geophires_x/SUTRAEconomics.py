@@ -158,8 +158,11 @@ class SUTRAEconomics(Economics.Economics):
             pumphpcorrected = pumphp / numberofpumps
             self.Cpumps = numberofpumps * 1.5 * ((1750 * pumphpcorrected**0.7) * 3 * pumphpcorrected ** (-0.11)) / 1e6
 
+        # Use the same transmission/pipeline cost treatment as the other economic models.
+        self.calculate_transmission_pipeline_cost(model)
+
         # Total CAPEX ($M)
-        self.CCap.value = self.Cwell.value + self.peakingboilercost.value + self.Cpumps
+        self.CCap.value = self.Cwell.value + self.peakingboilercost.value + self.Cpumps + self.Cpiping.value
 
         # OPEX
         # Pumping

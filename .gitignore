@@ -41,6 +41,8 @@ tests/examples/example_SAM-single-owner-PPA-9_cooling_cash-flow.csv
 .build
 .cache
 .eggs
+weather_data_cache/
+/weather_data_cache/
 
 .env
 *.env

@@ -162,6 +162,8 @@ class SUTRAOutputs(Outputs):
                     f.write(f"      Drilling and Completion Costs per Well:        {model.economics.Cwell.value / (model.wellbores.nprod.value + model.wellbores.ninj.value):10.2f} " + model.economics.Cwell.CurrentUnits.value + NL)
                 f.write(f"      Auxiliary Heater Cost:                         {model.economics.peakingboilercost.value:10.2f} " + model.economics.peakingboilercost.CurrentUnits.value + NL)
                 f.write(f"      Pump Cost:                                     {model.economics.Cpumps:10.2f} " + model.economics.peakingboilercost.CurrentUnits.value + NL)
+                if model.surfaceplant.piping_length.value > 0:
+                    f.write(f"      Transmission/pipeline Cost:                    {model.economics.Cpiping.value:10.2f} " + model.economics.Cpiping.CurrentUnits.value + NL)
                 f.write(f"      Total Capital Costs:                           {model.economics.CCap.value:10.2f} " + model.economics.CCap.CurrentUnits.value + NL)
                 f.write(NL)
                 f.write(NL)

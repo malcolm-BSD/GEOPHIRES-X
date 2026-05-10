@@ -60,7 +60,7 @@ Prerequisite: Follow fork & clone instructions above.
 Strongly recommended: use a Python IDE such as `PyCharm <https://www.jetbrains.com/pycharm/>`__ or `Visual Studio Code (aka VS Code) <https://code.visualstudio.com/>`__.
 
 If you are using PyCharm, first open the the cloned repo by going to File → Open and selecting your ``GEOPHIRES-X`` directory (from the previous steps).
-Run commands in a terminal with View → Tool Windows → Terminal
+Run commands in a terminal with View → Tool Windows → Terminal. In ``Settings → Tools → Python Integrated Tools → Testing``, set the *Default test runner* to ``pytest`` so that right-clicking the ``tests/`` folder uses pytest instead of unittest.
 
 1. `Install virtualenv <https://virtualenv.pypa.io/en/latest/installation.html#via-pip>`__ if you don't have it already. Then set up and activate a virtual environment for the project:
 
@@ -81,6 +81,12 @@ Run commands in a terminal with View → Tool Windows → Terminal
     pip install -e .
 
 (PyCharm may prompt you to install dependencies, making this step unnecessary to run on the command line)
+
+If PyCharm reports import errors such as ``ModuleNotFoundError: No module named 'matplotlib'`` or ``ModuleNotFoundError: No module named 'numpy'`` when running tests, double-check these items in order:
+
+- In ``Settings → Project → Python Interpreter``, confirm the interpreter is the virtual environment you created for this project (for example, ``<project>\.venv\Scripts\python.exe``). PyCharm sometimes picks a global interpreter if you skip this step.
+- In the same Interpreter window, verify required packages like ``numpy`` and ``matplotlib`` appear in the installed package list. If they are missing, click ``+`` and install them or run ``pip install -e .`` from the PyCharm terminal while that interpreter is selected.
+- Open ``Run → Edit Configurations…`` and inspect the pytest run configuration you are using. Ensure it references the same interpreter/virtual environment as above and that the *Working directory* is the project root (the folder containing ``setup.py``). Then rerun the tests.
 
 3. Install `pre-commit <https://pre-commit.com/>`__ and run the command to configure it for the project (somewhat confusingly also called ``install``)::
 

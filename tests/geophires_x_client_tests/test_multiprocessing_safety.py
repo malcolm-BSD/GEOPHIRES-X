@@ -10,6 +10,7 @@ from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
 from geophires_x_client.geophires_input_parameters import EndUseOption
 from geophires_x_client.geophires_input_parameters import ImmutableGeophiresInputParameters
+from tests.base_test_case import BaseTestCase
 
 
 def run_client_in_process(params_dict: dict, log_queue: multiprocessing.Queue, result_queue: multiprocessing.Queue):
@@ -33,17 +34,18 @@ def run_client_in_process(params_dict: dict, log_queue: multiprocessing.Queue, r
         result_queue.put(e)
 
 
-class MultiprocessingSafetyTestCase(unittest.TestCase):
+class MultiprocessingSafetyTestCase(BaseTestCase):
     def setUp(self):
+        super().setUp()
         """Set up a unique set of parameters for each test."""
         self.params_dict = {
-            'Print Output to Console': 0,
-            'End-Use Option': EndUseOption.DIRECT_USE_HEAT.value,
-            'Reservoir Model': 1,
-            'Time steps per year': 1,
-            'Reservoir Depth': 4 + time.time_ns() / 1e19,
-            'Gradient 1': 50,
-            'Maximum Temperature': 550,
+            "Print Output to Console": 0,
+            "End-Use Option": EndUseOption.DIRECT_USE_HEAT.value,
+            "Reservoir Model": 1,
+            "Time steps per year": 1,
+            "Reservoir Depth": 4 + time.time_ns() / 1e19,
+            "Gradient 1": 50,
+            "Maximum Temperature": 550,
         }
 
     def test_client_runs_real_geophires_and_caches_across_processes(self):
@@ -53,10 +55,10 @@ class MultiprocessingSafetyTestCase(unittest.TestCase):
         fully self-contained to prevent resource conflicts with the test runner.
         """
 
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             self.skipTest("The 'fork' multiprocessing context is not available on Windows.")
 
-        ctx = multiprocessing.get_context('fork')
+        ctx = multiprocessing.get_context("fork")
         # Use the Manager as a context manager. This is key to ensuring
         # all resources it creates (queues, etc.) are properly shut down
         # at the end of the block, preventing deadlocks.
@@ -92,7 +94,7 @@ class MultiprocessingSafetyTestCase(unittest.TestCase):
                         if p_cleanup.is_alive():
                             p_cleanup.terminate()
                     self.fail(
-                        f'Test timed out waiting for result #{i + 1}. A worker process likely crashed or is stuck.'
+                        f"Test timed out waiting for result #{i + 1}. A worker process likely crashed or is stuck."
                     )
 
             # --- Process Cleanup ---
@@ -100,11 +102,11 @@ class MultiprocessingSafetyTestCase(unittest.TestCase):
                 p.join(timeout=process_timeout_seconds)
                 if p.is_alive():
                     p.terminate()
-                    self.fail(f'Process {p.pid} failed to terminate cleanly.')
+                    self.fail(f"Process {p.pid} failed to terminate cleanly.")
 
             # --- Assertions ---
             for r in results:
-                self.assertNotIsInstance(r, Exception, f'A process failed with an exception: {r}')
+                self.assertNotIsInstance(r, Exception, f"A process failed with an exception: {r}")
                 self.assertIsNotNone(r)
                 self.assertIsInstance(r, GeophiresXResult)
                 self.assertIsInstance(r.direct_use_heat_breakeven_price_USD_per_MMBTU, float)
@@ -113,17 +115,17 @@ class MultiprocessingSafetyTestCase(unittest.TestCase):
             while not log_queue.empty():
                 log_records.append(log_queue.get().getMessage())
 
-            cache_indicator_log = 'GEOPHIRES-X output file:'
+            cache_indicator_log = "GEOPHIRES-X output file:"
             successful_runs = sum(1 for record in log_records if cache_indicator_log in record)
 
             self.assertEqual(
                 successful_runs,
                 1,
-                f'FAIL: GEOPHIRES was run {successful_runs} times instead of once, indicating the cache failed.',
+                f"FAIL: GEOPHIRES was run {successful_runs} times instead of once, indicating the cache failed.",
             )
 
             print(
-                f'\nTest passed: Detected {successful_runs} non-cached GEOPHIRES run(s) for {num_processes} requests.'
+                f"\nTest passed: Detected {successful_runs} non-cached GEOPHIRES run(s) for {num_processes} requests."
             )
 
         # CRITICAL: Reset the client's singleton state after the test to not interfere with other tests.
@@ -132,5 +134,5 @@ class MultiprocessingSafetyTestCase(unittest.TestCase):
         GeophiresXClient._lock = None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

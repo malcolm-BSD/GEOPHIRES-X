@@ -6,7 +6,9 @@ from .EconomicsUtils import BuildPricingModel
 from .OptionList import Configuration, WellDrillingCostCorrelation, PlantType
 from geophires_x.Parameter import floatParameter
 from geophires_x.Units import *
+from geophires_x.valco import calculate_and_assign_value_adjusted_levelized_cost_outputs
 from geophires_x.OptionList import WorkingFluid, EndUseOptions, EconomicModel
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 def calculate_cost_of_lateral_section(model: Model, length_m: float, well_correlation: int,
@@ -227,8 +229,8 @@ class SBTEconomics(Economics):
                 self.Cexpl.value = 1.15 * self.ccexpladjfactor.value * self._indirect_cost_factor * (
                     1. + self.cost_one_production_well.value * 0.6)  # 1.15 for 15% contingency
 
-            # Surface Piping Length Costs (M$) #assumed $750k/km
-            self.Cpiping.value = 750 / 1000 * model.surfaceplant.piping_length.value
+            # Keep transmission/pipeline CAPEX consistent across economic models and unit selections.
+            self.calculate_transmission_pipeline_cost(model)
 
             # district heating network costs
             if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:  # district heat
@@ -530,6 +532,8 @@ class SBTEconomics(Economics):
 
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
+        assign_extended_levelized_cost_outputs(self, model)
+        calculate_and_assign_value_adjusted_levelized_cost_outputs(self, model)
 
         self._calculate_derived_outputs(model)
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')

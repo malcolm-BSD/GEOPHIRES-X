@@ -1,0 +1,49 @@
+# Example 11a: New Absorption Chiller - Baseload mode
+# --------------------------------------------------
+# This small fixture demonstrates the input parameters needed to enable
+# and configure the new advanced Absorption Chiller subsystem in
+# GEOPHIRES-X. It shows baseload operation (steady/low-cycling output)
+# and references the embedded chiller catalog. Values are illustrative
+# and intended as a usage example for tests and documentation.
+
+# Enable the advanced Absorption Chiller subsystem
+Use Advanced Absorption Chiller,True,
+Reservoir Model,4,                 ---[-] Annual percentage thermal drawdown model
+Drawdown Parameter,0.005,           ---[1/year]
+Reservoir Depth,3.0,                ---[km]
+Gradient 1,60.0,                    ---[deg.C/km]
+Injection Temperature,60.0,         ---[deg.C]
+Production Flow Rate per Well,40.0, ---[kg/s]
+Number of Production Wells,1,
+Power Plant Type,5,                 ---[-] Absorption Chiller
+End-Use Option,2,                   ---[-] Direct-use heat application
+
+# Absorption Chiller top-level options (canonical parameter names)
+Absorption Chiller Use Pint,True,                ---[bool] enable Pint units handling (recommended)
+Absorption Chiller Use CoolProp,True,            ---[bool] enable CoolProp for fluid properties (best-effort)
+Absorption Chiller Refrigerant Family,LiBr-water, ---[string] 'LiBr-water' | 'NH3-water'
+Absorption Chiller Effect Type,double,           ---[string] 'single' | 'double' | 'triple'
+# Absorption Chiller Effect Multiplier Override,1.0,   ---[float] optional override of effect multiplier
+Absorption Chiller Min Part Load Ratio,0.2,        ---[fraction]
+Absorption Chiller Turndown Ratio,3.0,
+Absorption Chiller Chilled DeltaT,5.0,         ---[K]
+Absorption Chiller Pump Head,30.0,
+Absorption Chiller Pump Efficiency,0.70,
+
+# Catalog: use the embedded seeded CSV included with the repo. Tests may
+# override this with a user CSV by setting the Absorption Chiller Catalog Path.
+Absorption Chiller Catalog Path,data/absorption_chiller_catalog_default.csv,
+
+# Operation mode: baseload (minimize cycling; prefer steady unit schedules)
+Operating Mode,Baseload,
+
+# Dispatch-related options (baseload still accepts these to steer schedules)
+Absorption Chiller Dispatch Strategy,min_units,      ---[min_cost|min_units|follow_heat]
+
+# Supply the cooling demand time series used by chiller dispatch.
+Annual Cooling Demand,tests/assets/params/annual_cooling_demand.csv
+
+# Output control (keep console output for small test runs)
+Print Output to Console,True,
+
+# End of example 11a
