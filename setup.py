@@ -70,6 +70,7 @@ setup(
         "mpmath",
         "sympy",
         "scikit-learn",
+        "tqdm",
         "deepdiff",
         "mysql.connector",
         "cryptography",

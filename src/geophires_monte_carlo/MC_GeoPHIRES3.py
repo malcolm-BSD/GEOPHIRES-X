@@ -24,8 +24,10 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -93,8 +95,8 @@ def clean_filename(filename: str, fallback: str = "output") -> str:
     return clean
 
 
-def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> dict[str, float]:
-    values: dict[str, float] = {}
+def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> Dict[str, float]:
+    values: Dict[str, float] = {}
 
     with open(input_file_path) as input_file:
         for line in input_file:
@@ -113,12 +115,12 @@ def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> dict[st
 def add_missing_tornado_input_columns(
     input_df: pd.DataFrame,
     tornado_inputs: List[List[str]],
-    input_file_values: dict[str, float],
+    input_file_values: Dict[str, float],
 ) -> None:
     requested_columns = {column.strip() for columns in tornado_inputs for column in columns if column.strip()}
     available_columns = {column.strip() for column in input_df.columns}
     missing_columns = requested_columns - available_columns
-    unresolved_columns: list[str] = []
+    unresolved_columns: List[str] = []
 
     for column in sorted(missing_columns):
         if column in input_file_values:
@@ -335,8 +337,8 @@ def calculate_normal_value(
 
 def calculate_scaled_value_complementary(
     v1_value: float,
-    v1_range: tuple[float, float],
-    v2_range: tuple[float, float],
+    v1_range: Tuple[float, float],
+    v2_range: Tuple[float, float],
 ) -> float:
     """
     Calculate the complementary scaled value of v2 based on the position of v1 within its range.
@@ -353,7 +355,7 @@ def calculate_scaled_value_complementary(
     return v2_scaled
 
 
-def calculate_scaled_value(v1: float, v1_range: tuple[float, float], v2_range: tuple[float, float]) -> float:
+def calculate_scaled_value(v1: float, v1_range: Tuple[float, float], v2_range: Tuple[float, float]) -> float:
     """Scales a value from one range to another."""
     min_v1, max_v1 = v1_range
     min_v2, max_v2 = v2_range
@@ -459,7 +461,7 @@ def sanitize_filename(name: str, default: str = "output") -> str:
     return sanitized or default
 
 
-def validate_mc_inputs(input_specs: List[tuple[int, List[str]]], settings_file_path: str) -> None:
+def validate_mc_inputs(input_specs: List[Tuple[int, List[str]]], settings_file_path: str) -> None:
     """Validate Monte Carlo INPUT rows before launching worker processes."""
     distribution_numeric_fields = {
         "normal": [2, 3],
@@ -509,7 +511,7 @@ def validate_mc_inputs(input_specs: List[tuple[int, List[str]]], settings_file_p
 
 
 def validate_tornado_definitions(
-    tornado_specs: List[tuple[int, str, List[str]]],
+    tornado_specs: List[Tuple[int, str, List[str]]],
     input_names: List[str],
     output_names: List[str],
     settings_file_path: str,
@@ -551,7 +553,7 @@ def evaluate_expression(expression: str, variable_value: float) -> float:
 
 
 def extract_values(data: List[str]) -> List[float]:
-    seen: dict[str, float] = {}
+    seen: Dict[str, float] = {}
     order: List[str] = []
 
     for item in data:
@@ -592,7 +594,7 @@ def make_tornado_plots_stacked(
     scaler_X = StandardScaler()
     X = scaler_X.fit_transform(input_df[clean_outs])
 
-    coefficients: dict[str, np.ndarray] = {}
+    coefficients: Dict[str, np.ndarray] = {}
     for output in ins:
         if output:
             y = df[output].values.reshape(-1, 1)
@@ -1020,13 +1022,13 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
         flist = f.readlines()
 
     inputs: List[List[str]] = []
-    input_specs: List[tuple[int, List[str]]] = []
+    input_specs: List[Tuple[int, List[str]]] = []
     outputs: List[str] = []
     links_ratio: List[List[str]] = []
     links_reverse: List[List[str]] = []
     links_equal: List[List[str]] = []
     links_math: List[List[str]] = []
-    tornado_specs: List[tuple[int, str, List[str]]] = []
+    tornado_specs: List[Tuple[int, str, List[str]]] = []
     iterations = 0
     output_file = (
         args.MC_OUTPUT_FILE
@@ -1217,7 +1219,7 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
         logger.warning(msg)
 
     annotations = ""
-    outputs_result: dict[str, dict[str, float]] = {}
+    outputs_result: Dict[str, Dict[str, float]] = {}
 
     full_names: set = set()
     short_names: set = set()
