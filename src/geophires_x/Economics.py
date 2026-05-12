@@ -2598,7 +2598,7 @@ class Economics:
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS,
-            ToolTipText=f'{self.Cplant.Name} plus {self.Cgath.Name} plus {self.Cpiping.Name}.'
+            ToolTipText=f'{self.Cplant.Name} plus {self.Cgath.Name} plus Transmission pipeline costs.'
         )
 
         self.tess_capital_cost = self.OutputParameterDict[self.tess_capital_cost.Name] = OutputParameter(

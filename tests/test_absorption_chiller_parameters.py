@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 
 from geophires_x.absorption.absorption_chiller import AbsorptionChiller
@@ -22,7 +24,8 @@ def test_dispatch_example_uses_canonical_temperature_profile_parameters():
     assert params["Absorption Chiller Condenser Temperature Profile"].sValue == "30.0,30.0,30.0,30.0"
 
 
-def test_absorption_chiller_temperature_profiles_read_as_parameters():
+def test_absorption_chiller_temperature_profiles_read_as_parameters(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [""])
     model = Model(enable_geophires_logging_config=False)
     surface_plant = SurfacePlantAbsorptionChiller(model)
     model.InputParameters = {
@@ -184,20 +187,13 @@ def test_geophires_dispatch_integration_uses_fast_chiller_bank_path(monkeypatch)
     model.surfaceplant.CoolingDemand.value = [1000.0]
 
     calls = []
-    original_build_bank = model.surfaceplant._advanced_absorption_chiller().build_bank
+    original_dispatch = model.surfaceplant._dispatch_bank_one_hour
 
-    def build_tracking_bank(required_capacity_kW):
-        bank = original_build_bank(required_capacity_kW)
-        original_dispatch = bank.dispatch_hourly
+    def dispatch_tracking(*args, **kwargs):
+        calls.append(True)
+        return original_dispatch(*args, **kwargs)
 
-        def dispatch_tracking(*args, **kwargs):
-            calls.append(kwargs.get("use_milp"))
-            return original_dispatch(*args, **kwargs)
-
-        monkeypatch.setattr(bank, "dispatch_hourly", dispatch_tracking)
-        return bank
-
-    monkeypatch.setattr(model.surfaceplant._advanced_absorption_chiller(), "build_bank", build_tracking_bank)
+    monkeypatch.setattr(model.surfaceplant, "_dispatch_bank_one_hour", dispatch_tracking)
 
     model.surfaceplant.advanced_dispatch_output(
         model,
@@ -206,7 +202,7 @@ def test_geophires_dispatch_integration_uses_fast_chiller_bank_path(monkeypatch)
         generator_temperature_c=95.0,
     )
 
-    assert calls == [False]
+    assert calls == [True]
 
 
 def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):

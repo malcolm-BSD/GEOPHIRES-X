@@ -312,7 +312,7 @@ class GeophiresXResult:
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
                 _AliasedField(
-                    "Transmission pipeline cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
+                    "Transmission/pipeline Cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
                 ),
                 "District Heating System Cost",
                 "Field gathering system costs",
