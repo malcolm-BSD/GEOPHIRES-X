@@ -69,6 +69,7 @@ setup(
         "jsons",
         "mpmath",
         "sympy",
+        "scikit-learn",
         "deepdiff",
         "mysql.connector",
         "cryptography",
