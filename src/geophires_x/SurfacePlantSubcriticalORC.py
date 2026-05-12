@@ -72,40 +72,23 @@ class SurfacePlantSubcriticalOrc(SurfacePlant):
         # calculate power plant entering temperature
         self.TenteringPP.value = SurfacePlant.power_plant_entering_temperature(self, self.enduse_option.value,
                                 model.reserv.timevector.value, self.T_chp_bottom.value, model.wellbores.ProducedTemperature.value)
+        ambient_temperature = SurfacePlant.ambient_temperature_profile(self, model, len(self.TenteringPP.value))
 
         # Availability water
-        self.Availability.value = SurfacePlant.availability_water(self, self.ambient_temperature.value, self.TenteringPP.value, self.ambient_temperature.value)
+        self.Availability.value = SurfacePlant.availability_water(self, ambient_temperature, self.TenteringPP.value, ambient_temperature)
 
         # Subcritical ORC-specific values.
-        if self.ambient_temperature.value < 15.:
-            C21 = 0.0
-            C11 = 2.746E-3
-            C01 = -8.3806E-2
-            D21 = 0.0
-            D11 = 2.713E-3
-            D01 = -9.1841E-2
-            C22 = 0.0
-            C12 = 0.0894
-            C02 = 55.6
-            D22 = 0.0
-            D12 = 0.0894
-            D02 = 62.6
-        else:
-            C21 = 0.0
-            C11 = 2.713E-3
-            C01 = -9.1841E-2
-            D21 = 0.0
-            D11 = 2.676E-3
-            D01 = -1.012E-1
-            C22 = 0.0
-            C12 = 0.0894
-            C02 = 62.6
-            D22 = 0.0
-            D12 = 0.0894
-            D02 = 69.6
+        C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22 = (
+            SurfacePlant.electricity_temperature_coefficients(
+                self,
+                ambient_temperature,
+                (-8.3806E-2, 2.746E-3, 0.0, -9.1841E-2, 2.713E-3, 0.0, 55.6, 0.0894, 0.0, 62.6, 0.0894, 0.0),
+                (-9.1841E-2, 2.713E-3, 0.0, -1.012E-1, 2.676E-3, 0.0, 62.6, 0.0894, 0.0, 69.6, 0.0894, 0.0),
+            )
+        )
 
         model.wellbores.Tinj.value, ReinjTemp, etau = SurfacePlant.reinjection_temperature(self, model,
-                                                    self.ambient_temperature.value, self.TenteringPP.value, model.wellbores.Tinj.value,
+                                                    ambient_temperature, self.TenteringPP.value, model.wellbores.Tinj.value,
                                                     C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22)
 
         # calculate electricity & heat production

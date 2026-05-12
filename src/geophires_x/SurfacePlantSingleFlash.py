@@ -74,40 +74,23 @@ class SurfacePlantSingleFlash(SurfacePlant):
         # calculate power plant entering temperature
         self.TenteringPP.value = SurfacePlant.power_plant_entering_temperature(self, self.enduse_option.value,
                                 model.reserv.timevector.value, self.T_chp_bottom.value, model.wellbores.ProducedTemperature.value)
+        ambient_temperature = SurfacePlant.ambient_temperature_profile(self, model, len(self.TenteringPP.value))
 
         # Availability water
-        self.Availability.value = SurfacePlant.availability_water(self, self.ambient_temperature.value, self.TenteringPP.value, self.ambient_temperature.value)
+        self.Availability.value = SurfacePlant.availability_water(self, ambient_temperature, self.TenteringPP.value, ambient_temperature)
 
         # Single flash-specific values.
-        if self.ambient_temperature.value < 15.:
-            C21 = -4.27318E-7
-            C11 = 8.65629E-4
-            C01 = 1.78931E-1
-            D21 = -5.85412E-7
-            D11 = 9.68352E-4
-            D01 = 1.58056E-1
-            C22 = -1.11519E-3
-            C12 = 7.79126E-1
-            C02 = -10.2242
-            D22 = -1.10232E-3
-            D12 = 7.83893E-1
-            D02 = -5.17039
-        else:
-            C21 = -5.85412E-7
-            C11 = 9.68352E-4
-            C01 = 1.58056E-1
-            D21 = -7.78996E-7
-            D11 = 1.09230E-3
-            D01 = 1.33708E-1
-            C22 = -1.10232E-3
-            C12 = 7.83893E-1
-            C02 = -5.17039
-            D22 = -1.08914E-3
-            D12 = 7.88562E-1
-            D02 = -1.89707E-1
+        C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22 = (
+            SurfacePlant.electricity_temperature_coefficients(
+                self,
+                ambient_temperature,
+                (1.78931E-1, 8.65629E-4, -4.27318E-7, 1.58056E-1, 9.68352E-4, -5.85412E-7, -10.2242, 7.79126E-1, -1.11519E-3, -5.17039, 7.83893E-1, -1.10232E-3),
+                (1.58056E-1, 9.68352E-4, -5.85412E-7, 1.33708E-1, 1.09230E-3, -7.78996E-7, -5.17039, 7.83893E-1, -1.10232E-3, -1.89707E-1, 7.88562E-1, -1.08914E-3),
+            )
+        )
 
         model.wellbores.Tinj.value, ReinjTemp, etau = SurfacePlant.reinjection_temperature(self, model,
-                                                    self.ambient_temperature.value, self.TenteringPP.value, model.wellbores.Tinj.value,
+                                                    ambient_temperature, self.TenteringPP.value, model.wellbores.Tinj.value,
                                                     C01, C11, C21, D01, D11, D21, C02, C12, C22, D02, D12, D22)
 
         # calculate electricity & heat production

@@ -120,6 +120,9 @@ class AGSOutputs(Outputs.Outputs):
                         model.economics.Cwell.value) + " " + model.economics.Cwell.CurrentUnits.value + NL)
                     f.write(f"      Surface Plant Cost:                                     " + "{0:.1f}".format(
                         model.economics.Cplant.value) + " " + model.economics.Cplant.CurrentUnits.value + NL)
+                    if model.surfaceplant.piping_length.value > 0:
+                        f.write(f"      Transmission/pipeline Cost:                           " + "{0:.1f}".format(
+                            model.economics.Cpiping.value) + " " + model.economics.Cpiping.CurrentUnits.value + NL)
                     f.write(f"      OPEX:                                                  " + "{0:.1f}".format(
                         model.economics.Coam.value) + " " + model.economics.Coam.CurrentUnits.value + NL)
                     if model.surfaceplant.End_use == EndUseOptions.HEAT:
@@ -128,6 +131,11 @@ class AGSOutputs(Outputs.Outputs):
                     else:
                         f.write(f"      LCOE:                                                 " + "{0:.1f}".format(
                             model.economics.LCOE.value) + " " + model.economics.LCOE.CurrentUnits.value + NL)
+                        if model.economics.DoXLCOCalculations.value:
+                            f.write(f"      XLCOE Market:                                         " + "{0:.1f}".format(
+                                model.economics.XLCOE_Market.value) + " " + model.economics.XLCOE_Market.CurrentUnits.value + NL)
+                            f.write(f"      XLCOE Market + Social:                                " + "{0:.1f}".format(
+                                model.economics.XLCOE_MarketSocial.value) + " " + model.economics.XLCOE_MarketSocial.CurrentUnits.value + NL)
 
                     f.write(NL)
                     f.write('                                        ******************************\n')

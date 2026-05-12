@@ -23,8 +23,10 @@ from geophires_x.SurfacePlantAbsorptionChiller import SurfacePlantAbsorptionChil
 from geophires_x.SurfacePlantDistrictHeating import SurfacePlantDistrictHeating
 from geophires_x.SurfacePlantHeatPump import SurfacePlantHeatPump
 from geophires_x.Economics import Economics
+from geophires_x.Dispatch import create_operating_mode_strategy
 from geophires_x.Outputs import Outputs
-from geophires_x.OptionList import EndUseOptions, PlantType
+from geophires_x.OptionList import EndUseOptions, OperatingMode, PlantType
+from geophires_x.WeatherData import OpenMeteoNetworkError, fetch_open_meteo_weather
 from geophires_x.CylindricalReservoir import CylindricalReservoir
 from geophires_x.MPFReservoir import MPFReservoir
 from geophires_x.LHSReservoir import LHSReservoir
@@ -41,6 +43,7 @@ from geophires_x.SurfacePlantAGS import SurfacePlantAGS
 from geophires_x.AGSEconomics import AGSEconomics
 from geophires_x.AGSOutputs import AGSOutputs
 from geophires_x.EconomicsAddOns import EconomicsAddOns
+from geophires_x.formula_evaluator import resolve_model_parameter_formulas
 
 
 class Model(object):
@@ -71,12 +74,15 @@ class Model(object):
         # Should be only those value that they want to change from the default.
         # we do this as soon as possible because what we instantiate may depend on settings in this file
         self.InputParameters = {}
+        self._runtime_warnings_issued = set()
 
         if input_file is None and len(sys.argv) > 1:
             input_file = sys.argv[1]
 
+        self.input_file_path = Path(input_file).resolve() if input_file and not str(input_file).startswith('http') else None
+
         # Key step - read the entire provided input file
-        read_input_file(self.InputParameters, logger=self.logger, input_file_name=input_file)
+        self.InputParameters = read_input_file(logger=self.logger, input_file_name=input_file)
 
         # initiate the outputs object
         output_file = 'HDR.out'
@@ -93,6 +99,10 @@ class Model(object):
         self.sdacgteconomics = None
         self.addoutputs = None
         self.addeconomics = None
+        self.dispatch_results = None
+        self.dispatch_adapter = None
+        self.weather_data = None
+        self.operating_mode_strategy = create_operating_mode_strategy(OperatingMode.BASELOAD)
 
         # initialize the default objects
         self.reserv: TDPReservoir = TDPReservoir(self)
@@ -254,12 +264,55 @@ class Model(object):
 
         # re-read the parameters for the newly instantiated surface plant
         self.surfaceplant.read_parameters(self)
+        resolve_model_parameter_formulas(self)
+        self._apply_weather_data_if_requested()
+        self.wellbores._set_well_counts_from_parameters(self)
+        self.operating_mode_strategy = create_operating_mode_strategy(self.surfaceplant.operating_mode.value)
 
         # if end-use option is 8 (district heating), some calculations are required prior to the reservoir and wellbore simulations
-        if self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
+        if (
+            self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING
+            and self.surfaceplant.operating_mode.value != OperatingMode.DISPATCHABLE
+        ):
             self.surfaceplant.CalculateDHDemand(self)  # calculate district heating demand
 
         self.logger.info(f'complete {str(__class__)}: {__name__}')
+
+    def _apply_weather_data_if_requested(self) -> None:
+        latitude = getattr(self.surfaceplant, "project_latitude", None)
+        longitude = getattr(self.surfaceplant, "project_longitude", None)
+        latitude_provided = bool(getattr(latitude, "Provided", False))
+        longitude_provided = bool(getattr(longitude, "Provided", False))
+
+        if not latitude_provided and not longitude_provided:
+            self.weather_data = None
+            return
+
+        if latitude_provided != longitude_provided:
+            raise ValueError("Project Latitude and Project Longitude must both be provided to use weather data.")
+
+        try:
+            self.weather_data = fetch_open_meteo_weather(
+                latitude.value,
+                longitude.value,
+                year=self.surfaceplant.weather_data_year.value,
+            )
+        except OpenMeteoNetworkError as error:
+            self.weather_data = None
+            self.logger.warning(
+                "Weather data was requested but Open-Meteo could not be reached; continuing without weather data. "
+                "Project Latitude and Project Longitude will be ignored for this run. %s",
+                error,
+            )
+            return
+
+        annual_average_temperature = float(self.weather_data.annual_average()["temperature_2m"])
+        if not self.surfaceplant.ambient_temperature.Provided:
+            self.surfaceplant.ambient_temperature.value = annual_average_temperature
+            self.surfaceplant.ambient_temperature.Valid = True
+        if not self.reserv.Tsurf.Provided:
+            self.reserv.Tsurf.value = annual_average_temperature
+            self.reserv.Tsurf.Valid = True
 
     def Calculate(self):
         """
@@ -272,21 +325,6 @@ class Model(object):
         # calculate the results
         self.logger.info("Run calculations for the elements of the Model")
 
-        # This is where all the calculations are made using all the values that have been set.
-        # This is handled on a class-by-class basis
-
-        self.reserv.Calculate(self)  # model the reservoir
-        self.wellbores.Calculate(self)  # model the wellbores
-        self.surfaceplant.Calculate(self)  # model the surfaceplant
-
-        # in case of district heating, the surface plant module may have updated the utilization factor,
-        # and therefore we need to recalculate the modules reservoir, wellbore and surface plant.
-        # 1 iteration should be sufficient.
-        if self.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            self.reserv.Calculate(self)  # model the reservoir
-            self.wellbores.Calculate(self)  # model the wellbores
-            self.surfaceplant.Calculate(self)  # model the surfaceplant
-
-        self.economics.Calculate(self)  # model the economics
+        self.operating_mode_strategy.run(self)
 
         self.logger.info(f'complete {__class__}: {__name__}')

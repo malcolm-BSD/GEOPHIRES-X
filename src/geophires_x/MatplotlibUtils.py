@@ -16,10 +16,26 @@ from matplotlib import pyplot as plt
 _logger = logging.getLogger(__name__)
 
 
+def _retry_with_agg_backend(e) -> bool:
+    tcl_error_name = 'TclError'
+    if e.__class__.__name__ != tcl_error_name:
+        return False
+
+    try:
+        plt.switch_backend("Agg")
+        _logger.warning(f"Falling back to matplotlib Agg backend after {tcl_error_name}: {str(e)}")
+        return True
+    except Exception:
+        return False
+
+
 def plt_show(**kw_args):
     try:
         plt.show(**kw_args)
     except Exception as e:
+        if _retry_with_agg_backend(e):
+            plt.show(**kw_args)
+            return
         _handle_tcl_error_on_windows_github_actions(e)
 
 
@@ -27,6 +43,8 @@ def plt_subplot() -> Any:
     try:
         return plt.subplot()
     except Exception as e:
+        if _retry_with_agg_backend(e):
+            return plt.subplot()
         _handle_tcl_error_on_windows_github_actions(e)
 
 
@@ -34,6 +52,8 @@ def plt_subplots(**kw_args) -> Any:
     try:
         return plt.subplots(**kw_args)
     except Exception as e:
+        if _retry_with_agg_backend(e):
+            return plt.subplots(**kw_args)
         _handle_tcl_error_on_windows_github_actions(e)
 
 
@@ -41,6 +61,8 @@ def plt_figure(*args, **kw_args) -> Any:
     try:
         return plt.figure(*args, **kw_args)
     except Exception as e:
+        if _retry_with_agg_backend(e):
+            return plt.figure(*args, **kw_args)
         _handle_tcl_error_on_windows_github_actions(e)
 
 

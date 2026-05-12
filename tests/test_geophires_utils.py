@@ -60,7 +60,7 @@ class TestCelsiusToKelvin(unittest.TestCase):
     def test_non_numeric_input(self):
         """Should raise a ValueError when given a non-numeric input"""
         # Arrange
-        celsius = '25'
+        celsius = "25"
 
         # Act and Assert
         with self.assertRaises(ValueError):
@@ -78,7 +78,7 @@ class TestCelsiusToKelvin(unittest.TestCase):
     def test_string_input(self):
         """Should raise a ValueError when given a string input"""
         # Arrange
-        celsius = 'twenty-five'
+        celsius = "twenty-five"
 
         # Act and Assert
         with self.assertRaises(ValueError):
@@ -166,7 +166,7 @@ class TestUtileffFunc(unittest.TestCase):
 
     def test_non_float_temperature(self):
         """Raises a ValueError if the input temperature is not a float or convertible to float."""
-        temperature = '50.0'
+        temperature = "50.0"
 
         with self.assertRaises(ValueError):
             UtilEff_func(temperature)
@@ -213,12 +213,12 @@ class TestViscosityWater(unittest.TestCase):
         ]
 
         for temp, expected_viscosity in temp_expected_viscosities:
-            with self.subTest(msg=f'temp={temp}C'):
+            with self.subTest(msg=f"temp={temp}C"):
                 result = viscosity_water_Pa_sec(temp)
                 self.assertAlmostEqual(expected_viscosity, result, places=6)
 
     def test_valid_input_temperature_with_pressure(self):
-        default_pressure = quantity(100, 'MPa')
+        default_pressure = quantity(100, "MPa")
         temp_expected_viscosities = [
             (0, 0.0016605697996519605),
             (20, 0.0009931446334997267),
@@ -230,7 +230,7 @@ class TestViscosityWater(unittest.TestCase):
         ]
 
         for temp, expected_viscosity in temp_expected_viscosities:
-            with self.subTest(msg=f'temp={temp}C'):
+            with self.subTest(msg=f"temp={temp}C"):
                 result = viscosity_water_Pa_sec(temp, pressure=default_pressure)
                 self.assertAlmostEqual(expected_viscosity, result, places=6)
 
@@ -252,7 +252,7 @@ class TestViscosityWater(unittest.TestCase):
     def test_string_input_temperature(self):
         """The function raises a ValueError if the input temperature is a string."""
         with self.assertRaises(ValueError):
-            viscosity_water_Pa_sec('water')
+            viscosity_water_Pa_sec("water")
 
 
 class TestDensityWater(unittest.TestCase):
@@ -334,7 +334,7 @@ class TestHeatCapacityWater(unittest.TestCase):
 
     def test_invalid_input_not_number(self):
         with self.assertRaises(ValueError):
-            heat_capacity_water_J_per_kg_per_K('abc')
+            heat_capacity_water_J_per_kg_per_K("abc")
 
     def test_invalid_input_negative(self):
         with self.assertRaises(ValueError):
@@ -432,7 +432,7 @@ class TestRecoverableHeat(unittest.TestCase):
         """Raises ValueError when given a non-numeric value for Twater."""
 
         with self.assertRaises(ValueError):
-            RecoverableHeat('abc')
+            RecoverableHeat("abc")
 
 
 class TestVaporPressureWater(unittest.TestCase):
@@ -458,7 +458,7 @@ class TestVaporPressureWater(unittest.TestCase):
 
     def test_value_error(self):
         with self.assertRaises(ValueError):
-            vapor_pressure_water_kPa('abc')
+            vapor_pressure_water_kPa("abc")
 
     def test_minimum_temperature(self):
         with self.assertRaises(ValueError):
@@ -466,7 +466,7 @@ class TestVaporPressureWater(unittest.TestCase):
 
     def test_maximum_temperature(self):
         with self.assertRaises(ValueError):
-            vapor_pressure_water_kPa(float('inf'))
+            vapor_pressure_water_kPa(float("inf"))
 
     def test_50_degrees(self):
         result = vapor_pressure_water_kPa(50)
@@ -505,7 +505,7 @@ class TestEnthalpyWater(unittest.TestCase):
         self.assertAlmostEqual(result, 62.98145105731618, places=3)
 
     def test_non_float_temperature(self):
-        temperature = 'abc123'
+        temperature = "abc123"
         with self.assertRaises(TypeError):
             enthalpy_water_kJ_per_kg(temperature)
 
@@ -533,56 +533,56 @@ class TestEnthalpyWater(unittest.TestCase):
 class GeophiresUtilsTestCase(BaseTestCase):
     def test_input_comments(self):
         d = {}
-        GeoPHIRESUtils.read_input_file(
-            d, input_file_name=Path(self._get_test_file_path('geophires_x_client_tests/input_comments.txt')).absolute()
+        d = GeoPHIRESUtils.read_input_file(
+            input_file_name=Path(self._get_test_file_path("geophires_x_client_tests/input_comments.txt")).absolute()
         )
         self.assertIsNotNone(d)
         self.assertDictEqual(
             d,
             {
-                'Gradient 1': ParameterEntry(Name='Gradient 1', sValue='69', Comment='', raw_entry='Gradient 1, 69'),
-                'Reservoir Depth': ParameterEntry(
-                    Name='Reservoir Depth',
-                    sValue='5',
-                    Comment='-- comment here',
-                    raw_entry='Reservoir Depth, 5, -- comment here',
+                "Gradient 1": ParameterEntry(Name="Gradient 1", sValue="69", Comment="", raw_entry="Gradient 1, 69"),
+                "Reservoir Depth": ParameterEntry(
+                    Name="Reservoir Depth",
+                    sValue="5",
+                    Comment="-- comment here",
+                    raw_entry="Reservoir Depth, 5, -- comment here",
                 ),
-                'End-Use Option': ParameterEntry(
-                    Name='End-Use Option',
-                    sValue='1',
-                    Comment='# another comment',
-                    raw_entry='End-Use Option, 1, # another comment',
+                "End-Use Option": ParameterEntry(
+                    Name="End-Use Option",
+                    sValue="1",
+                    Comment="# another comment",
+                    raw_entry="End-Use Option, 1, # another comment",
                 ),
-                'Power Plant Type': ParameterEntry(
-                    Name='Power Plant Type',
-                    sValue='4',
-                    Comment='comments galore',
-                    raw_entry='Power Plant Type, 4, comments galore',
+                "Power Plant Type": ParameterEntry(
+                    Name="Power Plant Type",
+                    sValue="4",
+                    Comment="comments galore",
+                    raw_entry="Power Plant Type, 4, comments galore",
                 ),
                 # Note sValue and Comment are, obviously, inaccurate for list-type parameters - this is handled in
                 # geophires_x.Parameter.ReadParameter where raw_entry value is parsed instead.
-                'Gradients': ParameterEntry(
-                    Name='Gradients',
-                    sValue='10',
-                    Comment=' 20 30 40 -- gradiance',
-                    raw_entry='Gradients, 10, 20, 30, 40, -- gradiance',
+                "Gradients": ParameterEntry(
+                    Name="Gradients",
+                    sValue="10, 20, 30, 40",
+                    Comment="-- gradiance",
+                    raw_entry="Gradients, 10, 20, 30, 40, -- gradiance",
                 ),
-                'Thicknesses': ParameterEntry(
-                    Name='Thicknesses', sValue='3', Comment='2 1', raw_entry='Thicknesses, 3,2, 1'
+                "Thicknesses": ParameterEntry(
+                    Name="Thicknesses", sValue="3,2, 1", Comment="", raw_entry="Thicknesses, 3,2, 1"
                 ),
             },
         )
 
     def test_is_int_and_is_float(self):
-        self.assertTrue(is_int('1'))
-        self.assertFalse(is_int('1.1'))
-        self.assertTrue(is_float('1.1'))
+        self.assertTrue(is_int("1"))
+        self.assertFalse(is_int("1.1"))
+        self.assertTrue(is_float("1.1"))
 
-        self.assertFalse(is_int('Year 0'))
-        self.assertFalse(is_float('Year 0'))
+        self.assertFalse(is_int("Year 0"))
+        self.assertFalse(is_float("Year 0"))
 
         self.assertFalse(is_float(None))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

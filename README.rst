@@ -148,6 +148,21 @@ Note that many parameters are interrelated and/or conditionally dependent on one
 reviewing the GEOPHIRES example(s) relevant to your use case in the following section
 is strongly recommended to gain a working understanding of how to construct valid sets of input parameters.
 
+Compatibility notes
+-------------------
+Parameter labels use canonical, human-friendly names (for example, ``Absorption Chiller Use Hourly Temperatures``).
+Hourly absorption chiller temperature profiles are set with ordinary list parameters such as
+``Absorption Chiller Generator Temperature Profile``. The older dotted-key style has been removed from the canonical parser
+and is no longer accepted. Update any existing input files to use the canonical parameter names shown in the
+`Parameters Reference <https://softwareengineerprogrammer.github.io/GEOPHIRES/parameters.html>`__ and the examples in
+the `tests/examples` directory.
+
+Advanced absorption chiller examples are available for both current operating paths:
+``tests/examples/example11_new_AC_dispatch.txt`` demonstrates full-year dispatchable cooling demand, dispatch profile
+CSV output, and improved text output; ``tests/examples/example11_new_AC_baseload.txt`` demonstrates the current
+baseload integration, which uses the average annual cooling demand as a steady target aligned to GEOPHIRES plant
+timesteps.
+
 
 Examples
 --------
@@ -228,6 +243,14 @@ Example-specific web interface deeplinks are listed in the Link column.
      - `example11_AC.txt <tests/examples/example11_AC.txt>`__
      - `.out <tests/examples/example11_AC.out>`__
      - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example11_AC>`__
+   * - Example 11a: Advanced Absorption Chiller - Baseload
+     - `example11_new_AC_baseload.txt <tests/examples/example11_new_AC_baseload.txt>`__
+     -
+     -
+   * - Example 11b: Advanced Absorption Chiller - Dispatch
+     - `example11_new_AC_dispatch.txt <tests/examples/example11_new_AC_dispatch.txt>`__
+     - `text .out <tests/examples/example11_new_AC_dispatch_text.out>`__
+     -
    * - Example 12: District Heating
      - `example12_DH.txt <tests/examples/example12_DH.txt>`__
      - `.out <tests/examples/example12_DH.out>`__

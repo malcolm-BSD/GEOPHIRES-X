@@ -1,0 +1,2 @@
+pulp>=2.6.0
+# development extras (linters/tests) can be added here as needed

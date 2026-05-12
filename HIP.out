@@ -1,0 +1,40 @@
+                               *********************
+                               ***HIP CASE REPORT***
+                               *********************
+
+      ***SUMMARY OF INPUTS***
+      Reservoir Temperature:       150.00 degC
+      Rejection Temperature:        25.00 degC
+      Reservoir Porosity:           18.00 %
+      Reservoir Area:               81.00 km**2
+      Reservoir Thickness:           0.29 kilometer
+      Reservoir Life Cycle:         30.00 yr
+      Rock Heat Capacity:        2.84e+12 kJ/km**3C
+      Fluid Specific Heat Capacity:      -1.00 kJ/kgC
+      Density Of Reservoir Fluid:  -1.00e+00 kg/km**3
+      Density Of Reservoir Rock:   2.55e+12 kg/km**3
+      Recoverable Fluid Factor:       0.50
+      Recoverable Heat from Rock:       0.75
+
+      ***SUMMARY OF RESULTS***
+      Reservoir Pressure:           -1.00 MPa
+      Reservoir Depth:              -1.00 kilometer
+      Reservoir Volume (reservoir):       0.00 km**3
+      Reservoir Volume (rock):       0.00 km**3
+      Recoverable Volume (recoverable fluid):       0.00 km**3
+      Stored Heat (reservoir):   0.00e+00 kJ
+      Stored Heat (rock):        0.00e+00 kJ
+      Stored Heat (fluid):       0.00e+00 kJ
+      Mass of Reservoir (rock):   0.00e+00 kilogram
+      Mass of Reservoir (fluid):   0.00e+00 kilogram
+      Specific Enthalpy (reservoir):       0.00 kJ/kg
+      Specific Enthalpy (rock):       0.00 kJ/kg
+      Specific Enthalpy (fluid):       0.00 kJ/kg
+      Recovery Factor (reservoir):       0.00 %
+      Available Heat (reservoir):   0.00e+00 kJ
+      Producible Heat (reservoir):   0.00e+00 kJ
+      Producible Heat/Unit Area (reservoir):   0.00e+00 kJ/km**2
+      Producible Heat/Unit Volume (reservoir):   0.00e+00 kJ/km**3
+      Producible Electricity (reservoir):       0.00 MW
+      Producible Electricity/Unit Area (reservoir):       0.00 MW/km**2
+      Producible Electricity/Unit Volume (reservoir):       0.00 MW/km**3

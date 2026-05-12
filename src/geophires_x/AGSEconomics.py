@@ -5,7 +5,9 @@ import geophires_x.Model as Model
 import geophires_x.Economics as Economics
 from geophires_x.Parameter import floatParameter
 from geophires_x.Units import *
+from geophires_x.valco import calculate_and_assign_value_adjusted_levelized_cost_outputs
 from geophires_x.OptionList import WorkingFluid, EndUseOptions, EconomicModel
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 class AGSEconomics(Economics.Economics):
@@ -201,7 +203,9 @@ class AGSEconomics(Economics.Economics):
                     self.CAPEX_Surface_Plant = np.max(
                         model.surfaceplant.Instantaneous_electricity_production_method_4) * self.Power_plant_cost_per_kWe.value / 1e6  # [M$]
 
-            self.TotalCAPEX = self.CAPEX_Drilling + self.CAPEX_Surface_Plant  # Total system capital cost (only includes drilling and surface plant cost) [M$]
+            # Use the same transmission pipeline cost treatment as the other economic models.
+            self.calculate_transmission_pipeline_cost(model)
+            self.TotalCAPEX = self.CAPEX_Drilling + self.CAPEX_Surface_Plant + self.Cpiping.value  # [M$]
 
             # Calculate OPEX
             if model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
@@ -245,11 +249,19 @@ class AGSEconomics(Economics.Economics):
             self.CCap.value = self.TotalCAPEX
             self.CCap.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cwell.value = self.CAPEX_Drilling
+            self.Cpiping.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cplant.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Cplant.value = self.CAPEX_Surface_Plant
             self.Cplant.CurrentUnits = CurrencyUnit.MDOLLARS
             self.Coam.value = self.AverageOPEX_Plant * 1000
             self.Coam.CurrentUnits = CurrencyFrequencyUnit.KDOLLARSPERYEAR
+            self.XLCOE_Market.CurrentUnits = self.LCOE.CurrentUnits
+            self.XLCOE_MarketSocial.CurrentUnits = self.LCOE.CurrentUnits
+            self.XLCOH_Market.CurrentUnits = self.LCOH.CurrentUnits
+            self.XLCOH_MarketSocial.CurrentUnits = self.LCOH.CurrentUnits
+
+            assign_extended_levelized_cost_outputs(self, model)
+            calculate_and_assign_value_adjusted_levelized_cost_outputs(self, model)
 
         self._calculate_derived_outputs(model)
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')

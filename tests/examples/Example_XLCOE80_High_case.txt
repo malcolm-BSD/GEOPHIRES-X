@@ -1,0 +1,72 @@
+************reservoir*************
+Reservoir Model, 8
+Reservoir Depth, 7.5 kilometer
+Gradient 1, 60
+Reservoir Volume Option, 4
+Reservoir Volume, 8136407202.64, pi * 1 mi * 1 mi * 1000
+Reservoir Heat Capacity, 1112
+Reservoir Density, 2663
+Reservoir Thermal Conductivity, 2.5
+
+Lateral Endpoint Depth, 7.5 kilometer
+Lateral Inclination Angle, 30.5
+Junction Depth, 4.2 kilometer
+Vertical Section Length, 4.2 kilometer
+Number of Multilateral Sections, 12
+SBT Accuracy Desired, 5
+Lateral Spacing, 75
+Discretization Length, 250
+SBT Initial Timestep Count, 5
+SBT Initial to Final Timestep Transition, 10000, seconds = one year
+SBT Final Timestep Count, 120, ~4 per year
+
+****************Wellbore***********
+Is AGS, True
+Well Geometry Configuration, 5
+Number of Production Wells, 5
+Number of Injection Wells, 5
+Production Well Diameter, 8.5
+Injection Well Diameter, 8.5
+Nonvertical Wellbore Diameter, 0.216
+Production Flow Rate per Well, 16.0
+Reservoir Impedance, 1E-4, there is very little impedance in an AGS system
+Multilaterals Cased, False
+
+****************Surface plant************
+End-Use Option, 1
+Power Plant Type, 2
+Plant Lifetime, 15
+Construction Years, 15, Calibrated native-deck timing to better approximate the published high-case XLCOE outputs with the XLCO block fixed
+Ambient Temperature, 10
+Surface Temperature, 10
+Injection Temperature, 60
+
+***************Economics****************
+Economic Model, 3
+Discount Rate, 0.10, Calibrated native-deck market discount rate to better approximate the published high-case XLCOE outputs with the XLCO block fixed
+Reservoir Stimulation Capital Cost, 0
+Exploration Capital Cost, 0
+Starting Electricity Sale Price, 0.15
+Ending Electricity Sale Price, 0.15
+Well Drilling and Completion Capital Cost, 2.2, Calibrated native-deck drilling cost to keep LCOE and XLCOE Market close while leaving the XLCO block unchanged
+
+
+# ***Extended Levelized Cost Parameters***
+# ****************************************
+# This is a paper high-case approximation using a full AGS model, not the paper's synthetic annualized stream fixture.
+# The XLCO coefficients below are treated as fixed. The project geometry and economics above are calibrated so a
+# native GEOPHIRES run lands as close as practical to the published 8.0/3.4/1.1 outputs without changing that XLCO block.
+Do XLCO(E|H|C) Calculations,True
+#general parameters for all three XLCO types
+XLCO(E|H|C) Carbon Price,35.0, US$/tonne CO2
+XLCO(E|H|C) Water Shadow Price,0.5, US$/m3
+XLCO(E|H|C) Operations Jobs Per MW,1.7
+XLCO(E|H|C) Construction Jobs Per Rig,37
+XLCO(E|H|C) Indirect Jobs Multiplier,1.0
+XLCO(E|H|C) Average Monthly Wage,7000, US$/work/month
+Idle Rig Discount Rate,0.186
+Social Discount Rate,0.04
+#specific parameters for XLCOE
+XLCOE REC Price, 38, US$/MWh
+XLCOE Avoided Emissions Intensity,0.44, TONNEPERMWH
+XLCOE Displaced Water Use Intensity,7.5, m3/MWh

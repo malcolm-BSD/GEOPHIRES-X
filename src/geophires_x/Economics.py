@@ -22,10 +22,13 @@ from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, WellDrillingCostCorrelation, EconomicModel, EndUseOptions, PlantType, \
     _WellDrillingCostCorrelationCitation
 from geophires_x.Parameter import intParameter, floatParameter, OutputParameter, ReadParameter, boolParameter, \
-    coerce_int_params_to_enum_values, listParameter, Parameter
+    coerce_int_params_to_enum_values, listParameter, Parameter, strParameter
 from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
 from geophires_x.Units import *
+from geophires_x.levelized_costs import calculate_levelized_cost_outputs
+from geophires_x.valco import calculate_and_assign_value_adjusted_levelized_cost_outputs
 from geophires_x.WellBores import calculate_total_drilling_lengths_m
+from geophires_x.xlco import assign_extended_levelized_cost_outputs
 
 
 def calculate_cost_of_one_vertical_well(model: Model, depth_m: float, well_correlation: int,
@@ -373,228 +376,33 @@ def CalculateLCOELCOHLCOC(econ, model: Model) -> tuple[float, float, float]:
     :return: LCOE: The levelized cost of electricity and LCOH: The levelized cost of heat and LCOC: The levelized cost of cooling
     :rtype: tuple[float, float, float]
     """
-
-    LCOE = LCOH = LCOC = 0.0
-    CCap_elec = (econ.CCap.value * econ.CAPEX_heat_electricity_plant_ratio.value)
-    Coam_elec = (econ.Coam.value * econ.CAPEX_heat_electricity_plant_ratio.value)
-    CCap_heat = (econ.CCap.value * (1.0 - econ.CAPEX_heat_electricity_plant_ratio.value))
-    Coam_heat = (econ.Coam.value * (1.0 - econ.CAPEX_heat_electricity_plant_ratio.value))
-
-    def _capex_total_plus_construction_inflation() -> float:
-        # TODO should be return value instead of mutating econ
-        econ.inflation_cost_during_construction.value = quantity(
-            econ.CCap.value * econ.inflrateconstruction.value,
-            econ.CCap.CurrentUnits
-        ).to(econ.inflation_cost_during_construction.CurrentUnits).magnitude
-
-        return econ.CCap.value + econ.inflation_cost_during_construction.value
-
-    def _construction_inflation_cost_elec_heat() -> tuple[float, float]:
-        construction_inflation_cost_elec = CCap_elec * econ.inflrateconstruction.value
-        construction_inflation_cost_heat = CCap_heat * econ.inflrateconstruction.value
-
-        # TODO should be return value instead of mutating econ
-        econ.inflation_cost_during_construction.value = quantity(
-            construction_inflation_cost_elec + construction_inflation_cost_heat,
-            econ.CCap.CurrentUnits
-        ).to(econ.inflation_cost_during_construction.CurrentUnits).magnitude
-
-        return CCap_elec + construction_inflation_cost_elec, CCap_heat + construction_inflation_cost_heat
-
-    # Calculate LCOE/LCOH/LCOC
-    if econ.econmodel.value == EconomicModel.FCR:
-        capex_total_plus_infl = _capex_total_plus_construction_inflation()
-
-        if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
-            LCOE = (econ.FCR.value * capex_total_plus_infl + econ.Coam.value) / \
-                   np.average(model.surfaceplant.NetkWhProduced.value) * 1E8  # cents/kWh
-        elif (model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and
-              model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]):
-            LCOH = (econ.FCR.value * capex_total_plus_infl + econ.Coam.value +
-                    econ.averageannualpumpingcosts.value) / np.average(
-                model.surfaceplant.HeatkWhProduced.value) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-        # co-gen
-        elif model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option:
-            capex_elec_plus_infl, capex_heat_plus_infl = _construction_inflation_cost_elec_heat()
-            LCOE = (econ.FCR.value * capex_elec_plus_infl + Coam_elec) / np.average(model.surfaceplant.NetkWhProduced.value) * 1E8  # cents/kWh
-            LCOH = (econ.FCR.value * capex_heat_plus_infl + Coam_heat + econ.averageannualpumpingcosts.value) / np.average(model.surfaceplant.HeatkWhProduced.value) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-            LCOC = (econ.FCR.value * capex_total_plus_infl + econ.Coam.value + econ.averageannualpumpingcosts.value) / np.average(
-                model.surfaceplant.cooling_kWh_Produced.value) * 1E8  # cents/kWh
-            LCOC = LCOC * 2.931  # $/Million Btu
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-            LCOH = (econ.FCR.value * capex_total_plus_infl
-                    + econ.Coam.value + econ.averageannualpumpingcosts.value + econ.averageannualheatpumpelectricitycost.value) / np.average(
-                model.surfaceplant.HeatkWhProduced.value) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            LCOH = (econ.FCR.value * capex_total_plus_infl
-                    + econ.Coam.value + econ.averageannualpumpingcosts.value + econ.averageannualngcost.value) / model.surfaceplant.annual_heating_demand.value * 1E2  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-
-    elif econ.econmodel.value == EconomicModel.STANDARDIZED_LEVELIZED_COST:
-        discount_vector = 1. / np.power(1 + econ.discountrate.value,
-                                       np.linspace(0, model.surfaceplant.plant_lifetime.value - 1,
-                                                   model.surfaceplant.plant_lifetime.value))
-        capex_total_plus_infl = _capex_total_plus_construction_inflation()
-
-        if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
-            LCOE = (capex_total_plus_infl + np.sum(
-                econ.Coam.value * discount_vector)) / np.sum(
-                model.surfaceplant.NetkWhProduced.value * discount_vector) * 1E8  # cents/kWh
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and \
-            model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-            econ.averageannualpumpingcosts.value = np.average(
-                model.surfaceplant.PumpingkWh.value) * model.surfaceplant.electricity_cost_to_buy.value / 1E6  # M$/year
-            LCOH = (capex_total_plus_infl + np.sum((
-                econ.Coam.value + model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6) * discount_vector)) / np.sum(
-                model.surfaceplant.HeatkWhProduced.value * discount_vector) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/MMBTU
-
-        # co-gen
-        elif model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option:
-            capex_elec_plus_infl, capex_heat_plus_infl = _construction_inflation_cost_elec_heat()
-
-            LCOE = (capex_elec_plus_infl + np.sum(Coam_elec * discount_vector)) / np.sum(model.surfaceplant.NetkWhProduced.value * discount_vector) * 1E8  # cents/kWh
-            LCOH = (capex_heat_plus_infl +
-                    np.sum((Coam_heat + model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6) * discount_vector)) / np.sum(model.surfaceplant.HeatkWhProduced.value * discount_vector) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/MMBTU
-
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-            capex_total_plus_infl = _capex_total_plus_construction_inflation()
-
-            LCOC = (capex_total_plus_infl + np.sum((
-                econ.Coam.value + model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6) * discount_vector)) / np.sum(
-                model.surfaceplant.cooling_kWh_Produced.value * discount_vector) * 1E8  # cents/kWh
-            LCOC = LCOC * 2.931  # $/Million Btu
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-            capex_total_plus_infl = _capex_total_plus_construction_inflation()
-            LCOH = (capex_total_plus_infl + np.sum(
-                (econ.Coam.value + model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6 +
-                 model.surfaceplant.heat_pump_electricity_kwh_used.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6) * discount_vector)) / np.sum(
-                model.surfaceplant.HeatkWhProduced.value * discount_vector) * 1E8  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            capex_total_plus_infl = _capex_total_plus_construction_inflation()
-            LCOH = (capex_total_plus_infl + np.sum(
-                (econ.Coam.value + model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6 +
-                 econ.annualngcost.value) * discount_vector)) / np.sum(
-                model.surfaceplant.annual_heating_demand.value * discount_vector) * 1E2  # cents/kWh
-            LCOH = LCOH * 2.931  # $/Million Btu
-
-    elif econ.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA:
-        if model.surfaceplant.enduse_option.value.has_electricity_component:
-            # Designated as nominal (as opposed to real) in parameter tooltip text
-            LCOE = econ.sam_economics_calculations.lcoe_nominal.quantity().to(
-                convertible_unit(econ.LCOE.CurrentUnits.value)).magnitude
-
-        if model.surfaceplant.enduse_option.value.has_direct_use_heat_component:
-            if econ.sam_economics_calculations.lcoh_nominal.value is not None:
-                # Designated as nominal (as opposed to real) in parameter tooltip text
-                LCOH = econ.sam_economics_calculations.lcoh_nominal.quantity().to(
-                    convertible_unit(econ.LCOH.CurrentUnits.value)).magnitude
-            else:
-                # TODO probably should not happen; relevant to
-                #  https://github.com/NatLabRockies/GEOPHIRES-X/issues/452?title=Deduplicate+calls+to+calculate_pre_revenue_costs_and_cashflow
-                pass
-
-        if econ.sam_economics_calculations.lcoc_nominal.value is not None:
-            # Designated as nominal (as opposed to real) in parameter tooltip text
-            LCOC = econ.sam_economics_calculations.lcoc_nominal.quantity().to(
-                convertible_unit(econ.LCOC.CurrentUnits.value)).magnitude
-
-    else:
-        if econ.econmodel.value != EconomicModel.BICYCLE:
-            model.logger.error(
-                f'Unrecognized economic model: {econ.econmodel.value}. '
-                f'Treating as {EconomicModel.BICYCLE.value} for LCOE/LCOH/LCOC calculations.'
-            )
-            # Error is logged instead of raising an exception for backwards compatibility.
-
-        # average return on investment (tax and inflation adjusted)
-        i_ave = econ.FIB.value * econ.BIR.value * (1 - econ.CTR.value) + (1 - econ.FIB.value) * econ.EIR.value
-        # capital recovery factor
-        CRF = i_ave / (1 - np.power(1 + i_ave, -model.surfaceplant.plant_lifetime.value))
-        inflation_vector = np.power(1 + econ.RINFL.value, np.linspace(1, model.surfaceplant.plant_lifetime.value, model.surfaceplant.plant_lifetime.value))
-        discount_vector = 1. / np.power(1 + i_ave, np.linspace(1, model.surfaceplant.plant_lifetime.value, model.surfaceplant.plant_lifetime.value))
-        capex_total_plus_infl = _capex_total_plus_construction_inflation()
-
-        NPV_cap = np.sum(capex_total_plus_infl * CRF * discount_vector)
-        NPV_fc = np.sum(capex_total_plus_infl * econ.PTR.value * inflation_vector * discount_vector)
-        NPV_it = np.sum(econ.CTR.value / (1 - econ.CTR.value) * (capex_total_plus_infl * CRF - econ.CCap.value / model.surfaceplant.plant_lifetime.value) * discount_vector)
-        NPV_itc = capex_total_plus_infl * econ.RITC.value / (1 - econ.CTR.value)
-
-        if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
-            NPV_oandm = np.sum(econ.Coam.value * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOE = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(model.surfaceplant.NetkWhProduced.value * inflation_vector * discount_vector) * 1E8
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-            PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            NPV_oandm = np.sum((econ.Coam.value + PumpingCosts) * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOH = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(model.surfaceplant.HeatkWhProduced.value * inflation_vector * discount_vector) * 1E8
-            LCOH = LCOH * 2.931  # $/MMBTU
-        # co-gen
-        elif model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option:
-            capex_elec_plus_infl, capex_heat_plus_infl = _construction_inflation_cost_elec_heat()
-
-            NPVcap_elec = np.sum(capex_elec_plus_infl * CRF * discount_vector)
-            NPVfc_elec = np.sum(capex_elec_plus_infl * econ.PTR.value * inflation_vector * discount_vector)
-            NPVit_elec = np.sum(econ.CTR.value / (1 - econ.CTR.value) * (capex_elec_plus_infl * CRF - CCap_elec / model.surfaceplant.plant_lifetime.value) * discount_vector)
-            NPVitc_elec = capex_elec_plus_infl * econ.RITC.value / (1 - econ.CTR.value)
-            NPVoandm_elec = np.sum(Coam_elec * inflation_vector * discount_vector)
-            NPVgrt_elec = econ.GTR.value / (1 - econ.GTR.value) * (NPVcap_elec + NPVoandm_elec + NPVfc_elec + NPVit_elec - NPVitc_elec)
-
-            LCOE = ((NPVcap_elec + NPVoandm_elec + NPVfc_elec + NPVit_elec + NPVgrt_elec - NPVitc_elec) /
-                    np.sum(model.surfaceplant.NetkWhProduced.value * inflation_vector * discount_vector) * 1E8)
-
-            NPV_cap_heat = np.sum(capex_heat_plus_infl * CRF * discount_vector)
-            NPV_fc_heat = np.sum((1 + econ.inflrateconstruction.value) * (econ.CCap.value * (1.0 - econ.CAPEX_heat_electricity_plant_ratio.value)) * econ.PTR.value * inflation_vector * discount_vector)
-            NPV_it_heat = np.sum(econ.CTR.value / (1 - econ.CTR.value) * (capex_heat_plus_infl * CRF - CCap_heat / model.surfaceplant.plant_lifetime.value) * discount_vector)
-            NPV_itc_heat = capex_heat_plus_infl * econ.RITC.value / (1 - econ.CTR.value)
-            NPV_oandm_heat = np.sum((econ.Coam.value * (1.0 - econ.CAPEX_heat_electricity_plant_ratio.value)) * inflation_vector * discount_vector)
-            NPV_grt_heat = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap_heat + NPV_oandm_heat + NPV_fc_heat + NPV_it_heat - NPV_itc_heat)
-
-            LCOH = ((NPV_cap_heat + NPV_oandm_heat + NPV_fc_heat + NPV_it_heat + NPV_grt_heat - NPV_itc_heat) /
-                    np.sum(model.surfaceplant.HeatkWhProduced.value * inflation_vector * discount_vector) * 1E8)
-            LCOH = LCOH * 2.931  # $/MMBTU
-
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
-            PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            NPV_oandm = np.sum((econ.Coam.value + PumpingCosts) * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOC = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(
-                model.surfaceplant.cooling_kWh_Produced.value * inflation_vector * discount_vector) * 1E8
-            LCOC = LCOC * 2.931  # $/MMBTU
-
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
-            PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            HeatPumpElecCosts = model.surfaceplant.heat_pump_electricity_kwh_used.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            NPV_oandm = np.sum((econ.Coam.value + PumpingCosts + HeatPumpElecCosts) * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOH = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(
-                model.surfaceplant.HeatkWhProduced.value * inflation_vector * discount_vector) * 1E8
-            LCOH = LCOH * 2.931  # $/MMBTU
-
-        elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT and model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
-            PumpingCosts = model.surfaceplant.PumpingkWh.value * model.surfaceplant.electricity_cost_to_buy.value / 1E6
-            NPV_oandm = np.sum(
-                (econ.Coam.value + PumpingCosts + econ.annualngcost.value) * inflation_vector * discount_vector)
-            NPV_grt = econ.GTR.value / (1 - econ.GTR.value) * (NPV_cap + NPV_oandm + NPV_fc + NPV_it - NPV_itc)
-            LCOH = (NPV_cap + NPV_oandm + NPV_fc + NPV_it + NPV_grt - NPV_itc) / np.sum(
-                model.surfaceplant.annual_heating_demand.value * inflation_vector * discount_vector) * 1E2
-            LCOH = LCOH * 2.931  # $/MMBTU
-
-    return LCOE, LCOH, LCOC
+    return calculate_levelized_cost_outputs(econ, model)
 
 
 class Economics:
     """
      Class to support the default economic calculations in GEOPHIRES
     """
+
+    @staticmethod
+    def _dispatch_summary_metric(model: Model, metric_name: str, fallback: float) -> float:
+        if getattr(model, 'dispatch_results', None) is None:
+            return fallback
+
+        return model.dispatch_results.summary_metrics.get(metric_name, fallback)
+
+    @staticmethod
+    def _safe_max(values, default: float = 0.0) -> float:
+        array = np.asarray(values)
+        if array.size == 0:
+            return default
+
+        return float(np.max(array))
+
+    @staticmethod
+    def _tess_enabled(model: Model) -> bool:
+        """Return whether TESS economics should be applied for this model run."""
+        return bool(getattr(getattr(model.surfaceplant, 'tess_enabled', None), 'value', False))
 
     def __init__(self, model: Model):
         """
@@ -1002,6 +810,516 @@ class Economics:
                         "Discount Rate is synonymous with Fixed Internal Rate. If one is provided, the other's value "
                         "will be automatically set to the same value."
         )
+        self.social_discountrate = self.ParameterDict[self.social_discountrate.Name] = floatParameter(
+            "Social Discount Rate",
+            DefaultValue=discount_rate_default_val,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.PERCENT,
+            PreferredUnits=PercentUnit.TENTH,
+            CurrentUnits=PercentUnit.TENTH,
+            ErrMessage=f'assume default social discount rate ({discount_rate_default_val})',
+            ToolTipText="Social discount rate for XLCOE Market + Social calculations. "
+                        "This parameter is ignored unless XLCOE calculations are enabled."
+        )
+        self.DoXLCOCalculations = self.ParameterDict[self.DoXLCOCalculations.Name] = boolParameter(
+            "Do XLCO(E|H|C) Calculations",
+            DefaultValue=False,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default: no XLCO(E|H|C) calculations",
+            ToolTipText="Enable Extended Levelized Cost of Electricity|Hear|Cooling (XLCO(E|H|C)) calculations. "
+        )
+        self.XLCOEAvoidedEmissionsIntensity = self.ParameterDict[self.XLCOEAvoidedEmissionsIntensity.Name] = floatParameter(
+            "XLCOE Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default avoided emissions intensity (0.0 tCO2/MWh) for electricity production",
+            ToolTipText="Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits."
+        )
+        self.XLCOCarbonPrice = self.ParameterDict[self.XLCOCarbonPrice.Name] = floatParameter(
+            "XLCO(E|H|C) Carbon Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.COSTPERMASS,
+            PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
+            Required=False,
+            ErrMessage="assume default carbon price (0.0 USD/tonne)",
+            ToolTipText="Carbon price used for XLCO(E|H|C) market carbon-offset benefits."
+        )
+        self.XLCOERECPrice = self.ParameterDict[self.XLCOERECPrice.Name] = floatParameter(
+            "XLCOE REC Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default REC price (0.0 USD/MWh)",
+            ToolTipText="Renewable Energy Credit price used for XLCOE market benefits."
+        )
+        self.XLCOEDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOEDisplacedWaterUseIntensity.Name] = floatParameter(
+            "XLCOE Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default displaced water use intensity (0.0 m3/MWh) for electrity",
+            ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh."
+        )
+        self.XLCOWaterShadowPrice = self.ParameterDict[self.XLCOWaterShadowPrice.Name] = floatParameter(
+            "XLCO(E|H|C) Water Shadow Price",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default water shadow price (0.0 USD per m3)",
+            ToolTipText="Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3."
+        )
+        self.IdleRigDiscountRate = self.ParameterDict[self.IdleRigDiscountRate.Name] = floatParameter(
+            "Idle Rig Discount Rate",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.PERCENT,
+            PreferredUnits=PercentUnit.TENTH,
+            CurrentUnits=PercentUnit.TENTH,
+            Required=False,
+            ErrMessage="assume default idle rig discount rate (0.0)",
+            ToolTipText="XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only."
+        )
+        self.XLCOConstructionJobsPerRig = self.ParameterDict[self.XLCOConstructionJobsPerRig.Name] = floatParameter(
+            "XLCO(E|H|C) Construction Jobs Per Rig",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default construction jobs per rig (0.0)",
+            ToolTipText="Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits."
+        )
+        self.XLCOOperationsJobsPerMW = self.ParameterDict[self.XLCOOperationsJobsPerMW.Name] = floatParameter(
+            "XLCO(E|H|C) Operations Jobs Per MW",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default operations jobs per MW (0.0)",
+            ToolTipText="Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits."
+        )
+        self.XLCOIndirectJobsMultiplier = self.ParameterDict[self.XLCOIndirectJobsMultiplier.Name] = floatParameter(
+            "XLCO(E|H|C) Indirect Jobs Multiplier",
+            DefaultValue=1.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default indirect jobs multiplier (1.0)",
+            ToolTipText="Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits."
+        )
+        self.XLCOAverageMonthlyWage = self.ParameterDict[self.XLCOAverageMonthlyWage.Name] = floatParameter(
+            "XLCO(E|H|C) Average Monthly Wage",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.DOLLARS,
+            CurrentUnits=CurrencyUnit.DOLLARS,
+            Required=False,
+            ErrMessage="assume default average monthly wage (0.0 USD)",
+            ToolTipText="Average monthly wage used for XLCO(E|H|C) social jobs benefits."
+        )
+        self.XLCOHAvoidedEmissionsIntensity = self.ParameterDict[self.XLCOHAvoidedEmissionsIntensity.Name] = floatParameter(
+            "XLCOH Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default heat avoided emissions intensity (0.0 tCO2/MWh)",
+            ToolTipText="Avoided emissions intensity used for future XLCOH carbon-offset benefits."
+        )
+        self.XLCOHDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOHDisplacedWaterUseIntensity.Name] = floatParameter(
+            "XLCOH Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOH displaced water use intensity (0.0 m3/MWh)",
+            ToolTipText="Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh."
+        )
+        self.XLCOHREC = self.ParameterDict[self.XLCOHREC.Name] = floatParameter(
+            "XLCOH Thermal REC",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default XLCOH Renewable Energy Credit (0.0 USD/MWh)",
+            ToolTipText="Thermal Energy Credit used for future XLCOH market benefits."
+        )
+        self.XLCOCAvoidedEmissionsIntensity = self.ParameterDict["XLCOC Avoided Emissions Intensity"] = floatParameter(
+            "XLCOC Avoided Emissions Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.CO2PRODUCTION,
+            PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
+            CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
+            Required=False,
+            ErrMessage="assume default cooling avoided emissions intensity (0.0 tCO2/MWh)",
+            ToolTipText="Avoided emissions intensity used for future XLCOC carbon-offset benefits."
+        )
+        self.XLCOCREC = self.ParameterDict[self.XLCOCREC.Name] = floatParameter(
+            "XLCOC Thermal REC",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMWH,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
+            Required=False,
+            ErrMessage="assume default XLCOC Renewable Energy Credit (0.0 USD/MWh)",
+            ToolTipText="Cooling Renewable Energy Credit used for future XLCOC market benefits."
+        )
+        self.XLCOCDisplacedWaterUseIntensity = self.ParameterDict["XLCOC Displaced Water Use Intensity"] = floatParameter(
+            "XLCOC Displaced Water Use Intensity",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default XLCOC displaced water use intensity (0.0 m3/MWh)",
+            ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh."
+        )
+        self.DoVALCOCalculations = self.ParameterDict[self.DoVALCOCalculations.Name] = boolParameter(
+            "Do VALCO(E|H|C) Calculations",
+            DefaultValue=False,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default: no VALCO(E|H|C) calculations",
+            ToolTipText="Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations."
+        )
+        self.VALCOCalculationMode = self.ParameterDict[self.VALCOCalculationMode.Name] = strParameter(
+            "VALCO Calculation Mode",
+            DefaultValue="Direct",
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCO calculation mode (Direct)",
+            ToolTipText="VALCO calculation mode. Direct is the v1 supported mode."
+        )
+        self.VALCOESystemAverageEnergyValue = self.ParameterDict[self.VALCOESystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOE System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average energy value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average energy value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyEnergyValue = self.ParameterDict[self.VALCOETechnologyEnergyValue.Name] = floatParameter(
+            "VALCOE Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology energy value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology energy value used in VALCOE calculations."
+        )
+        self.VALCOESystemAverageCapacityValue = self.ParameterDict[self.VALCOESystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOE System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average capacity value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average capacity value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyCapacityValue = self.ParameterDict[self.VALCOETechnologyCapacityValue.Name] = floatParameter(
+            "VALCOE Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology capacity value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology capacity value used in VALCOE calculations."
+        )
+        self.VALCOESystemAverageFlexibilityValue = self.ParameterDict[self.VALCOESystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOE System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE system average flexibility value (0.0 cents/kWh)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOE calculations."
+        )
+        self.VALCOETechnologyFlexibilityValue = self.ParameterDict[self.VALCOETechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOE Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
+            Required=False,
+            ErrMessage="assume default VALCOE technology flexibility value (0.0 cents/kWh)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOE calculations."
+        )
+        self.VALCOEBasisCapacityValue = self.ParameterDict[self.VALCOEBasisCapacityValue.Name] = floatParameter(
+            "VALCOE Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr."
+        )
+        self.VALCOECapacityCredit = self.ParameterDict[self.VALCOECapacityCredit.Name] = floatParameter(
+            "VALCOE Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE capacity credit (0.0)",
+            ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value."
+        )
+        self.VALCOEBaseFlexibilityValue = self.ParameterDict[self.VALCOEBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOE Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOEFlexibilityMultiplier = self.ParameterDict[self.VALCOEFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOE Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOE flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value."
+        )
+        self.VALCOHSystemAverageEnergyValue = self.ParameterDict[self.VALCOHSystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOH System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average energy value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyEnergyValue = self.ParameterDict[self.VALCOHTechnologyEnergyValue.Name] = floatParameter(
+            "VALCOH Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology energy value used in VALCOH calculations."
+        )
+        self.VALCOHSystemAverageCapacityValue = self.ParameterDict[self.VALCOHSystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOH System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average capacity value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyCapacityValue = self.ParameterDict[self.VALCOHTechnologyCapacityValue.Name] = floatParameter(
+            "VALCOH Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology capacity value used in VALCOH calculations."
+        )
+        self.VALCOHSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOHSystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOH System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH system average flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOH calculations."
+        )
+        self.VALCOHTechnologyFlexibilityValue = self.ParameterDict[self.VALCOHTechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOH Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOH technology flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOH calculations."
+        )
+        self.VALCOHBasisCapacityValue = self.ParameterDict[self.VALCOHBasisCapacityValue.Name] = floatParameter(
+            "VALCOH Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr."
+        )
+        self.VALCOHCapacityCredit = self.ParameterDict[self.VALCOHCapacityCredit.Name] = floatParameter(
+            "VALCOH Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH capacity credit (0.0)",
+            ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value."
+        )
+        self.VALCOHBaseFlexibilityValue = self.ParameterDict[self.VALCOHBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOH Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOHFlexibilityMultiplier = self.ParameterDict[self.VALCOHFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOH Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOH flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value."
+        )
+        self.VALCOCSystemAverageEnergyValue = self.ParameterDict[self.VALCOCSystemAverageEnergyValue.Name] = floatParameter(
+            "VALCOC System Average Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average energy value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyEnergyValue = self.ParameterDict[self.VALCOCTechnologyEnergyValue.Name] = floatParameter(
+            "VALCOC Technology Energy Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology energy value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology energy value used in VALCOC calculations."
+        )
+        self.VALCOCSystemAverageCapacityValue = self.ParameterDict[self.VALCOCSystemAverageCapacityValue.Name] = floatParameter(
+            "VALCOC System Average Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average capacity value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyCapacityValue = self.ParameterDict[self.VALCOCTechnologyCapacityValue.Name] = floatParameter(
+            "VALCOC Technology Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology capacity value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology capacity value used in VALCOC calculations."
+        )
+        self.VALCOCSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOCSystemAverageFlexibilityValue.Name] = floatParameter(
+            "VALCOC System Average Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC system average flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input system average flexibility value used in VALCOC calculations."
+        )
+        self.VALCOCTechnologyFlexibilityValue = self.ParameterDict[self.VALCOCTechnologyFlexibilityValue.Name] = floatParameter(
+            "VALCOC Technology Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            Required=False,
+            ErrMessage="assume default VALCOC technology flexibility value (0.0 $/MMBTU)",
+            ToolTipText="Direct-input technology flexibility value used in VALCOC calculations."
+        )
+        self.VALCOCBasisCapacityValue = self.ParameterDict[self.VALCOCBasisCapacityValue.Name] = floatParameter(
+            "VALCOC Basis Capacity Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC basis capacity value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr."
+        )
+        self.VALCOCCapacityCredit = self.ParameterDict[self.VALCOCCapacityCredit.Name] = floatParameter(
+            "VALCOC Capacity Credit",
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=1.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC capacity credit (0.0)",
+            ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value."
+        )
+        self.VALCOCBaseFlexibilityValue = self.ParameterDict[self.VALCOCBaseFlexibilityValue.Name] = floatParameter(
+            "VALCOC Base Flexibility Value",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC base flexibility value (0.0 USD/kW-yr)",
+            ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr."
+        )
+        self.VALCOCFlexibilityMultiplier = self.ParameterDict[self.VALCOCFlexibilityMultiplier.Name] = floatParameter(
+            "VALCOC Flexibility Multiplier",
+            DefaultValue=0.0,
+            Min=0.0,
+            UnitType=Units.NONE,
+            Required=False,
+            ErrMessage="assume default VALCOC flexibility multiplier (0.0)",
+            ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value."
+        )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
                                                              "Schedule is invalid and will result in an error.")
@@ -1267,6 +1585,7 @@ class Economics:
                 min_bond_financing_start_year,
                 latest_allowed_bond_financing_start_year_index + 1,
                 1)),
+            auto_raise_exception_on_invalid_read=True,
             UnitType=Units.TIME,
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
@@ -1499,6 +1818,17 @@ class Economics:
             Valid=False,
             ErrMessage="assume default district heating piping cost rate ($1,200/m)",
             ToolTipText="District heating piping cost rate ($/m)"
+        )
+        self.CPipelineCost = self.ParameterDict[self.CPipelineCost.Name] = floatParameter(
+            "Transmission/pipeline Cost",
+            DefaultValue=750,
+            Min=0,
+            Max=10000,
+            UnitType=Units.COSTPERDISTANCE,
+            PreferredUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+            CurrentUnits=CostPerDistanceUnit.KDOLLARSPERKM,
+            ErrMessage="assume default Transmission/pipeline Cost rate (KUSD750/km)",
+            ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km."
         )
         self.dhtotaldistrictnetworkcost = self.ParameterDict[self.dhtotaldistrictnetworkcost.Name] = floatParameter(
             "Total District Heating Network Cost",
@@ -1938,7 +2268,133 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             ToolTipText="For SAM economic models, this is the nominal LCOE value (as opposed to real)."
         )
+        self.XLCOE_Market = self.OutputParameterDict[self.XLCOE_Market.Name] = OutputParameter(
+            Name="XLCOE_Market",
+            display_name='Extended Electricity Breakeven Price (XLCOE Market)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.XLCOE_MarketSocial = self.OutputParameterDict[self.XLCOE_MarketSocial.Name] = OutputParameter(
+            Name="XLCOE_MarketSocial",
+            display_name='Extended Electricity Breakeven Price (XLCOE Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE = self.OutputParameterDict[self.VALCOE.Name] = OutputParameter(
+            Name="VALCOE",
+            display_name='Value-Adjusted Electricity Breakeven Price (VALCOE)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_EnergyAdjustment = self.OutputParameterDict[self.VALCOE_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOE_EnergyAdjustment",
+            display_name='VALCOE Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_CapacityAdjustment = self.OutputParameterDict[self.VALCOE_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOE_CapacityAdjustment",
+            display_name='VALCOE Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.VALCOE_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOE_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOE_FlexibilityAdjustment",
+            display_name='VALCOE Flexibility Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.CENTSSPERKWH,
+            CurrentUnits=EnergyCostUnit.CENTSSPERKWH
+        )
+        self.XLCOH_Market = self.OutputParameterDict[self.XLCOH_Market.Name] = OutputParameter(
+            Name="XLCOH_Market",
+            display_name='Extended Heat Breakeven Price (XLCOH Market)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.XLCOH_MarketSocial = self.OutputParameterDict[self.XLCOH_MarketSocial.Name] = OutputParameter(
+            Name="XLCOH_MarketSocial",
+            display_name='Extended Heat Breakeven Price (XLCOH Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH = self.OutputParameterDict[self.VALCOH.Name] = OutputParameter(
+            Name="VALCOH",
+            display_name='Value-Adjusted Heat Breakeven Price (VALCOH)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_EnergyAdjustment = self.OutputParameterDict[self.VALCOH_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOH_EnergyAdjustment",
+            display_name='VALCOH Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_CapacityAdjustment = self.OutputParameterDict[self.VALCOH_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOH_CapacityAdjustment",
+            display_name='VALCOH Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOH_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOH_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOH_FlexibilityAdjustment",
+            display_name='VALCOH Flexibility Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
         self.LCOH = self.OutputParameterDict[self.LCOH.Name] = lcoh_output_parameter()
+        self.XLCOC_Market = self.OutputParameterDict[self.XLCOC_Market.Name] = OutputParameter(
+            Name="XLCOC_Market",
+            display_name='Extended Cooling Breakeven Price (XLCOC Market)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.XLCOC_MarketSocial = self.OutputParameterDict[self.XLCOC_MarketSocial.Name] = OutputParameter(
+            Name="XLCOC_MarketSocial",
+            display_name='Extended Cooling Breakeven Price (XLCOC Market + Social)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC = self.OutputParameterDict[self.VALCOC.Name] = OutputParameter(
+            Name="VALCOC",
+            display_name='Value-Adjusted Cooling Breakeven Price (VALCOC)',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_EnergyAdjustment = self.OutputParameterDict[self.VALCOC_EnergyAdjustment.Name] = OutputParameter(
+            Name="VALCOC_EnergyAdjustment",
+            display_name='VALCOC Energy Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_CapacityAdjustment = self.OutputParameterDict[self.VALCOC_CapacityAdjustment.Name] = OutputParameter(
+            Name="VALCOC_CapacityAdjustment",
+            display_name='VALCOC Capacity Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
+        self.VALCOC_FlexibilityAdjustment = self.OutputParameterDict[self.VALCOC_FlexibilityAdjustment.Name] = OutputParameter(
+            Name="VALCOC_FlexibilityAdjustment",
+            display_name='VALCOC Flexibility Adjustment',
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
+        )
 
         stimulation_contingency_and_indirect_costs_tooltip = (
             f'plus {self.contingency_percentage.quantity().to(convertible_unit("%")).magnitude:g}% contingency '
@@ -2126,18 +2582,17 @@ class Economics:
                         f'{self.indirect_capital_cost_percentage.quantity().to(convertible_unit("%")).magnitude}%) '
                         f'are added. '
                         'The built-in cost correlation does not include the cost of pipelines to an off-site heat '
-                        'user or a district-heating system. These costs are estimated at $750 per meter pipeline '
-                        'length and can be manually added by the user to the pipeline distribution costs.'
+                        'user or a district-heating system. Those transmission pipeline costs are calculated from '
+                        f'{self.CPipelineCost.Name} multiplied by the specified pipeline length.'
         )
 
         self.Cpiping = self.OutputParameterDict[self.Cpiping.Name] = OutputParameter(
-            Name="Transmission pipeline costs",
-            display_name='Transmission pipeline cost',
+            Name="Transmission/pipeline Cost",
+            display_name='Transmission/pipeline Cost',
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS
         )
-
         self.surface_equipment_costs_total = self.OutputParameterDict[self.surface_equipment_costs_total.Name] = OutputParameter(
             Name='Total surface equipment costs',
             UnitType=Units.CURRENCY,
@@ -2146,6 +2601,22 @@ class Economics:
             ToolTipText=f'{self.Cplant.Name} plus {self.Cgath.Name} plus {self.Cpiping.Name}.'
         )
 
+        self.tess_capital_cost = self.OutputParameterDict[self.tess_capital_cost.Name] = OutputParameter(
+            Name="TESS Capital Cost",
+            display_name='TESS capital costs',
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText='Complete installed TESS capital cost calculated from TESS volume and cost per cubic meter.'
+        )
+        self.tess_o_and_m_cost = self.OutputParameterDict[self.tess_o_and_m_cost.Name] = OutputParameter(
+            Name="TESS O&M Cost",
+            display_name='TESS annual O&M costs',
+            UnitType=Units.CURRENCYFREQUENCY,
+            PreferredUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
+            CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
+            ToolTipText='Annual TESS fixed O&M cost calculated as a fraction of TESS capital cost.'
+        )
         self.Coamwater = self.OutputParameterDict[self.Coamwater.Name] = OutputParameter(
             Name="O&M Make-up Water costs",
             display_name='Water costs',
@@ -2541,10 +3012,10 @@ class Economics:
         if len(model.InputParameters) > 0:
             # loop through all the parameters that the user wishes to set, looking for parameters that match this object
             for item in self.ParameterDict.items():
+                input_key = item[0].strip()
                 ParameterToModify = item[1]
-                key = ParameterToModify.Name.strip()
-                if key in model.InputParameters:
-                    ParameterReadIn = model.InputParameters[key]
+                if input_key in model.InputParameters:
+                    ParameterReadIn = model.InputParameters[input_key]
 
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, model)
@@ -2883,6 +3354,7 @@ class Economics:
         self.Cstim.value = self.calculate_stimulation_costs(model).to(self.Cstim.CurrentUnits).magnitude
         self.calculate_field_gathering_costs(model)
         self.calculate_plant_costs(model)
+        self.calculate_tess_costs(model)
         self.calculate_total_capital_costs(model)
         self.calculate_operating_and_maintenance_costs(model)
 
@@ -2932,6 +3404,8 @@ class Economics:
 
         # Calculate LCOE/LCOH
         self.LCOE.value, self.LCOH.value, self.LCOC.value = CalculateLCOELCOHLCOC(self, model)
+        assign_extended_levelized_cost_outputs(self, model)
+        calculate_and_assign_value_adjusted_levelized_cost_outputs(self, model)
 
         # https://github.com/NREL/GEOPHIRES-X/issues/232
         self.jobs_created.value = round(
@@ -2967,7 +3441,12 @@ class Economics:
             self.Cwell.value = ((self.cost_one_production_well.value * model.wellbores.nprod.value) +
                                 (self.cost_one_injection_well.value * model.wellbores.ninj.value))
         else:
-            if hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided:
+            # Treat Provided+value==0 as "non-vertical costs included in vertical well costs" ---
+            has_nvs_param = hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided
+            nvs_value = model.wellbores.numnonverticalsections.value if has_nvs_param else 0
+            cost_nonverticals_explicitly = has_nvs_param and (nvs_value is not None) and (nvs_value > 0)
+
+            if cost_nonverticals_explicitly:
                 self.cost_lateral_section.value = 0.0
                 if not model.wellbores.IsAGS.value:
                     input_vert_depth_km = model.reserv.depth.quantity().to('km').magnitude
@@ -2979,7 +3458,7 @@ class Economics:
 
                 tot_m, tot_vert_m, tot_horiz_m, _ = calculate_total_drilling_lengths_m(
                     model.wellbores.Configuration.value,
-                    model.wellbores.numnonverticalsections.value,
+                    nvs_value,
                     model.wellbores.Nonvertical_length.value / 1000.0,
                     input_vert_depth_km,
                     output_vert_depth_km,
@@ -2995,30 +3474,33 @@ class Economics:
                     model.wellbores.injection_reservoir_depth.value = model.wellbores.injection_reservoir_depth.quantity().to(
                         'km').magnitude
 
-            self.cost_one_production_well.value = calculate_cost_of_one_vertical_well(model,
-                                                                                      model.reserv.depth.quantity().to(
-                                                                                          'm').magnitude,
-                                                                                      self.wellcorrelation.value,
-                                                                                      self.Vertical_drilling_cost_per_m.value,
-                                                                                      self.per_production_well_cost.Name,
-                                                                                      self.production_well_cost_adjustment_factor.value)
+            self.cost_one_production_well.value = calculate_cost_of_one_vertical_well(
+                model,
+                model.reserv.depth.quantity().to('m').magnitude,
+                self.wellcorrelation.value,
+                self.Vertical_drilling_cost_per_m.value,
+                self.per_production_well_cost.Name,
+                self.production_well_cost_adjustment_factor.value
+            )
             if model.wellbores.ninj.value == 0:
                 self.cost_one_injection_well.value = -1.0
             else:
-                self.cost_one_injection_well.value = calculate_cost_of_one_vertical_well(model,
-                                                                                         model.wellbores.injection_reservoir_depth.value * 1000.0,
-                                                                                         self.wellcorrelation.value,
-                                                                                         self.Vertical_drilling_cost_per_m.value,
-                                                                                         self.per_injection_well_cost.Name,
-                                                                                         self.injection_well_cost_adjustment_factor.value)
+                self.cost_one_injection_well.value = calculate_cost_of_one_vertical_well(
+                    model,
+                    model.wellbores.injection_reservoir_depth.value * 1000.0,
+                    self.wellcorrelation.value,
+                    self.Vertical_drilling_cost_per_m.value,
+                    self.per_injection_well_cost.Name,
+                    self.injection_well_cost_adjustment_factor.value
+                )
 
-            if hasattr(model.wellbores, 'numnonverticalsections') and model.wellbores.numnonverticalsections.Provided:
+            if cost_nonverticals_explicitly:
                 self.cost_lateral_section.value = calculate_cost_of_non_vertical_section(
                     model,
                     tot_horiz_m,
                     self.wellcorrelation.value,
                     self.Nonvertical_drilling_cost_per_m.value,
-                    model.wellbores.numnonverticalsections.value,
+                    nvs_value,
                     self.Nonvertical_drilling_cost_per_m.Name,
                     model.wellbores.NonverticalsCased.value,
                     self.production_well_cost_adjustment_factor.value
@@ -3032,7 +3514,6 @@ class Economics:
                 self.cost_one_injection_well.value * model.wellbores.ninj.value +
                 self.cost_lateral_section.value
             )
-
     def calculate_stimulation_costs(self, model: Model) -> PlainQuantity:
         if self.ccstimfixed.Valid:
             stimulation_costs = self.ccstimfixed.quantity().to(self.Cstim.CurrentUnits).magnitude
@@ -3055,13 +3536,33 @@ class Economics:
         return quantity(stimulation_costs, self.Cstim.CurrentUnits)
 
     def calculate_field_gathering_costs(self, model: Model) -> None:
+        design_heat_extracted_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_extracted_mw',
+            np.max(model.surfaceplant.HeatExtracted.value),
+        )
+        design_pumping_power_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_mw',
+            np.max(model.wellbores.PumpingPower.value),
+        )
+        design_pumping_power_prod_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_prod_mw',
+            np.max(model.wellbores.PumpingPowerProd.value),
+        )
+        design_pumping_power_inj_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_pumping_power_inj_mw',
+            np.max(model.wellbores.PumpingPowerInj.value),
+        )
         if self.ccgathfixed.Valid:
             self.Cgath.value = self.ccgathfixed.value
         else:
             self.Cgath.value = self.ccgathadjfactor.value * 50 - 6 * np.max(
                 model.surfaceplant.HeatExtracted.value) * 1000.  # (GEOPHIRES v1 correlation)
             if model.wellbores.impedancemodelused.value:
-                pumphp = np.max(model.wellbores.PumpingPower.value) * 1341
+                pumphp = design_pumping_power_mw * 1341
                 numberofpumps = np.ceil(pumphp / 2000)  # pump can be maximum 2,000 hp
                 if numberofpumps == 0:
                     self.Cpumps = 0.0
@@ -3071,14 +3572,14 @@ class Economics:
                             (1750 * pumphpcorrected ** 0.7) * 3 * pumphpcorrected ** (-0.11))
             else:
                 if model.wellbores.productionwellpumping.value:
-                    prodpumphp = np.max(model.wellbores.PumpingPowerProd.value) / model.wellbores.nprod.value * 1341
+                    prodpumphp = design_pumping_power_prod_mw / model.wellbores.nprod.value * 1341
                     Cpumpsprod = model.wellbores.nprod.value * 1.5 * (1750 * prodpumphp ** 0.7 + 5750 *
                                                                       prodpumphp ** 0.2 + 10000 + np.max(
                             model.wellbores.pumpdepth.value) * 50 * 3.281)  # see page 46 in user's manual assuming rental of rig for 1 day.
                 else:
                     Cpumpsprod = 0
 
-                injpumphp = np.max(model.wellbores.PumpingPowerInj.value) * 1341
+                injpumphp = design_pumping_power_inj_mw * 1341
                 numberofinjpumps = np.ceil(injpumphp / 2000)  # pump can be maximum 2,000 hp
                 if numberofinjpumps == 0:
                     Cpumpsinj = 0
@@ -3095,6 +3596,21 @@ class Economics:
     def calculate_plant_costs(self, model: Model) -> None:
         direct_use_heat_default_cost_musd_per_kwth = 250E-6  # TODO parameterize
 
+        design_heat_extracted_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_extracted_mw',
+            Economics._safe_max(model.surfaceplant.HeatExtracted.value),
+        )
+        design_heat_produced_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_heat_produced_mw',
+            Economics._safe_max(model.surfaceplant.HeatProduced.value),
+        )
+        design_electricity_produced_mw = Economics._dispatch_summary_metric(
+            model,
+            'design_gross_electricity_produced_mw',
+            Economics._safe_max(model.surfaceplant.ElectricityProduced.value),
+        )
         # plant costs
         if (model.surfaceplant.enduse_option.value == EndUseOptions.HEAT
             and model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]):  # direct-use
@@ -3105,7 +3621,7 @@ class Economics:
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
                                      * direct_use_heat_default_cost_musd_per_kwth
-                                     * np.max(model.surfaceplant.HeatExtracted.value)
+                                     * design_heat_extracted_mw
                                      * 1000.)
 
         # absorption chiller
@@ -3118,7 +3634,7 @@ class Economics:
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
                                      * direct_use_heat_default_cost_musd_per_kwth
-                                     * np.max(model.surfaceplant.HeatExtracted.value)
+                                     * design_heat_extracted_mw
                                      * 1000.)
 
                 if self.chillercapex.value == -1:  # no value provided by user, use built-in correlation ($2500/ton)
@@ -3140,13 +3656,24 @@ class Economics:
                 self.Cplant.value = self.ccplantfixed.value
             else:
                 # this is for the direct-use part all the way up to the heat pump
-                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * np.max(
-                    model.surfaceplant.HeatExtracted.value) * 1000.
-
+                self.Cplant.value = (
+                    self._indirect_cost_factor
+                    * self._contingency_factor
+                    * self.ccplantadjfactor.value
+                    * direct_use_heat_default_cost_musd_per_kwth
+                    * design_heat_extracted_mw
+                    * 1000.
+                )
                 if self.heatpumpcapex.value == -1:  # no value provided by user, use built-in correlation ($150/kWth)
                     heat_pump_default_cost_usd_per_kw = 150  # $150/kW - TODO parameterize
-                    self.heatpumpcapex.value = self._indirect_cost_factor * self._contingency_factor * np.max(
-                        model.surfaceplant.HeatProduced.value) * 1000 * heat_pump_default_cost_usd_per_kw / 1e6
+                    self.heatpumpcapex.value = (
+                        self._indirect_cost_factor
+                        * self._contingency_factor
+                        * design_heat_produced_mw
+                        * 1000
+                        * heat_pump_default_cost_usd_per_kw
+                        / 1e6
+                    )
 
                 # now add heat pump cost to surface plant cost
                 self.Cplant.value += self.heatpumpcapex.value
@@ -3156,8 +3683,7 @@ class Economics:
             if self.ccplantfixed.Valid:
                 self.Cplant.value = self.ccplantfixed.value
             else:
-                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * np.max(
-                    model.surfaceplant.HeatExtracted.value) * 1000.
+                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * design_heat_extracted_mw * 1000.
 
                 # add 65$/KW for peaking boiler
                 self.peakingboilercost.value = (self.peaking_boiler_cost_per_kW.quantity()
@@ -3182,8 +3708,8 @@ class Economics:
                     CCAPP1 = C3 * MaxProducedTemperature ** 3 + C2 * MaxProducedTemperature ** 2 + C1 * MaxProducedTemperature + C0
                 else:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
-                x = np.max(model.surfaceplant.ElectricityProduced.value)
-                y = np.max(model.surfaceplant.ElectricityProduced.value)
+                x = design_electricity_produced_mw
+                y = design_electricity_produced_mw
                 if y == 0.0:
                     y = 15.0
                 z = math.pow(y / 15., -0.06)
@@ -3201,11 +3727,10 @@ class Economics:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
                 # factor 1.1 to make supercritical 10% more expansive than subcritical
                 self.Cplantcorrelation = 1.1 * CCAPP1 * math.pow(
-                    np.max(model.surfaceplant.ElectricityProduced.value) / 15., -0.06) * np.max(
-                    model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6
+                    design_electricity_produced_mw / 15., -0.06) * design_electricity_produced_mw * 1000. / 1E6
 
             elif model.surfaceplant.plant_type.value == PlantType.SINGLE_FLASH:
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 10.:
+                if design_electricity_produced_mw < 10.:
                     C2 = 4.8472E-2
                     C1 = -35.2186
                     C0 = 8.4474E3
@@ -3214,7 +3739,7 @@ class Economics:
                     D0 = 6.9911E3
                     PLL = 5.
                     PRL = 10.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 25.:
+                elif design_electricity_produced_mw < 25.:
                     C2 = 4.0604E-2
                     C1 = -29.3817
                     C0 = 6.9911E3
@@ -3223,7 +3748,7 @@ class Economics:
                     D0 = 5.5263E3
                     PLL = 10.
                     PRL = 25.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 50.:
+                elif design_electricity_produced_mw < 50.:
                     C2 = 3.2773E-2
                     C1 = -23.5519
                     C0 = 5.5263E3
@@ -3232,7 +3757,7 @@ class Economics:
                     D0 = 5.1787E3
                     PLL = 25.
                     PRL = 50.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 75.:
+                elif design_electricity_produced_mw < 75.:
                     C2 = 3.4716E-2
                     C1 = -23.8139
                     C0 = 5.1787E3
@@ -3256,11 +3781,11 @@ class Economics:
                 b = math.log(CCAPPRL / CCAPPLL) / math.log(PRL / PLL)
                 a = CCAPPRL / PRL ** b
                 # factor 0.75 to make double flash 25% more expansive than single flash
-                self.Cplantcorrelation = (0.8 * a * math.pow(np.max(model.surfaceplant.ElectricityProduced.value), b) *
-                                          np.max(model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6)
+                self.Cplantcorrelation = (0.8 * a * math.pow(design_electricity_produced_mw, b) *
+                                          design_electricity_produced_mw * 1000. / 1E6)
 
             elif model.surfaceplant.plant_type.value == PlantType.DOUBLE_FLASH:
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 10.:
+                if design_electricity_produced_mw < 10.:
                     C2 = 4.8472E-2
                     C1 = -35.2186
                     C0 = 8.4474E3
@@ -3269,7 +3794,7 @@ class Economics:
                     D0 = 6.9911E3
                     PLL = 5.
                     PRL = 10.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 25.:
+                elif design_electricity_produced_mw < 25.:
                     C2 = 4.0604E-2
                     C1 = -29.3817
                     C0 = 6.9911E3
@@ -3278,7 +3803,7 @@ class Economics:
                     D0 = 5.5263E3
                     PLL = 10.
                     PRL = 25.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 50.:
+                elif design_electricity_produced_mw < 50.:
                     C2 = 3.2773E-2
                     C1 = -23.5519
                     C0 = 5.5263E3
@@ -3287,7 +3812,7 @@ class Economics:
                     D0 = 5.1787E3
                     PLL = 25.
                     PRL = 50.
-                elif np.max(model.surfaceplant.ElectricityProduced.value) < 75.:
+                elif design_electricity_produced_mw < 75.:
                     C2 = 3.4716E-2
                     C1 = -23.8139
                     C0 = 5.1787E3
@@ -3310,8 +3835,8 @@ class Economics:
                 CCAPPRL = D2 * maxProdTemp ** 2 + D1 * maxProdTemp + D0
                 b = math.log(CCAPPRL / CCAPPLL) / math.log(PRL / PLL)
                 a = CCAPPRL / PRL ** b
-                self.Cplantcorrelation = (a * math.pow(np.max(model.surfaceplant.ElectricityProduced.value), b) *
-                                          np.max(model.surfaceplant.ElectricityProduced.value) * 1000. / 1E6)
+                self.Cplantcorrelation = (a * math.pow(design_electricity_produced_mw, b) *
+                                          design_electricity_produced_mw * 1000. / 1E6)
 
             if self.ccplantfixed.Valid:
                 self.Cplant.value = self.ccplantfixed.value  # TODO unit conversion
@@ -3338,7 +3863,7 @@ class Economics:
                     (1.0 - self.CAPEX_heat_electricity_plant_ratio.quantity('dimensionless').magnitude)
             else:
                 if self.Power_plant_cost_per_kWe.Provided:
-                    nameplate_capacity_kW = np.max(model.surfaceplant.ElectricityProduced.quantity().to('kW'))
+                    nameplate_capacity_kW = quantity(design_electricity_produced_mw, 'MW').to('kW')
                     direct_plant_cost_MUSD = (nameplate_capacity_kW.magnitude *
                                               model.economics.Power_plant_cost_per_kWe
                                               .quantity().to('MUSD / kW').magnitude)
@@ -3383,9 +3908,40 @@ class Economics:
 
             self.Cplant.value = self.Cplant.value + quantity(self.CAPEX_cost_heat_plant_musd, 'MUSD').to(self.Cplant.CurrentUnits.value).magnitude
 
-        if not self.CAPEX_heat_electricity_plant_ratio.Provided and self.CAPEX_heat_electricity_plant_ratio.value == -1:
+        if (
+            not self.CAPEX_heat_electricity_plant_ratio.Provided
+            and self.CAPEX_heat_electricity_plant_ratio.value == -1
+            and self.Cplant.value != 0
+        ):
             self.CAPEX_heat_electricity_plant_ratio.value = (self.CAPEX_cost_electricity_plant_musd /
                                                              self.Cplant.quantity().to('MUSD').magnitude)
+
+    def calculate_transmission_pipeline_cost(self, model: Model) -> None:
+        # Transmission/pipeline Cost is calculated from the user-provided cost rate and the specified pipeline length.
+        self.Cpiping.value = (
+            self.CPipelineCost.quantity().to('MUSD/km').magnitude * model.surfaceplant.piping_length.value
+        )
+
+    def calculate_tess_costs(self, model: Model) -> None:
+        """Calculate TESS capital and fixed O&M costs for economic totals."""
+        if not Economics._tess_enabled(model):
+            self.tess_capital_cost.value = 0.0
+            self.tess_o_and_m_cost.value = 0.0
+            return
+
+        volume_m3 = model.surfaceplant.tess_volume.quantity().to(VolumeUnit.METERS3.value).magnitude
+        cost_usd_per_m3 = (
+            model.surfaceplant.tess_cost_per_cubic_meter.quantity()
+            .to(CostPerVolumeUnit.DOLLARSPERMETERS3.value)
+            .magnitude
+        )
+        self.tess_capital_cost.value = quantity(
+            volume_m3 * cost_usd_per_m3,
+            'USD',
+        ).to(self.tess_capital_cost.CurrentUnits).magnitude
+
+        fixed_om_fraction = float(model.surfaceplant.tess_fixed_om_fraction.value)
+        self.tess_o_and_m_cost.value = self.tess_capital_cost.value * fixed_om_fraction
 
     def calculate_total_capital_costs(self, model: Model) -> None:
         if not self.totalcapcost.Valid:
@@ -3396,8 +3952,8 @@ class Economics:
                 self.Cexpl.value = self._contingency_factor * self.ccexpladjfactor.value * self._indirect_cost_factor * (
                     1. + self.cost_one_production_well.value * 0.6)
 
-            # Surface Piping Length Costs (M$) #assumed $750k/km  # TODO parameterize
-            self.Cpiping.value = 750 / 1000 * model.surfaceplant.piping_length.value
+            # Keep transmission/pipeline CAPEX consistent across economic models and unit selections.
+            self.calculate_transmission_pipeline_cost(model)
 
             # district heating network costs
             if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:  # district heat
@@ -3430,8 +3986,16 @@ class Economics:
             else:
                 self.dhdistrictcost.value = 0
 
-            # TODO unit conversions
-            self.CCap.value = self.Cexpl.value + self.Cwell.value + self.Cstim.value + self.Cgath.value + self.Cplant.value + self.Cpiping.value + self.dhdistrictcost.value
+            self.CCap.value = (
+                self.Cexpl.value
+                + self.Cwell.value
+                + self.Cstim.value
+                + self.Cgath.value
+                + self.Cplant.value
+                + self.Cpiping.value
+                + self.dhdistrictcost.value
+                + self.tess_capital_cost.value
+            )
         else:
             self.CCap.value = self.totalcapcost.value
 
@@ -3466,19 +4030,29 @@ class Economics:
             ).magnitude
 
         if not self.oamtotalfixed.Valid:
+            design_heat_extracted_mw = Economics._dispatch_summary_metric(
+                model,
+                'design_heat_extracted_mw',
+                np.max(model.surfaceplant.HeatExtracted.value),
+            )
+            design_electricity_produced_mw = Economics._dispatch_summary_metric(
+                model,
+                'design_gross_electricity_produced_mw',
+                Economics._safe_max(model.surfaceplant.ElectricityProduced.value),
+            )
             # labor cost
             if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:  # electricity
-                if np.max(model.surfaceplant.ElectricityProduced.value) < 2.5:
+                if design_electricity_produced_mw < 2.5:
                     self.Claborcorrelation = 236. / 1E3  # M$/year
                 else:
                     self.Claborcorrelation = (589. * math.log(
-                        np.max(model.surfaceplant.ElectricityProduced.value)) - 304.) / 1E3  # M$/year
+                        design_electricity_produced_mw) - 304.) / 1E3  # M$/year
             else:
-                if np.max(model.surfaceplant.HeatExtracted.value) < 2.5 * 5.:
+                if design_heat_extracted_mw < 2.5 * 5.:
                     self.Claborcorrelation = 236. / 1E3  # M$/year
                 else:
                     self.Claborcorrelation = (589. * math.log(
-                        np.max(model.surfaceplant.HeatExtracted.value) / 5.) - 304.) / 1E3  # M$/year
+                        design_heat_extracted_mw / 5.) - 304.) / 1E3  # M$/year
                 # * 1.1 to convert from 2012 to 2016$ with BLS employment cost index (for utilities in March)
             self.Claborcorrelation = self.Claborcorrelation * 1.1
 
@@ -3533,7 +4107,14 @@ class Economics:
             else:
                 self.dhdistrictoandmcost.value = 0
 
-            self.Coam.value = self.Coamwell.value + self.Coamplant.value + self.Coamwater.value + self.chilleropex.value + self.dhdistrictoandmcost.value  # total O&M cost (M$/year)
+            self.Coam.value = (
+                self.Coamwell.value
+                + self.Coamplant.value
+                + self.Coamwater.value
+                + self.chilleropex.value
+                + self.dhdistrictoandmcost.value
+                + self.tess_o_and_m_cost.value
+            )  # total O&M cost (M$/year)
 
         else:
             self.Coam.value = self.oamtotalfixed.value  # total O&M cost (M$/year)

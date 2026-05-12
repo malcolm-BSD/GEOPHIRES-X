@@ -51,11 +51,11 @@ class GeophiresXClient:
         # Ensure that only the top-level user process can create the manager.
         # A spawned child process, which re-imports this script, will have a different name
         # (e.g., 'Spawn-1') and will skip this entire block, preventing a recursive crash.
-        if current_process().name == 'MainProcess':
+        if current_process().name == "MainProcess":
             with cls._init_lock:
                 if cls._manager is None:
                     cls._logger = _get_logger(__name__)  # Add a logger for this class method
-                    cls._logger.debug('MainProcess is creating the shared multiprocessing manager...')
+                    cls._logger.debug("MainProcess is creating the shared multiprocessing manager...")
                     cls._manager = Manager()
                     cls._cache = cls._manager.dict()
                     cls._lock = cls._manager.RLock()
@@ -73,7 +73,7 @@ class GeophiresXClient:
         with cls._init_lock:
             if cls._manager is not None:
                 cls._logger = _get_logger(__name__)
-                cls._logger.debug('Shutting down the shared multiprocessing manager...')
+                cls._logger.debug("Shutting down the shared multiprocessing manager...")
                 cls._manager.shutdown()
                 # De-register the hook to avoid trying to shut down twice.
                 try:
@@ -81,7 +81,7 @@ class GeophiresXClient:
                 except Exception as e:
                     # Fails in some environments (e.g. pytest), but is not critical
                     cls._logger.debug(
-                        f'Encountered exception shutting down the shared multiprocessing manager (OK): ' f'{e!s}'
+                        f"Encountered exception shutting down the shared multiprocessing manager (OK): {e!s}"
                     )
                 cls._manager = None
                 cls._cache = None
@@ -114,18 +114,22 @@ class GeophiresXClient:
         """Helper method to encapsulate the actual GEOPHIRES run."""
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
-        sys.argv = ['', input_params.as_file_path(), input_params.get_output_file_path()]
+        input_file_path = Path(input_params.as_file_path())
+        source_input_path = getattr(input_params, "from_file_path", None)
+        run_cwd = Path(source_input_path).resolve().parent if source_input_path else input_file_path.resolve().parent
+        os.chdir(run_cwd)
+        sys.argv = ["", str(input_file_path), str(input_params.get_output_file_path())]
 
         try:
             geophires.main(enable_geophires_logging_config=False)
         except Exception as e:
-            raise RuntimeError(f'GEOPHIRES encountered an exception: {e!s}') from e
+            raise RuntimeError(f"GEOPHIRES encountered an exception: {e!s}") from e
         except SystemExit:
-            raise RuntimeError('GEOPHIRES exited without giving a reason') from None
+            raise RuntimeError("GEOPHIRES exited without giving a reason") from None
         finally:
             sys.argv = stash_sys_argv
             os.chdir(stash_cwd)
 
-        self._logger.info(f'GEOPHIRES-X output file: {input_params.get_output_file_path()}')
+        self._logger.info(f"GEOPHIRES-X output file: {input_params.get_output_file_path()}")
         result = GeophiresXResult(input_params.get_output_file_path())
         return result

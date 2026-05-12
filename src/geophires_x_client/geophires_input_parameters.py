@@ -52,31 +52,38 @@ class GeophiresInputParameters:
         susceptible to potential bugs due to its mutability.
     """
 
-    def __init__(self, params: Optional[MappingProxyType] = None, from_file_path: Optional[Path] = None):
+    def __init__(
+        self,
+        params: Optional[MappingProxyType] = None,
+        from_file_path: Optional[Path] = None,
+        output_file_path: Optional[Path] = None,
+    ):
         """
         Note that params will override any duplicate entries in from_file_path
         """
 
-        assert (params is not None) or (from_file_path is not None), 'One of params or from_file_path must be provided'
+        assert (params is not None) or (from_file_path is not None), "One of params or from_file_path must be provided"
 
         if params is not None:
             self._params = dict(params)
-            self._file_path = Path(tempfile.gettempdir(), f'geophires-input-params_{uuid.uuid4()!s}.txt')
+            self._file_path = Path(tempfile.gettempdir(), f"geophires-input-params_{uuid.uuid4()!s}.txt")
 
             if from_file_path is not None:
                 # Note: This has a potential race condition if the file doesn't exist at the time of 'a',
-                with open(from_file_path, encoding='UTF-8') as base_file:
-                    with open(self._file_path, 'a', encoding='UTF-8') as f:
+                with open(from_file_path, encoding="UTF-8") as base_file:
+                    with open(self._file_path, "a", encoding="UTF-8") as f:
                         f.writelines(base_file.readlines())
         else:
             self._file_path = from_file_path
+
+        self._output_file_path = Path(output_file_path) if output_file_path is not None else None
 
         if params is not None:
             # TODO validate params - i.e. that all names are accepted by simulation, values don't exceed max allowed,
             #  etc.
 
-            with open(self._file_path, 'a', encoding='UTF-8') as f:
-                f.writelines([', '.join([str(p) for p in param_item]) + '\n' for param_item in self._params.items()])
+            with open(self._file_path, "a", encoding="UTF-8") as f:
+                f.writelines([", ".join([str(p) for p in param_item]) + "\n" for param_item in self._params.items()])
 
         self._id = hash(self._file_path)
 
@@ -84,10 +91,12 @@ class GeophiresInputParameters:
         return self._file_path
 
     def get_output_file_path(self):
-        return Path(tempfile.gettempdir(), f'geophires-result_{self._id}.out')
+        if self._output_file_path is not None:
+            return self._output_file_path
+        return Path(tempfile.gettempdir(), f"geophires-result_{self._id}.out")
 
     def as_text(self):
-        with open(self.as_file_path(), encoding='UTF-8') as f:
+        with open(self.as_file_path(), encoding="UTF-8") as f:
             return f.read()
 
     def __hash__(self):
@@ -112,6 +121,7 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
 
     params: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
     from_file_path: Union[Path, str, None] = None
+    output_file_path: Union[Path, str, None] = None
 
     # A unique ID for this instance, used for file I/O but not for hashing or equality.
     _instance_id: uuid.UUID = field(default_factory=uuid.uuid4, init=False, repr=False, compare=False)
@@ -125,11 +135,13 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
         # Normalize from_file_path to a Path object. object.__setattr__ is required
         # because the dataclass is frozen.
         if self.from_file_path and isinstance(self.from_file_path, str):
-            object.__setattr__(self, 'from_file_path', Path(self.from_file_path))
+            object.__setattr__(self, "from_file_path", Path(self.from_file_path))
+        if self.output_file_path and isinstance(self.output_file_path, str):
+            object.__setattr__(self, "output_file_path", Path(self.output_file_path))
 
         # Ensure params is an immutable proxy
         if not isinstance(self.params, MappingProxyType):
-            object.__setattr__(self, 'params', MappingProxyType(self.params))
+            object.__setattr__(self, "params", MappingProxyType(self.params))
 
     @override
     def __hash__(self) -> int:
@@ -148,7 +160,7 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
             # Hash the path itself if it's None or doesn't exist.
             file_content_hash = hash(self.from_file_path)
 
-        return hash((param_hash, file_content_hash))
+        return hash((param_hash, file_content_hash, self.output_file_path))
 
     def __deepcopy__(self, memo):
         """
@@ -173,7 +185,7 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
         """
         state = self.__dict__.copy()
         # Convert mappingproxy to dict for serialization
-        state['params'] = dict(self.params)
+        state["params"] = dict(self.params)
         return state
 
     def __setstate__(self, state: dict):
@@ -182,7 +194,7 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
         Converts the dict back to a mappingproxy to maintain immutability.
         """
         # Convert dict back to mappingproxy
-        state['params'] = MappingProxyType(state['params'])
+        state["params"] = MappingProxyType(state["params"])
         # Restore the instance's dictionary
         self.__dict__.update(state)
 
@@ -193,32 +205,34 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
         The resulting file path is cached on the instance for efficiency.
         """
         # Use hasattr to check for the cached attribute on the frozen instance
-        if hasattr(self, '_cached_file_path'):
+        if hasattr(self, "_cached_file_path"):
             return self._cached_file_path
 
-        file_path = Path(tempfile.gettempdir(), f'geophires-input-params_{self._instance_id!s}.txt')
+        file_path = Path(tempfile.gettempdir(), f"geophires-input-params_{self._instance_id!s}.txt")
 
-        with open(file_path, 'w+', encoding='UTF-8') as f:
+        with open(file_path, "w+", encoding="UTF-8") as f:
             if self.from_file_path:
-                with open(self.from_file_path, encoding='UTF-8') as base_file:
+                with open(self.from_file_path, encoding="UTF-8") as base_file:
                     f.write(base_file.read())
 
             if self.params:
                 # Ensure there is a newline between the base file content and appended params.
                 if self.from_file_path and f.tell() > 0:
                     f.seek(f.tell() - 1)
-                    if f.read(1) != '\n':
-                        f.write('\n')
-                f.writelines([f'{key}, {value}\n' for key, value in self.params.items()])
+                    if f.read(1) != "\n":
+                        f.write("\n")
+                f.writelines([f"{key}, {value}\n" for key, value in self.params.items()])
 
         # Cache the path on the instance after creation.
-        object.__setattr__(self, '_cached_file_path', file_path)
+        object.__setattr__(self, "_cached_file_path", file_path)
         return file_path
 
     @override
     def get_output_file_path(self) -> Path:
         """Returns a unique path for the GEOPHIRES output file."""
-        return Path(tempfile.gettempdir(), f'geophires-result_{self._instance_id!s}.out')
+        if self.output_file_path is not None:
+            return Path(self.output_file_path)
+        return Path(tempfile.gettempdir(), f"geophires-result_{self._instance_id!s}.out")
 
     def as_csv(self) -> str:
         """
@@ -227,9 +241,9 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
         same columns as GeophiresXResult.as_csv, and is meant to be used in conjunction with the same.
         """
         if self.from_file_path:
-            raise NotImplementedError('CSV from file path is not implemented.')
+            raise NotImplementedError("CSV from file path is not implemented.")
 
         f = StringIO()
         w = csv.writer(f)
-        w.writerows([['INPUT PARAMETERS', key, '', value, ''] for key, value in self.params.items()])
+        w.writerows([["INPUT PARAMETERS", key, "", value, ""] for key, value in self.params.items()])
         return f.getvalue()
