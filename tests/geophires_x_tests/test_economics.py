@@ -89,26 +89,26 @@ class EconomicsTestCase(BaseTestCase):
         self.assertEqual(
             ec.wellcorrelation.ToolTipText,
             # noinspection SqlNoDataSourceInspection
-            'Select the built-in well drilling and completion cost correlation: '
-            '1: vertical small diameter, baseline; '
-            '2: deviated small diameter, baseline; '
-            '3: vertical large diameter, baseline; '
-            '4: deviated large diameter, baseline; '
-            '5: Simple (per-meter cost); '
-            '6: vertical small diameter, intermediate1; '
-            '7: vertical small diameter, intermediate2; '
-            '8: deviated small diameter, intermediate1; '
-            '9: deviated small diameter, intermediate2; '
-            '10: vertical large diameter, intermediate1; '
-            '11: vertical large diameter, intermediate2; '
-            '12: deviated large diameter, intermediate1; '
-            '13: deviated large diameter, intermediate2; '
-            '14: vertical open-hole, small diameter, ideal; '
-            '15: deviated liner, small diameter, ideal; '
-            '16: vertical open-hole, large diameter, ideal; '
-            '17: deviated liner, large diameter, ideal. '
+            "Select the built-in well drilling and completion cost correlation: "
+            "1: vertical small diameter, baseline; "
+            "2: deviated small diameter, baseline; "
+            "3: vertical large diameter, baseline; "
+            "4: deviated large diameter, baseline; "
+            "5: Simple (per-meter cost); "
+            "6: vertical small diameter, intermediate1; "
+            "7: vertical small diameter, intermediate2; "
+            "8: deviated small diameter, intermediate1; "
+            "9: deviated small diameter, intermediate2; "
+            "10: vertical large diameter, intermediate1; "
+            "11: vertical large diameter, intermediate2; "
+            "12: deviated large diameter, intermediate1; "
+            "13: deviated large diameter, intermediate2; "
+            "14: vertical open-hole, small diameter, ideal; "
+            "15: deviated liner, small diameter, ideal; "
+            "16: vertical open-hole, large diameter, ideal; "
+            "17: deviated liner, large diameter, ideal. "
             "Baseline correlations (1-4) are from NREL's 2025 cost curve update. "
-            'Intermediate and ideal correlations (6-17) are from GeoVision.',
+            "Intermediate and ideal correlations (6-17) are from GeoVision.",
         )
 
     def test_indirect_cost_factor(self) -> None:
@@ -118,17 +118,17 @@ class EconomicsTestCase(BaseTestCase):
         def _get_result(peaking_boiler_cost_: int) -> GeophiresXResult:
             return GeophiresXClient().get_geophires_result(
                 GeophiresInputParameters(
-                    from_file_path=self._get_test_file_path('../examples/example12_DH.txt'),
+                    from_file_path=self._get_test_file_path("../examples/example12_DH.txt"),
                     params={
-                        'Peaking Boiler Cost per kW': peaking_boiler_cost_,
+                        "Peaking Boiler Cost per kW": peaking_boiler_cost_,
                     },
                 )
             )
 
         def _lcoh_pbc(r: GeophiresXResult) -> tuple[float, float]:
             return (
-                r.result['SUMMARY OF RESULTS']['Direct-Use heat breakeven price (LCOH)']['value'],
-                r.result['CAPITAL COSTS (M$)']['of which Peaking Boiler Cost']['value'],
+                r.result["SUMMARY OF RESULTS"]["Direct-Use heat breakeven price (LCOH)"]["value"],
+                r.result["CAPITAL COSTS (M$)"]["of which Peaking Boiler Cost"]["value"],
             )
 
         lcoh, peaking_boiler_cost = _lcoh_pbc(_get_result(0))
@@ -139,19 +139,19 @@ class EconomicsTestCase(BaseTestCase):
     def _new_model(
         self, input_file: Path | None = None, additional_params: dict[str, Any] | None = None, read_and_calculate=False
     ) -> Model:
-        model_args = {'enable_geophires_logging_config': False}
+        model_args = {"enable_geophires_logging_config": False}
 
         if input_file is not None:
             if additional_params is not None:
                 params = GeophiresInputParameters(from_file_path=input_file, params=additional_params)
                 input_file = params.as_file_path()
 
-            model_args['input_file'] = input_file
+            model_args["input_file"] = input_file
 
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         m = Model(**model_args)
 

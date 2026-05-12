@@ -24,15 +24,15 @@ def get_file_states(directory) -> dict[str, Any]:
         for filename in files:
             # Ignore hidden files, temporary editor files, and this script itself
             # fmt:off
-            if (filename.startswith('.') or
-                filename.endswith('~') or filename == os.path.basename(__file__)):  # noqa: PTH119
+            if (filename.startswith(".") or
+                filename.endswith("~") or filename == os.path.basename(__file__)):  # noqa: PTH119
                 # fmt:on
                 continue
 
             filepath = os.path.join(root, filename)
 
             # Avoid watching build directories if they are generated inside docs/
-            if '_build' in filepath or 'build' in filepath:
+            if "_build" in filepath or "build" in filepath:
                 continue
 
             try:
@@ -43,8 +43,8 @@ def get_file_states(directory) -> dict[str, Any]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Automatically rebuilds docs locally when changes are detected.')
-    parser.add_argument('--no-say', action='store_true', help='Disable audio notifications via the say command')
+    parser = argparse.ArgumentParser(description="Automatically rebuilds docs locally when changes are detected.")
+    parser.add_argument("--no-say", action="store_true", help="Disable audio notifications via the say command")
     args = parser.parse_args()
 
     # Determine paths relative to this script
@@ -55,20 +55,20 @@ def main():
         if args.no_say:
             return
         try:
-            subprocess.run(['say', msg], cwd=project_root, check=False)  # noqa: S603,S607
+            subprocess.run(["say", msg], cwd=project_root, check=False)  # noqa: S603,S607
         except subprocess.CalledProcessError:
             pass
 
     # Watch the directory where the script is located (docs/)
-    watch_dirs = [script_dir, Path(project_root) / 'docs', Path(project_root) / 'tests' / 'examples']
+    watch_dirs = [script_dir, Path(project_root) / "docs", Path(project_root) / "tests" / "examples"]
 
-    command = ['tox', '-e', 'docs']
+    command = ["tox", "-e", "docs"]
     poll_interval = 2  # Seconds
 
     _log.info(f"Watching '{watch_dirs}' for changes...")
     _log.info(f"Project root determined as: '{project_root}'")
     _log.info(f"Command to run: {' '.join(command)}")
-    _log.info('Press Ctrl+C to stop.')
+    _log.info("Press Ctrl+C to stop.")
 
     def _get_file_states() -> dict:
         states = {}
@@ -86,7 +86,7 @@ def main():
             current_states = _get_file_states()
 
             if current_states != last_states:
-                _log.info('[Change Detected] Running docs build...')
+                _log.info("[Change Detected] Running docs build...")
                 time.sleep(1)
 
                 try:
@@ -95,20 +95,20 @@ def main():
                 except FileNotFoundError:
                     _log.error("Error: 'tox' command not found. Please ensure tox is installed.")
                 except Exception as e:
-                    _log.error(f'An error occurred: {e}')
-                    _say('error rebuilding docs')
+                    _log.error(f"An error occurred: {e}")
+                    _say("error rebuilding docs")
 
-                print('\n')
+                print("\n")
                 _log.info(f"Docs rebuild complete at {time.strftime('%Y-%m-%d %H:%M:%S')}.")
-                _say('docs rebuilt')
+                _say("docs rebuilt")
                 _log.info(f"Waiting for further changes in '{watch_dirs}'...")
 
                 # Update state to the current state
                 last_states = _get_file_states()
 
     except KeyboardInterrupt:
-        _log.info('Watcher stopped.')
+        _log.info("Watcher stopped.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

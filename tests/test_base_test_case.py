@@ -31,16 +31,16 @@ class TestBaseTestCase(BaseTestCase):
         with self.assertRaises(ValueError) as msg_type_error:
             self.assertAlmostEqualWithinPercentage(100, 100, 10)
 
-            self.assertIn(str(msg_type_error), '(you may have meant to pass percent=10)')
+            self.assertIn(str(msg_type_error), "(you may have meant to pass percent=10)")
 
-        with self.assertLogs('tests.base_test_case', level='INFO') as logs:
+        with self.assertLogs("tests.base_test_case", level="INFO") as logs:
             with self.assertRaises(AssertionError):
                 self.assertAlmostEqualWithinPercentage([1, 2, 3], [1.1, 2.2, 3.3], percent=10.5)
 
             self.assertHasLogRecordWithMessage(
                 logs,
-                'Got 2 lists, you probably meant to call:\n\t'
-                'self.assertListAlmostEqual([1, 2, 3], [1.1, 2.2, 3.3], msg=None, percent=10.5)',
+                "Got 2 lists, you probably meant to call:\n\t"
+                "self.assertListAlmostEqual([1, 2, 3], [1.1, 2.2, 3.3], msg=None, percent=10.5)",
             )
 
     def test_assertHasLogRecordWithMessage(self):
@@ -54,15 +54,15 @@ class TestBaseTestCase(BaseTestCase):
 
         logs = _Logs(
             [
-                'Parameter given (0.0) for Property Tax Rate is the same as the default value. Consider removing Property '
-                'Tax Rate from the input file unless you wish to change it from the default value of (0.0)',
-                'Construction CAPEX Schedule length (2) did not match construction years (4). It has been adjusted to: '
-                '[0.25, 0.25, 0.25, 0.25]',
+                "Parameter given (0.0) for Property Tax Rate is the same as the default value. Consider removing Property "
+                "Tax Rate from the input file unless you wish to change it from the default value of (0.0)",
+                "Construction CAPEX Schedule length (2) did not match construction years (4). It has been adjusted to: "
+                "[0.25, 0.25, 0.25, 0.25]",
                 "complete <class 'geophires_x.Economics.Economics'>: read_parameters",
             ]
         )
-        self.assertHasLogRecordWithMessage(logs, 'has been adjusted to', treat_substring_match_as_match=True)
+        self.assertHasLogRecordWithMessage(logs, "has been adjusted to", treat_substring_match_as_match=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -11,7 +11,6 @@ from tests.base_test_case import BaseTestCase
 
 
 class SurfacePlantTestCase(BaseTestCase):
-
     def test_integrate_time_series_slice_1_time_step_per_year(self):
         self._workaround_module_initialization_order_dependency()
         from geophires_x.SurfacePlant import SurfacePlant
@@ -82,7 +81,7 @@ class SurfacePlantTestCase(BaseTestCase):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         m = Model(enable_geophires_logging_config=False)
 
@@ -93,22 +92,22 @@ class SurfacePlantTestCase(BaseTestCase):
 
     def test_flash_plant_with_impedance_model_warning(self):
         try:
-            with self.assertLogs(level='WARNING') as logs:
+            with self.assertLogs(level="WARNING") as logs:
                 params = GeophiresInputParameters(
                     {
-                        'Reservoir Impedance': 0.001,
-                        'Power Plant Type': 4,
+                        "Reservoir Impedance": 0.001,
+                        "Power Plant Type": 4,
                     }
                 )
                 GeophiresXClient().get_geophires_result(params)
                 self.assertHasLogRecordWithMessage(
                     logs,
-                    'Flash plant is being used with impedance model. When reservoir impedance '
-                    'is specified, no flashing is allowed in production wells or at surface.',
+                    "Flash plant is being used with impedance model. When reservoir impedance "
+                    "is specified, no flashing is allowed in production wells or at surface.",
                 )
         except AssertionError as ae:
-            if 'CI' in os.environ or 'TOXPYTHON' in os.environ:
+            if "CI" in os.environ or "TOXPYTHON" in os.environ:
                 # TODO to investigate and fix
-                self.skipTest('Skipping due to intermittent failure on GitHub Actions')
+                self.skipTest("Skipping due to intermittent failure on GitHub Actions")
             else:
                 raise ae

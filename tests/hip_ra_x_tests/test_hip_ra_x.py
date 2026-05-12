@@ -34,18 +34,18 @@ from tests.base_test_case import BaseTestCase
 # noinspection PyTypeChecker
 class HipRaXTestCase(BaseTestCase):
     def test_hip_ra_x_examples(self):
-        example_files = self._list_test_files_dir(test_files_dir='./examples')
+        example_files = self._list_test_files_dir(test_files_dir="./examples")
         assert len(example_files) > 0  # test integrity check - no files means something is misconfigured
 
         client = HipRaXClient()
 
         def get_output_file_for_example(example_file: Path):
-            return self._get_test_file_path(Path(example_file).with_suffix('.out'))
+            return self._get_test_file_path(Path(example_file).with_suffix(".out"))
 
         for example_file_path in example_files:
-            if example_file_path.startswith('HIP-RA-X_example') and '.out' not in example_file_path:
+            if example_file_path.startswith("HIP-RA-X_example") and ".out" not in example_file_path:
                 with self.subTest(msg=example_file_path):
-                    input_file_path = self._get_test_file_path(Path('./examples', example_file_path))
+                    input_file_path = self._get_test_file_path(Path("./examples", example_file_path))
                     result = client.get_hip_ra_result(HipRaInputParameters(input_file_path))
 
                     assert result is not None
@@ -60,13 +60,13 @@ class HipRaXTestCase(BaseTestCase):
     def test_print_output_to_console(self):
         def get_stdout_from_running(print_output_to_console: bool | int) -> str:
             params = {
-                'Reservoir Temperature': 250.0,
-                'Rejection Temperature': 60.0,
-                'Reservoir Porosity': 10.0,
-                'Reservoir Area': 55.0,
-                'Reservoir Thickness': 0.25,
-                'Reservoir Life Cycle': 25,
-                'Print Output to Console': print_output_to_console,
+                "Reservoir Temperature": 250.0,
+                "Rejection Temperature": 60.0,
+                "Reservoir Porosity": 10.0,
+                "Reservoir Area": 55.0,
+                "Reservoir Thickness": 0.25,
+                "Reservoir Life Cycle": 25,
+                "Print Output to Console": print_output_to_console,
             }
 
             f = io.StringIO()
@@ -76,79 +76,79 @@ class HipRaXTestCase(BaseTestCase):
             self.assertIsNotNone(result)
             return f.getvalue()
 
-        self.assertIn('***HIP CASE REPORT***', get_stdout_from_running(True))
-        self.assertNotIn('***HIP CASE REPORT***', get_stdout_from_running(False))
-        self.assertIn('***HIP CASE REPORT***', get_stdout_from_running(1))
-        self.assertNotIn('***HIP CASE REPORT***', get_stdout_from_running(0))
+        self.assertIn("***HIP CASE REPORT***", get_stdout_from_running(True))
+        self.assertNotIn("***HIP CASE REPORT***", get_stdout_from_running(False))
+        self.assertIn("***HIP CASE REPORT***", get_stdout_from_running(1))
+        self.assertNotIn("***HIP CASE REPORT***", get_stdout_from_running(0))
 
     def test_result_parsing_1(self):
-        result = HipRaResult(self._get_test_file_path('hip-result_example-1.out'))
+        result = HipRaResult(self._get_test_file_path("hip-result_example-1.out"))
         self.assertIsNotNone(result.result)
         self.assertDictEqual(
             result.result,
             {
-                'Reservoir Temperature': {'value': 250.0, 'unit': 'degC'},
-                'Reservoir Volume': {'value': 13.75, 'unit': 'km**3'},
-                'Stored Heat': {'value': 7420000000000000.0, 'unit': 'kJ'},
-                'Fluid Produced': {'value': 1100000000000.0, 'unit': 'kilogram'},
-                'Enthalpy': {'value': 181.43, 'unit': 'kJ/kg'},
-                'Wellhead Heat': {'value': 827000000000000.0, 'unit': 'kJ'},
-                'Recovery Factor': {'value': 11.15, 'unit': '%'},
-                'Available Heat': {'value': 14700000000000.0, 'unit': 'kJ'},
-                'Producible Heat': {'value': 5860000000000.0, 'unit': 'kJ'},
-                'Producible Electricity': {'value': 185.85, 'unit': 'MW'},
+                "Reservoir Temperature": {"value": 250.0, "unit": "degC"},
+                "Reservoir Volume": {"value": 13.75, "unit": "km**3"},
+                "Stored Heat": {"value": 7420000000000000.0, "unit": "kJ"},
+                "Fluid Produced": {"value": 1100000000000.0, "unit": "kilogram"},
+                "Enthalpy": {"value": 181.43, "unit": "kJ/kg"},
+                "Wellhead Heat": {"value": 827000000000000.0, "unit": "kJ"},
+                "Recovery Factor": {"value": 11.15, "unit": "%"},
+                "Available Heat": {"value": 14700000000000.0, "unit": "kJ"},
+                "Producible Heat": {"value": 5860000000000.0, "unit": "kJ"},
+                "Producible Electricity": {"value": 185.85, "unit": "MW"},
             },
         )
 
     def test_result_parsing_2(self):
-        result = HipRaResult(self._get_test_file_path('hip-result_example-2.out'))
+        result = HipRaResult(self._get_test_file_path("hip-result_example-2.out"))
         self.assertIsNotNone(result.result)
         self.assertDictEqual(
             result.result,
             {
-                'Reservoir Temperature': {'value': 250.00, 'unit': 'degC'},
-                'Reservoir Volume (reservoir)': {'value': 13.75, 'unit': 'km**3'},
-                'Reservoir Volume (rock)': {'value': 12.38, 'unit': 'km**3'},
-                'Reservoir Volume (fluid)': {'value': 0.69, 'unit': 'km**3'},
-                'Stored Heat (reservoir)': {'value': 5.52e15, 'unit': 'kJ'},
-                'Stored Heat (rock)': {'value': 5.01e15, 'unit': 'kJ'},
-                'Stored Heat (fluid)': {'value': 5.09e14, 'unit': 'kJ'},
-                'Mass of Reservoir (total)': {'value': 3.21e13, 'unit': 'kilogram'},
-                'Mass of Reservoir (rock)': {'value': 3.16e13, 'unit': 'kilogram'},
-                'Mass of Reservoir (fluid)': {'value': 5.49e11, 'unit': 'kilogram'},
-                'Enthalpy (reservoir)': {'value': 49.31, 'unit': 'kJ/kg'},
-                'Enthalpy (rock)': {'value': -333.72, 'unit': 'kJ/kg'},
-                'Enthalpy (fluid)': {'value': 383.04, 'unit': 'kJ/kg'},
-                'Wellhead Heat (reservoir)': {'value': 5.52e15, 'unit': 'kJ'},
-                'Wellhead Heat (rock)': {'value': 5.01e15, 'unit': 'kJ'},
-                'Wellhead Heat (fluid)': {'value': 5.09e14, 'unit': 'kJ'},
-                'Recovery Factor (reservoir)': {'value': -49.39, 'unit': '%'},
-                'Recovery Factor (rock)': {'value': -55.51, 'unit': '%'},
-                'Recovery Factor (fluid)': {'value': 10.91, 'unit': '%'},
-                'Available Heat (reservoir)': {'value': -6.81e15, 'unit': 'kJ'},
-                'Available Heat (rock)': {'value': -6.95e15, 'unit': 'kJ'},
-                'Available Heat (fluid)': {'value': 1.39e14, 'unit': 'kJ'},
-                'Producible Heat (reservoir)': {'value': -2.72e15, 'unit': 'kJ'},
-                'Producible Heat (rock)': {'value': -2.78e15, 'unit': 'kJ'},
-                'Producible Heat (fluid)': {'value': 5.55e13, 'unit': 'kJ'},
-                'Producible Heat/Unit Area (reservoir)': {'value': -4.95e13, 'unit': 'KJ/km**2'},
-                'Producible Heat/Unit Area (rock)': {'value': -5.05e13, 'unit': 'KJ/km**2'},
-                'Producible Heat/Unit Area (fluid)': {'value': 1.01e12, 'unit': 'KJ/km**2'},
-                'Producible Electricity (reservoir)': {'value': -86399.37, 'unit': 'MW'},
-                'Producible Electricity (rock)': {'value': -88159.67, 'unit': 'MW'},
-                'Producible Electricity (fluid)': {'value': 1760.30, 'unit': 'MW'},
-                'Producible Electricity/Unit Area (reservoir)': {'value': -1570.90, 'unit': 'MW/km**2'},
-                'Producible Electricity/Unit Area (rock)': {'value': -1602.90, 'unit': 'MW/km**2'},
-                'Producible Electricity/Unit Area (fluid)': {'value': 32.01, 'unit': 'MW/km**2'},
+                "Reservoir Temperature": {"value": 250.00, "unit": "degC"},
+                "Reservoir Volume (reservoir)": {"value": 13.75, "unit": "km**3"},
+                "Reservoir Volume (rock)": {"value": 12.38, "unit": "km**3"},
+                "Reservoir Volume (fluid)": {"value": 0.69, "unit": "km**3"},
+                "Stored Heat (reservoir)": {"value": 5.52e15, "unit": "kJ"},
+                "Stored Heat (rock)": {"value": 5.01e15, "unit": "kJ"},
+                "Stored Heat (fluid)": {"value": 5.09e14, "unit": "kJ"},
+                "Mass of Reservoir (total)": {"value": 3.21e13, "unit": "kilogram"},
+                "Mass of Reservoir (rock)": {"value": 3.16e13, "unit": "kilogram"},
+                "Mass of Reservoir (fluid)": {"value": 5.49e11, "unit": "kilogram"},
+                "Enthalpy (reservoir)": {"value": 49.31, "unit": "kJ/kg"},
+                "Enthalpy (rock)": {"value": -333.72, "unit": "kJ/kg"},
+                "Enthalpy (fluid)": {"value": 383.04, "unit": "kJ/kg"},
+                "Wellhead Heat (reservoir)": {"value": 5.52e15, "unit": "kJ"},
+                "Wellhead Heat (rock)": {"value": 5.01e15, "unit": "kJ"},
+                "Wellhead Heat (fluid)": {"value": 5.09e14, "unit": "kJ"},
+                "Recovery Factor (reservoir)": {"value": -49.39, "unit": "%"},
+                "Recovery Factor (rock)": {"value": -55.51, "unit": "%"},
+                "Recovery Factor (fluid)": {"value": 10.91, "unit": "%"},
+                "Available Heat (reservoir)": {"value": -6.81e15, "unit": "kJ"},
+                "Available Heat (rock)": {"value": -6.95e15, "unit": "kJ"},
+                "Available Heat (fluid)": {"value": 1.39e14, "unit": "kJ"},
+                "Producible Heat (reservoir)": {"value": -2.72e15, "unit": "kJ"},
+                "Producible Heat (rock)": {"value": -2.78e15, "unit": "kJ"},
+                "Producible Heat (fluid)": {"value": 5.55e13, "unit": "kJ"},
+                "Producible Heat/Unit Area (reservoir)": {"value": -4.95e13, "unit": "KJ/km**2"},
+                "Producible Heat/Unit Area (rock)": {"value": -5.05e13, "unit": "KJ/km**2"},
+                "Producible Heat/Unit Area (fluid)": {"value": 1.01e12, "unit": "KJ/km**2"},
+                "Producible Electricity (reservoir)": {"value": -86399.37, "unit": "MW"},
+                "Producible Electricity (rock)": {"value": -88159.67, "unit": "MW"},
+                "Producible Electricity (fluid)": {"value": 1760.30, "unit": "MW"},
+                "Producible Electricity/Unit Area (reservoir)": {"value": -1570.90, "unit": "MW/km**2"},
+                "Producible Electricity/Unit Area (rock)": {"value": -1602.90, "unit": "MW/km**2"},
+                "Producible Electricity/Unit Area (fluid)": {"value": 32.01, "unit": "MW/km**2"},
             },
         )
 
     def test_result_parsing_3(self):
-        result = HipRaResult(self._get_test_file_path('hip-result_test-result-parsing-3.out'))
-        self.assertIsNone(result.result['Recoverable Fluid Factor']['unit'])
-        self.assertEqual(result.result['Recoverable Fluid Factor']['value'], 0.50)
-        self.assertEqual(result.result['Producible Heat/Unit Area (reservoir)']['value'], 1.37e13)
-        self.assertEqual(result.result['Producible Heat/Unit Area (reservoir)']['unit'], 'kJ/km**2')
+        result = HipRaResult(self._get_test_file_path("hip-result_test-result-parsing-3.out"))
+        self.assertIsNone(result.result["Recoverable Fluid Factor"]["unit"])
+        self.assertEqual(result.result["Recoverable Fluid Factor"]["value"], 0.50)
+        self.assertEqual(result.result["Producible Heat/Unit Area (reservoir)"]["value"], 1.37e13)
+        self.assertEqual(result.result["Producible Heat/Unit Area (reservoir)"]["unit"], "kJ/km**2")
 
     def test_calculate_reservoir_volume(self):
         """Calculates the volume of the reservoir"""
@@ -157,14 +157,14 @@ class HipRaXTestCase(BaseTestCase):
         hip_ra.Calculate()
         assert hip_ra.reservoir_volume.value == hip_ra.reservoir_area.value * hip_ra.reservoir_thickness.value
 
-    @unittest.skip(reason='FIXME: Race condition if tests are run in parallel')
+    @unittest.skip(reason="FIXME: Race condition if tests are run in parallel")
     def test_standard_outputs(self):
         """Prints the standard outputs to the output file"""
 
         hip_ra = self._new_hip_ra_test_instance()
         hip_ra.PrintOutputs()
 
-        out_file = Path('HIP.out')
+        out_file = Path("HIP.out")
 
         # Assert that the output file is created
         assert out_file.exists()
@@ -194,17 +194,17 @@ class HipRaXTestCase(BaseTestCase):
             param: OutputParameter = hip_ra.OutputParameterDict[key]
             assert param.CurrentUnits == param.PreferredUnits
 
-    @unittest.skip(reason='FIXME: Race condition if tests are run in parallel')
+    @unittest.skip(reason="FIXME: Race condition if tests are run in parallel")
     def test_raises_permission_error(self):
         """Raises a PermissionError if there is no permission to write to the output file"""
 
         hip_ra = self._new_hip_ra_test_instance()
         # Create a read-only file
-        Path.chmod('HIP.out', 0o444)
+        Path.chmod("HIP.out", 0o444)
         with self.assertRaises(PermissionError):
             hip_ra.PrintOutputs()
         # Restore file permissions
-        Path.chmod('HIP.out', 0o644)
+        Path.chmod("HIP.out", 0o644)
 
     def test_handles_converting_output_units(self):
         """Handles converting output units for all classes of units (TEMPERATURE, DENSITY, etc.)"""
@@ -222,11 +222,11 @@ class HipRaXTestCase(BaseTestCase):
         """
         client = HipRaClient()
         result: HipRaResult = client.get_hip_ra_result(
-            HipRaInputParameters(self._get_test_file_path('./examples/HIP-RA-X_example1.txt'))
+            HipRaInputParameters(self._get_test_file_path("./examples/HIP-RA-X_example1.txt"))
         )
         with open(result.output_file_path) as f:
             content = f.read()
-            assert len(re.compile(r'[0-9]e\+[0-9]+\s').findall(content)) > 0
+            assert len(re.compile(r"[0-9]e\+[0-9]+\s").findall(content)) > 0
 
     def test_read_all_parameters_no_effect_with_no_input_file(self):
         def read_params(hip_ra):
@@ -249,8 +249,8 @@ class HipRaXTestCase(BaseTestCase):
             hip_ra.InputParameters = {
                 param.Name: param
                 for param in [
-                    ParameterEntry(Name='Reservoir Temperature', sValue='200'),
-                    ParameterEntry(Name='Reservoir Porosity', sValue='25.0'),
+                    ParameterEntry(Name="Reservoir Temperature", sValue="200"),
+                    ParameterEntry(Name="Reservoir Porosity", sValue="25.0"),
                 ]
             }
 
@@ -268,11 +268,11 @@ class HipRaXTestCase(BaseTestCase):
             hip_ra.InputParameters = {
                 param.Name: param
                 for param in [
-                    ParameterEntry(Name='Reservoir Porosity', sValue='30.0'),
-                    ParameterEntry(Name='Rejection Temperature', sValue='50.0'),
-                    ParameterEntry(Name='Density Of Water', sValue='-1'),
-                    ParameterEntry(Name='Heat Capacity Of Water', sValue='-1'),
-                    ParameterEntry(Name='Recoverable Heat', sValue='-1'),
+                    ParameterEntry(Name="Reservoir Porosity", sValue="30.0"),
+                    ParameterEntry(Name="Rejection Temperature", sValue="50.0"),
+                    ParameterEntry(Name="Density Of Water", sValue="-1"),
+                    ParameterEntry(Name="Heat Capacity Of Water", sValue="-1"),
+                    ParameterEntry(Name="Recoverable Heat", sValue="-1"),
                 ]
             }
 
@@ -293,8 +293,8 @@ class HipRaXTestCase(BaseTestCase):
             hip_ra.InputParameters = {
                 param.Name: param
                 for param in [
-                    ParameterEntry(Name='Reservoir Temperature', sValue='150.0'),
-                    ParameterEntry(Name='Formation Porosity', sValue='18.0'),
+                    ParameterEntry(Name="Reservoir Temperature", sValue="150.0"),
+                    ParameterEntry(Name="Formation Porosity", sValue="18.0"),
                 ]
             }
 
@@ -317,8 +317,8 @@ class HipRaXTestCase(BaseTestCase):
                     # TODO Pint conversion would treat 'F' as farad, hence 'degF' here. However, it is possible to
                     #  configure Pint to treat 'F' as Fahrenheit instead, which should be done since users could make
                     #  this mistake.
-                    ParameterEntry(Name='Reservoir Temperature', sValue='150.0 degF'),
-                    ParameterEntry(Name='Formation Porosity', sValue='18.0 %'),
+                    ParameterEntry(Name="Reservoir Temperature", sValue="150.0 degF"),
+                    ParameterEntry(Name="Formation Porosity", sValue="18.0 %"),
                 ]
             }
 
@@ -334,27 +334,27 @@ class HipRaXTestCase(BaseTestCase):
         """The class converts units of the output parameters if specified in the input file."""
 
         hip_ra: HIP_RA = self._new_hip_ra_test_instance()
-        hip_ra.OutputParameterDict['Reservoir Volume (reservoir)'].PreferredUnits = VolumeUnit.METERS3
-        hip_ra.OutputParameterDict['Stored Heat (reservoir)'].PreferredUnits = HeatUnit.J
+        hip_ra.OutputParameterDict["Reservoir Volume (reservoir)"].PreferredUnits = VolumeUnit.METERS3
+        hip_ra.OutputParameterDict["Stored Heat (reservoir)"].PreferredUnits = HeatUnit.J
 
-        hip_ra.OutputParameterDict['Specific Enthalpy (reservoir)'].PreferredUnits = EnthalpyUnit.KJPERKG
+        hip_ra.OutputParameterDict["Specific Enthalpy (reservoir)"].PreferredUnits = EnthalpyUnit.KJPERKG
 
-        hip_ra.OutputParameterDict['Wellhead Heat (reservoir)'].PreferredUnits = HeatUnit.J
-        hip_ra.OutputParameterDict['Recovery Factor (reservoir)'].PreferredUnits = PercentUnit.PERCENT
-        hip_ra.OutputParameterDict['Available Heat (reservoir)'].PreferredUnits = HeatUnit.J
-        hip_ra.OutputParameterDict['Producible Heat (reservoir)'].PreferredUnits = HeatUnit.J
-        hip_ra.OutputParameterDict['Producible Electricity (reservoir)'].PreferredUnits = PowerUnit.W
+        hip_ra.OutputParameterDict["Wellhead Heat (reservoir)"].PreferredUnits = HeatUnit.J
+        hip_ra.OutputParameterDict["Recovery Factor (reservoir)"].PreferredUnits = PercentUnit.PERCENT
+        hip_ra.OutputParameterDict["Available Heat (reservoir)"].PreferredUnits = HeatUnit.J
+        hip_ra.OutputParameterDict["Producible Heat (reservoir)"].PreferredUnits = HeatUnit.J
+        hip_ra.OutputParameterDict["Producible Electricity (reservoir)"].PreferredUnits = PowerUnit.W
 
         hip_ra.PrintOutputs()
 
-        assert hip_ra.OutputParameterDict['Reservoir Volume (reservoir)'].CurrentUnits == VolumeUnit.KILOMETERS3
-        assert hip_ra.OutputParameterDict['Stored Heat (reservoir)'].CurrentUnits == HeatUnit.KJ
+        assert hip_ra.OutputParameterDict["Reservoir Volume (reservoir)"].CurrentUnits == VolumeUnit.KILOMETERS3
+        assert hip_ra.OutputParameterDict["Stored Heat (reservoir)"].CurrentUnits == HeatUnit.KJ
 
-        assert hip_ra.OutputParameterDict['Specific Enthalpy (reservoir)'].CurrentUnits == EnthalpyUnit.KJPERKG
-        assert hip_ra.OutputParameterDict['Recovery Factor (reservoir)'].CurrentUnits == PercentUnit.PERCENT
-        assert hip_ra.OutputParameterDict['Available Heat (reservoir)'].CurrentUnits == HeatUnit.KJ
-        assert hip_ra.OutputParameterDict['Producible Heat (reservoir)'].CurrentUnits == HeatUnit.KJ
-        assert hip_ra.OutputParameterDict['Producible Electricity (reservoir)'].CurrentUnits == PowerUnit.MW
+        assert hip_ra.OutputParameterDict["Specific Enthalpy (reservoir)"].CurrentUnits == EnthalpyUnit.KJPERKG
+        assert hip_ra.OutputParameterDict["Recovery Factor (reservoir)"].CurrentUnits == PercentUnit.PERCENT
+        assert hip_ra.OutputParameterDict["Available Heat (reservoir)"].CurrentUnits == HeatUnit.KJ
+        assert hip_ra.OutputParameterDict["Producible Heat (reservoir)"].CurrentUnits == HeatUnit.KJ
+        assert hip_ra.OutputParameterDict["Producible Electricity (reservoir)"].CurrentUnits == PowerUnit.MW
 
     def test_initialization_with_default_parameters(self):
         hip_ra: HIP_RA_X = self._new_hip_ra_test_instance()
@@ -392,7 +392,7 @@ class HipRaXTestCase(BaseTestCase):
 
         assert hip_ra.reservoir_thickness.value == 0.286
 
-        assert hip_ra.reservoir_temperature.Name == 'Reservoir Temperature'
+        assert hip_ra.reservoir_temperature.Name == "Reservoir Temperature"
         assert hip_ra.reservoir_temperature.value == 150.0
         assert hip_ra.reservoir_temperature.Min == 50
         assert hip_ra.reservoir_temperature.Max == 1000
@@ -400,8 +400,8 @@ class HipRaXTestCase(BaseTestCase):
         assert hip_ra.reservoir_temperature.PreferredUnits == TemperatureUnit.CELSIUS
         assert hip_ra.reservoir_temperature.CurrentUnits == TemperatureUnit.CELSIUS
         assert hip_ra.reservoir_temperature.Required is True
-        assert hip_ra.reservoir_temperature.ErrMessage == 'assume default reservoir temperature (150 degC)'
-        assert hip_ra.reservoir_temperature.ToolTipText == 'Reservoir Temperature'
+        assert hip_ra.reservoir_temperature.ErrMessage == "assume default reservoir temperature (150 degC)"
+        assert hip_ra.reservoir_temperature.ToolTipText == "Reservoir Temperature"
 
         assert hip_ra.rejection_temperature.value == 25.0
         assert hip_ra.reservoir_porosity.value == 18.0
@@ -421,10 +421,10 @@ class HipRaXTestCase(BaseTestCase):
         # assert hip_ra.rejection_entropy.value == 0.367
         # assert hip_ra.rejection_enthalpy.value == 104.8
 
-    @unittest.skip(reason='FIXME: Race condition if tests are run in parallel')
+    @unittest.skip(reason="FIXME: Race condition if tests are run in parallel")
     def test_logger_initialization(self):
         hip_ra = self._new_hip_ra_test_instance(enable_hip_ra_logging_config=True)
-        assert hip_ra.logger.name == 'root'
+        assert hip_ra.logger.name == "root"
         assert hip_ra.logger.level == logging.INFO
         assert hip_ra.logger.isEnabledFor(logging.INFO) is True
 
@@ -434,34 +434,34 @@ class HipRaXTestCase(BaseTestCase):
         with self.assertRaises(RuntimeError) as rex:
             client.get_hip_ra_result(
                 HipRaInputParameters(
-                    file_path_or_params_dict=Path(tempfile.gettempdir(), f'a-non-existent-file_{uuid.uuid1()!s}.txt')
+                    file_path_or_params_dict=Path(tempfile.gettempdir(), f"a-non-existent-file_{uuid.uuid1()!s}.txt")
                 )
             )
 
-        self.assertIn('Unable to read input file', str(rex.exception))
-        self.assertIn('.txt not found', str(rex.exception))
+        self.assertIn("Unable to read input file", str(rex.exception))
+        self.assertIn(".txt not found", str(rex.exception))
 
     def test_hip_ra_input_parameters_init(self):
         input_from_params: HipRaInputParameters = HipRaInputParameters(
             {
-                'Reservoir Temperature': 250.0,
-                'Rejection Temperature': 60.0,
-                'Reservoir Porosity': 10.0,
-                'Reservoir Area': 55.0,
-                'Reservoir Thickness': 0.25,
-                'Reservoir Life Cycle': 25,
+                "Reservoir Temperature": 250.0,
+                "Rejection Temperature": 60.0,
+                "Reservoir Porosity": 10.0,
+                "Reservoir Area": 55.0,
+                "Reservoir Thickness": 0.25,
+                "Reservoir Life Cycle": 25,
             }
         )
 
         with open(input_from_params.as_file_path()) as f:
             input_file_contents = f.read()
             self.assertEqual(
-                'Reservoir Temperature, 250.0\n'
-                'Rejection Temperature, 60.0\n'
-                'Reservoir Porosity, 10.0\n'
-                'Reservoir Area, 55.0\n'
-                'Reservoir Thickness, 0.25\n'
-                'Reservoir Life Cycle, 25\n',
+                "Reservoir Temperature, 250.0\n"
+                "Rejection Temperature, 60.0\n"
+                "Reservoir Porosity, 10.0\n"
+                "Reservoir Area, 55.0\n"
+                "Reservoir Thickness, 0.25\n"
+                "Reservoir Life Cycle, 25\n",
                 input_file_contents,
             )
 
@@ -472,7 +472,7 @@ class HipRaXTestCase(BaseTestCase):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 
-        sys.argv = ['']
+        sys.argv = [""]
 
         try:
             hip_ra: HIP_RA_X = HIP_RA_X(enable_hip_ra_logging_config=enable_hip_ra_logging_config)

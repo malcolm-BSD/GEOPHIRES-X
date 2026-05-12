@@ -10,7 +10,6 @@ from geophires_x_client import GeophiresXClient
 
 
 class FervoProjectRed2026TestCase(BaseTestCase):
-
     def test_fervo_project_red_2026_results_against_reference_values(self):
         """
         Asserts that results conform to some of the key reference values claimed in docs/Fervo_Project_Cape-4.md.
@@ -23,26 +22,26 @@ class FervoProjectRed2026TestCase(BaseTestCase):
             return self.value_unit_as_quantity(v_u)
 
         r = GeophiresXClient().get_geophires_result(
-            GeophiresInputParameters(from_file_path=self._get_test_file_path('../examples/Fervo_Project_Red-2026.txt'))
+            GeophiresInputParameters(from_file_path=self._get_test_file_path("../examples/Fervo_Project_Red-2026.txt"))
         )
 
-        self.assertEqual(_q(0.7, 'MW'), _vuq(r.result['SURFACE EQUIPMENT SIMULATION RESULTS']['Average Pumping Power']))
+        self.assertEqual(_q(0.7, "MW"), _vuq(r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Average Pumping Power"]))
 
-        self.assertLess(_vuq(r.result['SUMMARY OF RESULTS']['Average Net Electricity Production']), _q(2.0, 'MW'))
+        self.assertLess(_vuq(r.result["SUMMARY OF RESULTS"]["Average Net Electricity Production"]), _q(2.0, "MW"))
 
         max_total_power_q = _vuq(
-            r.result['SURFACE EQUIPMENT SIMULATION RESULTS']['Maximum Total Electricity Generation']
+            r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Maximum Total Electricity Generation"]
         )
-        self.assertGreaterEqual(max_total_power_q, _q(2.1, 'MW'))
-        self.assertLess(max_total_power_q, _q(2.8, 'MW'))
+        self.assertGreaterEqual(max_total_power_q, _q(2.1, "MW"))
+        self.assertLess(max_total_power_q, _q(2.8, "MW"))
 
-        reference_geofluid_availability_q = _q(60, 'kW/(kg/s)')
+        reference_geofluid_availability_q = _q(60, "kW/(kg/s)")
         result_geofluid_availability_q = _vuq(
-            r.result['SURFACE EQUIPMENT SIMULATION RESULTS']['Initial geofluid availability']
+            r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Initial geofluid availability"]
         )
         self.assertGreaterEqual(result_geofluid_availability_q, reference_geofluid_availability_q)
         self.assertLessEqual(result_geofluid_availability_q, reference_geofluid_availability_q * 2.5)
 
-        avg_production_temp_q = _vuq(r.result['RESERVOIR SIMULATION RESULTS']['Average Production Temperature'])
-        self.assertGreater(avg_production_temp_q, _q(346, 'degF'))
-        self.assertLess(avg_production_temp_q, _q(357, 'degF'))
+        avg_production_temp_q = _vuq(r.result["RESERVOIR SIMULATION RESULTS"]["Average Production Temperature"])
+        self.assertGreater(avg_production_temp_q, _q(346, "degF"))
+        self.assertLess(avg_production_temp_q, _q(357, "degF"))

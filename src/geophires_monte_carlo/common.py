@@ -9,7 +9,7 @@ def _get_logger():
     if _geophires_monte_carlo_logger is None:
         sh = logging.StreamHandler(sys.stdout)
         sh.setLevel(logging.INFO)
-        sh.setFormatter(logging.Formatter(fmt='[%(asctime)s][%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+        sh.setFormatter(logging.Formatter(fmt="[%(asctime)s][%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 
         _geophires_monte_carlo_logger = logging.getLogger(__name__)
         _geophires_monte_carlo_logger.setLevel(logging.INFO)

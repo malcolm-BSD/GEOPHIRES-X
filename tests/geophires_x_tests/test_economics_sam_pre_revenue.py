@@ -12,7 +12,6 @@ from geophires_x.EconomicsSamPreRevenue import adjust_phased_schedule_to_new_len
 
 
 class EconomicsSamPreRevenueTestCase(BaseTestCase):
-
     def test_adjust_phased_schedule_to_new_length(self) -> None:
         def asrt(original_schedule: list[float], new_length: int, expected_schedule: list[float]) -> None:
             adjusted_schedule = adjust_phased_schedule_to_new_length(original_schedule, new_length)
@@ -55,9 +54,9 @@ class EconomicsSamPreRevenueTestCase(BaseTestCase):
 
             # Ensure dict property consistency
             self.assertListEqual(
-                cf_line_item, pre_rev.pre_revenue_cash_flow_profile_dict[row_name.replace('[construction] ', '')]
+                cf_line_item, pre_rev.pre_revenue_cash_flow_profile_dict[row_name.replace("[construction] ", "")]
             )
 
             return cf_line_item
 
-        self.assertListEqual([-25e6, -25e6, -50e6], _get_row('Overnight capital expenditure [construction] ($)'))
+        self.assertListEqual([-25e6, -25e6, -50e6], _get_row("Overnight capital expenditure [construction] ($)"))
