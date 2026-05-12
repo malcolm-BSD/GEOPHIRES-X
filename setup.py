@@ -68,6 +68,7 @@ setup(
         "forex_python",
         "jsons",
         "mpmath",
+        "sympy",
         "deepdiff",
         "mysql.connector",
         "cryptography",

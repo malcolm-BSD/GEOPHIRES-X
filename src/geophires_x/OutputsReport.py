@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from io import TextIOWrapper
-from typing import Union
+from typing import Tuple, Union
 
 NL = "\n"
 
-ScalarRow = tuple[str, Union[str, float], Union[str, None]]
+ScalarRow = Tuple[str, Union[str, float], Union[str, None]]
 
 
 def field_label(field_name: str, print_width_before_value: int) -> str:
