@@ -41,7 +41,7 @@ Operating Mode,Baseload,
 Absorption Chiller Dispatch Strategy,min_units,      ---[min_cost|min_units|follow_heat]
 
 # Supply the cooling demand time series used by chiller dispatch.
-Annual Cooling Demand,tests/assets/params/annual_cooling_demand.csv
+Annual Cooling Demand,../assets/params/annual_cooling_demand.csv
 
 # Output control (keep console output for small test runs)
 Print Output to Console,True,

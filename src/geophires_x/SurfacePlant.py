@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import numpy as np
 
@@ -482,8 +484,8 @@ class SurfacePlant:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default electricity rate ($0.07/kWh)",
-            ToolTipText="Price of electricity to calculate pumping costs in direct-use heat only mode or revenue" +
-            " from electricity sales in CHP mode.",
+                        ToolTipText="Price of electricity to calculate pumping costs in direct-use heat only mode or revenue "
+                        "from electricity sales in CHP mode.",
         )
         self.heat_price = self.ParameterDict[self.heat_price.Name] = floatParameter(
             "Heat Rate",
@@ -984,10 +986,10 @@ class SurfacePlant:
             CurrentUnits=EnergyFrequencyUnit.GWPERYEAR
         )
         self.PumpingkWh = self.OutputParameterDict[self.PumpingkWh.Name] = OutputParameter(
-            Name="annual electricity production",
+            Name="Annual Electricity Use for Pumping",
             UnitType=Units.ENERGYFREQUENCY,
-            PreferredUnits=EnergyFrequencyUnit.KWPERYEAR,
-            CurrentUnits=EnergyFrequencyUnit.KWPERYEAR
+            PreferredUnits=EnergyFrequencyUnit.KWhPERYEAR,
+            CurrentUnits=EnergyFrequencyUnit.KWhPERYEAR
         )
         self.ElectricityProduced = self.OutputParameterDict[self.ElectricityProduced.Name] = OutputParameter(
             Name="Total Electricity Production",
@@ -1002,6 +1004,13 @@ class SurfacePlant:
             PreferredUnits=PowerUnit.MW,
             CurrentUnits=PowerUnit.MW
         )
+        self.NetElectricityProducedMax = self.OutputParameterDict[self.NetElectricityProducedMax.Name] = OutputParameter(
+            Name="Maximum Net Electricity Generation",
+            UnitType=Units.POWER,
+            PreferredUnits=PowerUnit.MW,
+            CurrentUnits=PowerUnit.MW
+        )
+
         self.TotalkWhProduced = self.OutputParameterDict[self.TotalkWhProduced.Name] = OutputParameter(
             Name="Total Electricity Generation",
             UnitType=Units.ENERGY,
@@ -1041,11 +1050,19 @@ class SurfacePlant:
             PreferredUnits=PowerUnit.MW,
             CurrentUnits=PowerUnit.MW
         )
+        self.HeatProducedMax = self.OutputParameterDict[self.HeatProducedMax.Name] = OutputParameter(
+            Name="Maximum Net Heat Production",
+            UnitType=Units.POWER,
+            PreferredUnits=PowerUnit.MW,
+            CurrentUnits=PowerUnit.MW
+        )
         self.HeatkWhProduced = self.OutputParameterDict[self.HeatkWhProduced.Name] = OutputParameter(
             Name="Heat Produced in kWh",
-            UnitType=Units.POWER,
-            PreferredUnits=PowerUnit.KW,
-            CurrentUnits=PowerUnit.KW
+            # display_name='Average Annual Heat Production',
+            UnitType=Units.ENERGY,
+            CurrentUnits=EnergyUnit.KWH,
+            # PreferredUnits=EnergyUnit.GWH,
+            PreferredUnits=EnergyUnit.KWH
         )
         self.Availability = self.OutputParameterDict[self.Availability.Name] = OutputParameter(
             Name="Geofluid Availability",
@@ -1254,6 +1271,7 @@ class SurfacePlant:
                         end_use_option = EndUseOptions.from_input_string(ParameterReadIn.sValue)
                         ParameterToModify.value = end_use_option
                         if end_use_option == EndUseOptions.HEAT:
+                            # TODO https://github.com/NatLabRockies/GEOPHIRES-X/issues/477?title=Validate+surface+application+for+direct-use+heat-only+end+use+(ORC/flash+plants+are+not+applicable)
                             self.plant_type.value = PlantType.INDUSTRIAL
                     elif ParameterToModify.Name == 'Operating Mode':
                         ParameterToModify.value = OperatingMode.from_input_string(ParameterReadIn.sValue)
@@ -1449,3 +1467,10 @@ class SurfacePlant:
                 self.heat_to_power_conversion_efficiency.value = avg_efficiency
 
         self.enduse_option_output.value = self.enduse_option.value.value
+
+        self.NetElectricityProducedMax.value = np.max(self.NetElectricityProduced.quantity()).to(
+            self.NetElectricityProducedMax.CurrentUnits).magnitude
+
+        if model.surfaceplant.enduse_option.value.has_direct_use_heat_component or model.surfaceplant.plant_type.value in [
+            PlantType.ABSORPTION_CHILLER, PlantType.HEAT_PUMP]:
+            self.HeatProducedMax.value = np.max(model.surfaceplant.HeatProduced.value)

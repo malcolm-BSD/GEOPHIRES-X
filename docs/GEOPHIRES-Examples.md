@@ -15,6 +15,10 @@ A minimal example input file is available at
 
 See documentation: [Case Study: 500 MWe EGS Project Modeled on Fervo Cape Station](Fervo_Project_Cape-5.html).
 
+## Fervo Project Red: Evaluating the Gringarten Model against Empirical EGS Data
+
+See documentation: [Fervo Project Red: Evaluating the Gringarten Model against Empirical EGS Data](Fervo_Project_Red.html).
+
 ## Extended Levelized Cost Examples
 
 `XLC*` examples are available in `tests/examples/`:

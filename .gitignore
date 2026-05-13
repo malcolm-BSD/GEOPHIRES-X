@@ -27,6 +27,10 @@ Geothermal_district_heating_system_with_peaking_boilers.png
 regenerate-schemas.sh
 requirements_2025-08-11.txt
 
+tests/examples/example_SAM-single-owner-PPA-7_chp_cash-flow.csv
+tests/examples/example_SAM-single-owner-PPA-8_heat_cash-flow.csv
+tests/examples/example_SAM-single-owner-PPA-9_cooling_cash-flow.csv
+
 # C extensions
 *.so
 
@@ -103,8 +107,10 @@ docs/tmp
 docs/reference/geophires-request.json
 docs/reference/parameters.rst
 docs/Fervo_Project_Cape-5.md
+docs/Fervo_Project_Red.md
 docs/_images/*.bak.png
 docs/_images/singh-et-al-2025_fig-7_well-and-bench-spacing.xcf
+docs/_images/chp-topping-diagram.xcf
 docs/geophires-request.json
 docs/parameters.rst
 docs/hip-ra-x-request.json
@@ -112,14 +118,14 @@ docs/hip_ra_x_parameters.rst
 _site/
 /docs/geophires_x.rstx
 /docs/temperature.txt
+
+src/geophires_docs/fervo_project_red-2026_graph-data-extraction.xcf
+
 /geophires_x.rst
 /modules.rst
 /Useful sites for Sphinx docstrings.txt
 /.github/workflows/workflows.7z
 tmp.patch
-
-# TODO unignore once favicon is correctly configured
-docs/_images/geophires-favicon.png
 
 # Mypy Cache
 .mypy_cache/

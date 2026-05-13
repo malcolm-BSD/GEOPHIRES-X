@@ -9,7 +9,6 @@ from base_test_case import BaseTestCase
 
 
 class GeophiresClientImperativeInstantiationTestCase(BaseTestCase):
-
     # noinspection PyMethodMayBeStatic
     def test_imperative_instantiation_in_subprocess(self):
         """
@@ -48,7 +47,7 @@ print("SUCCESS")
 """
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            test_script_path = Path(tmpdir) / 'run_client_test.py'
+            test_script_path = Path(tmpdir) / "run_client_test.py"
             test_script_path.write_text(script_content)
 
             # fmt:off
@@ -61,11 +60,11 @@ print("SUCCESS")
             # fmt:on
 
         assert result.returncode == 0, (
-            f'Subprocess failed with exit code {result.returncode}. This indicates a crash.\\n'
-            f'--- STDOUT ---\\n{result.stdout}\\n'
-            f'--- STDERR ---\\n{result.stderr}'
+            f"Subprocess failed with exit code {result.returncode}. This indicates a crash.\\n"
+            f"--- STDOUT ---\\n{result.stdout}\\n"
+            f"--- STDERR ---\\n{result.stderr}"
         )
 
-        assert 'SUCCESS' in result.stdout, (
-            "Subprocess completed but did not print the final 'SUCCESS' message.\\n" f"--- STDOUT ---\\n{result.stdout}"
+        assert "SUCCESS" in result.stdout, (
+            f"Subprocess completed but did not print the final 'SUCCESS' message.\\n--- STDOUT ---\\n{result.stdout}"
         )

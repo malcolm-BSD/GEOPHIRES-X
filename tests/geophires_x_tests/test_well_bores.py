@@ -11,18 +11,17 @@ from geophires_x_client import GeophiresXResult
 
 
 class WellBoresTestCase(BaseTestCase):
-
     def test_number_of_doublets(self):
         r_prod_inj: GeophiresXResult = self._get_result(
             {
-                'Number of Production Wells': 10,
-                'Number of Injection Wells': 10,
+                "Number of Production Wells": 10,
+                "Number of Injection Wells": 10,
             }
         )
 
         r_doublets: GeophiresXResult = self._get_result(
             {
-                'Number of Doublets': 10,
+                "Number of Doublets": 10,
             }
         )
 
@@ -32,25 +31,25 @@ class WellBoresTestCase(BaseTestCase):
         with self.assertRaises(RuntimeError):
             self._get_result(
                 {
-                    'Number of Production Wells': 10,
-                    'Number of Injection Wells': 10,
-                    'Number of Doublets': 10,
+                    "Number of Production Wells": 10,
+                    "Number of Injection Wells": 10,
+                    "Number of Doublets": 10,
                 }
             )
 
         with self.assertRaises(RuntimeError):
             self._get_result(
                 {
-                    'Number of Production Wells': 10,
-                    'Number of Doublets': 10,
+                    "Number of Production Wells": 10,
+                    "Number of Doublets": 10,
                 }
             )
 
         with self.assertRaises(RuntimeError):
             self._get_result(
                 {
-                    'Number of Injection Wells': 10,
-                    'Number of Doublets': 10,
+                    "Number of Injection Wells": 10,
+                    "Number of Doublets": 10,
                 }
             )
 
@@ -63,7 +62,7 @@ class WellBoresTestCase(BaseTestCase):
         prod_inj_lcoe = self._prod_inj_lcoe_production(
             self._get_result(
                 {
-                    'Number of Doublets': 40.7381,
+                    "Number of Doublets": 40.7381,
                 }
             )
         )
@@ -74,7 +73,7 @@ class WellBoresTestCase(BaseTestCase):
         prod_inj_lcoe_2 = self._prod_inj_lcoe_production(
             self._get_result(
                 {
-                    'Number of Doublets': 199.2,
+                    "Number of Doublets": 199.2,
                 }
             )
         )
@@ -85,13 +84,13 @@ class WellBoresTestCase(BaseTestCase):
     def test_number_of_injection_wells_per_production_well(self):
         r_ratio: GeophiresXResult = self._get_result(
             {
-                'Number of Production Wells': 63,
-                'Number of Injection Wells per Production Well': 0.666,  # 3:2 ratio
+                "Number of Production Wells": 63,
+                "Number of Injection Wells per Production Well": 0.666,  # 3:2 ratio
             }
         )
 
         r_explicit_counts: GeophiresXResult = self._get_result(
-            {'Number of Production Wells': 63, 'Number of Injection Wells': 42}
+            {"Number of Production Wells": 63, "Number of Injection Wells": 42}
         )
 
         self.assertEqual(self._prod_inj_lcoe_production(r_explicit_counts), self._prod_inj_lcoe_production(r_ratio))
@@ -100,44 +99,44 @@ class WellBoresTestCase(BaseTestCase):
             self._prod_inj_lcoe_production(
                 self._get_result(
                     {
-                        'Number of Production Wells': 2,  # default value
-                        'Number of Injection Wells per Production Well': 3,
+                        "Number of Production Wells": 2,  # default value
+                        "Number of Injection Wells per Production Well": 3,
                     }
                 )
             ),
-            self._prod_inj_lcoe_production(self._get_result({'Number of Injection Wells per Production Well': 3})),
+            self._prod_inj_lcoe_production(self._get_result({"Number of Injection Wells per Production Well": 3})),
         )
 
         with self.assertRaises(RuntimeError):
             self._get_result(
                 {
-                    'Number of Production Wells': 63,
-                    'Number of Injection Wells per Production Well': 0.6666,  # 3:2 ratio
-                    'Number of Injection Wells': 42,
+                    "Number of Production Wells": 63,
+                    "Number of Injection Wells per Production Well": 0.6666,  # 3:2 ratio
+                    "Number of Injection Wells": 42,
                 }
             )
 
         with self.assertRaises(RuntimeError):
             self._get_result(
                 {
-                    'Number of Production Wells': 63,
-                    'Number of Injection Wells per Production Well': 0.6666,  # 3:2 ratio
-                    'Number of Doublets': 52,
+                    "Number of Production Wells": 63,
+                    "Number of Injection Wells per Production Well": 0.6666,  # 3:2 ratio
+                    "Number of Doublets": 52,
                 }
             )
 
     # noinspection PyMethodMayBeStatic
     def _get_result(self, _params) -> GeophiresXResult:
         params = GeophiresInputParameters(
-            {'Reservoir Depth': 5, 'Gradient 1': 74, 'Power Plant Type': 2, 'Maximum Temperature': 600, **_params}
+            {"Reservoir Depth": 5, "Gradient 1": 74, "Power Plant Type": 2, "Maximum Temperature": 600, **_params}
         )
         return GeophiresXClient().get_geophires_result(params)
 
     # noinspection PyMethodMayBeStatic
     def _prod_inj_lcoe_production(self, _r: GeophiresXResult) -> tuple[int, int, float, float]:
         return (
-            _r.result['ENGINEERING PARAMETERS']['Number of Production Wells']['value'],
-            _r.result['ENGINEERING PARAMETERS']['Number of Injection Wells']['value'],
-            _r.result['SUMMARY OF RESULTS']['Electricity breakeven price']['value'],
-            _r.result['SURFACE EQUIPMENT SIMULATION RESULTS']['Average Net Electricity Generation']['value'],
+            _r.result["ENGINEERING PARAMETERS"]["Number of Production Wells"]["value"],
+            _r.result["ENGINEERING PARAMETERS"]["Number of Injection Wells"]["value"],
+            _r.result["SUMMARY OF RESULTS"]["Electricity breakeven price"]["value"],
+            _r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Average Net Electricity Generation"]["value"],
         )

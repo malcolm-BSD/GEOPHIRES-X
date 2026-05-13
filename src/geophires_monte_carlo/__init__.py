@@ -10,9 +10,9 @@ from geophires_monte_carlo.common import _get_logger
 
 
 class SimulationProgram(str, Enum):
-    GEOPHIRES = 'GEOPHIRES', 'geophires_x/GEOPHIRESv3.py'
-    HIP_RA = 'HIP-RA', 'hip_ra/HIP_RA.py'
-    HIP_RA_X = 'HIP-RA-X', 'hip_ra_x/hip_ra_x.py'
+    GEOPHIRES = "GEOPHIRES", "geophires_x/GEOPHIRESv3.py"
+    HIP_RA = "HIP-RA", "hip_ra/HIP_RA.py"
+    HIP_RA_X = "HIP-RA-X", "hip_ra_x/hip_ra_x.py"
 
     def __new__(cls, *args, **kwds):
         obj = str.__new__(cls)
@@ -40,30 +40,30 @@ class MonteCarloRequest:
         self._simulation_program: SimulationProgram = simulation_program
 
         if not input_file.is_absolute():
-            raise ValueError(f'Input file path ({input_file}) must be absolute')
+            raise ValueError(f"Input file path ({input_file}) must be absolute")
         self.input_file = input_file
 
         if not monte_carlo_settings_file.is_absolute():
-            raise ValueError(f'Monte Carlo settings file path ({monte_carlo_settings_file}) must be absolute')
+            raise ValueError(f"Monte Carlo settings file path ({monte_carlo_settings_file}) must be absolute")
         self.monte_carlo_settings_file = monte_carlo_settings_file
 
         if output_file is not None:
             self.output_file: Path = output_file
         else:
-            self._temp_output_dir: TemporaryDirectory = TemporaryDirectory(prefix='geophires_monte_carlo-')
+            self._temp_output_dir: TemporaryDirectory = TemporaryDirectory(prefix="geophires_monte_carlo-")
             self.output_file: Path = Path(
-                self._temp_output_dir.name, f'MC_{self._simulation_program.name}_Result.txt'
+                self._temp_output_dir.name, f"MC_{self._simulation_program.name}_Result.txt"
             ).absolute()
 
         if not self.output_file.is_absolute():
-            raise ValueError(f'Output file path ({output_file}) must be absolute')
+            raise ValueError(f"Output file path ({output_file}) must be absolute")
 
     @property
     def code_file_path(self) -> Path:
         return self._simulation_program.code_file_path
 
     def __del__(self):
-        if hasattr(self, '_temp_output_dir'):
+        if hasattr(self, "_temp_output_dir"):
             self._temp_output_dir.cleanup()
 
 
@@ -75,11 +75,11 @@ class MonteCarloResult:
             self._request.monte_carlo_settings_file
         ) as mc_settings_file, open(self.json_output_file_path) as json_file:
             self._result: dict = {
-                'input': {
-                    'input_file_content': request_input_file.read(),
-                    'monte_carlo_settings_file_content': mc_settings_file.read(),
+                "input": {
+                    "input_file_content": request_input_file.read(),
+                    "monte_carlo_settings_file_content": mc_settings_file.read(),
                 },
-                'output': json.loads(json_file.read()),
+                "output": json.loads(json_file.read()),
             }
 
     @property
@@ -88,7 +88,7 @@ class MonteCarloResult:
 
     @property
     def json_output_file_path(self) -> Path:
-        return self.output_file_path.with_suffix('.json')
+        return self.output_file_path.with_suffix(".json")
 
     @property
     def result(self) -> dict:
@@ -110,9 +110,9 @@ class GeophiresMonteCarloClient:
         try:
             MC_GeoPHIRES3.main(command_line_args=args)
         except Exception as e:
-            raise RuntimeError(f'Monte Carlo encountered an exception: {e!s}') from e
+            raise RuntimeError(f"Monte Carlo encountered an exception: {e!s}") from e
         except SystemExit:
-            raise RuntimeError('Monte Carlo exited without giving a reason') from None
+            raise RuntimeError("Monte Carlo exited without giving a reason") from None
         finally:
             # Undo MC internal global settings changes
             os.chdir(stash_cwd)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 import tempfile
@@ -6,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
+from geophires_x.EconomicsUtils import total_capex_parameter_output_parameter
 from geophires_x.formula_evaluator import evaluate_formula_expression
 from geophires_x.formula_evaluator import resolve_parameter_formulas
 from geophires_x.Model import Model
@@ -809,6 +812,13 @@ class ParameterTestCase(BaseTestCase):
         ]
         self.assertEqual("kilogram", total_avoided_carbon_emissions_vu["unit"])
         self.assertEqual(int(total_avoided_carbon_emissions_vu["value"]), total_capacity_payment_revenue_usd)
+
+    def test_has_quantity_as_units(self):
+        param: OutputParameter = total_capex_parameter_output_parameter()
+        param.CurrentUnits = CurrencyUnit.MDOLLARS
+        param.value = 1
+        self.assertEqual(1e6, param.quantity("USD").magnitude)
+        self.assertEqual(1e6, param.quantity(CurrencyUnit.DOLLARS).magnitude)
 
     # noinspection PyMethodMayBeStatic
     def _new_model(self) -> Model:

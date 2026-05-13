@@ -9,13 +9,15 @@ from pint.facets.plain import PlainQuantity
 
 import geophires_x.Model as Model
 from geophires_x import EconomicsSam
-from geophires_x.EconomicsSam import calculate_sam_economics, SamEconomicsCalculations
+from geophires_x.EconomicsSam import calculate_sam_economics
+from geophires_x.EconomicsSamCalculations import SamEconomicsCalculations
 from geophires_x.EconomicsUtils import BuildPricingModel, wacc_output_parameter, nominal_discount_rate_parameter, \
     real_discount_rate_parameter, after_tax_irr_parameter, moic_parameter, project_vir_parameter, \
     project_payback_period_parameter, inflation_cost_during_construction_output_parameter, \
     interest_during_construction_output_parameter, total_capex_parameter_output_parameter, \
     overnight_capital_cost_output_parameter, CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME, \
-    _YEAR_INDEX_VALUE_EXPLANATION_SNIPPET, investment_tax_credit_output_parameter, expand_schedule_dsl
+    _YEAR_INDEX_VALUE_EXPLANATION_SNIPPET, investment_tax_credit_output_parameter, expand_schedule_dsl, \
+    lcoh_output_parameter, lcoc_output_parameter
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, WellDrillingCostCorrelation, EconomicModel, EndUseOptions, PlantType, \
     _WellDrillingCostCorrelationCitation
@@ -218,19 +220,25 @@ def CalculateTotalRevenue(plantlifetime: int, ConstructionYears: int, CAPEX: flo
     return CashFlow, CummCashFlow
 
 
-def CalculateRevenue(plantlifetime: int, ConstructionYears: int, Energy, Price):
+def CalculateRevenue(plantlifetime: int, ConstructionYears: int, Energy: list[float], Price: list[float]) \
+        -> tuple[list[float], list[float]]:
     """
     CalculateRevenue calculates the revenue stream for the project.  It is used to calculate the revenue
     stream for the project.
     # note this doesn't account for OPEX
+
     :param plantlifetime: The lifetime of the project in years in years (not including construction years) in years
     :type plantlifetime: int
+
     :param ConstructionYears: The number of years of construction for the project in years
     :type ConstructionYears: int
+
     :param Energy: The energy production array for the project in kWh
     :type Energy: list
+
     :param Price: The price model array for the project in $/kWh
     :type Price: list
+
     :return: CashFlow: The annual cash flow for the project in MUSD and CummCashFlow: The cumulative cash flow for the
     project in MUSD
     :rtype: list
@@ -2209,11 +2217,8 @@ class Economics:
         )
 
         # local variable initialization
-        self.CAPEX_cost_electricity_plant = 0.0
-        self.CAPEX_cost_heat_plant = 0.0
-        self.OPEX_cost_electricity_plant = 0.0
-        self.OPEX_cost_heat_plant = 0.0
-        self.CAPEX_heat_electricity_plant_ratio.value = 0.0
+        self.OPEX_cost_electricity_plant = 0.0  # TODO should be proper output parameter
+        self.OPEX_cost_heat_plant = 0.0  # TODO should be proper output parameter
         self.Claborcorrelation = 0.0
         self.Cpumps = 0.0
         self.annualelectricityincome = 0.0
@@ -2253,13 +2258,7 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB
         )
 
-        self.LCOC = self.OutputParameterDict[self.LCOC.Name] = OutputParameter(
-            Name="LCOC",
-            display_name='Direct-Use Cooling Breakeven Price (LCOC)',
-            UnitType=Units.ENERGYCOST,
-            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
-        )
+        self.LCOC = self.OutputParameterDict[self.LCOC.Name] = lcoc_output_parameter()
 
         self.LCOE = self.OutputParameterDict[self.LCOE.Name] = OutputParameter(
             Name="LCOE",
@@ -2353,13 +2352,7 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
         )
-        self.LCOH = self.OutputParameterDict[self.LCOH.Name] = OutputParameter(
-            Name="LCOH",
-            display_name='Direct-Use heat breakeven price (LCOH)',
-            UnitType=Units.ENERGYCOST,
-            PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,  # $/MMBTU
-            CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU
-        )
+        self.LCOH = self.OutputParameterDict[self.LCOH.Name] = lcoh_output_parameter()
         self.XLCOC_Market = self.OutputParameterDict[self.XLCOC_Market.Name] = OutputParameter(
             Name="XLCOC_Market",
             display_name='Extended Cooling Breakeven Price (XLCOC Market)',
@@ -2495,6 +2488,7 @@ class Economics:
                         f'The total is then divided over {model.surfaceplant.plant_lifetime.Name} years to calculate '
                         f'Redrilling costs per year.'
         )
+
         # noinspection SpellCheckingInspection
         self.Cplant = self.OutputParameterDict[self.Cplant.Name] = OutputParameter(
             Name="Surface Plant cost",
@@ -2536,6 +2530,22 @@ class Economics:
                         'their specific application. Beckers and Young (2017) collected several cost figures to '
                         'estimate the surface equipment cost for geothermal district-heating systems.'
         )
+
+        self.CAPEX_cost_electrical_plant = self.OutputParameterDict[self.CAPEX_cost_electrical_plant.Name] = OutputParameter(
+            Name='Electrical Plant cost',
+            display_name='of which Electrical Plant Cost',
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+        )
+        self.CAPEX_cost_heat_plant= self.OutputParameterDict[self.CAPEX_cost_heat_plant.Name] = OutputParameter(
+            Name='Heat Plant cost',
+            display_name='of which Heat Plant Cost',
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+        )
+
         self.Coamplant = self.OutputParameterDict[self.Coamplant.Name] = OutputParameter(
             Name="O&M Surface Plant costs",
             display_name='Power plant maintenance costs',
@@ -2575,6 +2585,7 @@ class Economics:
                         'user or a district-heating system. Those transmission pipeline costs are calculated from '
                         f'{self.CPipelineCost.Name} multiplied by the specified pipeline length.'
         )
+
         self.Cpiping = self.OutputParameterDict[self.Cpiping.Name] = OutputParameter(
             Name="Transmission/pipeline Cost",
             display_name='Transmission/pipeline Cost',
@@ -2582,6 +2593,14 @@ class Economics:
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS
         )
+        self.surface_equipment_costs_total = self.OutputParameterDict[self.surface_equipment_costs_total.Name] = OutputParameter(
+            Name='Total surface equipment costs',
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText=f'{self.Cplant.Name} plus {self.Cgath.Name} plus Transmission pipeline costs.'
+        )
+
         self.tess_capital_cost = self.OutputParameterDict[self.tess_capital_cost.Name] = OutputParameter(
             Name="TESS Capital Cost",
             display_name='TESS capital costs',
@@ -2616,7 +2635,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
         )
         self.capex_total = self.OutputParameterDict[self.capex_total.Name] = total_capex_parameter_output_parameter()
-        self.capex_total_per_kw = self.OutputParameterDict[self.capex_total_per_kw.Name] = OutputParameter(
+        self.capex_total_per_kwe = self.OutputParameterDict[self.capex_total_per_kwe.Name] = OutputParameter(
             Name="Total CAPEX ($/kW)",
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
@@ -2626,6 +2645,34 @@ class Economics:
                         'This metric is calculated based on the maximum net electricity generation of the facility. '
                         'It reflects all direct and indirect costs, contingency, and applicable cost escalations '
                         'included in the base Total CAPEX.',
+        )
+        self.capex_allocated_per_kwe = self.OutputParameterDict[self.capex_allocated_per_kwe.Name] = OutputParameter(
+            Name="Electricity CAPEX ($/kWe)",
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKW,
+            ToolTipText='The portion of total capital expenditure (CAPEX) allocated specifically '
+                        'to electricity generation, normalized per kilowatt of net electrical capacity (kWe). '
+                        'In cogeneration (CHP) scenarios, this is calculated by multiplying the Total CAPEX by the '
+                        'electrical plant cost allocation ratio, divided by the maximum net electricity generation.'
+        )
+        self.capex_allocated_per_kwth = self.OutputParameterDict[self.capex_allocated_per_kwth.Name] = OutputParameter(
+            Name="Heat CAPEX ($/kWth)",
+            UnitType=Units.ENERGYCOST,
+            PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKW,
+            ToolTipText='The portion of total capital expenditure (CAPEX) allocated specifically to direct-use heat '
+                        'production, normalized per kilowatt of net thermal capacity (kWth). In cogeneration (CHP) '
+                        'scenarios, this is calculated by multiplying the Total CAPEX by the thermal plant cost '
+                        'allocation ratio (1 minus the electrical ratio), divided by the maximum net heat production.'
+        )
+
+        self.chp_percent_cost_allocation_for_electrical_plant = self.OutputParameterDict[self.chp_percent_cost_allocation_for_electrical_plant.Name] = OutputParameter(
+            Name='CHP: Percent cost allocation for electrical plant',
+            UnitType=Units.PERCENT,
+            PreferredUnits=PercentUnit.PERCENT,
+            CurrentUnits=PercentUnit.PERCENT,
+            ToolTipText=self.CAPEX_heat_electricity_plant_ratio.ToolTipText,
         )
 
         # noinspection SpellCheckingInspection
@@ -2639,12 +2686,16 @@ class Economics:
                         f'make-up water, pumping O&M costs, '
                         f'and average royalty costs (both production-based and supplemental payments).'
         )
-        self.averageannualpumpingcosts = OutputParameter(
-            Name="Average Annual Pumping Costs",
+
+        # noinspection SpellCheckingInspection
+        self.averageannualpumpingcosts = self.OutputParameterDict[self.averageannualpumpingcosts.Name] = OutputParameter(
+            Name='Average Annual Pumping Costs',
+            display_name='Average Reservoir Pumping Cost',
             UnitType=Units.CURRENCYFREQUENCY,
             PreferredUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR
         )
+
         # heat pump
         self.averageannualheatpumpelectricitycost = self.OutputParameterDict[
             self.averageannualheatpumpelectricitycost.Name] = OutputParameter(
@@ -2887,6 +2938,7 @@ class Economics:
         self.jobs_created = self.OutputParameterDict[self.jobs_created.Name] = OutputParameter(
             Name="Estimated Jobs Created",
             UnitType=Units.NONE,
+            # TODO tooltip text derived from corresponding input parameter
         )
 
         # Results for the Royalty Holder
@@ -2925,6 +2977,15 @@ class Economics:
         )
 
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')
+
+    @property
+    def CAPEX_cost_electricity_plant_musd(self) -> float:
+        return self.CAPEX_cost_electrical_plant.quantity().to('MUSD').magnitude
+
+    @property
+    def CAPEX_cost_heat_plant_musd(self) -> float:
+        return self.CAPEX_cost_heat_plant.quantity().to('MUSD').magnitude
+
 
     def read_parameters(self, model: Model) -> None:
         """
@@ -3221,6 +3282,16 @@ class Economics:
         self.accrued_financing_during_construction_percentage.value = self.inflrateconstruction.quantity().to(
             convertible_unit(self.accrued_financing_during_construction_percentage.CurrentUnits)
         ).magnitude
+
+        if not self.CAPEX_heat_electricity_plant_ratio.Provided:
+            def _set_ratio(frac: float) -> None:
+                self.CAPEX_heat_electricity_plant_ratio.value = quantity(frac, 'dimensionless').to(
+                    convertible_unit(self.CAPEX_heat_electricity_plant_ratio.CurrentUnits)).magnitude
+
+            if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+                _set_ratio(1.0)
+            elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
+                _set_ratio(0.0)
 
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')
 
@@ -3523,6 +3594,8 @@ class Economics:
                     (model.wellbores.nprod.value + model.wellbores.ninj.value) * 750 * 500. + self.Cpumps) / 1E6
 
     def calculate_plant_costs(self, model: Model) -> None:
+        direct_use_heat_default_cost_musd_per_kwth = 250E-6  # TODO parameterize
+
         design_heat_extracted_mw = Economics._dispatch_summary_metric(
             model,
             'design_heat_extracted_mw',
@@ -3547,7 +3620,7 @@ class Economics:
                 self.Cplant.value = (self._indirect_cost_factor
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
-                                     * 250E-6
+                                     * direct_use_heat_default_cost_musd_per_kwth
                                      * design_heat_extracted_mw
                                      * 1000.)
 
@@ -3560,15 +3633,18 @@ class Economics:
                 self.Cplant.value = (self._indirect_cost_factor
                                      * self._contingency_factor
                                      * self.ccplantadjfactor.value
-                                     * 250E-6
+                                     * direct_use_heat_default_cost_musd_per_kwth
                                      * design_heat_extracted_mw
                                      * 1000.)
+
                 if self.chillercapex.value == -1:  # no value provided by user, use built-in correlation ($2500/ton)
+                    cooling_default_cost_usd_per_ton = 2500  # $2,500/ton of cooling. TODO parameterize
+
                     self.chillercapex.value = (
                         self._indirect_cost_factor
                         * self._contingency_factor
                         * np.max(model.surfaceplant.cooling_produced.value)
-                        * 1000 / 3.517 * 2500 / 1e6 # $2,500/ton of cooling.
+                        * 1000 / 3.517 * cooling_default_cost_usd_per_ton / 1e6
                     )
 
                 # now add chiller cost to surface plant cost
@@ -3580,11 +3656,24 @@ class Economics:
                 self.Cplant.value = self.ccplantfixed.value
             else:
                 # this is for the direct-use part all the way up to the heat pump
-                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    design_heat_extracted_mw) * 1000.
+                self.Cplant.value = (
+                    self._indirect_cost_factor
+                    * self._contingency_factor
+                    * self.ccplantadjfactor.value
+                    * direct_use_heat_default_cost_musd_per_kwth
+                    * design_heat_extracted_mw
+                    * 1000.
+                )
                 if self.heatpumpcapex.value == -1:  # no value provided by user, use built-in correlation ($150/kWth)
-                    self.heatpumpcapex.value = self._indirect_cost_factor * self._contingency_factor * np.max(
-                        design_heat_produced_mw) * 1000 * 150 / 1e6  # $150/kW - TODO parameterize
+                    heat_pump_default_cost_usd_per_kw = 150  # $150/kW - TODO parameterize
+                    self.heatpumpcapex.value = (
+                        self._indirect_cost_factor
+                        * self._contingency_factor
+                        * design_heat_produced_mw
+                        * 1000
+                        * heat_pump_default_cost_usd_per_kw
+                        / 1e6
+                    )
 
                 # now add heat pump cost to surface plant cost
                 self.Cplant.value += self.heatpumpcapex.value
@@ -3594,8 +3683,7 @@ class Economics:
             if self.ccplantfixed.Valid:
                 self.Cplant.value = self.ccplantfixed.value
             else:
-                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    design_heat_extracted_mw) * 1000.
+                self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * design_heat_extracted_mw * 1000.
 
                 # add 65$/KW for peaking boiler
                 self.peakingboilercost.value = (self.peaking_boiler_cost_per_kW.quantity()
@@ -3606,7 +3694,10 @@ class Economics:
                 self.Cplant.value += self.peakingboilercost.value
 
 
-        else:  # all other options have power plant
+        else:
+            # all other options have power plant
+            # TODO migrate relevant constants/calculations below to their respective classes
+
             if model.surfaceplant.plant_type.value == PlantType.SUB_CRITICAL_ORC:
                 MaxProducedTemperature = np.max(model.surfaceplant.TenteringPP.value)
                 if MaxProducedTemperature < 150.:
@@ -3748,9 +3839,28 @@ class Economics:
                                           design_electricity_produced_mw * 1000. / 1E6)
 
             if self.ccplantfixed.Valid:
-                self.Cplant.value = self.ccplantfixed.value
-                self.CAPEX_cost_electricity_plant = self.Cplant.value * self.CAPEX_heat_electricity_plant_ratio.value
-                self.CAPEX_cost_heat_plant = self.Cplant.value * (1.0 - self.CAPEX_heat_electricity_plant_ratio.value)
+                self.Cplant.value = self.ccplantfixed.value  # TODO unit conversion
+
+                # TODO compute self.CAPEX_heat_electricity_plant_ratio.Valid property instead
+                is_cogen_plant_capex_ratio_valid: bool = (
+                        not model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option
+                        or (
+                                self.CAPEX_heat_electricity_plant_ratio.Provided \
+                                and self.CAPEX_heat_electricity_plant_ratio.value != -1
+                        )
+                )
+
+                if not is_cogen_plant_capex_ratio_valid:
+                    # TODO enhance message user-friendliness
+                    raise RuntimeError(f'{self.CAPEX_heat_electricity_plant_ratio.Name} is required.')
+
+                self.CAPEX_cost_electrical_plant.value = self.Cplant.quantity(
+                    self.CAPEX_cost_electrical_plant.CurrentUnits).magnitude * \
+                    self.CAPEX_heat_electricity_plant_ratio.quantity('dimensionless').magnitude
+
+                self.CAPEX_cost_heat_plant.value = self.Cplant.quantity(
+                    self.CAPEX_cost_heat_plant.CurrentUnits).magnitude * \
+                    (1.0 - self.CAPEX_heat_electricity_plant_ratio.quantity('dimensionless').magnitude)
             else:
                 if self.Power_plant_cost_per_kWe.Provided:
                     nameplate_capacity_kW = quantity(design_electricity_produced_mw, 'MW').to('kW')
@@ -3763,34 +3873,48 @@ class Economics:
                     direct_plant_cost_MUSD = self.ccplantadjfactor.value * self.Cplantcorrelation * 1.02 * 1.10
 
                 self.Cplant.value = self._indirect_cost_factor * self._contingency_factor * direct_plant_cost_MUSD
-                self.CAPEX_cost_electricity_plant = self.Cplant.value
+                self.CAPEX_cost_electrical_plant.value = self.Cplant.quantity().to(self.CAPEX_cost_electrical_plant.CurrentUnits).magnitude
 
-        # add direct-use plant cost of co-gen system to Cplant (only of no total Cplant was provided)
+        # add direct-use plant cost of co-gen system to Cplant (only if no total Cplant was provided)
         if not self.ccplantfixed.Valid:
-            if model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
-                                                          EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT]:  # enduse_option = 3: cogen topping cycle
-                self.CAPEX_cost_heat_plant = (
+            if model.surfaceplant.enduse_option.value in [
+                # enduse_option = 3*: cogen topping cycle
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_TOPPING_EXTRA_HEAT
+            ]:
+                self.CAPEX_cost_heat_plant.value = quantity(
                     self._indirect_cost_factor
                     * self._contingency_factor
                     * self.ccplantadjfactor.value
-                    * 250E-6
+                    * direct_use_heat_default_cost_musd_per_kwth
                     * np.max(model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value)
-                    * 1000.
-                )
-                self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
-            elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
-                                                            EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY]:  # enduse_option = 4: cogen bottoming cycle
-                self.CAPEX_cost_heat_plant = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000.
-                self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
-            elif model.surfaceplant.enduse_option.value in [EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
-                                                            EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT]:  # cogen parallel cycle
-                self.CAPEX_cost_heat_plant = self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * 250E-6 * np.max(
-                    model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000.
+                    * 1000.,
+                    'MUSD'
+                ).to(self.CAPEX_cost_heat_plant.CurrentUnits).magnitude
+            elif model.surfaceplant.enduse_option.value in [
+                # enduse_option = 4*: cogen bottoming cycle
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_HEAT,
+                EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY
+            ]:
+                self.CAPEX_cost_heat_plant.value = quantity(self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * np.max(
+                    model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000., 'MUSD').to(self.CAPEX_cost_heat_plant.CurrentUnits).magnitude
+            elif model.surfaceplant.enduse_option.value in [
+                # cogen parallel cycle
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_ELECTRICITY,
+                EndUseOptions.COGENERATION_PARALLEL_EXTRA_HEAT
+            ]:
+                self.CAPEX_cost_heat_plant.value = quantity(self._indirect_cost_factor * self._contingency_factor * self.ccplantadjfactor.value * direct_use_heat_default_cost_musd_per_kwth * np.max(
+                    model.surfaceplant.HeatProduced.value / model.surfaceplant.enduse_efficiency_factor.value) * 1000., 'MUSD').to(self.CAPEX_cost_heat_plant.CurrentUnits).magnitude
 
-                self.Cplant.value = self.Cplant.value + self.CAPEX_cost_heat_plant
-            if not self.CAPEX_heat_electricity_plant_ratio.Provided and self.Cplant.value != 0:
-                self.CAPEX_heat_electricity_plant_ratio.value = self.CAPEX_cost_electricity_plant/self.Cplant.value
+            self.Cplant.value = self.Cplant.value + quantity(self.CAPEX_cost_heat_plant_musd, 'MUSD').to(self.Cplant.CurrentUnits.value).magnitude
+
+        if (
+            not self.CAPEX_heat_electricity_plant_ratio.Provided
+            and self.CAPEX_heat_electricity_plant_ratio.value == -1
+            and self.Cplant.value != 0
+        ):
+            self.CAPEX_heat_electricity_plant_ratio.value = (self.CAPEX_cost_electricity_plant_musd /
+                                                             self.Cplant.quantity().to('MUSD').magnitude)
 
     def calculate_transmission_pipeline_cost(self, model: Model) -> None:
         # Transmission/pipeline Cost is calculated from the user-provided cost rate and the specified pipeline length.
@@ -3900,8 +4024,10 @@ class Economics:
         # calculate average annual pumping costs in case no electricity is provided
         if model.surfaceplant.plant_type.value in [PlantType.INDUSTRIAL, PlantType.ABSORPTION_CHILLER,
                                                    PlantType.HEAT_PUMP, PlantType.DISTRICT_HEATING]:
-            self.averageannualpumpingcosts.value = np.average(
-                model.surfaceplant.PumpingkWh.value) * model.surfaceplant.electricity_cost_to_buy.value / 1E6  # M$/year
+            self.averageannualpumpingcosts.value = (np.average(
+                model.surfaceplant.PumpingkWh.quantity()) * model.surfaceplant.electricity_cost_to_buy.quantity()).to(
+                self.averageannualpumpingcosts.CurrentUnits.value
+            ).magnitude
 
         if not self.oamtotalfixed.Valid:
             design_heat_extracted_mw = Economics._dispatch_summary_metric(
@@ -4107,22 +4233,26 @@ class Economics:
             """
             Calculate cashflow and cumulative cash flow
 
-            Note that these calculations are irrelevant and ignored for SAM economic models, except for
-            carbon calculations.
+            Note that for SAM economic models, electricity revenue calculations are irrelevant and ignored.
             """
 
             total_duration = model.surfaceplant.plant_lifetime.value + model.surfaceplant.construction_years.value
+
             self.ElecRevenue.value = [0.0] * total_duration
             self.ElecCummRevenue.value = [0.0] * total_duration
+
             self.HeatRevenue.value = [0.0] * total_duration
             self.HeatCummRevenue.value = [0.0] * total_duration
+
             self.CoolingRevenue.value = [0.0] * total_duration
             self.CoolingCummRevenue.value = [0.0] * total_duration
+
             self.CarbonRevenue.value = [0.0] * total_duration
             self.CarbonCummCashFlow.value = [0.0] * total_duration
+            self.CarbonThatWouldHaveBeenProducedTotal.value = 0.0
+
             self.TotalRevenue.value = [0.0] * total_duration
             self.TotalCummRevenue.value = [0.0] * total_duration
-            self.CarbonThatWouldHaveBeenProducedTotal.value = 0.0
 
             # Based on the style of the project, calculate the revenue & cumulative revenue
             if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
@@ -4208,13 +4338,37 @@ class Economics:
         self.capex_total.value = (self.sam_economics_calculations.capex.quantity()
                                   .to(self.capex_total.CurrentUnits.value).magnitude)
 
-        # TODO define this as an output of SurfacePlant rather than calculating it on-demand here and elsewhere
-        max_net_electricity_generation_kw = quantity(
-            np.max(model.surfaceplant.NetElectricityProduced.value),
-            model.surfaceplant.NetElectricityProduced.CurrentUnits
-        ).to('kW')
-        capex_total_per_kw_q = self.capex_total.quantity().to('USD') / max_net_electricity_generation_kw
-        self.capex_total_per_kw.value = capex_total_per_kw_q.magnitude
+        def _calculate_capex_per_kw_outputs() -> None:
+            max_net_electricity_generation_kw = model.surfaceplant.NetElectricityProducedMax.quantity().to('kW')
+
+            if model.surfaceplant.enduse_option.value == EndUseOptions.ELECTRICITY:
+                capex_total_per_kw_q = self.capex_total.quantity().to('USD') / max_net_electricity_generation_kw
+                self.capex_total_per_kwe.value = capex_total_per_kw_q.to(
+                    self.capex_total_per_kwe.CurrentUnits.value).magnitude
+
+            elif model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option:
+                capex_allocated_per_kwe_q = (
+                        self.capex_total.quantity().to('USD') *
+                        self.CAPEX_heat_electricity_plant_ratio.quantity().to('dimensionless').magnitude /
+                        max_net_electricity_generation_kw
+                )
+                self.capex_allocated_per_kwe.value = capex_allocated_per_kwe_q.to(
+                    self.capex_allocated_per_kwe.CurrentUnits.value).magnitude
+
+
+                capex_allocated_per_kwth_q = (
+                        self.capex_total.quantity().to('USD') *
+                        (1. - self.CAPEX_heat_electricity_plant_ratio.quantity().to('dimensionless').magnitude) /
+                        model.surfaceplant.HeatProducedMax.quantity().to('kW')
+                )
+                self.capex_allocated_per_kwth.value = capex_allocated_per_kwth_q.to(
+                    self.capex_allocated_per_kwth.CurrentUnits.value).magnitude
+
+            elif model.surfaceplant.enduse_option.value == EndUseOptions.HEAT:
+                pass  # TODO add corresponding output parameter
+
+
+        _calculate_capex_per_kw_outputs()
 
         self.CCap.value = (self.sam_economics_calculations.capex.quantity()
                            .to(self.CCap.CurrentUnits.value).magnitude)
@@ -4317,6 +4471,19 @@ class Economics:
                 self.Cwell.value /
                 (model.wellbores.nprod.value + model.wellbores.ninj.value)
             )
+
+        if all(hasattr(self, it) for it in ['CAPEX_heat_electricity_plant_ratio',
+                                            'chp_percent_cost_allocation_for_electrical_plant']):
+            self.chp_percent_cost_allocation_for_electrical_plant.value = (
+                self.CAPEX_heat_electricity_plant_ratio.quantity()
+                .to(convertible_unit(self.chp_percent_cost_allocation_for_electrical_plant.CurrentUnits)).magnitude
+            )
+
+        if all(hasattr(self, it) for it in ['Cplant', 'Cgath', 'Cpiping']):
+            self.surface_equipment_costs_total.value = (
+                    self.Cplant.quantity() + self.Cgath.quantity() + self.Cpiping.quantity()).to(
+                self.surface_equipment_costs_total.CurrentUnits).magnitude
+
 
     @property
     def has_production_based_royalties(self):

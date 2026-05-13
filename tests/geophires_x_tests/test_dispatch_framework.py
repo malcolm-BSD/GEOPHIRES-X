@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ from tests.base_test_case import BaseTestCase
 
 
 class DispatchFrameworkTestCase(BaseTestCase):
-    def _new_model(self, input_file: Optional[str] = None) -> Model:
+    def _new_model(self, input_file: str | None = None) -> Model:
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
         sys.argv = [""]
@@ -381,7 +382,7 @@ class DispatchFrameworkTestCase(BaseTestCase):
         adapter.initialize(model, design_state={})
         return model, adapter
 
-    def _run_direct_use_cylindrical_dispatch(self, overrides: Optional[dict[str, str]] = None) -> Model:
+    def _run_direct_use_cylindrical_dispatch(self, overrides: dict[str, str] | None = None) -> Model:
         from geophires_x.CylindricalReservoir import CylindricalReservoir
 
         model = self._new_model()

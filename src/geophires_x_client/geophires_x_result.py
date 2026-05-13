@@ -87,6 +87,8 @@ class GeophiresXResult:
                 "VALCOC Flexibility Adjustment",
                 "Total CAPEX",
                 "Total CAPEX ($/kW)",
+                "Electricity CAPEX ($/kWe)",
+                "Heat CAPEX ($/kWth)",
                 "Average Direct-Use Heat Production",
                 "Direct-Use heat breakeven price",
                 "Direct-Use heat breakeven price (LCOH)",
@@ -304,6 +306,8 @@ class GeophiresXResult:
                 "Stimulation costs",
                 "Stimulation costs (for redrilling)",
                 "Surface power plant costs",
+                "of which Electrical Plant Cost",
+                "of which Heat Plant Cost",
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
@@ -456,6 +460,7 @@ class GeophiresXResult:
             ],
             "Simulation Metadata": [
                 _StringValueField("GEOPHIRES Version"),
+                _StringValueField("Simulation Date"),
                 "Calculation Time",
             ],
         }

@@ -13,13 +13,13 @@ from geophires_x_client import GeophiresXResult
 from geophires_x_client import ImmutableGeophiresInputParameters
 
 _SINGH_ET_AL_BASE_SIMULATION_PARAMETERS: dict[str, Any] = {
-    'Number of Production Wells': 4,
-    'Number of Injection Wells per Production Well': '1.2, -- The Singh et al. scenario has 4 producers and 6 injectors. '
-    'We model one fewer injector here to account for the combined injection rate being lower for '
-    'the higher bench separation cases.',
-    'Maximum Drawdown': '1, -- Redrilling not modeled in Singh et al. scenario. '
-    '(The equivalent GEOPHIRES simulation allows drawdown to reach up to 100% without triggering redrilling)',
-    'Plant Lifetime': 15,
+    "Number of Production Wells": 4,
+    "Number of Injection Wells per Production Well": "1.2, -- The Singh et al. scenario has 4 producers and 6 injectors. "
+    "We model one fewer injector here to account for the combined injection rate being lower for "
+    "the higher bench separation cases.",
+    "Maximum Drawdown": "1, -- Redrilling not modeled in Singh et al. scenario. "
+    "(The equivalent GEOPHIRES simulation allows drawdown to reach up to 100% without triggering redrilling)",
+    "Plant Lifetime": 15,
 }
 
 
@@ -50,7 +50,7 @@ def generate_fervo_project_cape_5_docs():
     generate_fervo_project_cape_5_graphs(
         (input_params, result),
         singh_et_al_base_simulation,
-        _PROJECT_ROOT / 'docs/_images'
+        _PROJECT_ROOT / "docs/_images"
     )
 
     generate_fervo_project_cape_5_md.generate_fervo_project_cape_5_md(
@@ -60,5 +60,5 @@ def generate_fervo_project_cape_5_docs():
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_fervo_project_cape_5_docs()

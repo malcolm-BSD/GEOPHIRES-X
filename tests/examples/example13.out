@@ -4,10 +4,10 @@
 
 Simulation Metadata
 ----------------------
- GEOPHIRES Version: 3.12.1
- Simulation Date: 2026-04-26
- Simulation Time:  15:33
- Calculation Time:      0.183 sec
+ GEOPHIRES Version: 3.13.5
+ Simulation Date: 2026-05-13
+ Simulation Time:  08:48
+ Calculation Time:      1.037 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -99,6 +99,8 @@ Simulation Metadata
          Drilling and completion costs per well:              6.62 MUSD
          Stimulation costs:                                   1.00 MUSD
          Surface power plant costs:                          21.91 MUSD
+            of which Electrical Plant Cost:                     14.01 MUSD
+            of which Heat Plant Cost:                            7.90 MUSD
          Field gathering system costs:                        2.32 MUSD
          Total surface equipment costs:                      24.23 MUSD
       Total capital costs:                                   51.72 MUSD

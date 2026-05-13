@@ -83,12 +83,31 @@ def _resolve_input_source(candidate: str, model) -> str:
 
 class HasQuantity(ABC):
 
-    def quantity(self) -> PlainQuantity:
+    def quantity(self, as_units: str | Enum | None = None) -> PlainQuantity:
         """
+        :param as_units: Optional units to convert to. If None, will use current units.
+
         :rtype: pint.registry.Quantity - note type annotation uses PlainQuantity due to issues with python 3.8 failing
             to import the Quantity TypeAlias
         """
-        return _ureg.Quantity(self.value, str(self.CurrentUnits.value))
+
+        # noinspection PyUnresolvedReferences
+        quant_val = self.value
+
+        if isinstance(quant_val, str):
+            quant_val = float(quant_val)
+
+        if isinstance(quant_val, Iterable):
+            quant_val = [float(it) for it in quant_val]
+
+        base_q = _ureg.Quantity(quant_val, str(convertible_unit(self.CurrentUnits.value)))
+        if as_units is None:
+            return base_q
+
+        if isinstance(as_units, Enum):
+            return base_q.to(convertible_unit(as_units.value))
+
+        return base_q.to(convertible_unit(as_units))
 
 
 @dataclass
@@ -1187,8 +1206,8 @@ def _ratio_suffix_conversion_factor(preferred_suffix: str, current_suffix: str) 
     if not preferred_suffix or not current_suffix or preferred_suffix == current_suffix:
         return 1.0
 
-    preferred_denominator = preferred_suffix.removeprefix("/")
-    current_denominator = current_suffix.removeprefix("/")
+    preferred_denominator = preferred_suffix[1:] if preferred_suffix.startswith("/") else preferred_suffix
+    current_denominator = current_suffix[1:] if current_suffix.startswith("/") else current_suffix
     return _ureg.Quantity(1, convertible_unit(preferred_denominator)).to(convertible_unit(current_denominator)).magnitude
 
 

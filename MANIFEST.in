@@ -2,6 +2,10 @@ graft docs
 graft src
 graft ci
 graft tests
+graft base_test_case
+graft data
+graft geophires_x_tests
+graft geophires_x_tests_shim
 
 include .aiexclude
 include .bumpversion.cfg
@@ -23,6 +27,11 @@ include INSTALL.rst
 include README.rst
 include How-to-extend-GEOPHIRES-X.md
 include geophires-logo.png
+include base_test_case.py
+include conftest.py
+include HIP.out
+include example_multiple_gradients-2.out
+include requirements-dev.txt
 
 prune References
 prune geophires_sam_economics

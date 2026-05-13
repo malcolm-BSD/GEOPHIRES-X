@@ -188,6 +188,15 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
         f.write(f"         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n")
 
         f.write(f"         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n")
+        if is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+            f.write(
+                f"            {econ.CAPEX_cost_electrical_plant.display_name}:"
+                f"                {econ.CAPEX_cost_electrical_plant.value:10.2f} {econ.CAPEX_cost_electrical_plant.CurrentUnits.value}\n"
+            )
+            f.write(
+                f"            {econ.CAPEX_cost_heat_plant.display_name}:"
+                f"                      {econ.CAPEX_cost_heat_plant.value:10.2f} {econ.CAPEX_cost_heat_plant.CurrentUnits.value}\n"
+            )
         if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
             f.write(f"            of which Absorption Chiller Cost:           {model.economics.chillercapex.value:10.2f} " + model.economics.Cplant.CurrentUnits.value + NL)
         if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
@@ -202,7 +211,11 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
         if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:
             f.write(f"         District Heating System Cost:                  {model.economics.dhdistrictcost.value:10.2f} {model.economics.dhdistrictcost.CurrentUnits.value}\n")
 
-        f.write(f"         Total surface equipment costs:                 {(model.economics.Cplant.value + model.economics.Cgath.value):10.2f} " + model.economics.Cplant.CurrentUnits.value + NL)
+        f.write(
+            f"         {model.economics.surface_equipment_costs_total.Name}:"
+            f"                 {model.economics.surface_equipment_costs_total.value:10.2f} "
+            f"{model.economics.surface_equipment_costs_total.CurrentUnits.value}\n"
+        )
 
     if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
         f.write(f"         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")

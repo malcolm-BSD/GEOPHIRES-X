@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
@@ -28,7 +30,7 @@ class OutputsTestCase(BaseTestCase):
         repo_root = Path(__file__).resolve().parents[2]
         for artifact_path in sorted(self._output_artifacts, key=lambda path: len(path.parts), reverse=True):
             artifact_path = artifact_path.resolve()
-            if not artifact_path.is_relative_to(repo_root):
+            if not self._path_is_relative_to(artifact_path, repo_root):
                 continue
             if artifact_path.exists() and artifact_path.is_file():
                 artifact_path.unlink()
@@ -1309,7 +1311,7 @@ class OutputsTestCase(BaseTestCase):
 
     def test_tess_dispatch_example_input_runs(self) -> None:
         """Verify the TESS dispatch example generates expected TESS outputs."""
-        input_path = Path(__file__).resolve().parent / "example1_dispatchable_tess.txt"
+        input_path = Path(__file__).resolve().parents[1] / "examples" / "example1_dispatchable_tess.txt"
         demand_csv_path = Path(__file__).resolve().parents[1] / "assets" / "params" / "annual_heat_demand.csv"
         text_output_path = self._output_artifact_path("example1_dispatchable_tess_generated_text.out")
         html_output_path = self._output_artifact_path("example1_dispatchable_tess_generated.html")

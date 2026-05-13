@@ -96,6 +96,6 @@ TESS Maximum Temperature,180,                         ---[deg.C]
 TESS Deadband Range,12,                               ---[deg.C] total thermostat range around target
 TESS Charge Flow Fraction,1.20,                       ---[-] geothermal charge command when tank is cool
 TESS Daily Heat Loss Fraction,0.002,                  ---[-]
-Improved Text Output File,tests/examples/example1_dispatchable_tess_weather_text.out,
-Dispatch Profile Output File,tests/examples/example1_dispatchable_tess_weather_dispatch_profile.csv,
+Improved Text Output File,example1_dispatchable_tess_weather_text.out,
+Dispatch Profile Output File,example1_dispatchable_tess_weather_dispatch_profile.csv,
 Generate Dispatch HTML Graphs,0,

@@ -320,20 +320,47 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             )
 
     elif econ.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA:
-        # SAM already returns a public LCOE. Reconstruct the discounted basis so downstream XLCO
-        # and VALCO calculations can operate on the same normalized representation as other models.
-        lcoe = econ.sam_economics_calculations.lcoe_nominal.quantity().to(
-            convertible_unit(econ.LCOE.CurrentUnits.value)
-        ).magnitude
-        discounted_output = float(np.sum(model.surfaceplant.NetkWhProduced.value))
-        baseline_discounted_cost_musd = lcoe * discounted_output / _ELECTRICITY_PRICE_FACTOR
-        bases[ELECTRICITY_COMMODITY] = LevelizedCostBasis(
-            commodity=ELECTRICITY_COMMODITY,
-            public_value=float(lcoe),
-            baseline_discounted_cost_musd=float(baseline_discounted_cost_musd),
-            discounted_output=float(discounted_output),
-            public_price_factor=_ELECTRICITY_PRICE_FACTOR,
-        )
+        # SAM already returns public nominal levelized costs. Reconstruct discounted bases
+        # so downstream XLCO and VALCO calculations can share the same representation.
+        sam_calcs = econ.sam_economics_calculations
+
+        if enduse_option.has_electricity_component and sam_calcs.lcoe_nominal.value is not None:
+            price_factor = _output_price_factor(econ.LCOE.CurrentUnits, _ELECTRICITY_PRICE_FACTOR)
+            lcoe = sam_calcs.lcoe_nominal.quantity().to(convertible_unit(econ.LCOE.CurrentUnits.value)).magnitude
+            discounted_output = float(np.sum(model.surfaceplant.NetkWhProduced.value))
+            bases[ELECTRICITY_COMMODITY] = LevelizedCostBasis(
+                commodity=ELECTRICITY_COMMODITY,
+                public_value=float(lcoe),
+                baseline_discounted_cost_musd=float(lcoe * discounted_output / price_factor),
+                discounted_output=float(discounted_output),
+                public_price_factor=price_factor,
+            )
+
+        if enduse_option.has_direct_use_heat_component and sam_calcs.lcoh_nominal.value is not None:
+            lcoh = sam_calcs.lcoh_nominal.quantity().to(convertible_unit(econ.LCOH.CurrentUnits.value)).magnitude
+            discounted_output = float(np.sum(model.surfaceplant.HeatkWhProduced.value))
+            bases[HEAT_COMMODITY] = LevelizedCostBasis(
+                commodity=HEAT_COMMODITY,
+                public_value=float(lcoh),
+                baseline_discounted_cost_musd=float(lcoh * discounted_output / _HEAT_AND_COOLING_PRICE_FACTOR),
+                discounted_output=float(discounted_output),
+                public_price_factor=_HEAT_AND_COOLING_PRICE_FACTOR,
+            )
+
+        if (
+            plant_type == PlantType.ABSORPTION_CHILLER
+            and hasattr(model.surfaceplant, 'cooling_kWh_Produced')
+            and sam_calcs.lcoc_nominal.value is not None
+        ):
+            lcoc = sam_calcs.lcoc_nominal.quantity().to(convertible_unit(econ.LCOC.CurrentUnits.value)).magnitude
+            discounted_output = float(np.sum(model.surfaceplant.cooling_kWh_Produced.value))
+            bases[COOLING_COMMODITY] = LevelizedCostBasis(
+                commodity=COOLING_COMMODITY,
+                public_value=float(lcoc),
+                baseline_discounted_cost_musd=float(lcoc * discounted_output / _HEAT_AND_COOLING_PRICE_FACTOR),
+                discounted_output=float(discounted_output),
+                public_price_factor=_HEAT_AND_COOLING_PRICE_FACTOR,
+            )
 
     elif econ.econmodel.value == EconomicModel.CLGS:
         # The CLGS/AGS path stores annual arrays directly instead of using the standard GEOPHIRES

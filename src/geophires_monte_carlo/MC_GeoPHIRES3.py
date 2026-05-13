@@ -24,8 +24,10 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -51,59 +53,59 @@ MC_BASE_SEED = 12345
 
 _INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
 _WINDOWS_RESERVED_FILENAMES = {
-    'CON',
-    'PRN',
-    'AUX',
-    'NUL',
-    'COM1',
-    'COM2',
-    'COM3',
-    'COM4',
-    'COM5',
-    'COM6',
-    'COM7',
-    'COM8',
-    'COM9',
-    'LPT1',
-    'LPT2',
-    'LPT3',
-    'LPT4',
-    'LPT5',
-    'LPT6',
-    'LPT7',
-    'LPT8',
-    'LPT9',
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
 }
 
 
-def clean_filename(filename: str, fallback: str = 'output') -> str:
+def clean_filename(filename: str, fallback: str = "output") -> str:
     """
     Removes characters that are not usable in Windows/macOS/Linux filenames.
     """
-    clean = _INVALID_FILENAME_CHARS.sub('-', str(filename).strip())
-    clean = re.sub(r'\s+', ' ', clean)
-    clean = re.sub(r'-+', '-', clean).strip(' .-')
+    clean = _INVALID_FILENAME_CHARS.sub("-", str(filename).strip())
+    clean = re.sub(r"\s+", " ", clean)
+    clean = re.sub(r"-+", "-", clean).strip(" .-")
 
     if not clean:
         clean = fallback
 
-    if clean.partition('.')[0].upper() in _WINDOWS_RESERVED_FILENAMES:
-        clean = f'_{clean}'
+    if clean.partition(".")[0].upper() in _WINDOWS_RESERVED_FILENAMES:
+        clean = f"_{clean}"
 
     return clean
 
 
-def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> dict[str, float]:
-    values: dict[str, float] = {}
+def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> Dict[str, float]:
+    values: Dict[str, float] = {}
 
     with open(input_file_path) as input_file:
         for line in input_file:
             clean = line.strip()
-            if not clean or clean.startswith('#') or ',' not in clean:
+            if not clean or clean.startswith("#") or "," not in clean:
                 continue
 
-            name, value = clean.split(',', 1)
-            value = value.split(',', 1)[0].strip()
+            name, value = clean.split(",", 1)
+            value = value.split(",", 1)[0].strip()
             if is_number(value):
                 values[name.strip()] = float(value)
 
@@ -113,17 +115,12 @@ def read_numeric_input_file_values(input_file_path: Union[str, Path]) -> dict[st
 def add_missing_tornado_input_columns(
     input_df: pd.DataFrame,
     tornado_inputs: List[List[str]],
-    input_file_values: dict[str, float],
+    input_file_values: Dict[str, float],
 ) -> None:
-    requested_columns = {
-        column.strip()
-        for columns in tornado_inputs
-        for column in columns
-        if column.strip()
-    }
+    requested_columns = {column.strip() for columns in tornado_inputs for column in columns if column.strip()}
     available_columns = {column.strip() for column in input_df.columns}
     missing_columns = requested_columns - available_columns
-    unresolved_columns: list[str] = []
+    unresolved_columns: List[str] = []
 
     for column in sorted(missing_columns):
         if column in input_file_values:
@@ -132,9 +129,9 @@ def add_missing_tornado_input_columns(
             unresolved_columns.append(column)
 
     if unresolved_columns:
-        available = ', '.join(sorted(input_df.columns))
-        missing = ', '.join(unresolved_columns)
-        raise ValueError(f'Tornado input column(s) not found: {missing}. Available input columns: {available}')
+        available = ", ".join(sorted(input_df.columns))
+        missing = ", ".join(unresolved_columns)
+        raise ValueError(f"Tornado input column(s) not found: {missing}. Available input columns: {available}")
 
 
 def parse_value(value_str: str) -> Union[None, bool, int, float, str, List[Any]]:
@@ -340,8 +337,8 @@ def calculate_normal_value(
 
 def calculate_scaled_value_complementary(
     v1_value: float,
-    v1_range: tuple[float, float],
-    v2_range: tuple[float, float],
+    v1_range: Tuple[float, float],
+    v2_range: Tuple[float, float],
 ) -> float:
     """
     Calculate the complementary scaled value of v2 based on the position of v1 within its range.
@@ -358,7 +355,7 @@ def calculate_scaled_value_complementary(
     return v2_scaled
 
 
-def calculate_scaled_value(v1: float, v1_range: tuple[float, float], v2_range: tuple[float, float]) -> float:
+def calculate_scaled_value(v1: float, v1_range: Tuple[float, float], v2_range: Tuple[float, float]) -> float:
     """Scales a value from one range to another."""
     min_v1, max_v1 = v1_range
     min_v2, max_v2 = v2_range
@@ -464,7 +461,7 @@ def sanitize_filename(name: str, default: str = "output") -> str:
     return sanitized or default
 
 
-def validate_mc_inputs(input_specs: List[tuple[int, List[str]]], settings_file_path: str) -> None:
+def validate_mc_inputs(input_specs: List[Tuple[int, List[str]]], settings_file_path: str) -> None:
     """Validate Monte Carlo INPUT rows before launching worker processes."""
     distribution_numeric_fields = {
         "normal": [2, 3],
@@ -514,7 +511,7 @@ def validate_mc_inputs(input_specs: List[tuple[int, List[str]]], settings_file_p
 
 
 def validate_tornado_definitions(
-    tornado_specs: List[tuple[int, str, List[str]]],
+    tornado_specs: List[Tuple[int, str, List[str]]],
     input_names: List[str],
     output_names: List[str],
     settings_file_path: str,
@@ -556,7 +553,7 @@ def evaluate_expression(expression: str, variable_value: float) -> float:
 
 
 def extract_values(data: List[str]) -> List[float]:
-    seen: dict[str, float] = {}
+    seen: Dict[str, float] = {}
     order: List[str] = []
 
     for item in data:
@@ -597,7 +594,7 @@ def make_tornado_plots_stacked(
     scaler_X = StandardScaler()
     X = scaler_X.fit_transform(input_df[clean_outs])
 
-    coefficients: dict[str, np.ndarray] = {}
+    coefficients: Dict[str, np.ndarray] = {}
     for output in ins:
         if output:
             y = df[output].values.reshape(-1, 1)
@@ -642,7 +639,6 @@ def make_tornado_plots(
                 X = input_df[tornado_outs].values
 
                 tornado_in_clean = tornado_in.strip()
-                tornado_in_filename = sanitize_filename(tornado_in_clean)
                 df.columns = df.columns.str.strip()
                 y = df[tornado_in_clean].values.reshape(-1, 1)
 
@@ -665,10 +661,10 @@ def make_tornado_plots(
                 plt.title("Sensitivity Analysis (Regression) on " + tornado_in_clean)
                 plt.grid(True)
                 plt.tight_layout()
-                fname = clean_filename(f'{tornado_in_clean}_tornado')
-                save_path = Path(Path(output_file).parent, f'{fname}.png')
+                fname = clean_filename(f"{tornado_in_clean}_tornado")
+                save_path = Path(Path(output_file).parent, f"{fname}.png")
                 if html_path:
-                    save_path = Path(Path(html_path).parent, f'{fname}.png')
+                    save_path = Path(Path(html_path).parent, f"{fname}.png")
                 plt.savefig(save_path)
                 plt.close()
                 full_names.add(save_path)
@@ -1026,13 +1022,13 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
         flist = f.readlines()
 
     inputs: List[List[str]] = []
-    input_specs: List[tuple[int, List[str]]] = []
+    input_specs: List[Tuple[int, List[str]]] = []
     outputs: List[str] = []
     links_ratio: List[List[str]] = []
     links_reverse: List[List[str]] = []
     links_equal: List[List[str]] = []
     links_math: List[List[str]] = []
-    tornado_specs: List[tuple[int, str, List[str]]] = []
+    tornado_specs: List[Tuple[int, str, List[str]]] = []
     iterations = 0
     output_file = (
         args.MC_OUTPUT_FILE
@@ -1223,7 +1219,7 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
         logger.warning(msg)
 
     annotations = ""
-    outputs_result: dict[str, dict[str, float]] = {}
+    outputs_result: Dict[str, Dict[str, float]] = {}
 
     full_names: set = set()
     short_names: set = set()
@@ -1239,7 +1235,7 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
             plt.figtext(0.11, 0.74, annotations, fontsize=8)
             ret = plt.hist(input_df[input_df.columns[i]].tolist(), bins=50, density=True)
             fname = clean_filename(input_df.columns[i])
-            save_path = Path(Path(output_file).parent, f'{fname}.png')
+            save_path = Path(Path(output_file).parent, f"{fname}.png")
             if html_path:
                 save_path = Path(Path(html_path).parent, f"{fname}.png")
             plt.savefig(save_path)
@@ -1271,10 +1267,10 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
 
             plt.figtext(0.11, 0.74, annotations, fontsize=8)
             ret = plt.hist(df[df.columns[i]].tolist(), bins=50, density=True)
-            f.write(f'bin values (as percentage): {ret[0]!s}\n')
-            f.write(f'bin edges: {ret[1]!s}\n')
+            f.write(f"bin values (as percentage): {ret[0]!s}\n")
+            f.write(f"bin edges: {ret[1]!s}\n")
             fname = clean_filename(df.columns[i])
-            save_path = Path(Path(output_file).parent, f'{fname}.png')
+            save_path = Path(Path(output_file).parent, f"{fname}.png")
             if html_path:
                 save_path = Path(Path(html_path).parent, f"{fname}.png")
             plt.savefig(save_path)

@@ -9,17 +9,17 @@ from geophires_x.OptionList import WellDrillingCostCorrelation
 
 class EndUseOptionsTestCase(BaseTestCase):
     def test_get_end_use_option_from_input_string(self):
-        self.assertEqual(EndUseOptions.from_input_string('1'), EndUseOptions.ELECTRICITY)
+        self.assertEqual(EndUseOptions.from_input_string("1"), EndUseOptions.ELECTRICITY)
 
         with self.assertRaises(ValueError):
-            EndUseOptions.from_input_string('2034982309')
+            EndUseOptions.from_input_string("2034982309")
 
     def test_get_end_use_option_from_int_val(self):
         self.assertEqual(EndUseOptions.from_int(1), EndUseOptions.ELECTRICITY)
 
     def test_cast_from_name_string(self):
-        self.assertIs(EndUseOptions('Electricity'), EndUseOptions.ELECTRICITY)
-        self.assertIs(EndUseOptions('Direct-Use Heat'), EndUseOptions.HEAT)
+        self.assertIs(EndUseOptions("Electricity"), EndUseOptions.ELECTRICITY)
+        self.assertIs(EndUseOptions("Direct-Use Heat"), EndUseOptions.HEAT)
 
     def test_equality(self):
         self.assertFalse(EndUseOptions.HEAT == EndUseOptions.ELECTRICITY)
@@ -31,12 +31,21 @@ class EndUseOptionsTestCase(BaseTestCase):
         self.assertFalse(EndUseOptions.HEAT is EndUseOptions.ELECTRICITY)
         self.assertTrue(EndUseOptions.HEAT is not EndUseOptions.ELECTRICITY)
 
-        self.assertEqual(str(EndUseOptions.HEAT), 'EndUseOptions.HEAT')
-        self.assertEqual(str(EndUseOptions.ELECTRICITY), 'EndUseOptions.ELECTRICITY')
+        self.assertEqual(str(EndUseOptions.HEAT), "EndUseOptions.HEAT")
+        self.assertEqual(str(EndUseOptions.ELECTRICITY), "EndUseOptions.ELECTRICITY")
+
+    def test_is_cogeneration_and_has_electricity_component(self):
+        self.assertTrue(EndUseOptions.ELECTRICITY.has_electricity_component)
+        self.assertFalse(EndUseOptions.ELECTRICITY.is_cogeneration_end_use_option)
+
+        self.assertFalse(EndUseOptions.HEAT.has_electricity_component)
+        self.assertFalse(EndUseOptions.HEAT.is_cogeneration_end_use_option)
+
+        self.assertTrue(EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY.has_electricity_component)
+        self.assertTrue(EndUseOptions.COGENERATION_BOTTOMING_EXTRA_ELECTRICITY.is_cogeneration_end_use_option)
 
 
 class WellDrillingCostCorrelationTestCase(BaseTestCase):
-
     def test_equality(self):
         self.assertFalse(WellDrillingCostCorrelation.VERTICAL_SMALL == WellDrillingCostCorrelation.DEVIATED_SMALL)
         self.assertTrue(WellDrillingCostCorrelation.VERTICAL_SMALL == WellDrillingCostCorrelation.VERTICAL_SMALL)
@@ -61,7 +70,7 @@ class WellDrillingCostCorrelationTestCase(BaseTestCase):
             correlation: WellDrillingCostCorrelation = test_case[0]
             depth_m = test_case[1]
             expected_cost_musd = test_case[2]
-            with self.subTest(msg=str(f'{correlation.name}, {depth_m}m')):
+            with self.subTest(msg=str(f"{correlation.name}, {depth_m}m")):
                 self.assertAlmostEqual(expected_cost_musd, correlation.calculate_cost_MUSD(depth_m), delta=0.1)
 
 
@@ -74,5 +83,5 @@ class PlantTypeTestCase(BaseTestCase):
 class ReservoirModelTestCase(BaseTestCase):
     def test_display_name(self):
         self.assertEqual(
-            'Multiple Parallel Fractures Model (Gringarten)', ReservoirModel.MULTIPLE_PARALLEL_FRACTURES.display_name
+            "Multiple Parallel Fractures Model (Gringarten)", ReservoirModel.MULTIPLE_PARALLEL_FRACTURES.display_name
         )
