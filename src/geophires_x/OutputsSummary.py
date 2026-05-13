@@ -158,7 +158,11 @@ def write_summary_of_results(
 
     if not dispatch_report and is_sam_econ_model:
         f.write(f"      {field_label(econ.capex_total.display_name, 50)}{econ.capex_total.value:10.2f} {econ.capex_total.CurrentUnits.value}\n")
-        f.write(f"      {field_label(econ.capex_total_per_kwe.display_name, 50)}{econ.capex_total_per_kwe.value:10.0f} {econ.capex_total_per_kwe.CurrentUnits.value}\n")
+        if model.surfaceplant.enduse_option.value is EndUseOptions.ELECTRICITY:
+            f.write(f"      {field_label(econ.capex_total_per_kwe.display_name, 50)}{econ.capex_total_per_kwe.value:10.0f} {econ.capex_total_per_kwe.CurrentUnits.value}\n")
+        elif is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
+            f.write(f"      {field_label(econ.capex_allocated_per_kwe.display_name, 50)}{econ.capex_allocated_per_kwe.value:10.0f} {econ.capex_allocated_per_kwe.CurrentUnits.value}\n")
+            f.write(f"      {field_label(econ.capex_allocated_per_kwth.display_name, 50)}{econ.capex_allocated_per_kwth.value:10.0f} {econ.capex_allocated_per_kwth.CurrentUnits.value}\n")
 
     f.write(f"      Number of production wells:                    {model.wellbores.nprod.value:10.0f}" + NL)
     f.write(f"      Number of injection wells:                     {model.wellbores.ninj.value:10.0f}" + NL)
