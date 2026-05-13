@@ -1360,7 +1360,7 @@ class EconomicsSamTestCase(BaseTestCase):
             capex_vus["Total surface equipment costs"]["value"],
             sum(
                 capex_vus[it]["value"]
-                for it in ["Surface power plant costs", "Transmission pipeline cost", "Field gathering system costs"]
+                for it in ["Surface power plant costs", "Transmission/pipeline Cost", "Field gathering system costs"]
             ),
             places=1,
         )
