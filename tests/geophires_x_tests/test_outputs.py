@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import subprocess
 import sys
 from csv import DictReader
 from pathlib import Path
@@ -714,6 +715,30 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(float(rows[0]["Cooling Demand (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Geothermal Cooling Output (MW)"]), 0.0)
         self.assertGreaterEqual(float(rows[0]["Demand Served (MW)"]), 0.0)
+
+    def test_cli_stdout_matches_dispatch_report_file(self):
+        examples_dir = Path(__file__).resolve().parents[1] / "examples"
+        output_path = self._output_artifact_path("example11_new_AC_dispatch_cli.out")
+        self._register_output_artifact(examples_dir / "example11_new_AC_dispatch_profile.csv")
+        self._register_output_artifact(examples_dir / "example11_new_AC_dispatch_text.out")
+
+        completed = subprocess.run(  # noqa: S603 - fixed test command using the active Python executable.
+            [
+                sys.executable,
+                "-m",
+                "geophires_x",
+                "example11_new_AC_dispatch.txt",
+                str(output_path),
+            ],
+            cwd=examples_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(output_path.read_text(encoding="UTF-8"), completed.stdout)
+        self.assertNotIn("***CASE REPORT***", completed.stderr)
+        self.assertNotIn("WARNING", completed.stdout)
 
     def test_new_absorption_chiller_baseload_example_outputs_are_parseable(self):
         output_path = self._output_artifact_path("example11_new_AC_baseload_generated.out")

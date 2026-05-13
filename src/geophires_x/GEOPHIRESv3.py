@@ -99,7 +99,6 @@ def main(enable_geophires_logging_config=True):
             outputfile = sys.argv[2]
 
         with open(outputfile, 'r', encoding='UTF-8') as f:
-            sys.stdout.write('\n')
             content = f.readlines()  # store all output in one long list
 
             # Now write each line to the screen
