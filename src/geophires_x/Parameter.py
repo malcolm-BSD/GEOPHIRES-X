@@ -1206,8 +1206,8 @@ def _ratio_suffix_conversion_factor(preferred_suffix: str, current_suffix: str) 
     if not preferred_suffix or not current_suffix or preferred_suffix == current_suffix:
         return 1.0
 
-    preferred_denominator = preferred_suffix.removeprefix("/")
-    current_denominator = current_suffix.removeprefix("/")
+    preferred_denominator = preferred_suffix[1:] if preferred_suffix.startswith("/") else preferred_suffix
+    current_denominator = current_suffix[1:] if current_suffix.startswith("/") else current_suffix
     return _ureg.Quantity(1, convertible_unit(preferred_denominator)).to(convertible_unit(current_denominator)).magnitude
 
 
