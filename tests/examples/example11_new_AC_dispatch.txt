@@ -44,7 +44,7 @@ Dispatch Analysis End Year, 6
 # If available, provide generator heat availability (hourly series). In
 # many test harnesses this is provided via CSV; here we show the parameter
 # name to be used. The solver will enforce available_generator_heat.
-Annual Cooling Demand,tests/assets/params/annual_cooling_demand.csv
+Annual Cooling Demand,../assets/params/annual_cooling_demand.csv
 
 # Optional: dispatch solver preferences (use canonical parameter names)
 # Use dispatch-related parameters (e.g. "Absorption Chiller Dispatch Strategy",
