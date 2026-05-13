@@ -1,5 +1,9 @@
 name: build
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -21,29 +25,55 @@ jobs:
             toxpython: 'python3.11'
             tox_env: 'check'
             os: 'ubuntu-latest'
+            pytest_args: ''
           - name: 'docs'
             python: '3.11'
             toxpython: 'python3.11'
             tox_env: 'docs'
             os: 'ubuntu-latest'
+            pytest_args: ''
           - name: 'py38 (ubuntu)'
             python: '3.8'
             toxpython: 'python3.8'
             python_arch: 'x64'
             tox_env: 'py38'
             os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py38 test_geophires_x.py (ubuntu)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
           - name: 'py39 (ubuntu)'
             python: '3.9'
             toxpython: 'python3.9'
             python_arch: 'x64'
             tox_env: 'py39'
             os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py39 test_geophires_x.py (ubuntu)'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
           - name: 'py310 (ubuntu)'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
             tox_env: 'py310'
             os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py310 test_geophires_x.py (ubuntu)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
 #          - name: 'py310 (windows)'
 #            python: '3.10'
 #            toxpython: 'python3.10'
@@ -56,24 +86,56 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py311'
             os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py311 test_geophires_x.py (ubuntu)'
+            python: '3.11'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
           - name: 'py311 (macos)'
             python: '3.11'
             toxpython: 'python3.11'
             python_arch: 'x64'
             tox_env: 'py311'
             os: 'macos-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py311 test_geophires_x.py (macos)'
+            python: '3.11'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311'
+            os: 'macos-latest'
+            pytest_args: 'tests/test_geophires_x.py'
           - name: 'py311 (windows)'
             python: '3.11'
             toxpython: 'python3.11'
             python_arch: 'x64'
             tox_env: 'py311'
             os: 'windows-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py311 test_geophires_x.py (windows)'
+            python: '3.11'
+            toxpython: 'python3.11'
+            python_arch: 'x64'
+            tox_env: 'py311'
+            os: 'windows-latest'
+            pytest_args: 'tests/test_geophires_x.py'
           - name: 'py312 (ubuntu)'
             python: '3.12'
             toxpython: 'python3.12'
             python_arch: 'x64'
             tox_env: 'py312'
             os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py312 test_geophires_x.py (ubuntu)'
+            python: '3.12'
+            toxpython: 'python3.12'
+            python_arch: 'x64'
+            tox_env: 'py312'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
 #          - name: 'pypy38 (ubuntu)'
 #            python: 'pypy-3.8'
 #            toxpython: 'pypy3.8'
@@ -116,10 +178,17 @@ jobs:
         tox --version
         pip list --format=freeze
     - name: test
+      if: ${{ matrix.pytest_args == '' }}
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: >
         tox -e ${{ matrix.tox_env }} -v
+    - name: test
+      if: ${{ matrix.pytest_args != '' }}
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: >
+        tox -e ${{ matrix.tox_env }} -v -- pytest --cov --cov-report=term-missing --cov-report=xml -vv ${{ matrix.pytest_args }}
 
   coverage:
     name: Upload coverage to Codecov
