@@ -66,13 +66,21 @@ class BaseTestCase(unittest.TestCase):
     def _remove_test_artifact(cls, artifact_path: Path) -> None:
         artifact_path = artifact_path.resolve()
         tests_root = cls._tests_root().resolve()
-        if not artifact_path.is_relative_to(tests_root) or not artifact_path.exists():
+        if not cls._path_is_relative_to(artifact_path, tests_root) or not artifact_path.exists():
             return
 
         if artifact_path.is_dir():
             shutil.rmtree(artifact_path)
         else:
             artifact_path.unlink()
+
+    @staticmethod
+    def _path_is_relative_to(path: Path, other: Path) -> bool:
+        try:
+            path.relative_to(other)
+            return True
+        except ValueError:
+            return False
 
     def setUp(self) -> None:
         super().setUp()

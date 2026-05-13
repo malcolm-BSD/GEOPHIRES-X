@@ -30,7 +30,7 @@ class OutputsTestCase(BaseTestCase):
         repo_root = Path(__file__).resolve().parents[2]
         for artifact_path in sorted(self._output_artifacts, key=lambda path: len(path.parts), reverse=True):
             artifact_path = artifact_path.resolve()
-            if not artifact_path.is_relative_to(repo_root):
+            if not self._path_is_relative_to(artifact_path, repo_root):
                 continue
             if artifact_path.exists() and artifact_path.is_file():
                 artifact_path.unlink()
