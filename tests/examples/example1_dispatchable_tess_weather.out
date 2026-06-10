@@ -4,10 +4,10 @@
 
 Simulation Metadata
 ----------------------
- GEOPHIRES Version: 3.12.1
- Simulation Date: 2026-05-09
- Simulation Time:  19:33
- Calculation Time:     11.566 sec
+ GEOPHIRES Version: 3.13.9
+ Simulation Date: 2026-06-10
+ Simulation Time:  12:56
+ Calculation Time:     23.957 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -100,6 +100,7 @@ Simulation Metadata
       Maximum reservoir temperature:                        400.0 degC
       Number of segments:                                     1
       Geothermal gradient:                                        50 degC/km
+      Project location:                                     39.7392, -104.9903
 
 
                            ***RESERVOIR PARAMETERS***

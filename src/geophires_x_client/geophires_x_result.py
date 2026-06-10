@@ -221,6 +221,7 @@ class GeophiresXResult:
                 "Segment 3   Geothermal gradient",
                 "Segment 3   Thickness",
                 "Segment 4   Geothermal gradient",
+                _StringValueField("Project location"),
             ],
             "RESERVOIR PARAMETERS": [
                 _EqualSignDelimitedField("Reservoir Model"),

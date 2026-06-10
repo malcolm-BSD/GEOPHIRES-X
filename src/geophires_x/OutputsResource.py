@@ -72,3 +72,7 @@ def write_resource_characteristics(model: Model, f: TextIOWrapper) -> None:
         f.write(
             f"      Segment {str(i + 1):s}   Geothermal gradient:                    {model.reserv.gradient.value[i]:10.4g} {model.reserv.gradient.CurrentUnits.value}\n"
         )
+
+    if model.surfaceplant.project_location.value is not None:
+        label = model.surfaceplant.project_location.display_name
+        f.write(f"      {label}:{' ' * (53 - len(label))}{model.surfaceplant.project_location.value}\n")

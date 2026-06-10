@@ -8,6 +8,7 @@ graft geophires_x_tests
 graft geophires_x_tests_shim
 
 include .aiexclude
+include .aiignore
 include .bumpversion.cfg
 include .cookiecutterrc
 include .coveragerc

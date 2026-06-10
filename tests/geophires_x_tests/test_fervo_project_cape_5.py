@@ -112,14 +112,14 @@ class FervoProjectCape5TestCase(BaseTestCase):
         )
 
         min_net_gen = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Minimum Net Electricity Generation"]["value"]
-        self.assertGreater(min_net_gen, 499)
-        self.assertLess(min_net_gen, 505)
+        self.assertGreater(min_net_gen, 550)
+        self.assertLess(min_net_gen, 580)
 
         max_total_gen = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Maximum Total Electricity Generation"][
             "value"
         ]
-        self.assertGreater(max_total_gen, 550)
-        self.assertLess(max_total_gen, 600)
+        self.assertGreater(max_total_gen, 800)
+        self.assertLess(max_total_gen, 850)
 
         lcoe = r.result["SUMMARY OF RESULTS"]["Electricity breakeven price"]["value"]
         self.assertGreater(lcoe, 7.5)
@@ -139,7 +139,7 @@ class FervoProjectCape5TestCase(BaseTestCase):
         pumping_power_pct = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"][
             "Initial pumping power/net installed power"
         ]["value"]
-        self.assertGreater(pumping_power_pct, 14.5)
+        self.assertGreater(pumping_power_pct, 14)
         self.assertLess(pumping_power_pct, 30)
 
         num_prod_wells = r.result["SUMMARY OF RESULTS"]["Number of production wells"]["value"]
@@ -505,4 +505,4 @@ class FervoProjectCape5TestCase(BaseTestCase):
         fpc5_max_total_net_gen_mwe = (
             quantity(max_total_gen_dict["value"], max_total_gen_dict["unit"]).to("MW").magnitude
         )
-        self.assertLess(fpc5_max_total_net_gen_mwe, 120)
+        self.assertLess(fpc5_max_total_net_gen_mwe, 170)

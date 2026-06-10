@@ -4,10 +4,10 @@
 
 Simulation Metadata
 ----------------------
- GEOPHIRES Version: 3.9.28
- Simulation Date: 2025-07-02
- Simulation Time:  12:19
- Calculation Time:      0.854 sec
+ GEOPHIRES Version: 3.13.9
+ Simulation Date: 2026-06-10
+ Simulation Time:  12:48
+ Calculation Time:      8.155 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -21,11 +21,18 @@ Simulation Metadata
       Geothermal gradient:                                     28 degC/km
 
 
+                           ***WEATHER DATA RESULTS***
+
+      Annual average temperature (from Open-Meteo):          9.77 °C
+      Minimum hourly temperature (from Open-Meteo):        -17.70 °C
+      Maximum hourly temperature (from Open-Meteo):         32.90 °C
+
+
                            ***ECONOMIC PARAMETERS***
 
       Economic Model = Fixed Charge Rate (FCR)
       Fixed Charge Rate (FCR):                                5.00
-      Accrued financing during construction:                  0.00 %
+      Accrued financing during construction:                 0.00 %
       Project lifetime:                                      30 yr
       Capacity factor:                                       60.0 %
       Project NPV:                                          -7.63 MUSD
@@ -55,6 +62,7 @@ Simulation Metadata
       Maximum reservoir temperature:                        400.0 degC
       Number of segments:                                     1
       Geothermal gradient:                                        28 degC/km
+      Project location:                                     42.441977082209235, -76.43242140337269
 
 
                            ***RESERVOIR PARAMETERS***
@@ -92,13 +100,13 @@ Simulation Metadata
 
                           ***CAPITAL COSTS (M$)***
 
+         Exploration costs:                                   4.20 MUSD
          Drilling and completion costs:                       7.91 MUSD
          Drilling and completion costs per well:              3.96 MUSD
          Stimulation costs:                                   1.51 MUSD
          Surface power plant costs:                           3.52 MUSD
          Field gathering system costs:                        1.14 MUSD
          Total surface equipment costs:                       4.66 MUSD
-         Exploration costs:                                   4.20 MUSD
       Total capital costs:                                   18.28 MUSD
       Annualized capital costs:                               0.91 MUSD
 
