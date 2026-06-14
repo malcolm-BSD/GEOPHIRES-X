@@ -485,18 +485,18 @@ class Outputs:
                     f.write(f'         {model.economics.Cwell.display_name}:                 {model.economics.Cwell.value:10.2f} {model.economics.Cwell.CurrentUnits.value}\n')
 
                     if econ.cost_lateral_section.value > 0.0:
-                        f.write(f'             Drilling and completion costs per vertical production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
-                        f.write(f'             Drilling and completion costs per vertical injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
+                        f.write(f'             Drilling and completion costs per vertical production well:   {econ.cost_one_production_well.value:10.2f} {econ.cost_one_production_well.CurrentUnits.value}\n')
+                        f.write(f'             Drilling and completion costs per vertical injection well:    {econ.cost_one_injection_well.value:10.2f} {econ.cost_one_injection_well.CurrentUnits.value}\n')
                         f.write(f'             {econ.cost_per_lateral_section.Name}:       {econ.cost_per_lateral_section.value:10.2f} {econ.cost_lateral_section.CurrentUnits.value}\n')
                     elif round(econ.cost_one_production_well.value, 4) != round(econ.cost_one_injection_well.value, 4) \
                         and model.economics.cost_one_injection_well.value != -1:
-                        f.write(f'             Drilling and completion costs per production well:   {econ.cost_one_production_well.value:10.2f} ' + econ.cost_one_production_well.CurrentUnits.value + NL)
-                        f.write(f'             Drilling and completion costs per injection well:    {econ.cost_one_injection_well.value:10.2f} ' + econ.cost_one_injection_well.CurrentUnits.value + NL)
+                        f.write(f'             {econ.cost_one_production_well.display_name}:   {econ.cost_one_production_well.value:10.2f} {econ.cost_one_production_well.CurrentUnits.value}\n')
+                        f.write(f'             {econ.cost_one_injection_well.display_name}:    {econ.cost_one_injection_well.value:10.2f} {econ.cost_one_injection_well.CurrentUnits.value}\n')
                     else:
                         cpw_label = Outputs._field_label(econ.drilling_and_completion_costs_per_well.display_name, 47)
                         f.write(f'         {cpw_label}{econ.drilling_and_completion_costs_per_well.value:10.2f} {econ.Cwell.CurrentUnits.value}\n')
 
-                    f.write(f'         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n')
+                    self.write_stimulation_costs_outputs(econ, f)
 
                     f.write(f'         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n')
                     if model.surfaceplant.enduse_option.value.is_cogeneration_end_use_option:
@@ -529,21 +529,28 @@ class Outputs:
                     # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)
                     f.write(f'         {econ.RITCValue.display_name}:                         {-1 * econ.RITCValue.value:10.2f} {econ.RITCValue.CurrentUnits.value}\n')
 
-                additional_capex_modifiers: list[tuple[Parameter, int]] = [
+                def _render_additional_capital_cost_modifiers(additional_modifiers: list[tuple[Parameter, int]]) -> None:
+                    for additional_modifier_entry in additional_modifiers:
+                        additional_modifier_param: Parameter = additional_modifier_entry[0]
+                        additional_modifier_multiplier: int = additional_modifier_entry[1]
+
+                        am_render_value = additional_modifier_param.value * additional_modifier_multiplier
+
+                        if additional_modifier_param.Provided:
+                            am_label = Outputs._field_label(additional_modifier_param.Name, 47)
+                            f.write(
+                                f'         {am_label}{am_render_value:10.2f} {additional_modifier_param.CurrentUnits.value}\n')
+
+                additional_occ_modifiers: list[tuple[Parameter, int]] = [
                     (econ.FlatLicenseEtc, 1),
-                    (econ.OtherIncentives, -1),
-                    (econ.TotalGrant, -1)
                 ]
-                for additional_capex_modifier_entry in additional_capex_modifiers:
-                    additional_capex_modifier_param: Parameter = additional_capex_modifier_entry[0]
-                    additional_capex_modifier_multiplier: int = additional_capex_modifier_entry[1]
-
-                    acm_render_value = additional_capex_modifier_param.value * additional_capex_modifier_multiplier
-
-                    if additional_capex_modifier_param.Provided:
-                        acm_label = Outputs._field_label(additional_capex_modifier_param.Name, 47)
-                        f.write(
-                            f'         {acm_label}{acm_render_value:10.2f} {additional_capex_modifier_param.CurrentUnits.value}\n')
+                if not is_sam_econ_model:
+                    # For SAM-EM these modify Total CAPEX, not OCC
+                    additional_occ_modifiers.extend([
+                        (econ.OtherIncentives, -1),
+                        (econ.TotalGrant, -1)
+                    ])
+                _render_additional_capital_cost_modifiers(additional_occ_modifiers)
 
                 if is_sam_econ_model and econ.DoAddOnCalculations.value:
                     # Non-SAM econ models print this in Extended Economics profile
@@ -570,6 +577,13 @@ class Outputs:
                     idc_label = Outputs._field_label(econ.interest_during_construction.display_name, 47)
                     f.write(
                         f'         {idc_label}{econ.interest_during_construction.value:10.2f} {econ.interest_during_construction.CurrentUnits.value}\n')
+
+                additional_total_capex_modifiers: list[tuple[Parameter, int]] = [
+                    (econ.OtherIncentives, -1),
+                    (econ.TotalGrant, -1)
+                    ] if is_sam_econ_model else []
+
+                _render_additional_capital_cost_modifiers(additional_total_capex_modifiers)
 
                 capex_param = econ.CCap if not is_sam_econ_model else econ.capex_total
                 capex_label = Outputs._field_label(capex_param.display_name, 50)
@@ -949,6 +963,35 @@ class Outputs:
         f.write(NL)
 
     # noinspection PyMethodMayBeStatic
+    def write_stimulation_costs_outputs(self, econ: Economics, f) -> None:
+        f.write(
+            f'         '
+            f'{econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f}'
+            f' '
+            f'{econ.Cstim.CurrentUnits.value}\n'
+        )
+
+        def _write_output(_stim_cost_per_well_output: OutputParameter) -> None:
+            if _stim_cost_per_well_output.value is not None:
+                scw_label = Outputs._field_label(_stim_cost_per_well_output.display_name, 43)
+                # noinspection PyStringConversionWithoutDunderMethod
+                f.write(
+                    f'             '
+                    f'{scw_label}{_stim_cost_per_well_output.value:10.2f}'
+                    f' '
+                    f'{_stim_cost_per_well_output.CurrentUnits.value}\n'
+                )
+
+        if econ.cstim_per_well.value is not None:
+            _write_output(econ.cstim_per_well)
+        else:
+            for stim_cost_per_well_output in [
+                econ.cstim_per_production_well,
+                econ.cstim_per_injection_well
+            ]:
+                _write_output(stim_cost_per_well_output)
+
+    # noinspection PyMethodMayBeStatic
     def get_sam_cash_flow_profile_output(self, model):
         ret = '\n'
         ret += '                            ***************************\n'
@@ -991,6 +1034,8 @@ class Outputs:
 
         if close_f:
             f_output_file.close()
+
+
 
     @staticmethod
     def _field_label(field_name: str, print_width_before_value: int) -> str:

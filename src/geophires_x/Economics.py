@@ -16,8 +16,8 @@ from geophires_x.EconomicsUtils import BuildPricingModel, wacc_output_parameter,
     project_payback_period_parameter, inflation_cost_during_construction_output_parameter, \
     interest_during_construction_output_parameter, total_capex_parameter_output_parameter, \
     overnight_capital_cost_output_parameter, CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME, \
-    _YEAR_INDEX_VALUE_EXPLANATION_SNIPPET, investment_tax_credit_output_parameter, expand_schedule_dsl, \
-    lcoh_output_parameter, lcoc_output_parameter
+    _YEAR_INDEX_VALUE_EXPLANATION_SNIPPET, investment_tax_credit_output_parameter, lcoh_output_parameter, lcoc_output_parameter
+from geophires_x.ParameterUtils import expand_schedule_dsl
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, WellDrillingCostCorrelation, EconomicModel, EndUseOptions, PlantType, \
     _WellDrillingCostCorrelationCitation
@@ -1214,7 +1214,17 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default investment tax credit rate (0)",
-            ToolTipText="Investment tax credit rate (see docs)"
+            ToolTipText="Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate."
+        )
+        self.ritc_state_amount = self.ParameterDict[self.ritc_state_amount.Name] = floatParameter(
+            'State Investment Tax Credit Amount',
+            DefaultValue=0.0,
+            Min=0.0,
+            Max=self.totalcapcost.Max,
+            UnitType=self.totalcapcost.UnitType,
+            PreferredUnits=self.totalcapcost.PreferredUnits,
+            CurrentUnits=self.totalcapcost.CurrentUnits,
+            ToolTipText='State investment tax credit amount (state ITC).'
         )
         self.PTR = self.ParameterDict[self.PTR.Name] = floatParameter(
             "Property Tax Rate",
@@ -1962,6 +1972,34 @@ class Economics:
                         f'total stimulation cost. '
                         f'For traditional hydrothermal reservoirs, {self.ccstimfixed.Name} should be set to $0.'
         )
+        # noinspection SpellCheckingInspection
+        self.cstim_per_well = self.OutputParameterDict[self.cstim_per_well.Name] = OutputParameter(
+            Name='Stimulation costs per well',
+            value=None,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText='Stimulation cost per well, including direct and indirect costs and contingency.'
+        )
+        # noinspection SpellCheckingInspection
+        self.cstim_per_production_well = self.OutputParameterDict[self.cstim_per_production_well.Name] = OutputParameter(
+            Name='Stimulation costs per production well',
+            value=None,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText='Stimulation cost per producton well, including direct and indirect costs and contingency.'
+        )
+        # noinspection SpellCheckingInspection
+        self.cstim_per_injection_well = self.OutputParameterDict[self.cstim_per_injection_well.Name] = OutputParameter(
+            Name='Stimulation costs per injection well',
+            value=None,
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText='Stimulation cost per injection well, including direct and indirect costs and contingency.'
+        )
+
 
         # TODO switch order to align with theoretical basis, which lists indirect costs first
         contingency_and_indirect_costs_tooltip_stem = (
@@ -2436,15 +2474,17 @@ class Economics:
         self.RITCValue = self.OutputParameterDict[self.RITCValue.Name] = investment_tax_credit_output_parameter()
         self.cost_one_production_well = self.OutputParameterDict[self.cost_one_production_well.Name] = OutputParameter(
             Name="Cost of One Production Well",
+            display_name='Drilling and completion costs per production well',
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
         )
         self.cost_one_injection_well = self.OutputParameterDict[self.cost_one_injection_well.Name] = OutputParameter(
             Name="Cost of One Injection Well",
+            display_name='Drilling and completion costs per injection well',
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
         )
         self.cost_lateral_section = self.OutputParameterDict[self.cost_lateral_section.Name] = OutputParameter(
             Name="Cost of the entire (multi-) lateral section of a well",
@@ -2775,7 +2815,8 @@ class Economics:
                     self.royalty_rate_schedule,
                     self.royalty_supplemental_payments,
                     self.construction_capex_schedule,
-                    self.bond_financing_start_year
+                    self.bond_financing_start_year,
+                    self.ritc_state_amount
                 ]
                 for sam_em_only_param in sam_em_only_params:
                     if sam_em_only_param.Provided:
@@ -3036,25 +3077,76 @@ class Economics:
             )
 
     def calculate_stimulation_costs(self, model: Model) -> PlainQuantity:
+        production_wells_stimulated: bool = self.stimulation_cost_per_production_well.Provided
         if self.ccstimfixed.Valid:
-            stimulation_costs = self.ccstimfixed.quantity().to(self.Cstim.CurrentUnits).magnitude
+            stimulation_costs_cstim_u = self.ccstimfixed.quantity().to(self.Cstim.CurrentUnits).magnitude
+
+            # Ideally we'd infer per-well costs per the below logic, but this doesn't necessarily
+            #   cleanly map to legacy parameterizations that may have implicitly assumed that stimulation costs include
+            #   both production and injection wells, even though the default behavior is and always has been only
+            #   injection wells are stimulated. Production wells are only assumed to be stimulated when
+            #   Reservoir Stimulation Capital Cost per Production Well is provided, which was added in v3.9.32.
+
+            # num_stimulated_wells = model.wellbores.ninj.value
+            # if production_wells_stimulated:
+            #     num_stimulated_wells += model.wellbores.nprod.value
+            #
+            #     self.cstim_per_well.value = (
+            #             self.ccstimfixed.quantity() / num_stimulated_wells
+            #     ).to(self.cstim_per_well.CurrentUnits).magnitude
+            # else:
+            #     self.cstim_per_injection_well.value = (
+            #             self.ccstimfixed.quantity() / num_stimulated_wells
+            #     ).to(self.cstim_per_injection_well.CurrentUnits).magnitude
+
+            ret = quantity(stimulation_costs_cstim_u, self.Cstim.CurrentUnits)
         else:
-            stim_cost_per_injection_well = self.stimulation_cost_per_injection_well.quantity().to(
+            direct_stim_cost_per_injection_well_cstim_u = self.stimulation_cost_per_injection_well.quantity().to(
                 self.Cstim.CurrentUnits).magnitude
-            stim_cost_per_production_well = self.stimulation_cost_per_production_well.quantity().to(
+            direct_stim_cost_per_production_well_cstim_u = self.stimulation_cost_per_production_well.quantity().to(
                 self.Cstim.CurrentUnits).magnitude
 
-            stimulation_costs = (
-                (
-                    stim_cost_per_injection_well * model.wellbores.ninj.value
-                    + stim_cost_per_production_well * model.wellbores.nprod.value
-                )
-                * self.ccstimadjfactor.value
-                * self._stimulation_indirect_cost_factor
-                * self._contingency_factor
+            def _total_cost_per_well(direct_cost_per_well) -> float:
+                return (direct_cost_per_well * self.ccstimadjfactor.value * self._stimulation_indirect_cost_factor
+                        * self._contingency_factor)
+
+            total_stim_cost_per_injection_well_cstim_u = _total_cost_per_well(
+                direct_stim_cost_per_injection_well_cstim_u)
+            total_stim_cost_per_production_well_cstim_u = _total_cost_per_well(
+                direct_stim_cost_per_production_well_cstim_u)
+
+            stimulation_costs_cstim_u = (
+                total_stim_cost_per_injection_well_cstim_u * model.wellbores.ninj.value
+                + total_stim_cost_per_production_well_cstim_u * model.wellbores.nprod.value
             )
 
-        return quantity(stimulation_costs, self.Cstim.CurrentUnits)
+            ret = quantity(stimulation_costs_cstim_u, self.Cstim.CurrentUnits)
+
+            if self.stimulation_cost_per_injection_well.Provided or self.stimulation_cost_per_production_well.Provided:
+                self.cstim_per_injection_well.value = quantity(
+                    total_stim_cost_per_injection_well_cstim_u, self.Cstim.CurrentUnits).to(
+                        self.cstim_per_injection_well.CurrentUnits).magnitude
+
+                if production_wells_stimulated:
+                    self.cstim_per_production_well.value = quantity(
+                        total_stim_cost_per_production_well_cstim_u, self.Cstim.CurrentUnits).to(
+                            self.cstim_per_production_well.CurrentUnits).magnitude
+                else:
+                    # Only injection wells are assumed to be stimulated unless production well cost param is provided,
+                    # so keep this value as None instead of 0
+                    pass
+
+                if total_stim_cost_per_injection_well_cstim_u == total_stim_cost_per_production_well_cstim_u:
+                    self.cstim_per_well.value = ret.to(
+                        self.cstim_per_well.CurrentUnits).magnitude / (model.wellbores.ninj.value + model.wellbores.nprod.value)
+                else:
+                    pass  # Leave cstim_per_well value = None
+            else:
+                # Ideally we'd infer per-well costs per the above logic; see relevant comment above re: legacy
+                #  parameterizations.
+                pass
+
+        return ret
 
     def calculate_field_gathering_costs(self, model: Model) -> None:
         if self.ccgathfixed.Valid:
@@ -3443,8 +3535,15 @@ class Economics:
             self.RITCValue.value = self.RITC.value * self.CCap.value
             self.CCap.value = self.CCap.value - self.RITCValue.value
 
-        # Add in the FlatLicenseEtc, OtherIncentives, & TotalGrant
-        self.CCap.value = self.CCap.value + self.FlatLicenseEtc.value - self.OtherIncentives.value - self.TotalGrant.value
+        self.CCap.value += self.FlatLicenseEtc.value
+
+        if self.econmodel.value != EconomicModel.SAM_SINGLE_OWNER_PPA:
+            # SAM-EM parameterizes these as ibi_oth_amount
+            self.CCap.value = (
+                self.CCap.value
+                - self.OtherIncentives.value
+                - self.TotalGrant.value
+            )
 
     def calculate_operating_and_maintenance_costs(self, model: Model) -> None:
         # O&M costs

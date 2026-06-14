@@ -58,9 +58,9 @@ Free software: `MIT license <LICENSE>`__
     :alt: Supported implementations
     :target: https://pypi.org/project/geophires-x
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/softwareengineerprogrammer/GEOPHIRES-X/v3.13.9.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/softwareengineerprogrammer/GEOPHIRES-X/v3.14.1.svg
     :alt: Commits since latest release
-    :target: https://github.com/softwareengineerprogrammer/GEOPHIRES-X/compare/v3.13.9...main
+    :target: https://github.com/softwareengineerprogrammer/GEOPHIRES-X/compare/v3.14.1...main
 
 .. |docs| image:: https://readthedocs.org/projects/GEOPHIRES-X/badge/?style=flat
     :target: https://softwareengineerprogrammer.github.io/GEOPHIRES
@@ -196,6 +196,10 @@ Example-specific web interface deeplinks are listed in the Link column.
      - `example4.txt <tests/examples/example4.txt>`__
      - `.out <tests/examples/example4.out>`__
      - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example4>`__
+   * - Example 4b: Hydrothermal Electricity (Drawdown Schedule)
+     - `example4.txt <tests/examples/example4b_drawdown-schedule.txt>`__
+     - `.out <tests/examples/example4b_drawdown-schedule.out>`__
+     - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example4b_drawdown-schedule>`__
    * - Example 5: User-Provided Reservoir Data (File Parameter)
      - `example5.txt <tests/examples/example5.txt>`__
      - `.out <tests/examples/example5.out>`__
@@ -236,6 +240,10 @@ Example-specific web interface deeplinks are listed in the Link column.
      - `example13.txt <tests/examples/example13.txt>`__
      - `.out <tests/examples/example13.out>`__
      - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example13>`__
+   * - Example 13b: Redrilling due to Well Integrity
+     - `example13.txt <tests/examples/example13b_well-integrity.txt>`__
+     - `.out <tests/examples/example13b_well-integrity.out>`__
+     - `link <https://gtp.scientificwebservices.com/geophires?geophires-example-id=example13b_well-integrity>`__
    * - Example 14: Data Center
      - `example14_data-center.txt <tests/examples/example14_data-center.txt>`__
      - `.out <tests/examples/example14_data-center.out>`__
