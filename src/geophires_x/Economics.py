@@ -3181,7 +3181,7 @@ class Economics:
 
                 # Coerces equal injection and production well costs required for stimulation cost per well output
                 # display heuristic
-                per_well_cost_precision = 2
+                per_well_cost_precision = 3
 
                 self.stimulation_cost_per_injection_well.value = round(
                     quantity(
