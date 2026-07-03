@@ -117,5 +117,4 @@ Maximum Drawdown, 0.0025
 Maximum Temperature, 500
 Time steps per year, 12
 
-Project Latitude, 38.506196
-Project Longitude, -112.918155
+Gringarten-Stehfest Precision, 8
