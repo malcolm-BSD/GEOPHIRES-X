@@ -2885,7 +2885,7 @@ class Economics:
 
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')
 
-    def _validate_read_stimulation_cost_parameters(self, model: Model) -> None:
+    def _validate_read_stimulation_cost_parameters(self, _model: Model) -> None:
         def _raise_mutually_exclusive_error(param1: Parameter, param2: Parameter) -> None:
             raise ValueError(f'Cannot provide both {param1.Name} and {param2.Name} parameters. ')
 
