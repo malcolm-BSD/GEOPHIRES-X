@@ -1506,7 +1506,7 @@
       "maximum": 100
     },
     "Reservoir Stimulation Capital Cost per Fracture Surface Area": {
-      "description": "Reservoir stimulation capital cost per fracture surface area before adjustment factor, indirect costs, and contingency. Provide Reservoir Stimulation Capital Cost per Production Well = -1 to indicate that production wells are stimulated.",
+      "description": "Direct reservoir stimulation cost per fracture surface area before adjustment factor, indirect costs, and contingency. By default, this applies only to injection wells. To include production wells, set Reservoir Stimulation Capital Cost per Production Well = -1.",
       "type": "number",
       "units": "USD/m**2",
       "category": "Economics",

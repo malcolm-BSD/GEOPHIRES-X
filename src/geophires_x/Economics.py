@@ -695,10 +695,9 @@ class Economics:
             UnitType=Units.COSTPERAREA,
             PreferredUnits=CostPerAreaUnit.DOLLARSPERMETERS2,
             CurrentUnits=CostPerAreaUnit.DOLLARSPERMETERS2,
-            # TODO/WIP...
-            ToolTipText=f'Reservoir stimulation capital cost per fracture surface area {before_stim_modifiers_note}. '
-                        f'Provide {self.stimulation_cost_per_production_well.Name} = '
-                        f'{CALCULATED_PARAMETER_PLACEHOLDER_VALUE} to indicate that production wells are stimulated.'
+            ToolTipText=f'Direct reservoir stimulation cost per fracture surface area {before_stim_modifiers_note}. '
+                        f'By default, this applies only to injection wells. To include production wells, set '
+                        f'{self.stimulation_cost_per_production_well.Name} = {CALCULATED_PARAMETER_PLACEHOLDER_VALUE}.'
         )
 
         # noinspection SpellCheckingInspection
