@@ -3199,6 +3199,11 @@ class Economics:
                     per_well_cost_precision
                 )
 
+                # In an ideal world we might use separate calculated values instead of mutating
+                # stimulation_cost_per_injection_well and stimulation_cost_per_production_well above. But the current
+                # pattern is OK for now and nominally captures the fact that the value is mutated internally by
+                # virtue of the Provided attribute remaining False.
+
             direct_stim_cost_per_injection_well_cstim_u = self.stimulation_cost_per_injection_well.quantity().to(
                 self.Cstim.CurrentUnits).magnitude
             direct_stim_cost_per_production_well_cstim_u = self.stimulation_cost_per_production_well.quantity().to(
