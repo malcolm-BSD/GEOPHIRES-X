@@ -135,6 +135,7 @@ class AreaUnit(str, Enum):
     FEET2 = "ft**2"
     INCHES2 = "in**2"
     MILES2 = "mi**2"
+    ACRES = 'acre'
 
 
 class VolumeUnit(str, Enum):

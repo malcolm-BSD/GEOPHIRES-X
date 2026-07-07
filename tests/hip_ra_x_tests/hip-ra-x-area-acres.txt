@@ -1,0 +1,6 @@
+Reservoir Temperature, 212.5
+Rejection Temperature, 60.0
+Reservoir Porosity, 10.0
+Reservoir Area, 109930 acre
+Reservoir Thickness, 0.25
+Reservoir Life Cycle, 25
