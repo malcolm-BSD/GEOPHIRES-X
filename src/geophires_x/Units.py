@@ -1,6 +1,5 @@
-# copyright, 2023, Malcolm I Ross
-import logging
 from __future__ import annotations
+import logging
 import os
 import inspect
 import re
