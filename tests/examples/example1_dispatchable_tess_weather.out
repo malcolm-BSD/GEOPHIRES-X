@@ -4,10 +4,10 @@
 
 Simulation Metadata
 ----------------------
- GEOPHIRES Version: 3.13.9
- Simulation Date: 2026-06-10
- Simulation Time:  12:56
- Calculation Time:     23.957 sec
+ GEOPHIRES Version: 3.13.5
+ Simulation Date: 2026-05-13
+ Simulation Time:  20:23
+ Calculation Time:     14.587 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -100,7 +100,6 @@ Simulation Metadata
       Maximum reservoir temperature:                        400.0 degC
       Number of segments:                                     1
       Geothermal gradient:                                        50 degC/km
-      Project location:                                     39.7392, -104.9903
 
 
                            ***RESERVOIR PARAMETERS***
@@ -130,6 +129,7 @@ Simulation Metadata
          Surface power plant costs:                          21.81 MUSD
          Field gathering system costs:                        2.67 MUSD
          Total surface equipment costs:                      24.48 MUSD
+         TESS capital costs:                                       7.50 MUSD
       Total capital costs:                                   56.87 MUSD
       Annualized capital costs:                               2.84 MUSD
 
@@ -140,6 +140,7 @@ Simulation Metadata
          Power plant maintenance costs:                       1.34 MUSD/yr
          Water costs:                                         0.01 MUSD/yr
          Average Reservoir Pumping Cost:                      0.02 MUSD/yr
+         TESS annual O&M costs:                                   0.07 MUSD/yr
       Total operating and maintenance costs:                  1.98 MUSD/yr
 
 

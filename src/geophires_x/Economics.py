@@ -767,7 +767,7 @@ class Economics:
         self.timestepsperyear = self.ParameterDict[self.timestepsperyear.Name] = intParameter(
             "Time steps per year",
             DefaultValue=4,
-            AllowableRange=list(range(1, 101, 1)),
+            AllowableRange=list(range(1, 8761)),
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume default number of time steps per year (4)",

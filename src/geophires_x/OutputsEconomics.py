@@ -216,6 +216,12 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
             f"                 {model.economics.surface_equipment_costs_total.value:10.2f} "
             f"{model.economics.surface_equipment_costs_total.CurrentUnits.value}\n"
         )
+        if Economics._tess_enabled(model):
+            f.write(
+                f"         {econ.tess_capital_cost.display_name}:"
+                f"                                 {econ.tess_capital_cost.value:10.2f} "
+                f"{econ.tess_capital_cost.CurrentUnits.value}\n"
+            )
 
     if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
         f.write(f"         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")
@@ -286,6 +292,12 @@ def write_operation_and_maintenance_costs(model: Model, f: TextIOWrapper, is_sam
             f.write(f"         Average Reservoir Pumping Cost:                {model.economics.averageannualpumpingcosts.value:10.2f} {model.economics.averageannualpumpingcosts.CurrentUnits.value}\n")
         if model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
             f.write(f"         Absorption Chiller O&M Cost:                   {model.economics.chilleropex.value:10.2f} {model.economics.chilleropex.CurrentUnits.value}\n")
+        if Economics._tess_enabled(model):
+            f.write(
+                f"         {econ.tess_o_and_m_cost.display_name}:"
+                f"                             {econ.tess_o_and_m_cost.value:10.2f} "
+                f"{econ.tess_o_and_m_cost.CurrentUnits.value}\n"
+            )
         if model.surfaceplant.plant_type.value == PlantType.HEAT_PUMP:
             f.write(f"         Average Heat Pump Electricity Cost:            {model.economics.averageannualheatpumpelectricitycost.value:10.2f} {model.economics.averageannualheatpumpelectricitycost.CurrentUnits.value}\n")
         if model.surfaceplant.plant_type.value == PlantType.DISTRICT_HEATING:

@@ -1410,6 +1410,21 @@ class OutputsTestCase(BaseTestCase):
         self.assertGreater(parsed_results["TESS annual discharge"]["value"], 0.0)
         self.assertGreater(parsed_results["Peak geothermal charge"]["value"], 0.0)
 
+        parsed_report = GeophiresXResult(result.output_file_path).result
+        capital_costs = parsed_report["CAPITAL COSTS (M$)"]
+        self.assertAlmostEqual(7.5, capital_costs["TESS capital costs"]["value"])
+        self.assertEqual("MUSD", capital_costs["TESS capital costs"]["unit"])
+        o_and_m_costs = parsed_report["OPERATING AND MAINTENANCE COSTS (M$/yr)"]
+        self.assertAlmostEqual(0.07, o_and_m_costs["TESS annual O&M costs"]["value"])
+        self.assertEqual("MUSD/yr", o_and_m_costs["TESS annual O&M costs"]["unit"])
+
+        text_output = text_output_path.read_text(encoding="UTF-8")
+        self.assertIn("TESS capital costs", text_output)
+        self.assertIn("TESS annual O&M costs", text_output)
+        html_output = html_output_path.read_text(encoding="UTF-8")
+        self.assertIn("TESS capital costs", html_output)
+        self.assertIn("TESS annual O&amp;M costs", html_output)
+
         with open(dispatch_profile_path, encoding="UTF-8", newline="") as f:
             rows = list(DictReader(f))
         self.assertEqual(8760, len(rows))
