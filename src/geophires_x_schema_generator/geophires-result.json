@@ -566,6 +566,11 @@
           "description": "Surface Plant cost plus Field gathering system cost plus Transmission pipeline costs.",
           "units": "MUSD"
         },
+        "TESS capital costs": {
+          "type": "number",
+          "description": "TESS Capital Cost. Complete installed TESS capital cost calculated from TESS volume and cost per cubic meter.",
+          "units": "MUSD"
+        },
         "Investment Tax Credit": {
           "type": "number",
           "description": "Investment Tax Credit Value. Represents the total undiscounted ITC sum. For SAM Economic Models, this accounts for the standard Year 1 Federal ITC as well as any applicable State ITCs or multi-year credit schedules.",
@@ -642,6 +647,11 @@
           "units": "MUSD/yr"
         },
         "Absorption Chiller O&M Cost": {},
+        "TESS annual O&M costs": {
+          "type": "number",
+          "description": "TESS O&M Cost. Annual TESS fixed O&M cost calculated as a fraction of TESS capital cost.",
+          "units": "MUSD/yr"
+        },
         "Average Heat Pump Electricity Cost": {},
         "Annual District Heating O&M Cost": {
           "type": "number",

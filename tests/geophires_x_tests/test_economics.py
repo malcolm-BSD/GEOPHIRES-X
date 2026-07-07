@@ -10,6 +10,7 @@ import numpy_financial as npf
 # ruff: noqa: I001  # Successful module initialization is dependent on this specific import order.
 from geophires_x.Model import Model
 from geophires_x.Economics import CalculateFinancialPerformance
+from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import (
     GeophiresXResult,
     GeophiresXClient,
@@ -113,6 +114,16 @@ class EconomicsTestCase(BaseTestCase):
 
     def test_indirect_cost_factor(self) -> None:
         self.assertEqual(1.12, self._new_model().economics._indirect_cost_factor)
+
+    def test_daily_time_steps_per_year_are_accepted(self) -> None:
+        model = self._new_model()
+        model.InputParameters = {
+            "Time steps per year": ParameterEntry(Name="Time steps per year", sValue="365"),
+        }
+
+        model.economics.read_parameters(model)
+
+        self.assertEqual(365, model.economics.timestepsperyear.value)
 
     def test_peaking_boiler_cost(self):
         def _get_result(peaking_boiler_cost_: int) -> GeophiresXResult:

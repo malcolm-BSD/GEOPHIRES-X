@@ -122,6 +122,7 @@ Simulation Metadata
          Surface power plant costs:                          23.78 MUSD
          Field gathering system costs:                        2.58 MUSD
          Total surface equipment costs:                      26.36 MUSD
+         TESS capital costs:                                       7.50 MUSD
       Total capital costs:                                   58.75 MUSD
       Annualized capital costs:                               2.94 MUSD
 
@@ -132,6 +133,7 @@ Simulation Metadata
          Power plant maintenance costs:                       1.41 MUSD/yr
          Water costs:                                         0.01 MUSD/yr
          Average Reservoir Pumping Cost:                      0.02 MUSD/yr
+         TESS annual O&M costs:                                   0.07 MUSD/yr
       Total operating and maintenance costs:                  2.06 MUSD/yr
 
 
