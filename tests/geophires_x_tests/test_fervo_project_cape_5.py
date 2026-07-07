@@ -12,6 +12,7 @@ from geophires_docs import generate_fervo_project_cape_5_md
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.GeoPHIRESUtils import sig_figs
 from geophires_x.Parameter import HasQuantity
+from geophires_x.ParameterUtils import COMMENT_PARAMETER_NAME_PREFIX
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
@@ -83,7 +84,7 @@ class FervoProjectCape5TestCase(BaseTestCase):
                 ret[field] = fieldValue.strip()
 
             if include_line_comments and field.startswith("#"):
-                ret[f"_COMMENT-{comment_idx}"] = line.strip()
+                ret[f"{COMMENT_PARAMETER_NAME_PREFIX}{comment_idx}"] = line.strip()
                 comment_idx += 1
 
             # TODO preserve newlines
@@ -112,14 +113,14 @@ class FervoProjectCape5TestCase(BaseTestCase):
         )
 
         min_net_gen = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Minimum Net Electricity Generation"]["value"]
-        self.assertGreater(min_net_gen, 550)
-        self.assertLess(min_net_gen, 580)
+        self.assertGreater(min_net_gen, 499)
+        self.assertLess(min_net_gen, 505)
 
         max_total_gen = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"]["Maximum Total Electricity Generation"][
             "value"
         ]
-        self.assertGreater(max_total_gen, 800)
-        self.assertLess(max_total_gen, 850)
+        self.assertGreater(max_total_gen, 550)
+        self.assertLess(max_total_gen, 600)
 
         lcoe = r.result["SUMMARY OF RESULTS"]["Electricity breakeven price"]["value"]
         self.assertGreater(lcoe, 7.5)
@@ -139,7 +140,7 @@ class FervoProjectCape5TestCase(BaseTestCase):
         pumping_power_pct = r.result["SURFACE EQUIPMENT SIMULATION RESULTS"][
             "Initial pumping power/net installed power"
         ]["value"]
-        self.assertGreater(pumping_power_pct, 14)
+        self.assertGreater(pumping_power_pct, 14.5)
         self.assertLess(pumping_power_pct, 30)
 
         num_prod_wells = r.result["SUMMARY OF RESULTS"]["Number of production wells"]["value"]
@@ -505,4 +506,4 @@ class FervoProjectCape5TestCase(BaseTestCase):
         fpc5_max_total_net_gen_mwe = (
             quantity(max_total_gen_dict["value"], max_total_gen_dict["unit"]).to("MW").magnitude
         )
-        self.assertLess(fpc5_max_total_net_gen_mwe, 170)
+        self.assertLess(fpc5_max_total_net_gen_mwe, 120)

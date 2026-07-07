@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import math
 import os
+import math
 import tempfile
 import uuid
 from pathlib import Path
@@ -227,6 +227,12 @@ class GeophiresXTestCase(BaseTestCase):
 
                 self._sanitize_nan(geophires_result)
                 self._sanitize_nan(expected_result)
+                geophires_result: GeophiresXResult = self._sanitize_nan(
+                    self._strip_metadata(client.get_geophires_result(input_params))
+                )
+                expected_result: GeophiresXResult = self._sanitize_nan(
+                    self._strip_metadata(GeophiresXResult(get_output_file_for_example(example_file_path)))
+                )
 
                 try:
                     self.assertDictEqual(

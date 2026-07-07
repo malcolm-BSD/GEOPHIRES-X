@@ -24,6 +24,7 @@ from geophires_docs import _get_logger
 from geophires_docs import _get_project_root
 from geophires_x.GeoPHIRESUtils import is_int
 from geophires_x.GeoPHIRESUtils import sig_figs
+from geophires_x.ParameterUtils import COMMENT_PARAMETER_NAME_PREFIX
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXResult
 from geophires_x_client import ImmutableGeophiresInputParameters
@@ -219,7 +220,7 @@ def get_fpc_category_parameters_table_md(
 
     table_entries = []
     for param_name, param_val_comment in input_params_dict.items():
-        if param_name.startswith(("#", "_COMMENT-")):
+        if param_name.startswith(("#", COMMENT_PARAMETER_NAME_PREFIX)):
             continue
 
         if param_name in parameters_to_exclude:
@@ -387,6 +388,9 @@ def get_result_values(result: GeophiresXResult) -> dict[str, Any]:
         "max_net_generation_mwe": round(sig_figs(max_net_generation_mwe, 3)),
         "max_total_generation_mwe": round(sig_figs(max_total_generation_mwe, 3)),
         "two_year_avg_net_power_mwe_per_production_well": sig_figs(two_year_avg_net_power_mwe_per_production_well, 2),
+        "heat_to_power_conversion_efficiency_pct": sig_figs(
+            _q(surf_equip_sim["Heat to Power Conversion Efficiency"]).to("percent").magnitude, 3
+        ),
         "parasitic_loss_pct": sig_figs(parasitic_loss_pct, 3),
         "number_of_times_redrilling": redrills,
         "total_wells_including_redrilling": total_wells_including_redrilling,

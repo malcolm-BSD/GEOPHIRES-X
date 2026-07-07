@@ -312,9 +312,6 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
-                _AliasedField(
-                    "Transmission/pipeline Cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
-                ),
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",
@@ -325,23 +322,6 @@ class GeophiresXResult:
                 "One-time Grants Etc",
                 "Total Add-on CAPEX",
                 "Overnight Capital Cost",
-                # Displayed for economic models that treat inflation costs as capital costs (SAM-EM)
-                "Inflation costs during construction",
-                "Royalty supplemental payments during construction",
-                "Interest during construction",
-                "Total capital costs",
-                "Annualized capital costs",
-                # AGS/CLGS
-                "Total CAPEX",
-                "Drilling Cost",
-                # SUTRA
-                "Drilling and Completion Costs",
-                "Drilling and Completion Costs per Well",
-                "Drilling and completion costs per production well",
-                "Drilling and completion costs per injection well",
-                "Auxiliary Heater Cost",
-                "Pump Cost",
-                "Total Capital Costs",
             ],
             "OPERATING AND MAINTENANCE COSTS (M$/yr)": [
                 "Wellfield maintenance costs",
@@ -1111,6 +1091,13 @@ class GeophiresXResult:
         def extract_table_header(lines: list) -> list:
             # Tried various regexy approaches to extract this programmatically but landed on hard-coding.
             return [
+                "Year Since Start",
+                "Carbon Captured (tonne/yr)",
+                "Cumm. Carbon Captured (tonne)",
+                "S-DAC-GT Annual Cost (USD/yr)",
+                "S-DAC-GT Cumm. Cash Flow (USD)",
+                "Cumm. Cost Per Tonne (USD/tonne)",
+                "Annual Carbon Revenue (USD/yr)",
                 "Year Since Start",
                 "Carbon Captured (tonne/yr)",
                 "Cumm. Carbon Captured (tonne)",

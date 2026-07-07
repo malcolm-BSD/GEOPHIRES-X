@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import sys
 from pathlib import Path
@@ -11,6 +10,8 @@ from typing import Any, Callable
 # ruff: noqa: I001
 from geophires_x.Model import Model
 from geophires_x.SBTEconomics import SBTEconomics
+
+# from geophires_x.EconomicsS_DAC_GT import EconomicsS_DAC_GT  # TODO
 from geophires_x.SBTReservoir import SBTReservoir
 from geophires_x.SBTWellbores import SBTWellbores
 
@@ -40,134 +41,6 @@ _log = _get_logger()
 
 
 class GeophiresXSchemaGenerator:
-    @staticmethod
-    def _dispatch_summary_schema() -> dict:
-        number_array_schema = {"type": "array", "items": {"type": "number"}}
-        return {
-            "type": "object",
-            "description": (
-                "Structured dispatchable-operation summary emitted for dispatch runs. "
-                "Includes dispatch settings, the analyzed operating-year window, scalar summary metrics, "
-                "and annual aggregate arrays."
-            ),
-            "required": [
-                "schema_version",
-                "demand_type",
-                "surfaceplant_mode",
-                "dispatch_settings",
-                "analysis_window",
-                "summary_metrics",
-                "annual_aggregates",
-            ],
-            "properties": {
-                "schema_version": {"type": "integer", "enum": [1]},
-                "demand_type": {"type": "string", "enum": ["thermal", "cooling", "electric"]},
-                "surfaceplant_mode": {"type": "string", "enum": ["thermal", "electric", "chp"]},
-                "dispatch_settings": {
-                    "type": "object",
-                    "required": ["demand_source", "flow_strategy"],
-                    "properties": {
-                        "demand_source": {
-                            "type": "string",
-                            "enum": ["Annual Heat Demand", "Annual Electricity Demand", "Annual Cooling Demand"],
-                        },
-                        "flow_strategy": {
-                            "type": "string",
-                            "enum": ["Demand Following"],
-                        },
-                    },
-                    "additionalProperties": False,
-                },
-                "analysis_window": {
-                    "type": "object",
-                    "required": ["start_year", "end_year", "year_count", "simulation_start_hour"],
-                    "properties": {
-                        "start_year": {"type": "integer"},
-                        "end_year": {"type": "integer"},
-                        "year_count": {"type": "integer"},
-                        "simulation_start_hour": {"type": "integer"},
-                    },
-                    "additionalProperties": False,
-                },
-                "summary_metrics": {
-                    "type": "object",
-                    "properties": {
-                        "dispatch_analysis_start_year": {"type": "number"},
-                        "dispatch_analysis_end_year": {"type": "number"},
-                        "peak_hourly_demand_mw": {"type": "number"},
-                        "average_runtime_fraction": {"type": "number"},
-                        "dispatch_capacity_factor": {"type": "number"},
-                        "observed_peak_flow_kg_per_sec": {"type": "number"},
-                        "annual_served_heat_kwh": {"type": "number"},
-                        "annual_served_cooling_kwh": {"type": "number"},
-                        "annual_served_electricity_kwh": {"type": "number"},
-                        "annual_unmet_heat_kwh": {"type": "number"},
-                        "annual_unmet_cooling_kwh": {"type": "number"},
-                        "annual_unmet_electricity_kwh": {"type": "number"},
-                        "peak_served_heat_kwh": {"type": "number"},
-                        "peak_served_cooling_kwh": {"type": "number"},
-                        "peak_unmet_heat_kwh": {"type": "number"},
-                        "peak_unmet_cooling_kwh": {"type": "number"},
-                        "peak_served_electricity_kwh": {"type": "number"},
-                        "peak_unmet_electricity_kwh": {"type": "number"},
-                        "design_heat_extracted_mw": {"type": "number"},
-                        "design_heat_produced_mw": {"type": "number"},
-                        "design_cooling_produced_mw": {"type": "number"},
-                        "design_heat_pump_electricity_consumed_mw": {"type": "number"},
-                        "design_pumping_power_mw": {"type": "number"},
-                        "design_pumping_power_prod_mw": {"type": "number"},
-                        "design_pumping_power_inj_mw": {"type": "number"},
-                        "design_flow_kg_per_sec": {"type": "number"},
-                        "design_gross_electricity_produced_mw": {"type": "number"},
-                        "design_net_electricity_produced_mw": {"type": "number"},
-                        "annual_heat_pump_electricity_kwh": {"type": "number"},
-                        "annual_district_heating_boiler_kwh": {"type": "number"},
-                        "peak_district_heating_boiler_mw": {"type": "number"},
-                    },
-                    "additionalProperties": False,
-                },
-                "annual_aggregates": {
-                    "type": "object",
-                    "properties": {
-                        "analysis_years": {"type": "array", "items": {"type": "integer"}},
-                        "annual_served_heat_kwh": number_array_schema,
-                        "annual_served_cooling_kwh": number_array_schema,
-                        "annual_served_electricity_kwh": number_array_schema,
-                        "annual_unmet_heat_kwh": number_array_schema,
-                        "annual_unmet_cooling_kwh": number_array_schema,
-                        "annual_heat_demand_kwh": number_array_schema,
-                        "annual_cooling_demand_kwh": number_array_schema,
-                        "annual_unmet_electricity_kwh": number_array_schema,
-                        "annual_electricity_demand_kwh": number_array_schema,
-                        "annual_heat_pump_electricity_kwh": number_array_schema,
-                        "annual_district_heating_boiler_kwh": number_array_schema,
-                    },
-                    "additionalProperties": False,
-                },
-            },
-            "additionalProperties": False,
-        }
-
-    @staticmethod
-    def _dispatch_profile_schema() -> dict:
-        return {
-            "type": "object",
-            "description": "Hourly dispatch profile emitted for dispatch runs.",
-            "required": ["schema_version", "columns", "rows"],
-            "properties": {
-                "schema_version": {"type": "integer", "enum": [1]},
-                "columns": {"type": "array", "items": {"type": "string"}},
-                "rows": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {"type": "number"},
-                    },
-                },
-            },
-            "additionalProperties": False,
-        }
-
     def __init__(self):
         # noinspection PyProtectedMember
         self.result_fields_by_category: dict[str, list[Any]] = GeophiresXResult._RESULT_FIELDS_BY_CATEGORY
@@ -212,6 +85,7 @@ class GeophiresXSchemaGenerator:
             (SBTEconomics(dummy_model), "Economics"),
             (SUTRAEconomics(dummy_model), "Economics"),
             (EconomicsAddOns(dummy_model), "Economics"),
+            # (EconomicsS_DAC_GT(dummy_model), 'Economics'),  # TODO reconcile conflicting output units
         ]
 
     def get_schema_title(self) -> str:
@@ -329,9 +203,6 @@ class GeophiresXSchemaGenerator:
                 cat_properties[param_name] = param.copy()
 
             properties[category] = {"type": "object", "properties": cat_properties}
-
-        properties["Dispatch Summary"] = self._dispatch_summary_schema()
-        properties["Dispatch Profile"] = self._dispatch_profile_schema()
 
         result_schema = {
             "definitions": {},
@@ -503,12 +374,6 @@ def _get_min_and_max(param: dict, default_val="") -> tuple:
 
 
 def _fix_floating_point_error(val: Any) -> Any:
-    try:
-        if isinstance(val, (float, int)) and math.isinf(float(val)):
-            return None
-    except (TypeError, ValueError):
-        pass
-
     if ".0000" in str(val):
         return format(float(val), ".1f")
 
@@ -551,12 +416,6 @@ class HipRaXSchemaGenerator(GeophiresXSchemaGenerator):
 
     def get_schema_title(self) -> str:
         return "HIP-RA-X"
-
-    def get_result_json_schema(self, output_params_json) -> dict:
-        result_schema = super().get_result_json_schema(output_params_json)
-        result_schema["properties"].pop("Dispatch Summary", None)
-        result_schema["properties"].pop("Dispatch Profile", None)
-        return result_schema
 
     def get_input_schema_reference(self) -> str:
         return "hip-ra-x-request.json"

@@ -418,6 +418,17 @@
       "minimum": 0,
       "maximum": 0.2
     },
+    "Drawdown Parameter Schedule": {
+      "description": "Thermal drawdown schedule for reservoir model 3 and 4 using DSL syntax",
+      "type": "array",
+      "units": "1/year",
+      "category": "Reservoir",
+      "default": [
+        0.005
+      ],
+      "minimum": 0.0,
+      "maximum": 0.2
+    },
     "Gringarten-Stehfest Precision": {
       "description": "Sets the numerical precision (decimal places) for the inverse Laplace transform (Stehfest algorithm) used in the Gringarten calculation for the Multiple Parallel Fractures Reservoir Model. The default value provides maximum result stability; lower values calculate faster but may reduce consistency.",
       "type": "integer",
@@ -815,13 +826,22 @@
       "maximum": 10000.0
     },
     "Maximum Drawdown": {
-      "description": "Maximum allowable thermal drawdown before redrilling of all wells into new reservoir (most applicable to EGS-type reservoirs with heat farming strategies). E.g. a value of 0.2 means that all wells are redrilled after the production temperature (at the wellhead) has dropped by 20% of its initial temperature",
+      "description": "Maximum allowable thermal drawdown before redrilling of all wells into new reservoir (most applicable to EGS-type reservoirs with heat farming strategies). E.g. a value of 0.2 means that all wells are redrilled after the production temperature (at the wellhead) has dropped by 20% of its initial temperature. Note that redrilling is triggered by whichever occurs first: this thermal drawdown limit or the chronological limit defined by Well Integrity Maximum Lifetime.",
       "type": "number",
       "units": "",
       "category": "Well Bores",
       "default": 1.0,
       "minimum": 0.0,
       "maximum": "1.0"
+    },
+    "Well Integrity Maximum Lifetime": {
+      "description": "Maximum chronological lifetime of the wellbore infrastructure before mechanical/chemical failure forces a redrilling event, independent of thermal drawdown. Models a deterministic first-order approximation of well integrity failure (compressive yielding, high-temperature creep, low-cycle fatigue, cement degradation, sulfide stress cracking, etc.) that is particularly relevant for Superhot Rock systems where wellbore infrastructure may typically fail before thermal depletion. Redrilling is triggered at the minimum of the thermal drawdown index defined by Maximum Drawdown and this chronological index. If not provided, defaults to project lifetime (no mechanical failure).",
+      "type": "number",
+      "units": "yr",
+      "category": "Well Bores",
+      "default": -1.0,
+      "minimum": 0.1,
+      "maximum": 100.0
     },
     "Is AGS": {
       "description": "Set to true if the model is for an Advanced Geothermal System (AGS)",
@@ -1674,7 +1694,7 @@
     "Construction Years": {
       "description": "Number of years spent in construction (assumes whole years, no fractions). By default, capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years. For SAM Economic Models, provide Construction CAPEX Schedule to use a custom spread instead.",
       "type": "integer",
-      "units": null,
+      "units": "yr",
       "category": "Surface Plant",
       "default": 1,
       "minimum": 1,
@@ -1816,7 +1836,7 @@
       "maximum": 1000
     },
     "Reservoir Stimulation Capital Cost per Injection Well": {
-      "description": "Reservoir stimulation capital cost per injection well before indirect costs and contingency",
+      "description": "Reservoir stimulation capital cost per injection well before adjustment factor, indirect costs, and contingency",
       "type": "number",
       "units": "MUSD",
       "category": "Economics",
@@ -1825,13 +1845,22 @@
       "maximum": 100
     },
     "Reservoir Stimulation Capital Cost per Production Well": {
-      "description": "Reservoir stimulation capital cost per production well before indirect costs and contingency. By default, only the injection wells are assumed to be stimulated unless this parameter is provided.",
+      "description": "Reservoir stimulation capital cost per production well before adjustment factor, indirect costs, and contingency. By default, only the injection wells are assumed to be stimulated unless this parameter is provided.",
       "type": "number",
       "units": "MUSD",
       "category": "Economics",
       "default": 0,
-      "minimum": 0,
+      "minimum": -1,
       "maximum": 100
+    },
+    "Reservoir Stimulation Capital Cost per Fracture Surface Area": {
+      "description": "Direct reservoir stimulation cost per fracture surface area before adjustment factor, indirect costs, and contingency. By default, this applies only to injection wells. To include production wells, set Reservoir Stimulation Capital Cost per Production Well = -1.",
+      "type": "number",
+      "units": "USD/m**2",
+      "category": "Economics",
+      "default": 0.9,
+      "minimum": 0,
+      "maximum": 1000
     },
     "Reservoir Stimulation Capital Cost Adjustment Factor": {
       "description": "Multiplier for reservoir stimulation capital cost correlation",
@@ -2635,13 +2664,22 @@
       "maximum": 1.0
     },
     "Investment Tax Credit Rate": {
-      "description": "Investment tax credit rate (see docs)",
+      "description": "Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate.",
       "type": "number",
       "units": "",
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
       "maximum": 1.0
+    },
+    "State Investment Tax Credit Amount": {
+      "description": "State investment tax credit amount (state ITC).",
+      "type": "number",
+      "units": "MUSD",
+      "category": "Economics",
+      "default": 0.0,
+      "minimum": 0.0,
+      "maximum": 100000.0
     },
     "Property Tax Rate": {
       "description": "Property tax rate (see docs)",

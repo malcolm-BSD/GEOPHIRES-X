@@ -1,4 +1,6 @@
 import csv
+import json
+import os
 import tempfile
 import uuid
 from dataclasses import dataclass
@@ -234,14 +236,23 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
             return Path(self.output_file_path)
         return Path(tempfile.gettempdir(), f"geophires-result_{self._instance_id!s}.out")
 
-    def as_csv(self) -> str:
+    def as_csv(self, parse_units_and_comments: bool = False) -> str:
         """
         This method returns the input parameters in CSV (Comma-Separated Values) format, using its
         internal dictionary as the definitive source.  It does not include a header, but uses the
         same columns as GeophiresXResult.as_csv, and is meant to be used in conjunction with the same.
         """
+
         if self.from_file_path:
             raise NotImplementedError("CSV from file path is not implemented.")
+
+        if parse_units_and_comments:
+
+            def _get_file_path(file_name: Union[str, Path]) -> str:
+                return os.path.join(os.path.abspath(os.path.dirname(__file__)), str(file_name))
+
+            with open(_get_file_path("../geophires_x_schema_generator/geophires-request.json"), encoding="utf-8") as f:
+                _ = json.loads(f.read())
 
         f = StringIO()
         w = csv.writer(f)

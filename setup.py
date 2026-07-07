@@ -13,7 +13,7 @@ def read(*names, **kwargs):
 
 setup(
     name="geophires-x",
-    version="3.13.9",
+    version="3.15.2",
     license="MIT",
     description="GEOPHIRES is a free and open-source geothermal techno-economic simulator.",
     long_description="{}\n{}".format(
@@ -68,9 +68,6 @@ setup(
         "forex_python",
         "jsons",
         "mpmath",
-        "sympy",
-        "scikit-learn",
-        "tqdm",
         "deepdiff",
         "mysql.connector",
         "cryptography",

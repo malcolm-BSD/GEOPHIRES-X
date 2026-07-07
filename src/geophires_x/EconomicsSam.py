@@ -145,6 +145,12 @@ def validate_read_parameters(model: Model) -> None:
                 # temporarily switching/testing and/or migrating between schedule-based and rate-based more user
                 # friendly by only requiring enabling/disabling 2 parameters rather than up to 6.
 
+    if econ.DoSDACGTCalculations.value:
+        raise NotImplementedError(
+            'S-DAC is not currently supported for SAM Economic Models. '
+            'See https://github.com/NatLabRockies/GEOPHIRES-X/issues/511.'  # TODO to implement
+        )
+
 
 def _validate_construction_capex_schedule(
     econ_capex_schedule: listParameter, construction_years: int, model: Model
@@ -238,7 +244,17 @@ def calculate_sam_economics(model: Model) -> SamEconomicsCalculations:
     sam_economics.after_tax_irr.value = sf(_get_after_tax_irr_pct(single_owner, cash_flow_operational_years, model))
 
     sam_economics.project_npv.value = sf(_get_project_npv_musd(single_owner, cash_flow_operational_years, model))
-    sam_economics.capex.value = single_owner.Outputs.adjusted_installed_cost * 1e-6
+
+    # Add back ibi_oth_amount (OtherIncentives + TotalGrant) which SAM subtracts from
+    # total_installed_cost to compute adjusted_installed_cost. Incentives are still applied
+    # by SAM natively in the cash flow/tax basis calculations; we just don't want them to
+    # also reduce the reported Total CAPEX (which would be inconsistent with Overnight Capital
+    # Cost, since CCap is not reduced by incentives for SAM Economic Models - see
+    # Economics.calculate_total_capital_costs).
+    _ibi_oth_usd = (
+        (model.economics.OtherIncentives.quantity() + model.economics.TotalGrant.quantity()).to('USD').magnitude
+    )
+    sam_economics.capex.value = (single_owner.Outputs.adjusted_installed_cost + _ibi_oth_usd) * 1e-6
 
     if model.economics.has_royalties:
         combined_royalties_usd = [
@@ -679,6 +695,9 @@ def _get_single_owner_parameters(model: Model) -> dict[str, Any]:
 
     geophires_itc_tenths = Decimal(econ.RITC.value)
     ret['itc_fed_percent'] = [float(geophires_itc_tenths * Decimal(100))]
+
+    geophires_state_itc_usd = Decimal(econ.ritc_state_amount.quantity().to(convertible_unit('USD')).magnitude)
+    ret['itc_sta_amount'] = [float(geophires_state_itc_usd)]
 
     if econ.PTCElec.Provided:
         ret['ptc_fed_amount'] = [econ.PTCElec.quantity().to(convertible_unit('USD/kWh')).magnitude]
