@@ -24,6 +24,8 @@ The recommended architecture is:
 
 This allows GEOPHIRES-X to retain its current behavior by default while giving advanced users a path to request more detailed calculations where GenGEO is a better fit.
 
+The GenGEO bridge should also be viewed as a possible **first implementation of a general external-engine interface**, rather than a permanently special-purpose connection. The immediate proposal remains narrowly scoped to GenGEO, but the interface should be designed so that future complementary models could be evaluated without redesigning GEOPHIRES-X core.
+
 ## Why this is worth considering
 
 GEOPHIRES-X is a broad techno-economic simulator. It combines reservoir, wellbore, surface-plant, direct-use, power-generation, and economic models across many geothermal applications. Its strength is breadth, scenario coverage, extensibility, and community familiarity.
@@ -40,6 +42,16 @@ If successful, this would give users three benefits:
 - optional GenGEO-backed detailed calculations for supported electricity cases;
 - clearer community comparison between simplified and higher-fidelity modeling assumptions.
 
+## Alignment with community trends
+
+Recent geothermal research has emphasized standardized, multi-scale, and multi-physics workflows that combine complementary methods rather than expecting a single monolithic model to address every part of geothermal assessment. The paper *Towards a multi-physics multi-scale approach of deep geothermal exploration* provides a relevant example of this direction and highlights the value of coordinating specialized models across scales and physical domains.
+
+The proposed GEOPHIRES-X / GenGEO bridge is narrower than the exploration workflow discussed in that paper, but it follows the same broad interoperability principle: specialized tools can retain their own scientific focus while exchanging information through defined interfaces.
+
+This proposal therefore explores one possible path toward a more interoperable geothermal modeling ecosystem, in which GEOPHIRES-X can optionally interact with complementary open-source tools through stable, versioned interfaces.
+
+The intended outcome is not to declare GEOPHIRES-X the mandatory platform for other models. Rather, it is to make GEOPHIRES-X more capable of participating in modular community workflows while preserving independent model governance, scientific transparency, and user choice.
+
 ## Relationship to the existing SAM integration
 
 The SAM / PySAM integration in GEOPHIRES-X is a useful precedent, but the GenGEO case is different.
@@ -49,6 +61,20 @@ SAM is primarily used as a downstream financial-modeling engine. GEOPHIRES-X can
 GenGEO would sit closer to the engineering core. It would potentially replace or augment selected surface-plant, thermodynamic-cycle, and cost calculations before final economics. That makes the integration more sensitive to boundary conditions, units, supported plant modes, and result semantics.
 
 For that reason, the GenGEO integration should be more formal than a simple tool call. It should use an explicit external-engine contract.
+
+## Long-term architectural interpretation
+
+The immediate work should remain limited to a GEOPHIRES-X / GenGEO bridge. However, the design should avoid embedding GenGEO-specific assumptions into GEOPHIRES-X core wherever a more general contract would be equally practical.
+
+A successful bridge could demonstrate a reusable pattern for optional interoperability with other specialized tools, including:
+
+- external reservoir simulators;
+- detailed thermodynamic-cycle models;
+- proprietary or research-grade surface-plant simulators;
+- reduced-order or surrogate models;
+- future community-developed geothermal modules.
+
+Each future integration would require its own scientific validation, licensing review, supported-mode matrix, and maintenance commitment. This proposal does not place any of those tools within the current project scope. It only recommends that the first interface be sufficiently general to avoid making GenGEO the only possible external engine.
 
 ## Proposed architecture
 
@@ -111,6 +137,8 @@ class DetailedPlantEngine:
 ```
 
 The bridge should own the mapping between GEOPHIRES-X and GenGEO. GEOPHIRES-X core should not import GenGEO classes directly.
+
+Although the first adapter would be GenGEO-specific, the GEOPHIRES-X-facing contract should use generic external-engine concepts where practical. GenGEO-specific mappings, defaults, and error translations should remain inside the bridge package.
 
 ## Request schema principles
 
@@ -213,6 +241,7 @@ This proposal is not legal advice. If the integration becomes a distributed feat
 | Dependency mismatch | Python and package versions may differ | Optional subprocess, sidecar, or containerized bridge |
 | License ambiguity | MIT core plus LGPL external model | Keep GenGEO outside core and optional |
 | Maintenance burden | Two communities and two release cadences | Separate bridge ownership and explicit compatibility matrix |
+| Over-generalization | A generic interface could become too abstract before requirements are known | Implement only the minimum abstractions needed for the GenGEO MVP and generalize from demonstrated use cases |
 
 ## Testing strategy
 
@@ -265,13 +294,16 @@ Success criteria:
 - unsupported cases fail cleanly and remain native GEOPHIRES-X;
 - unit conversions are tested;
 - output deltas are reproducible in CI or a documented local test environment;
-- maintainers agree whether an override mode is worth pursuing.
+- maintainers agree whether an override mode is worth pursuing;
+- the external-engine contract is no more general than necessary, but does not require GEOPHIRES-X core to import GenGEO internals.
 
 ## Decision requested from the community
 
 The requested community decision is not whether to merge GenGEO into GEOPHIRES-X.
 
 The requested decision is whether the GEOPHIRES-X community is interested in exploring a narrow optional bridge that would allow supported GEOPHIRES-X cases to use GenGEO-backed detailed calculations in advisory mode.
+
+A related architectural question is whether the community wants the initial bridge contract to be written as a reusable external-engine interface, while keeping GenGEO as the only implementation within the current scope.
 
 If yes, the next step is to define the minimum supported-mode matrix and request/result schema before writing production code.
 
@@ -284,9 +316,18 @@ If yes, the next step is to define the minimum supported-mode matrix and request
 5. Which GenGEO outputs should GEOPHIRES-X be allowed to consume in future override mode?
 6. What tolerance levels are acceptable for side-by-side numerical comparisons?
 7. Who should own long-term bridge maintenance?
+8. What is the minimum reusable external-engine abstraction that supports GenGEO without prematurely designing a universal plugin system?
 
 ## Recommendation
 
 Proceed with a discussion PR and a small set of scoped issues. Do not create a GitHub Project yet. A GitHub Project will be useful after the community agrees on scope and after the first implementation issues are accepted.
 
 The safest first implementation is a separate optional bridge package or subprocess worker that supports water-based ORC electricity cases in advisory mode only.
+
+The interface should be designed as a modest first step toward interoperability—not as a commitment to support every geothermal model or modeling domain.
+
+## References
+
+- Darnet, M., Vedrine, S., Bretaudeau, F., et al. (2026). *Towards a multi-physics multi-scale approach of deep geothermal exploration*. **Geothermal Energy**. https://doi.org/10.1186/s40517-026-00392-7
+- GEOPHIRES-X repository and documentation: https://github.com/NatLabRockies/GEOPHIRES-X
+- GenGEO repository: https://github.com/GEG-ETHZ/genGEO
