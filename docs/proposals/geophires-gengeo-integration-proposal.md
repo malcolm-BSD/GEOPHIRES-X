@@ -1,445 +1,564 @@
-# Proposal: Optional GEOPHIRES–GenGEO Integration
+# Proposal: GEOPHIRES-X External Extension Framework
+
+> **PR continuity note:** This file retains its original GenGEO-oriented filename because it was introduced in PR #32. The proposal has been broadened following a review of the public/open geothermal techno-economic modeling landscape. GenGEO is now one candidate engine within a general GEOPHIRES-X extension framework rather than the sole architectural target.
 
 ## Purpose
 
-This proposal describes a possible community-led integration between **GEOPHIRES-X** and **GenGEO**, two open-source geothermal techno-economic modeling tools with overlapping but different strengths.
+This proposal describes a community-led framework that allows **GEOPHIRES-X** to interoperate with selected public/open geothermal techno-economic models while preserving GEOPHIRES-X as:
 
-The objective is not to merge the two codebases. The objective is to explore whether GEOPHIRES-X can optionally use selected GenGEO calculations for higher-fidelity surface-plant, thermodynamic-cycle, and cost modeling while preserving GEOPHIRES-X as the primary project model and public user interface.
+- the primary project model;
+- the canonical input and output environment;
+- the default calculation engine;
+- the public user interface;
+- the orchestration, validation, and comparison layer.
 
-The proposed approach is modular, optional, open source, web-service compatible, Monte Carlo capable, and portable across public hosting, local execution, and user-controlled cloud environments.
+The objective is not to merge external codebases into GEOPHIRES-X. The objective is to establish a stable, versioned, capability-aware extension contract through which specialized tools can be used as:
+
+1. replacement engines for selected calculations;
+2. chained upstream or downstream models;
+3. parallel benchmark engines.
+
+The supporting landscape survey is:
+
+- `docs/proposals/geothermal-techno-economic-model-landscape.md`
+
+## Scope decision
+
+This PR proposes only three implementation phases:
+
+- **Phase 0:** extension framework foundation;
+- **Phase 1:** PySAM/SSC and GeoCLUSTER integrations;
+- **Phase 2:** bounded GenGEO and FGEM pilots.
+
+No Phase 3 or later implementation commitment is included. PyThermoNomics, REopt, reV, dGeo, legacy GETEM spreadsheets, and other possible tools remain documented candidates or references for later community decisions.
 
 ## Summary recommendation
 
-The recommended architecture is a **containerized GEOPHIRES–GenGEO execution worker** behind a stable, versioned request/result contract.
+GEOPHIRES-X should become a modest **federated modeling platform**, not an ever-growing monolithic simulator.
 
-The same worker should support three deployment modes:
+The recommended architecture consists of:
 
-1. the existing public GEOPHIRES calculator service;
-2. local execution from Python, PyCharm, or a local container;
-3. scalable batch execution in a user-controlled environment such as AWS Batch.
+- a canonical, versioned case schema;
+- explicit SI-unit normalization;
+- a capability registry;
+- external adapters that own model-specific mappings;
+- multiple execution modes, including in-process Python, subprocesses, containers, compiled-library wrappers, HTTP services, and batch jobs;
+- normalized outputs with complete provenance;
+- a common validation and comparison harness.
 
-The initial modeling scope should remain narrow:
+The first implementation priority should be the most mature, complementary, and maintainable engines:
 
-- electricity-only;
-- water-based ORC first;
-- advisory comparison mode first;
-- native GEOPHIRES-X results remain authoritative by default;
-- unsupported cases fall back cleanly to native GEOPHIRES-X.
+1. **PySAM/SSC** for geothermal electricity, GETEM-derived cost treatment, and project finance;
+2. **GeoCLUSTER** for closed-loop/AGS simulation and rapid surrogate-based screening.
 
-However, **Monte Carlo and batch execution should be MVP requirements**, not future enhancements. Monte Carlo is central to project analysis, teaching, research, uncertainty quantification, and cloud-scale GEOPHIRES use.
+The second implementation priority should address higher-value but higher-risk specialist tools:
 
-The GenGEO bridge should also be treated as a possible first implementation of a modest external-engine interface rather than a permanently special-purpose connection.
+3. **GenGEO** as an isolated and modernized higher-fidelity thermodynamic/reservoir engine;
+4. **FGEM** as a chained hourly dispatch, storage, and market-value engine.
 
 ## Why this is worth considering
 
-GEOPHIRES-X is a broad techno-economic simulator. It combines reservoir, wellbore, surface-plant, direct-use, power-generation, and economic models across many geothermal applications. Its strengths are breadth, scenario coverage, extensibility, public accessibility, and community familiarity.
+GEOPHIRES-X has unusually broad project-level coverage. It handles reservoirs, wellbores, surface plants, direct use, electricity, cogeneration, closed-loop systems, costs, economics, and uncertainty analysis. That breadth makes it the natural public-facing platform and common case-definition environment.
 
-GenGEO is narrower in scope but appears to provide more detailed thermodynamic-cycle and bottom-up cost calculations for selected electricity-generation cases, especially water-based ORC and CO₂-plume geothermal configurations.
+However, specialized tools provide important functionality that should not necessarily be recreated in GEOPHIRES-X core:
 
-The opportunity is therefore not “which model replaces the other?” but rather:
+- SAM/PySAM provides nationally supported geothermal electricity and finance calculations;
+- GeoCLUSTER provides a large closed-loop design space and specialized conduction-dominated models;
+- GenGEO provides detailed coupled thermodynamic and research configurations;
+- FGEM provides hourly dispatch, storage, and market-revenue calculations.
 
-> Can GEOPHIRES-X provide the project framework and public interface while optionally delegating selected detailed plant and cost calculations to GenGEO through a reproducible execution service?
+The opportunity is therefore:
 
-If successful, users would gain:
+> Can GEOPHIRES-X preserve its breadth and usability while delegating selected calculations to independently maintained specialist engines through explicit, testable boundaries?
 
-- fast native GEOPHIRES-X calculations for screening and broad scenario analysis;
-- optional GenGEO-backed calculations for supported electricity cases;
-- side-by-side comparison of simplified and higher-fidelity assumptions;
-- public browser access without local installation;
-- reproducible local and cloud execution using the same modeling worker;
-- scalable Monte Carlo analysis without redesigning the integration.
+A successful framework would provide:
 
-## Alignment with community trends
+- broader modeling capability without forcing all dependencies on every user;
+- independent benchmarking of native GEOPHIRES-X calculations;
+- reproducible local, hosted, and cloud execution;
+- explicit model boundaries and prevention of double counting;
+- consistent Monte Carlo and batch behavior;
+- preservation of external licenses and governance;
+- easier adoption of future specialist models without redesigning GEOPHIRES-X core.
 
-Recent geothermal research has emphasized standardized, multi-scale, and multi-physics workflows that combine complementary methods rather than expecting a single monolithic model to address every part of geothermal assessment. The paper *Towards a multi-physics multi-scale approach of deep geothermal exploration* provides a relevant example of this direction and highlights the value of coordinating specialized models across scales and physical domains.
+## Candidate tools and proposed roles
 
-The proposed GEOPHIRES-X / GenGEO integration is narrower than the exploration workflow discussed in that paper, but follows the same interoperability principle: specialized tools retain their scientific focus while exchanging information through defined, versioned interfaces.
+| Tool | Maturity/support | Proposed role in this PR |
+|---|---|---|
+| GEOPHIRES-X | Mature; actively developed | Host, default engine, canonical schema, orchestration, reporting |
+| PySAM/SSC | Production-grade; actively supported | Phase 1 plant, geothermal project, finance, and benchmark extension |
+| GeoCLUSTER | Strong national-laboratory research platform; 2026 maintenance | Phase 1 closed-loop engine and surrogate extension |
+| GenGEO | Scientifically valuable; upstream code stale since 2021 | Phase 2 isolated modernization and water-based ORC pilot |
+| FGEM | Credible recent research software | Phase 2 hourly dispatch, storage, and market-value extension |
+| PyThermoNomics | Emerging, structured research package | Documented only; no implementation commitment |
+| REopt | Mature and active | Documented future whole-system connector |
+| reV | Mature and active | Documented future geospatial workflow |
+| dGeo | Important deployment-model lineage | Ecosystem reference only |
+| GETEM spreadsheet | Historical | Validation reference; current path is SAM |
 
-The intended outcome is not to declare GEOPHIRES-X the mandatory platform for other models. Rather, it is to make GEOPHIRES-X more capable of participating in modular community workflows while preserving independent governance, scientific transparency, and user choice.
+## Core architectural principles
 
-## Relationship to the existing SAM integration
+### 1. Capability-based extensions
 
-The SAM / PySAM integration in GEOPHIRES-X is a useful precedent, but the GenGEO case is different.
+Extensions should declare what they can calculate rather than inheriting directly from internal GEOPHIRES-X model classes.
 
-SAM is primarily used as a downstream financial-modeling engine. GEOPHIRES-X can calculate technical performance, pass outputs to SAM, and receive financial results.
+Example capabilities:
 
-GenGEO would sit closer to the engineering core. It could augment selected surface-plant, thermodynamic-cycle, and cost calculations before final economics. That makes the integration more sensitive to boundary conditions, units, supported plant modes, result semantics, runtime dependencies, and Monte Carlo performance.
-
-For that reason, the GenGEO integration should use an explicit execution contract and a separately managed worker runtime rather than a simple ad hoc function call.
-
-## Core architectural principle
-
-The web service, local user, and AWS batch deployment should all invoke the **same versioned execution worker and schemas**.
-
-```mermaid
-flowchart TB
-    A[GEOPHIRES web calculator] --> D[GEOPHIRES–GenGEO API and job manager]
-    B[Local Python or PyCharm] --> E[Local adapter or container]
-    C[User-controlled AWS workflow] --> F[AWS Batch job array]
-
-    D --> G[Versioned GEOPHIRES–GenGEO worker image]
-    E --> G
-    F --> G
-
-    G --> H[GEOPHIRES-X reservoir and wellbore calculation]
-    H --> I[Bridge: schema, units, support checks]
-    I --> J[GenGEO detailed calculation]
-    J --> K[Mapped result, provenance, diagnostics]
-    K --> L[Native versus GenGEO advisory comparison]
+```text
+reservoir.temperature_decline
+reservoir.pressure_drop
+wellbore.heat_loss
+wellbore.hydraulics
+plant.binary
+plant.flash
+plant.direct_heat
+plant.closed_loop
+plant.absorption_chiller
+economics.capex
+economics.project_finance
+operations.dispatch
+operations.storage
 ```
 
-The public hosted service is therefore one deployment of an open-source execution system, not the only place where the integration can run.
+Capability declarations allow the framework to reject unsupported combinations before execution.
 
-## Proposed execution modes
+### 2. Canonical case and result schemas
+
+The framework should define a versioned, JSON-compatible request/result schema with:
+
+- explicit SI units;
+- physical boundary definitions;
+- time basis and project lifetime;
+- financial convention identifiers;
+- optional references to large Parquet or HDF5 time-series artifacts;
+- schema migration and compatibility rules.
+
+The canonical schema is not required to expose every native input of every tool. It should represent the interoperable subset and allow adapter-specific extension fields where justified.
+
+### 3. Adapter-owned translations
+
+Each adapter should conceptually implement:
+
+```python
+class ExternalModelAdapter:
+    def capabilities(self) -> CapabilityManifest:
+        ...
+
+    def validate_case(self, case: CanonicalCase) -> ValidationResult:
+        ...
+
+    def translate_inputs(self, case: CanonicalCase) -> ExternalRequest:
+        ...
+
+    def run(self, request: ExternalRequest) -> ExternalRawResult:
+        ...
+
+    def normalize_outputs(self, result: ExternalRawResult) -> CanonicalResult:
+        ...
+
+    def provenance(self) -> ProvenanceRecord:
+        ...
+```
+
+GEOPHIRES-X core and the public calculator should not import external-model internals directly.
+
+### 4. Explicit execution modes
+
+The framework must distinguish among:
+
+#### Replacement
+
+A selected GEOPHIRES-X calculation is replaced by an external result.
+
+```text
+GEOPHIRES-X project model
+    -> external plant or finance calculation
+    -> normalized result returned to GEOPHIRES-X
+```
+
+#### Chained
+
+An external model consumes a completed GEOPHIRES-X profile.
+
+```text
+GEOPHIRES-X physical production profile
+    -> FGEM dispatch/storage/market model
+    -> hourly operation and revenue results
+```
+
+#### Parallel benchmark
+
+Multiple engines run independently and produce a comparison report.
+
+```text
+GEOPHIRES-X | PySAM | GeoCLUSTER | GenGEO
+                    -> normalized comparison
+```
+
+The mode must be explicit. The framework must not silently apply two plant, cost, or finance models to the same project boundary.
+
+### 5. Deployment-neutral execution
+
+The same schema and adapter contract should support:
+
+- in-process Python execution where dependencies are compatible;
+- subprocess execution;
+- local containers;
+- compiled SSC/PySAM wrappers;
+- remote HTTP services;
+- local multicore workers;
+- AWS Batch or equivalent institutional/cloud batch systems.
+
+The public hosted calculator should be the easiest entry point, but hosted execution should not be the only way to use an extension.
+
+### 6. Monte Carlo and batch compatibility
+
+Monte Carlo is a primary GEOPHIRES-X use case. The framework should support it from the foundation phase rather than retrofitting it later.
+
+The batch contract should include:
+
+- deterministic random seeds;
+- realization and chunk identifiers;
+- configurable chunk size;
+- persistent initialization within a worker where useful;
+- partial-failure reporting;
+- retry and resume behavior;
+- raw realization results;
+- aggregate statistics;
+- chunk-size invariance testing;
+- provenance for every result bundle.
+
+Threads should not be assumed safe for external engines. Independent processes or containers are preferred unless an engine is explicitly demonstrated to be thread-safe.
+
+### 7. Provenance as a first-class result
+
+Every external result should identify:
+
+- model and adapter name;
+- exact version and commit;
+- container image digest where applicable;
+- data-package version and checksum;
+- schema version;
+- capability and execution mode;
+- defaults applied;
+- unit conversions;
+- warnings and extrapolations;
+- whether results were simulated, interpolated, or retrieved;
+- random seed and batch metadata;
+- external-engine runtime and dependency versions.
+
+### 8. Native GEOPHIRES-X remains authoritative by default
+
+The first release of each adapter should operate in comparison or chained mode. Native GEOPHIRES-X should remain authoritative unless a user explicitly selects a validated replacement mode.
+
+Unsupported cases should:
+
+- fail validation before external execution;
+- clearly identify unsupported fields or modes;
+- fall back to native GEOPHIRES-X only when the user's policy permits it;
+- never silently change project boundaries.
+
+## Common validation corpus
+
+A shared golden-case library should include, as relevant to supported adapters:
+
+- hydrothermal binary plant;
+- hydrothermal flash plant;
+- EGS doublet;
+- direct-use heating;
+- cogeneration;
+- closed-loop water system;
+- closed-loop CO2 system when supported;
+- flexible generation with hourly market prices;
+- externally supplied reservoir-production profile;
+- campus heating/cooling case.
+
+For each case, retain:
+
+- original-tool inputs and results;
+- translated canonical inputs;
+- GEOPHIRES-X results;
+- output-specific tolerances;
+- mapping assumptions;
+- explanation of model-boundary differences;
+- expected numerical divergence where models are not physically equivalent.
+
+The objective is not forced agreement. It is transparent and explainable disagreement.
+
+## Phase 0 — Extension framework foundation
+
+### Goal
+
+Create the reusable interoperability foundation before coupling GEOPHIRES-X to any one external model.
+
+### Deliverables
+
+- canonical case and result schemas;
+- explicit SI-unit convention;
+- capability vocabulary and registry;
+- adapter discovery and version negotiation;
+- replacement, chained, and benchmark execution semantics;
+- standardized validation and unsupported-mode reporting;
+- local subprocess runner;
+- container runner;
+- batch request/result contract compatible with AWS Batch;
+- provenance record and compatibility manifest;
+- golden-case validation harness;
+- normalized comparative-results report;
+- extension documentation template;
+- licensing and distribution checklist;
+- reference adapter or mock engine for framework testing.
+
+### Acceptance criteria
+
+- A mock adapter can be discovered, validated, run, and compared with a native result.
+- The same canonical deterministic request can run locally and in a container.
+- A representative Monte Carlo request can be chunked and reconstructed reproducibly.
+- Unsupported capabilities fail before model execution with actionable diagnostics.
+- Provenance is sufficient to reproduce the calculation environment.
+- Native-only GEOPHIRES-X users do not install external dependencies.
+
+## Phase 1 — PySAM/SSC and GeoCLUSTER
+
+### PySAM/SSC workstream
+
+#### Initial supported scope
+
+- electricity generation;
+- hydrothermal and EGS cases supported by the selected SAM geothermal module;
+- binary and flash plant pathways where the input mapping is defensible;
+- selected SAM financial models;
+- advisory/benchmark mode first.
+
+#### Integration modes
+
+1. **Power-block mode:** GEOPHIRES-X provides produced-fluid state and flow.
+2. **Full SAM geothermal-project mode:** SAM executes its supported geothermal calculation.
+3. **Financial-postprocessor mode:** GEOPHIRES-X supplies production and cost time series to a selected SAM financial model.
+4. **Parallel benchmark mode:** native and SAM results are normalized and compared.
+
+#### Deliverables
+
+- PySAM/SSC adapter;
+- supported-version matrix and dependency pinning;
+- explicit input-boundary mapping document;
+- binary and flash golden cases;
+- selected financial-model mappings;
+- deterministic and Monte Carlo execution tests;
+- delta report for native versus SAM results;
+- documented treatment of GETEM-derived assumptions.
+
+#### Acceptance criteria
+
+- Supported PySAM cases reproduce direct PySAM reference runs within approved tolerances.
+- Financial outputs identify the selected SAM financial structure and assumptions.
+- Unsupported direct-use and other non-SAM cases are rejected clearly.
+- Version changes cannot be adopted without rerunning the compatibility suite.
+
+### GeoCLUSTER workstream
+
+#### Initial supported scope
+
+- closed-loop water cases;
+- selected well geometries present in both systems;
+- precomputed/surrogate queries;
+- on-demand semi-analytical calculations where programmatically available;
+- advisory comparison with GEOPHIRES-X SBT and U-loop calculations.
+
+#### Deliverables
+
+- GeoCLUSTER adapter;
+- data-package manifest with checksums;
+- surrogate/interpolation provenance fields;
+- geometry and operating-condition mapping document;
+- thermal-production and pumping output normalization;
+- closed-loop golden cases;
+- comparison report against native GEOPHIRES-X closed-loop models;
+- documented behavior outside the supported precomputed domain.
+
+#### Acceptance criteria
+
+- Every result states whether it was simulated, interpolated, or retrieved.
+- Data-package and model versions are independently identifiable.
+- Out-of-domain queries fail or invoke an approved dynamic calculation rather than extrapolating silently.
+- Native and GeoCLUSTER model-boundary differences are documented in comparison outputs.
+
+## Phase 2 — GenGEO and FGEM pilots
+
+### GenGEO modernization and integration pilot
+
+#### Rationale
+
+GenGEO offers useful coupled thermodynamic, reservoir, and cost calculations, but its upstream repository is based on a legacy Python environment and has not shown sustained maintenance since 2021. It therefore requires stricter isolation and validation than the Phase 1 engines.
+
+#### Initial supported scope
+
+- one water-based binary/ORC case family;
+- advisory benchmark mode;
+- native GEOPHIRES-X remains authoritative;
+- no direct code merge into GEOPHIRES-X;
+- CO2/CPG configurations deferred until the water-based adapter is validated.
+
+#### Deliverables
+
+- captured legacy GenGEO environment and golden results;
+- modernization specification and dependency inventory;
+- supported Python runtime or reproducible compatibility container;
+- installable package or stable batch entry point;
+- removal or isolation of shared mutable state, fixed paths, and shared temporary files;
+- GEOPHIRES-X-to-GenGEO adapter;
+- water-based ORC mapping document;
+- legacy-versus-modernized regression report;
+- GEOPHIRES-X/GenGEO comparison report;
+- licensing and governance decision for upstream contribution versus compatibility fork.
+
+#### Acceptance criteria
+
+- Legacy reference cases are preserved before modernization.
+- Modernized or containerized results match approved legacy tolerances.
+- Independent worker processes run safely in parallel.
+- Unsupported configurations are rejected explicitly.
+- LGPL code and source-availability obligations remain clearly separated from GEOPHIRES-X core.
+
+### FGEM operational extension pilot
+
+#### Rationale
+
+FGEM provides a distinctive hourly operational layer for flexible generation, storage, and market participation. Its best initial boundary is downstream of GEOPHIRES-X physical calculations rather than replacement of the full project model.
+
+#### Initial supported scope
+
+- GEOPHIRES-X hourly or representative production handoff;
+- flexible dispatch and curtailment;
+- thermal and battery storage where supported;
+- wholesale energy, capacity, environmental-credit, and PPA revenue streams;
+- chained mode as the default;
+- full-FGEM comparison only as an optional research mode.
+
+#### Deliverables
+
+- FGEM chained adapter;
+- time-series and market-input schema extensions;
+- physical-to-operational boundary document;
+- hourly dispatch and revenue output normalization;
+- storage state and constraint mapping;
+- flexible-operation golden cases;
+- comparison against baseload GEOPHIRES-X economics;
+- deterministic and batch execution tests.
+
+#### Acceptance criteria
+
+- Energy conservation and annual aggregation checks pass.
+- Revenue streams and market assumptions are explicit and separable.
+- Physical production limits from GEOPHIRES-X cannot be exceeded silently.
+- Storage state, efficiency, and losses are reported consistently.
+- Hourly outputs reproduce direct FGEM reference runs within approved tolerances.
+
+## Deployment posture
 
 ### Public hosted service
 
-The existing GEOPHIRES calculator should become the easiest entry point for ordinary users.
-
-A user could select:
+The public calculator may expose supported extensions through:
 
 - native GEOPHIRES-X;
-- GenGEO detailed calculation;
-- compare native GEOPHIRES-X and GenGEO.
+- selected external engine;
+- compare mode;
+- asynchronous batch or Monte Carlo jobs where operational limits allow.
 
-Small deterministic runs may be handled interactively. Larger Monte Carlo runs should be asynchronous jobs with status, progress, downloadable results, and resource limits.
+Unlimited anonymous cloud computation should not be assumed. Large studies may require quotas, authentication, or user-controlled cloud deployment.
 
 ### Local execution
 
-Advanced users should be able to run the same model from PyCharm, the command line, or a local container.
+Users should be able to run the same adapter and schema from:
 
-Local execution supports:
+- Python;
+- the command line;
+- a local container;
+- local multicore workers.
 
-- offline use;
-- confidential studies;
-- teaching environments;
-- local Monte Carlo;
-- exact reproduction of hosted results.
+This supports confidential studies, teaching, debugging, and exact reproduction of hosted results.
 
-The local interface may call the worker as a package or container, but should use the same request/result schema as the hosted service.
+### User-controlled batch execution
 
-### User-controlled cloud execution
-
-Researchers and project teams should be able to run the same worker in their own AWS accounts or institutional cloud environments.
-
-For AWS, the reference implementation should support:
+The Phase 0 contract should remain compatible with:
 
 - AWS Batch job arrays;
-- S3 input and output storage;
-- chunked realization processing;
-- retries and resume behavior;
-- optional Spot capacity;
-- fixed container image versions;
-- deterministic random seeds;
-- result aggregation.
+- S3-compatible input and output storage;
+- fixed container versions;
+- retries and resume;
+- optional Spot compute;
+- result aggregation;
+- infrastructure-as-code examples.
 
-This allows large studies without forcing users to send confidential or expensive jobs through the public service.
-
-## Monte Carlo as an MVP requirement
-
-Monte Carlo is a primary use case, not an optional optimization.
-
-The worker should avoid starting and initializing GenGEO for every realization. Instead, each worker process should initialize once and process a chunk of realizations.
-
-```text
-Worker starts
-  -> loads GEOPHIRES-X, bridge, and GenGEO once
-  -> processes realizations 1 through N
-  -> writes a result bundle
-  -> exits
-```
-
-For example, a 40,000-realization study could be divided into 200 jobs of 200 realizations each. The chunk size should be configurable based on runtime, memory, and failure-recovery needs.
-
-The MVP should include:
-
-- reproducible random seeds;
-- configurable chunk size;
-- persistent initialization within a worker;
-- local multicore execution;
-- batch execution contract;
-- partial-failure detection;
-- retry and resume support;
-- raw realization results;
-- aggregate statistics;
-- provenance for every result bundle.
-
-Threads should not be assumed safe. Independent worker processes or containers are preferred unless GenGEO is explicitly shown to be thread-safe.
-
-## GenGEO modernization workstream
-
-The current GenGEO repository documents an older Python and dependency environment. A public hosted integration should not depend indefinitely on that legacy runtime.
-
-A one-time modernization effort should therefore be included near the beginning of the project.
-
-Recommended modernization scope:
-
-1. upgrade GenGEO to a currently supported Python version, initially targeting Python 3.11;
-2. add a standard `pyproject.toml` package definition;
-3. update and lock supported versions of SciPy, pandas, CoolProp, and other dependencies;
-4. remove or isolate legacy spreadsheet dependencies where practical;
-5. expose a stable programmatic API for supported calculations;
-6. eliminate reliance on mutable module-level state, fixed filenames, repository-relative paths, and shared temporary files;
-7. make model instances safe for independent parallel worker processes;
-8. add deterministic batch-oriented entry points;
-9. add cross-platform and containerized regression tests;
-10. document numerical equivalence or expected numerical changes relative to the legacy version.
-
-The preferred outcome is a modernized GenGEO release maintained with, or accepted by, the GenGEO community. If upstream adoption is not immediately available, the project may need a clearly identified compatibility fork or bridge-specific branch, with governance and maintenance responsibilities made explicit.
-
-## Proposed integration boundary
-
-The initial integration boundary should remain after GEOPHIRES-X has computed the reservoir and wellbore state but before final surface-plant and economic reporting.
-
-| Scope item | Initial recommendation |
-|---|---|
-| End use | Electricity only |
-| Plant type | Water-based ORC first |
-| Calculation mode | Advisory side-by-side comparison |
-| Authoritative result | Native GEOPHIRES-X by default |
-| Unsupported cases | Explicitly report unsupported and fall back to native GEOPHIRES-X |
-| Monte Carlo | Required in MVP |
-| Public deployment | Existing hosted GEOPHIRES calculator |
-| Scalable deployment | Container worker and AWS Batch reference path |
-| Later expansion | CO₂ direct-power, selected cost override, explicit override mode |
-
-Direct heat, district heating, heat pumps, absorption chillers, flash plants, CHP configurations, and other advanced GEOPHIRES-X cases should remain native unless a clear GenGEO mapping is later approved.
-
-## Proposed execution contract
-
-A lightweight interface could be introduced conceptually as:
-
-```python
-class DetailedPlantEngine:
-    def supports(self, request) -> SupportResult:
-        """Return whether the requested case is supported."""
-
-    def evaluate(self, request: DetailedEngineRequest) -> DetailedEngineResult:
-        """Run one deterministic case."""
-
-    def evaluate_batch(self, request: DetailedBatchRequest) -> DetailedBatchResult:
-        """Run a reproducible chunk of Monte Carlo or parameter-sweep cases."""
-```
-
-The bridge should own GEOPHIRES-X-to-GenGEO mappings. GEOPHIRES-X core and the public web calculator should not import GenGEO internals directly.
-
-The contract should include:
-
-- schema version;
-- execution mode;
-- units;
-- input provenance;
-- random seed and sampling metadata;
-- chunk identifier;
-- worker and container version;
-- GEOPHIRES-X version;
-- GenGEO version or commit;
-- bridge version;
-- warnings and unsupported-mode reasons.
-
-## Web-service behavior
-
-The public service should distinguish between interactive and batch workloads.
-
-### Interactive endpoint
-
-Suitable for:
-
-- one deterministic run;
-- native-versus-GenGEO comparison;
-- very small Monte Carlo studies.
-
-### Asynchronous job endpoint
-
-Suitable for:
-
-- large Monte Carlo studies;
-- parameter sweeps;
-- classroom workloads;
-- long-running analyses.
-
-The asynchronous interface should support:
-
-- job submission;
-- job status;
-- progress reporting;
-- cancellation where practical;
-- durable result storage;
-- downloadable CSV and JSON outputs;
-- expiration and retention policy;
-- quotas and rate limits;
-- clear error reporting.
-
-Unlimited anonymous cloud Monte Carlo should not be assumed. The public service may reasonably offer free deterministic and small batch runs while directing large studies toward authenticated quotas or bring-your-own-cloud deployment.
-
-## AWS reference architecture
-
-A practical reference deployment could use:
-
-- a container registry such as GitHub Container Registry or Amazon ECR;
-- the existing web-service platform or ECS/Fargate for API and interactive jobs;
-- AWS Batch for large Monte Carlo job arrays;
-- S3 for inputs, intermediate bundles, and outputs;
-- a job-status database or existing service database;
-- CloudWatch for logs and metrics;
-- GitHub Actions for image build, testing, and publication;
-- Terraform, AWS CDK, or another open infrastructure-as-code implementation.
-
-The reference deployment should not require that all users adopt AWS. The container and schema should remain portable to other clouds, institutional clusters, and local systems.
-
-## Advisory mode before override mode
-
-The first working release should not replace native GEOPHIRES-X calculations. It should report:
-
-- native GEOPHIRES-X result;
-- GenGEO-backed result;
-- absolute and percentage deltas;
-- mapping assumptions;
-- warnings and unsupported fields;
-- runtime and version provenance.
-
-Only after regression testing and community review should an explicit override mode be considered.
+This proposal does not require every adapter to ship an AWS deployment in its first implementation. It requires the framework contract not to prevent one.
 
 ## Licensing and dependency posture
 
-GEOPHIRES-X is MIT-licensed. GenGEO is LGPL-licensed. This does not prevent interoperation, but it argues against casually copying GenGEO into GEOPHIRES-X core.
+GEOPHIRES-X is MIT-licensed. The candidate tools use different licenses and distribution models.
 
-The recommended posture is:
+The framework should:
 
-- keep the GenGEO codebase and license identity clear;
-- keep the bridge and worker open source;
-- publish source corresponding to distributed worker images;
-- avoid making hosted execution the only access path;
-- provide local and user-controlled deployment options;
-- document all third-party dependencies and versions;
+- preserve external license identity;
+- avoid casual source copying into GEOPHIRES-X core;
+- use process or container boundaries for LGPL/GPL tools where appropriate;
+- publish source corresponding to distributed images when required;
+- document all third-party dependencies and dataset terms;
+- separate code licenses from data-package licenses;
 - conduct a formal license review before production distribution.
 
 This proposal is not legal advice.
 
-## Technical risks
+## Principal risks
 
 | Risk | Concern | Mitigation |
 |---|---|---|
-| Legacy runtime | Current GenGEO environment is old for public hosting | Modernization workstream and regression testing |
-| Unit mismatch | GEOPHIRES-X accepts flexible user units | Canonical SI bridge schema with explicit conversion tests |
-| Unsupported mode drift | GEOPHIRES-X covers more end uses than GenGEO | Narrow supported-mode matrix and explicit fallback |
-| Numerical differences | Simplified and detailed models may diverge | Advisory mode, golden cases, documented assumptions |
-| Monte Carlo overhead | Reinitializing GenGEO for every realization wastes compute | Persistent worker initialization and chunked batches |
-| Parallel safety | Shared mutable state could corrupt results | Independent processes or containers and concurrency tests |
-| Public cloud cost | Anonymous large jobs could create uncontrolled expense | Quotas, rate limits, async jobs, and bring-your-own-cloud path |
-| Reproducibility | Hosted, local, and AWS results could drift | Same worker image, schemas, seeds, and compatibility matrix |
-| Maintenance burden | Multiple repositories and release cadences | Explicit ownership, pinned compatibility, CI, and release policy |
-| Over-generalization | A universal plugin system could become too abstract | Implement only abstractions demonstrated by the GenGEO MVP |
+| Framework over-design | A generic API could become too abstract before real adapters exist | Build Phase 0 with a mock adapter, then harden it through Phase 1 |
+| Unit and boundary mismatch | Similar fields may represent different physical boundaries | Canonical SI schema, explicit boundary documents, conversion tests |
+| Double counting | Two plant, cost, or finance models may be applied to one boundary | Explicit replacement/chained/benchmark modes |
+| External version drift | Upstream updates may change results | Pin versions, maintain compatibility matrices, rerun golden cases |
+| Dataset drift | GeoCLUSTER or other data assets may change independently | Data manifests, checksums, immutable version references |
+| Legacy GenGEO runtime | Old dependencies complicate hosting and security | Compatibility container, modernization pilot, regression suite |
+| Monte Carlo overhead | Reinitialization may dominate runtime | Persistent worker initialization and chunked execution |
+| Parallel safety | Research tools may use global state or shared files | Independent processes/containers and parallel-safety tests |
+| Licensing | LGPL/GPL and dataset terms may constrain packaging | External boundaries and formal license review |
+| False precision | Detailed models may appear more authoritative than validated | Advisory mode first, uncertainty reporting, documented limits |
+| Maintenance burden | GEOPHIRES-X maintainers could inherit unsupported external code | Adapter ownership, capability manifests, optional dependencies |
 
-## Testing strategy
+## Governance
 
-The integration should have its own test suite covering:
+Each adapter should identify:
 
-1. request and result schema validation;
-2. unit conversions;
-3. supported and unsupported mode detection;
-4. deterministic golden cases;
-5. native-versus-GenGEO delta reports;
-6. legacy-versus-modernized GenGEO regression cases;
-7. batch reproducibility from fixed random seeds;
-8. chunking invariance, where equivalent studies produce equivalent results regardless of chunk size;
-9. retry and resume behavior;
-10. local multicore execution;
-11. container execution;
-12. hosted API smoke tests;
-13. AWS Batch reference-deployment smoke tests;
-14. failure modes, timeouts, invalid thermodynamic states, and partial result bundles.
+- technical owner;
+- upstream project and contact path;
+- supported versions;
+- release and deprecation policy;
+- validation owner;
+- security-update process;
+- license and data terms;
+- expected response when the upstream project becomes inactive.
 
-## Proposed MVP
+A tool should not be treated as a permanently supported extension merely because an experimental adapter exists.
 
-The first milestone should be a **web-capable, Monte Carlo-capable compare-only MVP**.
+## Out of scope for this PR
 
-Required deliverables:
+The following are not implementation commitments in PR #32:
 
-- modernized GenGEO runtime on a supported Python version;
-- versioned request/result schemas;
-- containerized GEOPHIRES–GenGEO worker;
-- water-based ORC support;
-- deterministic advisory comparison;
-- Monte Carlo batch interface;
-- persistent initialization within each worker;
-- local multicore execution;
-- asynchronous web-job interface;
-- public calculator integration for deterministic and appropriately limited batch runs;
-- AWS Batch reference deployment;
-- raw and aggregated outputs;
-- explicit unsupported-mode fallback;
-- version and provenance reporting.
+- PyThermoNomics/OPM integration;
+- REopt campus or hybrid optimization;
+- reV regional supply-curve workflows;
+- dGeo market-adoption modeling;
+- a generalized shallow-geothermal component library;
+- mandatory external-engine override behavior;
+- CO2/CPG GenGEO integration before the water-based pilot passes;
+- a commitment to indefinite hosting of third-party engines;
+- any Phase 3 or later roadmap.
 
-Success criteria:
+## Decision requested
 
-- at least three deterministic golden cases run locally and through the hosted-service path;
-- a representative Monte Carlo study runs reproducibly locally and on AWS Batch;
-- changing chunk size does not materially change statistical results;
-- failed chunks can be retried without rerunning successful chunks;
-- unsupported cases remain native GEOPHIRES-X;
-- hosted, local, and AWS runs use the same worker image and schemas;
-- numerical differences from legacy GenGEO are understood and documented;
-- no GenGEO dependency is required for users who select native GEOPHIRES-X only.
+The community is asked to decide whether to proceed with the bounded three-phase program:
 
-## Proposed GitHub workflow
+1. establish the reusable extension framework;
+2. implement PySAM/SSC and GeoCLUSTER as the first supported adapters;
+3. pilot GenGEO and FGEM under stricter isolation and validation requirements.
 
-This effort should continue as a discussion PR before full project formalization.
-
-Once the community agrees to proceed, enable Issues and create scoped work items for:
-
-- GenGEO modernization;
-- supported-mode matrix;
-- request/result schemas;
-- container worker;
-- Monte Carlo and chunking;
-- hosted-service integration;
-- AWS reference deployment;
-- golden cases and regression tests;
-- licensing and governance;
-- documentation and public release.
-
-A GitHub Project becomes useful once these workstreams have owners and accepted scope.
-
-## Decision requested from the community
-
-The requested decision is whether the GEOPHIRES-X community is interested in exploring an open-source, web-capable, Monte Carlo-capable GenGEO integration built around a portable execution worker.
-
-The decision includes whether the community supports:
-
-- a one-time GenGEO modernization effort;
-- the public GEOPHIRES calculator as the primary public deployment;
-- local and user-controlled cloud deployment as equal open-source access paths;
-- Monte Carlo and AWS portability as MVP requirements;
-- GenGEO as the first implementation of a modest external-engine contract.
-
-If yes, the next step is to define the supported-mode matrix, modernization acceptance tests, schemas, deployment boundary, and ownership model before production implementation.
-
-## Initial open questions
-
-1. Who currently operates and maintains the hosted GEOPHIRES calculator, and what deployment constraints already exist?
-2. Should the worker image contain both GEOPHIRES-X and GenGEO, or should the service orchestrate separate images?
-3. Can the GenGEO community accept and maintain the modernization changes upstream?
-4. What Python version should be the first supported target?
-5. Which existing GEOPHIRES-X examples should become deterministic and Monte Carlo golden cases?
-6. What Monte Carlo chunk sizes and concurrency limits are appropriate for local and hosted execution?
-7. What free public-service limits are reasonable?
-8. Should large public-web studies export a ready-to-run AWS package or submit directly into a user-owned AWS account?
-9. What retention, privacy, and confidentiality policies are needed for hosted studies?
-10. Which GenGEO outputs could later be eligible for explicit override mode?
-11. Who owns long-term worker-image, bridge, and cloud-reference maintenance?
-12. What is the minimum reusable external-engine abstraction that supports this work without prematurely designing a universal plugin system?
-
-## Recommendation
-
-Proceed with a web-service-oriented but deployment-neutral design.
-
-Build a modernized, containerized GenGEO execution worker that serves the existing GEOPHIRES web calculator, supports efficient Monte Carlo through persistent chunked workers, and can run unchanged on a laptop, in the public hosted service, or in a user's AWS account.
-
-Do not make the public service the only execution path. Open source availability requires that the same worker remain runnable locally and in user-controlled infrastructure.
-
-## References
-
-- Darnet, M., Vedrine, S., Bretaudeau, F., et al. (2026). *Towards a multi-physics multi-scale approach of deep geothermal exploration*. **Geothermal Energy**. https://doi.org/10.1186/s40517-026-00392-7
-- GEOPHIRES-X repository and documentation: https://github.com/NatLabRockies/GEOPHIRES-X
-- GenGEO repository: https://github.com/GEG-ETHZ/genGEO
+This sequence provides immediate value from mature tools, creates an independent validation ecosystem, and tests the framework against both compiled software, large scientific datasets, legacy Python research code, and hourly operational models—without committing GEOPHIRES-X to an unlimited integration roadmap.
