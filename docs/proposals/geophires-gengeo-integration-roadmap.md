@@ -1,212 +1,246 @@
 # GEOPHIRES–GenGEO Integration Roadmap
 
-This roadmap supports the companion proposal: `docs/proposals/geophires-gengeo-integration-proposal.md`.
+This roadmap supports `docs/proposals/geophires-gengeo-integration-proposal.md`.
 
-The roadmap is intentionally lightweight. It is meant to help the GEOPHIRES-X community discuss scope before committing to implementation.
+The roadmap now assumes a **web-service-oriented, deployment-neutral architecture** with Monte Carlo, containerization, and AWS portability included in the MVP.
 
-## Phase 0 — Community discussion
+## Phase 0 — Community alignment
 
-**Goal:** Decide whether the concept is worth exploring.
+**Goal:** Decide whether the community supports the revised direction.
 
-**Deliverables:**
+**Questions to resolve:**
 
-- Proposal PR opened for review.
-- Parent tracking issue created.
-- Initial comments from GEOPHIRES-X and GenGEO stakeholders.
-- Decision on whether the bridge should live in this repository or a separate repository.
+- Is GenGEO modernization acceptable and who should own it?
+- Can the hosted GEOPHIRES calculator support asynchronous jobs?
+- Should the worker contain both GEOPHIRES-X and GenGEO?
+- Is AWS Batch the appropriate reference deployment for large studies?
+- What public-service limits and governance are acceptable?
 
 **Exit criteria:**
 
-- There is agreement on whether to proceed to a narrow specification phase.
-- A maintainer or small working group is identified.
+- Agreement to proceed to specification.
+- Initial working group identified.
+- Existing hosted-service owner and constraints identified.
 
-## Phase 1 — Interoperability specification
+## Phase 1 — GenGEO modernization specification
 
-**Goal:** Define the bridge before writing production code.
+**Goal:** Define the minimum work needed to move GenGEO to a supported runtime without changing scientific results unintentionally.
 
 **Deliverables:**
 
-- Supported-mode matrix.
-- Request schema.
-- Result schema.
-- Unit convention.
-- Error convention.
-- Advisory-report format.
-- Initial golden-case list.
+- target Python version, initially evaluating Python 3.11;
+- dependency inventory and upgrade plan;
+- standard package structure and `pyproject.toml` design;
+- stable programmatic entry point;
+- parallel-safety assessment;
+- legacy regression-case inventory;
+- upstream contribution or compatibility-fork decision.
 
-**Recommended initial scope:**
+**Exit criteria:**
 
-- electricity-only use case;
+- Modernization scope approved.
+- Legacy reference results captured.
+- Ownership and repository strategy agreed.
+
+## Phase 2 — Interoperability and execution specification
+
+**Goal:** Define the contract shared by hosted, local, and AWS execution.
+
+**Deliverables:**
+
+- supported-mode matrix;
+- deterministic request/result schemas;
+- Monte Carlo batch request/result schemas;
+- canonical unit convention;
+- provenance and compatibility fields;
+- error and unsupported-mode conventions;
+- chunking, seed, retry, and resume conventions;
+- advisory-report format;
+- initial deterministic and Monte Carlo golden cases.
+
+**Recommended initial modeling scope:**
+
+- electricity only;
 - water-based ORC only;
-- advisory mode only;
-- no required GenGEO dependency in GEOPHIRES-X core;
+- advisory comparison only;
+- native GEOPHIRES-X remains authoritative;
 - fallback to native GEOPHIRES-X for unsupported cases.
 
 **Exit criteria:**
 
-- Schema is stable enough for prototype implementation.
-- At least three candidate golden cases are selected.
-- Unsupported cases are explicitly defined.
+- Schemas stable enough for implementation.
+- Monte Carlo behavior specified.
+- At least three deterministic cases and one representative Monte Carlo case selected.
 
-## Phase 2 — Compare-only bridge MVP
+## Phase 3 — Modernized GenGEO runtime
 
-**Goal:** Demonstrate that GEOPHIRES-X boundary conditions can be mapped into a GenGEO-backed calculation and reported side-by-side.
+**Goal:** Produce a supported, testable GenGEO runtime suitable for public hosting and batch execution.
 
 **Deliverables:**
 
-- Minimal bridge runner.
-- Request/result JSON files.
-- Unit-normalization tests.
-- Advisory result comparison.
-- Clear unsupported-mode handling.
-
-**Non-goals:**
-
-- No override of GEOPHIRES-X results.
-- No broad mode coverage.
-- No attempt to vendor GenGEO into GEOPHIRES-X.
+- current supported Python runtime;
+- updated dependencies;
+- installable package;
+- stable API;
+- removal or isolation of fixed paths, shared temporary files, and mutable global state;
+- deterministic batch entry point;
+- cross-platform and container regression tests;
+- documented numerical comparison with legacy GenGEO.
 
 **Exit criteria:**
 
-- Supported case runs end-to-end.
-- Unsupported cases fall back cleanly.
-- Results are reproducible locally.
-- The community can inspect GEOPHIRES-X versus GenGEO deltas.
+- Golden GenGEO cases pass within approved tolerances.
+- Independent worker processes run safely in parallel.
+- Container build succeeds reproducibly.
 
-## Phase 3 — Validation and golden cases
+## Phase 4 — Containerized compare-only worker MVP
 
-**Goal:** Determine whether advisory-mode results are credible enough to justify deeper integration.
+**Goal:** Build one execution worker usable by every deployment mode.
 
 **Deliverables:**
 
-- Golden-case test suite.
-- Field-level numerical tolerances.
-- Delta reports for low-, medium-, and high-temperature ORC cases.
-- Documentation of known differences in modeling assumptions.
+- versioned container image;
+- GEOPHIRES-X-to-GenGEO mapper;
+- deterministic `evaluate` endpoint or command;
+- batch `evaluate_batch` endpoint or command;
+- native-versus-GenGEO advisory comparison;
+- full provenance in outputs;
+- explicit unsupported-mode fallback.
+
+**Exit criteria:**
+
+- Supported deterministic case runs end-to-end.
+- Same request gives equivalent results locally and in CI.
+- Native-only GEOPHIRES users require no GenGEO installation.
+
+## Phase 5 — Monte Carlo MVP
+
+**Goal:** Make uncertainty analysis efficient and reproducible from the first public release.
+
+**Deliverables:**
+
+- persistent worker initialization;
+- configurable realization chunking;
+- local multicore process pool;
+- deterministic random seeds;
+- raw realization output;
+- aggregate statistics;
+- partial-failure detection;
+- chunk retry and resume;
+- chunk-size invariance tests;
+- performance benchmarks.
+
+**Exit criteria:**
+
+- Representative Monte Carlo study runs without reinitializing GenGEO for every realization.
+- Equivalent seeds produce equivalent results locally and in containers.
+- Failed chunks can be rerun independently.
+- Performance is suitable for teaching and project use.
+
+## Phase 6 — Hosted calculator integration
+
+**Goal:** Make GenGEO available through the existing public GEOPHIRES interface.
+
+**Deliverables:**
+
+- native / GenGEO / compare selection;
+- synchronous deterministic execution;
+- asynchronous batch-job submission;
+- job status and progress;
+- downloadable CSV and JSON results;
+- retention and expiration rules;
+- quotas, rate limits, and cost controls;
+- security and validation controls;
+- operational logging and monitoring.
+
+**Exit criteria:**
+
+- Public deterministic run works end-to-end.
+- Limited public Monte Carlo works asynchronously.
+- Large anonymous jobs are prevented or redirected.
+- Hosted results match the versioned worker's local results.
+
+## Phase 7 — AWS reference deployment
+
+**Goal:** Allow research and project users to run large studies in their own AWS accounts.
+
+**Deliverables:**
+
+- AWS Batch job definition;
+- job-array and chunk orchestration;
+- S3 input/output conventions;
+- result aggregation;
+- retry and resume workflow;
+- optional Spot-compute guidance;
+- least-privilege IAM guidance;
+- infrastructure as code using Terraform, AWS CDK, or equivalent;
+- deployment and teardown documentation;
+- optional “prepare AWS run package” workflow from the public calculator.
+
+**Exit criteria:**
+
+- Representative Monte Carlo study runs reproducibly in AWS Batch.
+- Successful chunks are preserved across retries.
+- Results can be compared directly with local and hosted runs.
+- Deployment can be recreated from the public repository.
+
+## Phase 8 — Validation and community review
+
+**Goal:** Decide whether advisory results are scientifically and operationally credible enough for supported release.
+
+**Deliverables:**
+
+- deterministic golden-case suite;
+- Monte Carlo reproducibility suite;
+- legacy-versus-modernized GenGEO report;
+- hosted/local/AWS equivalence report;
+- performance and cost benchmarks;
+- modeling-assumption documentation;
+- compatibility matrix.
 
 **Exit criteria:**
 
 - Numerical differences are understood and documented.
-- CI or documented reproducibility workflow exists.
-- Maintainers decide whether override mode should be piloted.
+- Runtime and deployment differences do not alter results beyond accepted tolerances.
+- Maintainers decide whether explicit override mode should be considered.
 
-## Phase 4 — Optional override pilot
+## Phase 9 — Optional override pilot
 
-**Goal:** Allow explicit, limited use of selected GenGEO-backed outputs in GEOPHIRES-X economics/reporting.
+**Goal:** Allow explicit, limited use of selected GenGEO outputs in GEOPHIRES-X economics and reporting.
 
-**Potential override fields:**
+**Potential fields:**
 
 - net electric power;
 - gross electric power;
 - parasitic load;
 - cycle efficiency;
-- selected plant-cost fields.
+- selected plant-cost outputs.
 
 **Rules:**
 
-- Override mode must be explicit.
-- Native GEOPHIRES-X remains the default.
-- Unsupported or failed bridge runs must fall back to native GEOPHIRES-X unless the user requests fail-closed behavior.
-- Reports must clearly state when external-engine outputs were used.
-
-**Exit criteria:**
-
-- Override mode passes golden-case tests.
-- Reports include provenance.
-- Maintainers agree on user-facing documentation.
-
-## Phase 5 — Productization decision
-
-**Goal:** Decide whether this becomes a supported GEOPHIRES-X feature.
-
-**Options:**
-
-1. Keep as experimental external bridge.
-2. Maintain as optional plugin package.
-3. Add a formal external-engine hook to GEOPHIRES-X core.
-4. Defer or close if the maintenance burden is not justified.
+- Override is explicit, never default.
+- Native GEOPHIRES-X remains available.
+- Failed or unsupported GenGEO runs fall back or fail closed according to user policy.
+- Reports identify every overridden field and its provenance.
 
 ## Suggested issue breakdown
 
-### Issue 1 — Define supported-mode matrix
-
-Scope:
-
-- Identify which GEOPHIRES-X cases can be mapped to GenGEO.
-- Start with water-based ORC electricity cases.
-- Explicitly list unsupported modes.
-
-Acceptance criteria:
-
-- Markdown table of supported and unsupported modes.
-- First-pass list of required GEOPHIRES-X parameters.
-- First-pass list of required GenGEO inputs.
-
-### Issue 2 — Define bridge request/result schema
-
-Scope:
-
-- Create JSON schema or dataclass definitions.
-- Include units and provenance.
-- Define error codes.
-
-Acceptance criteria:
-
-- Versioned request schema.
-- Versioned result schema.
-- Example request and result files.
-
-### Issue 3 — Identify golden cases
-
-Scope:
-
-- Select existing GEOPHIRES-X examples suitable for ORC comparison.
-- Define expected output fields.
-- Define tolerances.
-
-Acceptance criteria:
-
-- Three or more candidate cases selected.
-- Each case includes input file, native GEOPHIRES-X result, and expected bridge fields.
-
-### Issue 4 — Build compare-only bridge prototype
-
-Scope:
-
-- Build a prototype that runs outside GEOPHIRES-X core.
-- Accept request JSON.
-- Return result JSON.
-- Produce advisory comparison.
-
-Acceptance criteria:
-
-- One supported case runs end-to-end.
-- Unsupported case fails cleanly.
-- No GenGEO dependency is added to GEOPHIRES-X core.
-
-### Issue 5 — Licensing and dependency review
-
-Scope:
-
-- Document MIT/LGPL interaction.
-- Decide whether subprocess, sidecar, package, or container is preferred.
-- Document installation implications.
-
-Acceptance criteria:
-
-- Written license/dependency note.
-- Maintainer decision on acceptable runtime boundary.
-
-### Issue 6 — Decide whether to create a GitHub Project
-
-Scope:
-
-- Revisit once Issues 1–5 have initial agreement.
-
-Acceptance criteria:
-
-- If implementation proceeds, create a GitHub Project with columns such as Backlog, Spec, Prototype, Validation, Review, Done.
-- If implementation does not proceed, close as not planned with rationale.
+1. Document hosted GEOPHIRES calculator architecture and operator constraints.
+2. Define GenGEO modernization scope and legacy regression cases.
+3. Decide upstream contribution versus compatibility fork.
+4. Define supported-mode matrix.
+5. Define deterministic and batch schemas.
+6. Build modernized GenGEO package.
+7. Build containerized compare-only worker.
+8. Implement persistent Monte Carlo worker and chunking.
+9. Implement local multicore execution.
+10. Integrate synchronous hosted execution.
+11. Integrate asynchronous hosted jobs.
+12. Define public quotas, retention, and cost controls.
+13. Build AWS Batch reference deployment.
+14. Build golden-case and equivalence test suites.
+15. Complete licensing and governance review.
+16. Decide whether to pilot override mode.
 
 ## Suggested labels
 
@@ -214,13 +248,26 @@ Acceptance criteria:
 - `integration`
 - `GenGEO`
 - `architecture`
+- `web-service`
+- `monte-carlo`
+- `aws`
+- `container`
+- `modernization`
 - `testing`
 - `licensing`
 - `external-engine`
 - `advisory-mode`
 
-## Project-board recommendation
+## GitHub Project recommendation
 
-Do not create a GitHub Project yet.
+A GitHub Project is still premature until the community accepts the revised architecture and identifies owners for the modernization, worker, hosted-service, and AWS workstreams.
 
-A GitHub Project will be useful after the community agrees to proceed beyond the proposal stage. Until then, a parent tracking issue plus a small number of scoped issues is enough and avoids over-formalizing a concept that may still change substantially.
+Once those decisions are made, a Project would be useful with views or workstreams for:
+
+- GenGEO modernization;
+- schemas and interoperability;
+- execution worker;
+- Monte Carlo;
+- hosted service;
+- AWS reference deployment;
+- validation and release.
