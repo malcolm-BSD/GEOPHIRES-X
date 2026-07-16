@@ -474,7 +474,16 @@ class HipRaXTestCase(BaseTestCase):
         with self.assertRaises(ValueError):
             HipRaInputParameters(1)
 
-    def _new_hip_ra_test_instance(self, enable_hip_ra_logging_config=False, pre_re_stash_runner=None) -> HIP_RA_X:
+    def test_area_acre(self):
+        result: HipRaResult = HipRaXClient().get_hip_ra_x_result(
+            HipRaInputParameters(self._get_test_file_path('hip-ra-x-area-acres.txt'))
+        )
+
+        self.assertEqual('km**2', result.result['SUMMARY OF INPUTS']['Reservoir Area']['unit'])
+        self.assertAlmostEqual(444.9, result.result['SUMMARY OF INPUTS']['Reservoir Area']['value'], places=1)
+
+    @staticmethod
+    def _new_hip_ra_test_instance(enable_hip_ra_logging_config=False, pre_re_stash_runner=None) -> HIP_RA_X:
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
 

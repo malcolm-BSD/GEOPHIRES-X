@@ -14,6 +14,7 @@ from forex_python.converter import CurrencyRates, CurrencyCodes
 
 from abc import ABC
 
+from pint import UndefinedUnitError
 from pint.facets.plain import PlainQuantity
 
 from geophires_x.OptionList import GeophiresInputEnum
@@ -947,8 +948,13 @@ def LookupUnits(sUnitText: str):
                     return item, uType
 
     # No match was found with the unit text string, so try with the canonical symbol (if different).
-    symbol = _ureg.get_symbol(sUnitText)
-    if symbol != sUnitText: return LookupUnits(symbol)
+    try:
+        symbol = _ureg.get_symbol(sUnitText)
+        if symbol != sUnitText:
+            return LookupUnits(symbol)
+    except UndefinedUnitError as _uue:
+        return sUnitText, uType
+
     return None, None
 
 
