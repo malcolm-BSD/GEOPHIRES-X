@@ -50,6 +50,7 @@ logger = logging.getLogger("root")  # TODO should be getting __name__ logger ins
 logger.setLevel(logging.INFO)
 pb: Optional[Any] = None
 MC_BASE_SEED = 12345
+MC_MAX_WORKERS_ENV_VAR = "GEOPHIRES_MONTE_CARLO_MAX_WORKERS"
 
 _INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
 _WINDOWS_RESERVED_FILENAMES = {
@@ -76,6 +77,37 @@ _WINDOWS_RESERVED_FILENAMES = {
     "LPT8",
     "LPT9",
 }
+
+
+def get_monte_carlo_max_workers(iterations: int) -> int:
+    """
+    Return a safe number of parallel Monte Carlo workers.
+
+    Windows workers launch an additional Python subprocess for each simulation.
+    Keeping the default pool small prevents simultaneous SciPy and CoolProp DLL
+    loads from exhausting the Windows paging file. Set
+    GEOPHIRES_MONTE_CARLO_MAX_WORKERS to a positive integer to override the
+    platform default.
+    """
+    cpu_worker_limit = max(1, (os.cpu_count() or 1) - 1)
+    default_worker_limit = 2 if os.name == "nt" else cpu_worker_limit
+    configured_worker_limit = default_worker_limit
+    configured_value = os.getenv(MC_MAX_WORKERS_ENV_VAR)
+
+    if configured_value is not None:
+        try:
+            configured_worker_limit = int(configured_value)
+            if configured_worker_limit < 1:
+                raise ValueError
+        except ValueError:
+            logger.warning(
+                "Ignoring invalid %s=%r; expected a positive integer.",
+                MC_MAX_WORKERS_ENV_VAR,
+                configured_value,
+            )
+            configured_worker_limit = default_worker_limit
+
+    return min(max(1, iterations), cpu_worker_limit, configured_worker_limit)
 
 
 def clean_filename(filename: str, fallback: str = "output") -> str:
@@ -1149,7 +1181,8 @@ def main(command_line_args=None, enable_geophires_monte_carlo_logging_config: bo
     ]
 
     with tqdm(total=iterations, desc="Finished processes", unit="iteration") as pbar:
-        max_workers = max(1, (os.cpu_count() or 1) - 1)
+        max_workers = get_monte_carlo_max_workers(iterations)
+        logger.info("Running Monte Carlo simulations with %s worker(s)", max_workers)
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(work_package, arg): arg for arg in executor_args}
             for future in concurrent.futures.as_completed(futures):

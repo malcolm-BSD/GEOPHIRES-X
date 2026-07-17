@@ -4,6 +4,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -13,11 +14,24 @@ from geophires_monte_carlo import MonteCarloResult
 from geophires_monte_carlo import SimulationProgram
 from geophires_monte_carlo.MC_GeoPHIRES3 import add_missing_tornado_input_columns
 from geophires_monte_carlo.MC_GeoPHIRES3 import clean_filename
+from geophires_monte_carlo.MC_GeoPHIRES3 import get_monte_carlo_max_workers
 from geophires_monte_carlo.MC_GeoPHIRES3 import read_numeric_input_file_values
 from tests.base_test_case import BaseTestCase
 
 
 class GeophiresMonteCarloTestCase(BaseTestCase):
+    def test_get_monte_carlo_max_workers_limits_windows_processes(self):
+        with patch("geophires_monte_carlo.MC_GeoPHIRES3.os.name", "nt"):
+            with patch("geophires_monte_carlo.MC_GeoPHIRES3.os.cpu_count", return_value=12):
+                with patch.dict(os.environ, {}, clear=True):
+                    self.assertEqual(2, get_monte_carlo_max_workers(10))
+
+    def test_get_monte_carlo_max_workers_honors_environment_override(self):
+        with patch("geophires_monte_carlo.MC_GeoPHIRES3.os.name", "nt"):
+            with patch("geophires_monte_carlo.MC_GeoPHIRES3.os.cpu_count", return_value=12):
+                with patch.dict(os.environ, {"GEOPHIRES_MONTE_CARLO_MAX_WORKERS": "3"}, clear=True):
+                    self.assertEqual(3, get_monte_carlo_max_workers(10))
+
     def test_clean_filename_removes_unusable_characters(self):
         self.assertEqual(
             "Flow Rate - Well 1 - low-high",
