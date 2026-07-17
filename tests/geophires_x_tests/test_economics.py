@@ -10,10 +10,12 @@ import numpy_financial as npf
 # ruff: noqa: I001  # Successful module initialization is dependent on this specific import order.
 from geophires_x.Model import Model
 from geophires_x.Economics import CalculateFinancialPerformance
+from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import (
     GeophiresXResult,
     GeophiresXClient,
     GeophiresInputParameters,
+    ImmutableGeophiresInputParameters,
 )
 from tests.base_test_case import BaseTestCase
 
@@ -114,6 +116,16 @@ class EconomicsTestCase(BaseTestCase):
     def test_indirect_cost_factor(self) -> None:
         self.assertEqual(1.12, self._new_model().economics._indirect_cost_factor)
 
+    def test_daily_time_steps_per_year_are_accepted(self) -> None:
+        model = self._new_model()
+        model.InputParameters = {
+            "Time steps per year": ParameterEntry(Name="Time steps per year", sValue="365"),
+        }
+
+        model.economics.read_parameters(model)
+
+        self.assertEqual(365, model.economics.timestepsperyear.value)
+
     def test_peaking_boiler_cost(self):
         def _get_result(peaking_boiler_cost_: int) -> GeophiresXResult:
             return GeophiresXClient().get_geophires_result(
@@ -134,6 +146,70 @@ class EconomicsTestCase(BaseTestCase):
         lcoh, peaking_boiler_cost = _lcoh_pbc(_get_result(0))
         self.assertLess(lcoh, 13.19)
         self.assertEqual(0, peaking_boiler_cost)
+
+    def test_stimulation_cost_per_fracture_surface_area(self):
+        def _get_result() -> GeophiresXResult:
+            return GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("generic-egs-case-5_no-stim-costs-specified.txt"),
+                    params={
+                        "Reservoir Stimulation Capital Cost per Production Well": -1,
+                        "Reservoir Stimulation Capital Cost per Fracture Surface Area": 0.87431693989,
+                        "Print Output to Console": True,
+                    },
+                )
+            )
+
+        r: GeophiresXResult = _get_result()
+
+        cap_costs = r.result["CAPITAL COSTS (M$)"]
+        self.assertAlmostEqual(454.02, cap_costs["Stimulation costs"]["value"], delta=0)
+
+        self.assertAlmostEqual(4.83, cap_costs["Stimulation costs per well"]["value"], delta=0)
+
+    def test_stimulation_cost_per_fracture_surface_area_injection_only(self):
+        r: GeophiresXResult = GeophiresXClient().get_geophires_result(
+            ImmutableGeophiresInputParameters(
+                from_file_path=self._get_test_file_path("generic-egs-case-5_no-stim-costs-specified.txt"),
+                params={
+                    "Reservoir Stimulation Capital Cost per Fracture Surface Area": 0.87431693989,
+                    "Print Output to Console": True,
+                },
+            )
+        )
+
+        cap_costs = r.result["CAPITAL COSTS (M$)"]
+
+        # Total cost should remain identical, but injection wells absorb 100% of the cost.
+        self.assertAlmostEqual(184, cap_costs["Stimulation costs"]["value"], places=0)
+        self.assertIsNone(cap_costs["Stimulation costs per well"])
+
+    def test_stimulation_cost_mutually_exclusive_validation(self):
+        with self.assertRaises(RuntimeError) as context:
+            GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("generic-egs-case-5_no-stim-costs-specified.txt"),
+                    params={
+                        "Reservoir Stimulation Capital Cost per Fracture Surface Area": 0.87431693989,
+                        "Reservoir Stimulation Capital Cost per Injection Well": 5,
+                    },
+                )
+            )
+        self.assertIn("Cannot provide both", str(context.exception))
+
+    def test_stimulation_cost_invalid_negative_production_cost(self):
+        with self.assertRaises(RuntimeError) as context:
+            GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("generic-egs-case-5_no-stim-costs-specified.txt"),
+                    params={
+                        "Reservoir Stimulation Capital Cost per Production Well": -5,
+                    },
+                )
+            )
+        self.assertIn(
+            " Reservoir Stimulation Capital Cost per Production Well outside of valid range", str(context.exception)
+        )
 
     # noinspection PyMethodMayBeStatic
     def _new_model(

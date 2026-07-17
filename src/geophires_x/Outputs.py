@@ -597,4 +597,3 @@ class Outputs:
             return
         dispatch_profile_output_file = _resolve_output_path(self.dispatch_profile_output_file.value, model)
         write_dispatch_profile_output(model, dispatch_profile_output_file)
-

@@ -1009,6 +1009,9 @@ class EconomicsSamTestCase(BaseTestCase):
                 "Drilling and completion costs per vertical production well",
                 "Drilling and completion costs per vertical injection well",
                 "Drilling and completion costs per non-vertical section",
+                "Stimulation costs per well",
+                "Stimulation costs per production well",
+                "Stimulation costs per injection well",
             ]:
                 capex_line_item_sum += quantity(capex_line_item["value"], capex_line_item["unit"]).to(total_capex_unit)
 
@@ -1384,6 +1387,99 @@ class EconomicsSamTestCase(BaseTestCase):
             )
 
         self.assertIn("CHP Electrical Plant Cost Allocation Ratio is required", str(re.exception))
+
+    def test_state_itc_amount(self):
+        def _get_result(state_itc_amount_musd: float, fed_itc_rate_frac: float = 0.0) -> GeophiresXResult:
+            return GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("generic-egs-case-2_sam-single-owner-ppa.txt"),
+                    params={
+                        "State Investment Tax Credit Amount": state_itc_amount_musd,
+                        "Investment Tax Credit Rate": fed_itc_rate_frac,
+                        "Construction Years": 1,
+                    },
+                )
+            )
+
+        def _itc_output_vu(r: GeophiresXResult) -> dict[str, float]:
+            return r.result["ECONOMIC PARAMETERS"]["Investment Tax Credit"]
+
+        def _itc_output_q(r: GeophiresXResult) -> dict[str, float]:
+            itc_vu = _itc_output_vu(r)
+            return quantity(itc_vu["value"], itc_vu["unit"])
+
+        r_state_itc_amount_only = _get_result(4)
+
+        line_item = "State ITC amount income ($)"
+        cash_flow_row = self._get_cash_flow_row(r_state_itc_amount_only.result["SAM CASH FLOW PROFILE"], line_item)
+        self.assertEqual(4_000_000, cash_flow_row[1])
+        self.assertEqual(quantity(4, "MUSD"), _itc_output_q(r_state_itc_amount_only))
+
+        r_fed_itc_rate_only = _get_result(0, 0.3)
+        fed_itc_rate_only_q = _itc_output_q(r_fed_itc_rate_only)
+
+        r_fed_itc_rate_and_state_itc_amount = _get_result(4, 0.3)
+        self.assertEqual(
+            _itc_output_q(r_state_itc_amount_only) + fed_itc_rate_only_q,
+            _itc_output_q(r_fed_itc_rate_and_state_itc_amount),
+        )
+
+    def test_other_incentives_one_time_flat_fees_and_total_grants(self):
+        def _assert_occ_plus_modifiers_equals_total_capex(_r: GeophiresXResult) -> None:
+            with open(_r.output_file_path, encoding="utf-8") as f:
+                lines = f.readlines()
+
+            is_parsing = False
+            occ_val = 0.0
+            total_capex_val = 0.0
+            intermediate_sum = 0.0
+
+            for line in lines:
+                clean_line = line.strip()
+
+                if clean_line.startswith("Overnight Capital Cost:"):
+                    is_parsing = True
+                    occ_val = float(clean_line.split(":")[1].replace("MUSD", "").strip())
+                    continue
+
+                if is_parsing:
+                    if clean_line.startswith("Total CAPEX:"):
+                        total_capex_val = float(clean_line.split(":")[1].replace("MUSD", "").strip())
+                        break
+
+                    if ":" in clean_line:
+                        val_str = clean_line.split(":")[1].replace("MUSD", "").strip()
+                        try:
+                            intermediate_sum += float(val_str)
+                        except ValueError:
+                            pass
+
+            self.assertAlmostEqual(
+                occ_val + intermediate_sum,
+                total_capex_val,
+                places=2,
+                msg="Total CAPEX should be the sum of OCC and all intermediate items (e.g., inflation, interest, incentives)",
+            )
+
+        _assert_occ_plus_modifiers_equals_total_capex(
+            GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("other-incentives-and-one-time-flat-fees.txt"),
+                    params={
+                        # 'Print Output to Console': True,
+                    },
+                )
+            )
+        )
+
+        _assert_occ_plus_modifiers_equals_total_capex(
+            GeophiresXClient().get_geophires_result(
+                ImmutableGeophiresInputParameters(
+                    from_file_path=self._get_test_file_path("other-incentives-and-one-time-flat-fees.txt"),
+                    params={"Print Output to Console": True, "One-time Grants Etc": 50},
+                )
+            )
+        )
 
     @staticmethod
     def _new_model(

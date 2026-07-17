@@ -5,6 +5,19 @@ Changelog
 GEOPHIRES v3 (2023-2026)
 ------------------------
 
+3.15
+^^^^
+
+3.15.3: `Acre unit support (HIP-RA-X Reservoir Area) <https://github.com/NatLabRockies/GEOPHIRES-X/pull/512>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.15.3>`__
+
+3.15: `Calculate S-DAC carbon revenue (BICYCLE); Reservoir Stimulation Capital Cost per Fracture Surface Area <https://github.com/NREL/GEOPHIRES-X/pull/510>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.15.2>`__ | **Changed:** S-DAC carbon revenue is now calculated. See `the tracking issue <https://github.com/NatLabRockies/GEOPHIRES-X/issues/341>`__ for details.
+
+3.14
+^^^^
+
+3.14: `Well integrity parameterization to trigger redrilling; Drawdown Parameter Schedule; Input params CSV unit and comment parsing; State ITC Amount; SAM-EM Other Incentives and One-time Grants fix; Stimulation costs per well outputs <https://github.com/NatLabRockies/GEOPHIRES-X/pull/502>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.14.1>`__ | **Changed:** SAM Economic Models inputs with Other Incentives and One-time Grants Etc parameters now calculate Overnight Capital Cost and Total CAPEX correctly. See `the tracking issue <https://github.com/NatLabRockies/GEOPHIRES-X/issues/504>`__ for details.
+
+
 3.13
 ^^^^
 

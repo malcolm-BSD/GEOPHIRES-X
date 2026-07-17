@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import math
 import os
+import math
 import tempfile
 import uuid
 from pathlib import Path
@@ -184,9 +184,12 @@ class GeophiresXTestCase(BaseTestCase):
                 )
                 # TOUGH not enabled for testing - see https://github.com/NREL/GEOPHIRES-X/issues/318
                 and not example_file_path_.startswith(("example6.txt", "example7.txt"))
+                #and it makes no sense to try to run some of the other artifacts that can creep into the test directory
                 and ".out" not in example_file_path_
                 and ".json" not in example_file_path_
-                and ".csv" not in example_file_path_,
+                and ".csv" not in example_file_path_
+                and "*.png" not in example_file_path_
+                and "*.html" not in example_file_path_,
                 self._list_test_files_dir(test_files_dir="examples"),
             )
         )
@@ -224,6 +227,12 @@ class GeophiresXTestCase(BaseTestCase):
 
                 self._sanitize_nan(geophires_result)
                 self._sanitize_nan(expected_result)
+                geophires_result: GeophiresXResult = self._sanitize_nan(
+                    self._strip_metadata(client.get_geophires_result(input_params))
+                )
+                expected_result: GeophiresXResult = self._sanitize_nan(
+                    self._strip_metadata(GeophiresXResult(get_output_file_for_example(example_file_path)))
+                )
 
                 try:
                     self.assertDictEqual(

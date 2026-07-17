@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 import os
 import inspect
 import re
@@ -9,14 +10,21 @@ from typing import Dict, Iterable, List, Union
 import pint
 
 
+from pint import RedefinitionError
+
 _UREG = None
+
+_log = logging.getLogger(__name__)
 
 
 def get_unit_registry():
     global _UREG
     if _UREG is None:
         _UREG = pint.get_application_registry()
-        _UREG.load_definitions(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'GEOPHIRES3_newunits.txt'))
+        try:
+            _UREG.load_definitions(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'GEOPHIRES3_newunits.txt'))
+        except RedefinitionError as rde:
+            _log.warning(f'Encountered RedefinitionError when attempting to load unit definitions: {rde}')
 
     return _UREG
 
@@ -85,6 +93,7 @@ class Units(IntEnum):
     INFLATION_RATE = auto()
     DYNAMIC_VISCOSITY = auto()
     COSTPERVOLUME = auto()
+    COSTPERAREA = auto()
 
 
 class AngleUnit(str, Enum):
@@ -134,6 +143,7 @@ class AreaUnit(str, Enum):
     FEET2 = "ft**2"
     INCHES2 = "in**2"
     MILES2 = "mi**2"
+    ACRES = 'acre'
 
 
 class VolumeUnit(str, Enum):
@@ -248,6 +258,15 @@ class CostPerDistanceUnit(str, Enum):
 class CostPerVolumeUnit(str, Enum):
     DOLLARSPERMETERS3 = "USD/m**3"
 
+
+class CostPerAreaUnit(str, Enum):
+    DOLLARSPERMETERS2 = "USD/m**2"
+
+    def get_currency_unit_str(self) -> str:
+        return self.value.split('/')[0]
+
+    def get_area_unit_str(self) -> str:
+        return self.value.split('/')[1]
 
 class PressureUnit(str, Enum):
     """Pressure Units"""

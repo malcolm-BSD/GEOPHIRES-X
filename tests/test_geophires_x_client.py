@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import csv
+import json
 import tempfile
 import uuid
 from pathlib import Path
@@ -561,18 +564,19 @@ class GeophiresXClientTestCase(BaseTestCase):
                 "S-DAC-GT Annual Cost (USD/yr)",
                 "S-DAC-GT Cumm. Cash Flow (USD)",
                 "Cumm. Cost Per Tonne (USD/tonne)",
+                "Annual Carbon Revenue (USD/yr)",
             ],
         )
 
         # Values below need to be synchronized if S-DAC-GT example output values change.
-        self.assertEqual([1, 78330.8, 78330.8, 17411627.98, 17411627.98, 222.28], sdacgt_profile[1])
+        self.assertEqual([1, 78330.8, 78330.8, 17411627.98, 17411627.98, 222.28, 14099544.46], sdacgt_profile[1])
 
         self.assertEqual(
-            [15, 76263.89, 1167207.48, 16952186.81, 259450710.33, 222.28],
+            [15, 76263.89, 1167207.48, 16952186.81, 259450710.33, 222.28, 13727499.34],
             sdacgt_profile[15],
         )
 
-        self.assertEqual([30, 68860.68, 2253170.17, 15306577.89, 500842063.38, 222.28], sdacgt_profile[30])
+        self.assertEqual([30, 68860.68, 2253170.17, 15306577.89, 500842063.38, 222.28, 12394922.28], sdacgt_profile[30])
 
     def test_parse_economic_model(self):
         result = GeophiresXResult(self._get_test_file_path("examples/example3.out"))
@@ -612,6 +616,15 @@ class GeophiresXClientTestCase(BaseTestCase):
 
         self.assertEqual(start_cwd, Path.cwd())
 
+    def _assert_fpc5_input_dict_csv(self, parse_units_and_comments: bool):
+        with open(self._get_test_file_path("fpc5-input-params-dict.json"), encoding="utf-8") as f:
+            fpc5_input_dict = json.loads(f.read())
+
+            fpc_input_dict_as_csv = ImmutableGeophiresInputParameters(params=fpc5_input_dict).as_csv(
+                parse_units_and_comments=parse_units_and_comments
+            )
+            self.assertEqual(len(fpc5_input_dict.keys()), len(fpc_input_dict_as_csv.splitlines()))
+
     def test_csv_with_input_parameters(self):
         with self.assertRaises(NotImplementedError):
             # This should fail because CSV from file path is not implemented.
@@ -638,3 +651,29 @@ class GeophiresXClientTestCase(BaseTestCase):
         result_file = Path(tempfile.gettempdir(), f"geophires-result_{uuid.uuid1()!s}.csv")
         with open(result_file, "w", newline="", encoding="utf-8") as rf:
             rf.write(csv_result)
+
+        self._assert_fpc5_input_dict_csv(parse_units_and_comments=False)
+
+    def test_csv_with_input_parameters_parse_units_and_comments(self):
+        csv_input_with_units_and_comments = ImmutableGeophiresInputParameters(
+            params={
+                "_COMMENT-0": "# My parameters",
+                "Reservoir Depth": "3000 m",
+                "Gradient 1": 50,
+                "End-Use Option": "1, -- Direct-Use Heat",
+                "Construction CAPEX Schedule": "0.014,0.027,0.139,0.431,0.389",
+                "Drawdown Parameter Schedule": "0.003,0.001,0.0 * 10,0.001 * 3,0.002 * 3,0.003 * 3,0.004 * 3,0.005 * 4,0.006, -- No drawdown for first 10 years, then 0.005/year",
+            }
+        ).as_csv(parse_units_and_comments=True)
+
+        # Export the CSV for testing in Excel (or other spreadsheet software).
+        result_file = Path(tempfile.gettempdir(), f"geophires-result_{uuid.uuid1()!s}.csv")
+        with open(result_file, "w", newline="", encoding="utf-8") as rf:
+            rf.write(csv_input_with_units_and_comments)
+
+        self.assertIsNotNone(csv_input_with_units_and_comments)
+        self.assertCsvFileContentsEqual(
+            self._get_test_file_path("input-parameters-with-parsed-units-and-comments.csv"), result_file
+        )
+
+        self._assert_fpc5_input_dict_csv(parse_units_and_comments=True)
