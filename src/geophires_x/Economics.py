@@ -490,6 +490,7 @@ class Economics:
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS,
+            auto_raise_exception_on_invalid_read=True,
             ToolTipText=f'Reservoir stimulation capital cost per production well {before_stim_modifiers_note}'
                         f'{stimulation_cost_per_production_well_default_value_note}'
         )

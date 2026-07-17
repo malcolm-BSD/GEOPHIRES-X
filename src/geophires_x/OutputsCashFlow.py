@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from io import TextIOWrapper
 from typing import TYPE_CHECKING
 
@@ -12,6 +13,34 @@ if TYPE_CHECKING:
     from geophires_x.Model import Model
 
 NL = "\n"
+
+
+def _carbon_revenue_outputs(model: Model):
+    econ = model.economics
+    carbon_price = copy.deepcopy(econ.CarbonPrice)
+    carbon_revenue = copy.deepcopy(econ.CarbonRevenue)
+    cumulative_carbon_revenue = copy.deepcopy(econ.CarbonCummCashFlow)
+
+    if econ.DoSDACGTCalculations.value:
+        construction_years = model.surfaceplant.construction_years.value
+
+        carbon_revenue = copy.deepcopy(model.sdacgteconomics.CarbonRevenue)
+        carbon_revenue.value = [*([0] * construction_years), *carbon_revenue.value]
+
+        cumulative_carbon_revenue = copy.deepcopy(model.sdacgteconomics.CarbonCummCashFlow)
+        cumulative_carbon_revenue.value = [
+            *([0] * construction_years),
+            *cumulative_carbon_revenue.value,
+        ]
+
+        for sdac_output, economics_output in (
+            (carbon_revenue, econ.CarbonRevenue),
+            (cumulative_carbon_revenue, econ.CarbonCummCashFlow),
+        ):
+            sdac_output.value = sdac_output.quantity().to(economics_output.CurrentUnits).magnitude
+            sdac_output.CurrentUnits = economics_output.CurrentUnits
+
+    return carbon_price, carbon_revenue, cumulative_carbon_revenue
 
 
 def _dispatch_report_year_count(model: Model, default: int | None = None) -> int | None:
@@ -42,6 +71,7 @@ def _filter_dispatch_cashflow_rows(table: pd.DataFrame, model: Model) -> pd.Data
 
 def revenue_and_cashflow_profile_table(model: Model) -> pd.DataFrame:
     econ = model.economics
+    carbon_price, carbon_revenue, cumulative_carbon_revenue = _carbon_revenue_outputs(model)
     coam = np.zeros(model.surfaceplant.construction_years.value + model.surfaceplant.plant_lifetime.value)
     for ii in range(model.surfaceplant.construction_years.value, model.surfaceplant.plant_lifetime.value + 1):
         coam[ii] = econ.Coam.value
@@ -71,13 +101,13 @@ def revenue_and_cashflow_profile_table(model: Model) -> pd.DataFrame:
     cashflow[
         f"Cooling:Cumm. Rev. ({econ.CoolingCummRevenue.CurrentUnits.value})|:5.2f"
     ] = econ.CoolingCummRevenue.value
-    cashflow[f"Carbon:Price ({econ.CarbonPrice.CurrentUnits.value})|:7.4f"] = econ.CarbonPrice.value
-    cashflow[f"Carbon:Ann. Rev. ({econ.CarbonRevenue.CurrentUnits.value})|:5.2f"] = (
-        econ.CarbonRevenue.value
+    cashflow[f"Carbon:Price ({carbon_price.CurrentUnits.value})|:7.4f"] = carbon_price.value
+    cashflow[f"Carbon:Ann. Rev. ({carbon_revenue.CurrentUnits.value})|:5.2f"] = (
+        carbon_revenue.value
     )
     cashflow[
-        f"Carbon:Cumm. Rev. ({econ.CarbonCummCashFlow.CurrentUnits.value})|:5.2f"
-    ] = econ.CarbonCummCashFlow.value
+        f"Carbon:Cumm. Rev. ({cumulative_carbon_revenue.CurrentUnits.value})|:5.2f"
+    ] = cumulative_carbon_revenue.value
     cashflow[f"Project:OPEX ({econ.Coam.CurrentUnits.value})|:5.2f"] = coam
     cashflow[f"Project:Net Rev. ({econ.TotalRevenue.CurrentUnits.value})|:5.2f"] = econ.TotalRevenue.value
     cashflow[f"Project:Net Cashflow ({econ.TotalCummRevenue.CurrentUnits.value})|:5.2f"] = (
@@ -111,6 +141,8 @@ def write_revenue_and_cashflow_profile_output(model: Model, f: TextIOWrapper) ->
         else:
             return output_param
 
+    carbon_price, carbon_revenue, cumulative_carbon_revenue = _carbon_revenue_outputs(model)
+
     f.write(
         "Start    ("
         + o(econ.ElecPrice).CurrentUnits.value
@@ -131,11 +163,11 @@ def write_revenue_and_cashflow_profile_output(model: Model, f: TextIOWrapper) ->
         + ")    ("
         + o(econ.CoolingCummRevenue).CurrentUnits.value
         + ")    |("
-        + o(econ.CarbonPrice).CurrentUnits.value
+        + o(carbon_price).CurrentUnits.value
         + ")    ("
-        + o(econ.CarbonRevenue).CurrentUnits.value
+        + o(carbon_revenue).CurrentUnits.value
         + ")    ("
-        + o(econ.CarbonCummCashFlow).CurrentUnits.value
+        + o(cumulative_carbon_revenue).CurrentUnits.value
         + ")    |("
         + o(econ.Coam).CurrentUnits.value
         + ") ("
@@ -170,7 +202,7 @@ def write_revenue_and_cashflow_profile_output(model: Model, f: TextIOWrapper) ->
             else ii - model.surfaceplant.construction_years.value + 1
         )
         f.write(
-            f"{display_year:3.0f}     {o(econ.ElecPrice).value[ii]:5.2f}          {o(econ.ElecRevenue).value[ii]:5.2f}  {o(econ.ElecCummRevenue).value[ii]:5.2f}     |   {o(econ.HeatPrice).value[ii]:5.2f}    {o(econ.HeatRevenue).value[ii]:5.2f}        {o(econ.HeatCummRevenue).value[ii]:5.2f}    |   {o(econ.CoolingPrice).value[ii]:5.2f}    {o(econ.CoolingRevenue).value[ii]:5.2f}        {o(econ.CoolingCummRevenue).value[ii]:5.2f}     |   {o(econ.CarbonPrice).value[ii]:5.2f}    {o(econ.CarbonRevenue).value[ii]:5.2f}        {o(econ.CarbonCummCashFlow).value[ii]:5.2f}     | {opex:5.2f}     {o(econ.TotalRevenue).value[ii]:5.2f}     {o(econ.TotalCummRevenue).value[ii]:5.2f}\n"
+            f"{display_year:3.0f}     {o(econ.ElecPrice).value[ii]:5.2f}          {o(econ.ElecRevenue).value[ii]:5.2f}  {o(econ.ElecCummRevenue).value[ii]:5.2f}     |   {o(econ.HeatPrice).value[ii]:5.2f}    {o(econ.HeatRevenue).value[ii]:5.2f}        {o(econ.HeatCummRevenue).value[ii]:5.2f}    |   {o(econ.CoolingPrice).value[ii]:5.2f}    {o(econ.CoolingRevenue).value[ii]:5.2f}        {o(econ.CoolingCummRevenue).value[ii]:5.2f}     |   {o(carbon_price).value[ii]:5.2f}    {o(carbon_revenue).value[ii]:5.2f}        {o(cumulative_carbon_revenue).value[ii]:5.2f}     | {opex:5.2f}     {o(econ.TotalRevenue).value[ii]:5.2f}     {o(econ.TotalCummRevenue).value[ii]:5.2f}\n"
         )
     f.write(NL)
 

@@ -2058,7 +2058,7 @@
       "category": "Economics",
       "default": 4,
       "minimum": 1,
-      "maximum": 100
+      "maximum": 8760
     },
     "Fixed Charge Rate": {
       "description": "Fixed charge rate (FCR) used in the Fixed Charge Rate Model",

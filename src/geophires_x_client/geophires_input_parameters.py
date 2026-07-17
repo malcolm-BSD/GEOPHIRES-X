@@ -10,11 +10,15 @@ from io import StringIO
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
+from typing import Dict
+from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Union
 
 from typing_extensions import override
+
+from geophires_x.ParameterUtils import COMMENT_PARAMETER_NAME_PREFIX
 
 
 class EndUseOption(Enum):
@@ -252,9 +256,58 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
                 return os.path.join(os.path.abspath(os.path.dirname(__file__)), str(file_name))
 
             with open(_get_file_path("../geophires_x_schema_generator/geophires-request.json"), encoding="utf-8") as f:
-                _ = json.loads(f.read())
+                request_schema: Dict[str, Any] = json.loads(f.read())
 
         f = StringIO()
         w = csv.writer(f)
-        w.writerows([["INPUT PARAMETERS", key, "", value, ""] for key, value in self.params.items()])
+
+        def _row_entries(param_name: str, param_value_raw: str) -> List[str]:
+            if not parse_units_and_comments:
+                # Preserve the existing five-column export contract unless the
+                # caller explicitly requests the new comments column.
+                return ["INPUT PARAMETERS", param_name, "", param_value_raw, ""]
+
+            value_entry = (str(param_value_raw) if param_value_raw is not None else "").strip()
+            units_entry = ""
+            comment_entry = ""
+
+            if param_name.startswith(COMMENT_PARAMETER_NAME_PREFIX):
+                comment_entry = param_value_raw
+                value_entry = ""
+            elif parse_units_and_comments:
+                param_schema = request_schema["properties"].get(param_name, {param_name: {}})
+                is_array_type = param_schema.get("type") == "array"
+
+                value_non_value_split = (
+                    value_entry.split(" ", maxsplit=1) if not is_array_type else value_entry.split(", --", maxsplit=1)
+                )
+                value_entry = value_non_value_split[0].rstrip(",").rstrip()
+                remainder = value_non_value_split[1] if len(value_non_value_split) > 1 else ""
+
+                default_units_for_param = param_schema.get("units", "")
+
+                if is_array_type:
+                    comment_entry = remainder.lstrip() if remainder else ""
+                    units_entry = default_units_for_param
+                else:
+                    unit_and_comment_split = remainder.split(" --", maxsplit=1) if remainder else [""]
+                    units_part = unit_and_comment_split[0]
+                    if units_part.lstrip().startswith("--"):
+                        comment_entry = units_part.lstrip()[2:].lstrip()
+                        units_entry = default_units_for_param
+                    else:
+                        units_entry = units_part if units_part != "" else default_units_for_param
+                        if len(unit_and_comment_split) > 1:
+                            comment_entry = unit_and_comment_split[1].lstrip()
+
+            return [
+                "INPUT PARAMETERS",
+                param_name,
+                "",
+                value_entry,
+                units_entry,
+                comment_entry,
+            ]
+
+        w.writerows([_row_entries(key, value) for key, value in self.params.items()])
         return f.getvalue()

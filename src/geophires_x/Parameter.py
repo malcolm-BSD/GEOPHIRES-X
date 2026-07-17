@@ -479,6 +479,7 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     # then the first thing to do is to see if the user has specified a list, URL or a File,
     # and if so, the first thing we need to do is read the content of that file or URL and use it as the value for this parameter
     # instead of the original value, which is just a string that is the filename or URL
+    extended_input_loaded = False
     if ParamToModify.AllowExtendedInput:
         seems_like_file = seems_like_URL = False
         content = ""
@@ -487,6 +488,7 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             if content:
                 seems_like_URL = True
                 ParameterReadIn.sValue = content
+                extended_input_loaded = True
         else:
             resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
             if resolved_source != ParameterReadIn.sValue:
@@ -496,6 +498,7 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
                 if content:
                     seems_like_file = True
                     ParameterReadIn.sValue = content
+                    extended_input_loaded = True
                 else:
                     seems_like_file = False
         # if the file or URL is provided but not valid, log an error and raise an exception
@@ -544,8 +547,32 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
 
     # List Parameter and Timeseries List (since it is a child of list)
     elif isinstance(ParamToModify, listParameter):
-        # if it is a list, replace the list is a text for with a list as a python list
-        pair_vector = parse_container_string_simple(ParameterReadIn.sValue, ParamToModify, model)
+        # ParameterEntry.sValue only retains the first CSV field for some legacy
+        # inputs, so prefer the complete right-hand side when it is available.
+        list_source = (
+            ParameterReadIn.sValue
+            if extended_input_loaded
+            else (_raw_input_rhs(ParameterReadIn.raw_entry) or ParameterReadIn.sValue)
+        )
+        try:
+            pair_vector = parse_container_string_simple(list_source, ParamToModify, model)
+        except TypeError:
+            # A one-value schedule is still a valid list.
+            try:
+                scalar_value = ast.literal_eval(list_source.strip())
+            except (ValueError, SyntaxError):
+                scalar_value = list_source.strip()
+            pair_vector = [scalar_value]
+
+        # The bare-CSV parser represents a single row as a nested list. List
+        # parameters treat the cells in that row as the individual values.
+        if (
+            isinstance(pair_vector, list)
+            and len(pair_vector) == 1
+            and isinstance(pair_vector[0], list)
+        ):
+            pair_vector = pair_vector[0]
+
         if pair_vector is None:
             pair_vector = _try_read_pair_vector(ParameterReadIn, param_to_modify=ParamToModify, model=model)
         if pair_vector is None:
@@ -910,10 +937,6 @@ def _is_historical_array_candidate(parameter_read_in: ParameterEntry, param_to_m
 
 def _try_read_pair_vector(parameter_read_in: ParameterEntry, param_to_modify=None, model=None) -> Optional[np.ndarray]:
     candidates = []
-
-    #rhs = _raw_input_rhs(parameter_read_in.raw_entry)
-    #if rhs is not None:
-    #    candidates.append(rhs)
 
     # If the string, make a list out of it
     if isinstance(parameter_read_in.sValue, str):

@@ -305,6 +305,9 @@ class GeophiresXResult:
                 "Drilling and completion costs (for redrilling)",
                 "Drilling and completion costs per redrilled well",
                 "Stimulation costs",
+                "Stimulation costs per well",
+                "Stimulation costs per production well",
+                "Stimulation costs per injection well",
                 "Stimulation costs (for redrilling)",
                 "Surface power plant costs",
                 "of which Electrical Plant Cost",
@@ -312,16 +315,36 @@ class GeophiresXResult:
                 "of which Absorption Chiller Cost",
                 "of which Heat Pump Cost",
                 "of which Peaking Boiler Cost",
+                _AliasedField(
+                    "Transmission/pipeline Cost", ["Transmission/pipeline Cost", "Transmission pipeline cost"]
+                ),
                 "District Heating System Cost",
                 "Field gathering system costs",
                 "Total surface equipment costs",
                 "TESS capital costs",
                 "Investment Tax Credit",
                 "One-time Flat License Fees Etc",
-                "Other Incentives",
-                "One-time Grants Etc",
                 "Total Add-on CAPEX",
                 "Overnight Capital Cost",
+                # Displayed for economic models that treat inflation costs as capital costs (SAM-EM)
+                "Inflation costs during construction",
+                "Royalty supplemental payments during construction",
+                "Interest during construction",
+                "Other Incentives",
+                "One-time Grants Etc",
+                "Total capital costs",
+                "Annualized capital costs",
+                # AGS/CLGS
+                "Total CAPEX",
+                "Drilling Cost",
+                # SUTRA
+                "Drilling and Completion Costs",
+                "Drilling and Completion Costs per Well",
+                "Drilling and completion costs per production well",
+                "Drilling and completion costs per injection well",
+                "Auxiliary Heater Cost",
+                "Pump Cost",
+                "Total Capital Costs",
             ],
             "OPERATING AND MAINTENANCE COSTS (M$/yr)": [
                 "Wellfield maintenance costs",
@@ -1098,12 +1121,6 @@ class GeophiresXResult:
                 "S-DAC-GT Cumm. Cash Flow (USD)",
                 "Cumm. Cost Per Tonne (USD/tonne)",
                 "Annual Carbon Revenue (USD/yr)",
-                "Year Since Start",
-                "Carbon Captured (tonne/yr)",
-                "Cumm. Carbon Captured (tonne)",
-                "S-DAC-GT Annual Cost (USD/yr)",
-                "S-DAC-GT Cumm. Cash Flow (USD)",
-                "Cumm. Cost Per Tonne (USD/tonne)",
             ]
 
         try:

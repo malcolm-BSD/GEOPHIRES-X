@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Units import (
     Units,
@@ -304,69 +306,6 @@ def expand_schedule_dsl(schedule_strings: list[str | float], total_years: int) -
     Deprecated, call ParameterUtils.expand_schedule_dsl
     """
 
-    from geophires_x.ParameterUtils import expand_schedule_dsl
-    if total_years <= 0:
-        return []
+    from geophires_x.ParameterUtils import expand_schedule_dsl as _expand_schedule_dsl
 
-    schedule_strings = _normalize_schedule_dsl_segments(schedule_strings)
-
-    if not schedule_strings:
-        return [0.0] * total_years
-
-    segments: list[tuple[float, int | None]] = []
-    for raw in schedule_strings:
-        raw = str(raw).strip()
-        if SCHEDULE_DSL_MULTIPLIER_SYMBOL in raw:
-            parts = raw.split(SCHEDULE_DSL_MULTIPLIER_SYMBOL)
-            if len(parts) != 2:
-                raise ValueError(f'Invalid schedule segment "{raw}": expected "<value> * <years>".')
-
-            val_raw = parts[0].strip()
-            if not is_float(val_raw):
-                raise ValueError(f'Invalid schedule segment "{raw}": "{val_raw}" is not a float.')
-            value = float(val_raw)
-            if value < 0:
-                raise ValueError(f'Invalid schedule segment "{raw}": {val_raw} is negative.')
-
-            years_raw = parts[1].strip()
-            if not is_int(years_raw):
-                raise ValueError(f'Invalid schedule segment "{raw}": "{years_raw}" is not an int.')
-
-            years = int(years_raw)
-            if years < 0:
-                raise ValueError(f'Invalid schedule segment "{raw}": year count must be non-negative.')
-            segments.append((value, years))
-        else:
-            if not is_float(raw):
-                raise ValueError(f'Invalid schedule segment "{raw}": "{raw}" is not a float.')
-
-            value = float(raw)
-            segments.append((value, None))
-
-    result: list[float] = []
-    terminal_value = 0.0
-
-    for idx, (value, years) in enumerate(segments):
-        is_last = idx == len(segments) - 1
-        if years is not None:
-            result.extend([value] * years)
-            terminal_value = value
-        else:
-            if is_last:
-                terminal_value = value
-            else:
-                result.append(value)
-                terminal_value = value
-
-    if len(result) > total_years:
-        raise ValueError(
-            f'Invalid schedule: Schedule expands to {len(result)} years ' f'which exceeds total_years={total_years}.'
-        )
-
-    return expand_schedule_dsl(schedule_strings, total_years)
-    remaining = total_years - len(result)
-    if remaining > 0:
-        result.extend([terminal_value] * remaining)
-
-    return result
-import ast
+    return _expand_schedule_dsl(_normalize_schedule_dsl_segments(schedule_strings), total_years)

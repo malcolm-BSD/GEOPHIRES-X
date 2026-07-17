@@ -164,6 +164,32 @@ def write_economic_parameters(model: Model, f: TextIOWrapper, is_sam_econ_model:
         f.write(f"      Estimated Jobs Created:                                 {model.economics.jobs_created.value}\n")
 
 
+def write_stimulation_costs_outputs(econ: Economics, f: TextIOWrapper) -> None:
+    f.write(
+        f"         {econ.Cstim.display_name}:                             "
+        f"{econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n"
+    )
+
+    def write_output(stimulation_cost_output: OutputParameter) -> None:
+        if stimulation_cost_output.value is None:
+            return
+
+        label = field_label(stimulation_cost_output.display_name, 43)
+        f.write(
+            f"             {label}{stimulation_cost_output.value:10.2f} "
+            f"{stimulation_cost_output.CurrentUnits.value}\n"
+        )
+
+    if econ.cstim_per_well.value is not None:
+        write_output(econ.cstim_per_well)
+    else:
+        for stimulation_cost_output in (
+            econ.cstim_per_production_well,
+            econ.cstim_per_injection_well,
+        ):
+            write_output(stimulation_cost_output)
+
+
 def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool) -> None:
     econ: Economics = model.economics
 
@@ -179,13 +205,13 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
             f.write(f"             {econ.cost_per_lateral_section.Name}:       {econ.cost_per_lateral_section.value:10.2f} {econ.cost_lateral_section.CurrentUnits.value}\n")
         elif round(econ.cost_one_production_well.value, 4) != round(econ.cost_one_injection_well.value, 4) \
             and model.economics.cost_one_injection_well.value != -1:
-            f.write(f"             Drilling and completion costs per production well:   {econ.cost_one_production_well.value:10.2f} " + econ.cost_one_production_well.CurrentUnits.value + NL)
-            f.write(f"             Drilling and completion costs per injection well:    {econ.cost_one_injection_well.value:10.2f} " + econ.cost_one_injection_well.CurrentUnits.value + NL)
+            f.write(f"             {econ.cost_one_production_well.display_name}:   {econ.cost_one_production_well.value:10.2f} {econ.cost_one_production_well.CurrentUnits.value}\n")
+            f.write(f"             {econ.cost_one_injection_well.display_name}:    {econ.cost_one_injection_well.value:10.2f} {econ.cost_one_injection_well.CurrentUnits.value}\n")
         else:
             cpw_label = field_label(econ.drilling_and_completion_costs_per_well.display_name, 47)
             f.write(f"         {cpw_label}{econ.drilling_and_completion_costs_per_well.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")
 
-        f.write(f"         {econ.Cstim.display_name}:                             {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n")
+        write_stimulation_costs_outputs(econ, f)
 
         f.write(f"         {econ.Cplant.display_name}:                     {econ.Cplant.value:10.2f} {econ.Cplant.CurrentUnits.value}\n")
         if is_cogeneration_end_use(model.surfaceplant.enduse_option.value):
@@ -232,20 +258,24 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
         # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)
         f.write(f"         {econ.RITCValue.display_name}:                         {-1 * econ.RITCValue.value:10.2f} {econ.RITCValue.CurrentUnits.value}\n")
 
-    additional_capex_modifiers: list[tuple[Parameter, int]] = [
-        (econ.FlatLicenseEtc, 1),
-        (econ.OtherIncentives, -1),
-        (econ.TotalGrant, -1),
-    ]
-    for additional_capex_modifier_entry in additional_capex_modifiers:
-        additional_capex_modifier_param: Parameter = additional_capex_modifier_entry[0]
-        additional_capex_modifier_multiplier: int = additional_capex_modifier_entry[1]
+    def render_additional_capital_cost_modifiers(modifiers: list[tuple[Parameter, int]]) -> None:
+        for parameter, multiplier in modifiers:
+            if parameter.Provided:
+                label = field_label(parameter.Name, 47)
+                f.write(
+                    f"         {label}{parameter.value * multiplier:10.2f} "
+                    f"{parameter.CurrentUnits.value}\n"
+                )
 
-        acm_render_value = additional_capex_modifier_param.value * additional_capex_modifier_multiplier
-
-        if additional_capex_modifier_param.Provided:
-            acm_label = field_label(additional_capex_modifier_param.Name, 47)
-            f.write(f"         {acm_label}{acm_render_value:10.2f} {additional_capex_modifier_param.CurrentUnits.value}\n")
+    additional_occ_modifiers: list[tuple[Parameter, int]] = [(econ.FlatLicenseEtc, 1)]
+    if not is_sam_econ_model:
+        additional_occ_modifiers.extend(
+            [
+                (econ.OtherIncentives, -1),
+                (econ.TotalGrant, -1),
+            ]
+        )
+    render_additional_capital_cost_modifiers(additional_occ_modifiers)
 
     if is_sam_econ_model and econ.DoAddOnCalculations.value:
         # Non-SAM econ models print this in Extended Economics profile
@@ -268,6 +298,14 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
     if display_idc_in_capital_costs:
         idc_label = field_label(econ.interest_during_construction.display_name, 47)
         f.write(f"         {idc_label}{econ.interest_during_construction.value:10.2f} {econ.interest_during_construction.CurrentUnits.value}\n")
+
+    if is_sam_econ_model:
+        render_additional_capital_cost_modifiers(
+            [
+                (econ.OtherIncentives, -1),
+                (econ.TotalGrant, -1),
+            ]
+        )
 
     capex_param = econ.CCap if not is_sam_econ_model else econ.capex_total
     capex_label = field_label(capex_param.display_name, 50)
