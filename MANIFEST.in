@@ -26,6 +26,7 @@ include CONTRIBUTING.rst
 include LICENSE
 include INSTALL.rst
 include README.rst
+include SECURITY.md
 include How-to-extend-GEOPHIRES-X.md
 include geophires-logo.png
 include base_test_case.py

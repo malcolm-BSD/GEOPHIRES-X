@@ -114,6 +114,7 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py311'
             os: 'windows-latest'
+            mplbackend: 'Agg'
             pytest_args: 'tests --ignore=tests/test_geophires_x.py'
           - name: 'py311 test_geophires_x.py (windows)'
             python: '3.11'
@@ -121,6 +122,7 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py311'
             os: 'windows-latest'
+            mplbackend: 'Agg'
             pytest_args: 'tests/test_geophires_x.py'
           - name: 'py312 (ubuntu)'
             python: '3.12'
@@ -136,6 +138,26 @@ jobs:
             tox_env: 'py312'
             os: 'ubuntu-latest'
             pytest_args: 'tests/test_geophires_x.py'
+          - name: 'py313 (ubuntu)'
+            python: '3.13'
+            toxpython: 'python3.13'
+            python_arch: 'x64'
+            tox_env: 'py313'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests --ignore=tests/test_geophires_x.py'
+          - name: 'py313 test_geophires_x.py (ubuntu)'
+            python: '3.13'
+            toxpython: 'python3.13'
+            python_arch: 'x64'
+            tox_env: 'py313'
+            os: 'ubuntu-latest'
+            pytest_args: 'tests/test_geophires_x.py'
+#          - name: 'py314 (ubuntu)'
+#            python: '3.14'
+#            toxpython: 'python3.14'
+#            python_arch: 'x64'
+#            tox_env: 'py314'
+#            os: 'ubuntu-latest'
 #          - name: 'pypy38 (ubuntu)'
 #            python: 'pypy-3.8'
 #            toxpython: 'pypy3.8'
@@ -181,12 +203,14 @@ jobs:
       if: ${{ matrix.pytest_args == '' }}
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
+        MPLBACKEND: '${{ matrix.mplbackend }}'
       run: >
         tox -e ${{ matrix.tox_env }} -v
     - name: test
       if: ${{ matrix.pytest_args != '' }}
       env:
         TOXPYTHON: '${{ matrix.toxpython }}'
+        MPLBACKEND: '${{ matrix.mplbackend }}'
       run: >
         tox -e ${{ matrix.tox_env }} -v -- pytest --cov --cov-report=term-missing --cov-report=xml -vv ${{ matrix.pytest_args }}
 
@@ -270,7 +294,7 @@ jobs:
         done
 
     - name: upload artifact
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
 
     - name: deploy to GitHub Pages
       id: deployment

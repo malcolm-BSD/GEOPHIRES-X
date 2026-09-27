@@ -608,7 +608,7 @@ class HIP_RA_X:
 
         self.logger.info(f"Complete {__class__.__name__!s}: {__name__}")
 
-    def read_parameters(self) -> None:
+    def read_parameters(self, suppress_input_sys_argv_warnings=False) -> None:
         """
         The read_parameters function reads in the parameters from a dictionary created by reading the user-provided file
         and updates the parameter values for this object.
@@ -619,7 +619,9 @@ class HIP_RA_X:
         """
         self.logger.info(f"Init {__class__.__name__!s}: {__name__}")
 
-        self.InputParameters.update(read_input_file(logger=self.logger))
+        self.InputParameters.update(
+            read_input_file(logger=self.logger, suppress_input_sys_argv_warnings=suppress_input_sys_argv_warnings)
+        )
 
         if len(self.InputParameters) > 0:
             for item in self.ParameterDict.items():
@@ -1056,7 +1058,7 @@ class HIP_RA_X:
         return "HIP_RA_X"
 
 
-def main(enable_hip_ra_logging_config=True):
+def main(enable_hip_ra_logging_config=True, suppress_input_sys_argv_warnings=False):
     # set the starting directory to be the directory that this file is in
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -1071,7 +1073,7 @@ def main(enable_hip_ra_logging_config=True):
     model = HIP_RA_X(enable_hip_ra_logging_config=enable_hip_ra_logging_config)
 
     # read the parameters that apply to the model
-    model.read_parameters()
+    model.read_parameters(suppress_input_sys_argv_warnings=suppress_input_sys_argv_warnings)
 
     try:
         # Calculate the entire model

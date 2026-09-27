@@ -568,7 +568,7 @@ def UtilEff_func(temperature_degC: float) -> float:
     return util_eff
 
 
-def read_input_file(logger=None, input_file_name=None) -> dict:
+def read_input_file(logger=None, input_file_name=None, suppress_input_sys_argv_warnings=False) -> dict:
     """
     Read input file and return a dictionary of parameters
     :param logger: logger object
@@ -589,10 +589,14 @@ def read_input_file(logger=None, input_file_name=None) -> dict:
 
     # read input data (except input from optional filenames)
     if input_file_name is None:
-        logger.warning('Input file name not provided, checking sys.argv')
+        if not suppress_input_sys_argv_warnings:
+            logger.warning('Input file name not provided, checking sys.argv')
+
         if len(sys.argv) > 1:
             input_file_name = sys.argv[1]
-            logger.warning(f'Using input file from sys.argv: {input_file_name}')
+
+            if not suppress_input_sys_argv_warnings:
+                logger.warning(f'Using input file from sys.argv: {input_file_name}')
 
     if not input_file_name:
         logger.warning(
@@ -743,6 +747,36 @@ def is_float(o: Any) -> bool:
         return False
     else:
         return True
+
+
+_MINIMUM_TIME_STEPS = 2
+
+
+def number_of_time_steps(model) -> int:
+    """
+    Number of samples in the simulation time vector: time steps per year times plant lifetime,
+    but never fewer than two.
+
+    A plant lifetime of 1 year sampled once per year would otherwise give
+    ``np.linspace(0, 1, 1) == array([0.0])`` -- a single sample sitting at t=0. That is both
+    physically empty, since there is no operating period to integrate over, and the singular point
+    of Ramey's wellbore model, which reads ``framey[1]`` to replace the t=0 value and so raised
+    "index 1 is out of bounds for axis 0 with size 1".
+
+    Two samples are the start and the end of the single operating year, which is also what
+    ``SurfacePlant`` needs to integrate annual energy: it slices ``series[i*n:(i+1)*n + 1]`` and
+    integrates with ``dx = 1/dx_steps * 365 * 24``, giving dx = 8760 h for one year.
+
+    ``timestepsperyear * plant_lifetime`` is less than two only when both are 1, so this is a no-op
+    for every other input.
+
+    See https://github.com/NatLabRockies/GEOPHIRES-X/issues/352
+    """
+    return max(
+        _MINIMUM_TIME_STEPS,
+        model.economics.timestepsperyear.value * model.surfaceplant.plant_lifetime.value,
+    )
+
 
 def sig_figs(val: float | list | tuple, num_sig_figs: int) -> float:
     if val is None:

@@ -15,6 +15,7 @@ import geophires_x.Model as Model
 
 from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K, quantity, static_pressure_MPa, set_or_append
 from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3
+from geophires_x.GeoPHIRESUtils import number_of_time_steps
 
 
 def derive_numseg_from_gradient_thickness(gradient_values: list[float], thickness_values: list[float]) -> int:
@@ -704,7 +705,7 @@ class Reservoir:
 
         model.logger.info(f'complete {str(__class__)}: {sys._getframe().f_code.co_name}')
 
-    @lru_cache(maxsize=1024)
+    @lru_cache(maxsize=256)
     def Calculate(self, model: Model) -> None:
         """
         The Calculate function is where all the calculations are done.
@@ -797,7 +798,7 @@ class Reservoir:
 
         # specify time-stepping vectors
         self.timevector.value = np.linspace(0, model.surfaceplant.plant_lifetime.value,
-                                            model.economics.timestepsperyear.value * model.surfaceplant.plant_lifetime.value)
+                                            number_of_time_steps(model))
         self.Tresoutput.value = np.zeros(len(self.timevector.value))
 
         if self.resoption.value is not ReservoirModel.SUTRA:
