@@ -1313,8 +1313,17 @@
       "minimum": -50,
       "maximum": 50
     },
+    "Use Weather Data": {
+      "description": "Use historical weather when project latitude and longitude are provided. Set False to retain project coordinates without downloading or applying weather data; Ambient Temperature and Surface Temperature then use their input or default values.",
+      "type": "boolean",
+      "units": null,
+      "category": "Surface Plant",
+      "default": true,
+      "minimum": null,
+      "maximum": null
+    },
     "Project Latitude": {
-      "description": "Project latitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "description": "Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
       "type": "number",
       "units": null,
       "category": "Surface Plant",
@@ -1323,7 +1332,7 @@
       "maximum": 90.0
     },
     "Project Longitude": {
-      "description": "Project longitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "description": "Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
       "type": "number",
       "units": null,
       "category": "Surface Plant",

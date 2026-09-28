@@ -1,5 +1,6 @@
 """Exercise the example comparison harness without running reservoir simulations."""
 
+from contextlib import ExitStack
 from copy import deepcopy
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -27,13 +28,12 @@ def test_example_harness_runs_once_and_checks_results(calculated_power):
     expected = _result(10.0)
     actual = _result(calculated_power)
 
-    with (
-        patch.object(case, "_list_test_files_dir", return_value=files),
-        patch.object(case, "_is_github_actions", return_value=False),
-        patch.object(examples, "GeophiresInputParameters") as input_parameters,
-        patch.object(examples, "GeophiresXClient") as client,
-        patch.object(examples, "GeophiresXResult", return_value=deepcopy(expected)),
-    ):
+    with ExitStack() as stack:
+        stack.enter_context(patch.object(case, "_list_test_files_dir", return_value=files))
+        stack.enter_context(patch.object(case, "_is_github_actions", return_value=False))
+        input_parameters = stack.enter_context(patch.object(examples, "GeophiresInputParameters"))
+        client = stack.enter_context(patch.object(examples, "GeophiresXClient"))
+        stack.enter_context(patch.object(examples, "GeophiresXResult", return_value=deepcopy(expected)))
         client.return_value.get_geophires_result.return_value = actual
         if calculated_power == 10.0:
             case.test_geophires_examples()

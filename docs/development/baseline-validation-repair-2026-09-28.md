@@ -39,9 +39,9 @@ It is separate from upstream reconciliation PR #34, whose head is
   Twenty targeted tests passed there, including the upstream reconciliation tests.
 - This is targeted validation, not a claim that the full suite is green. The
   original sync audit records sandbox multiprocessing restrictions and resource
-  limits. GitHub Actions and the remaining scientific decision are still gates.
+  limits. GitHub Actions and human review remain merge gates.
 
-## Unresolved Fervo modeling decision
+## Fervo modeling decision and approved repair
 
 Fervo_Project_Cape-5.txt explicitly specifies ambient temperature 11.17 C and
 states that hourly/seasonal fluctuations are not modeled. It also supplies
@@ -53,7 +53,7 @@ The prior baseline/sync runs reported minimum net output 563.3 MW, outside the
 unchanged reference range 499 to 505 MW. A diagnostic run on the repair branch
 with only weather loading disabled produced 499.10 MW, matching the saved
 reference; maximum total generation was 599.80 MW. This diagnostic patch was
-not committed and weather behavior and Fervo inputs remain unchanged.
+not committed; the approved parameter-based implementation is described below.
 
 There is an additional time-alignment concern: `ambient_temperature_profile`
 indexes hourly weather by simulation-array position, without converting model
@@ -63,11 +63,29 @@ tests verify temperature sensitivity but do not establish correct seasonal
 alignment. Rebaselining the case study to the current weather output would be
 premature.
 
-Recommended next decision: preserve the documented fixed-temperature case study
-and provide an explicit way to opt out of weather, while validating weather time
-alignment separately. The alternative is to redesign and validate the seasonal
-case study, then update its scientific references and documentation deliberately.
-Neither option has been implemented without the owner's decision.
+Seasonal time alignment remains a separate follow-up, with no changes to its
+calculations or scientific references in this repair.
+On September 28, 2026, the owner chose to keep the fixed-temperature case with
+an explicit weather opt-out.
+
+### Implementation of the approved choice
+
+- Add `Use Weather Data`, a boolean defaulting to `True`. Existing coordinate-based
+  activation stays compatible; explicit `False` exits weather loading before cache
+  or network access, clears the model weather object, and preserves supplied or
+  default ambient/surface temperatures. Coordinates remain available as metadata.
+- Add `Use Weather Data, False` to Cape-5 and its derived Cape-6 input; existing
+  case generation copies this setting from Cape-5. No numerical references changed.
+- Update the weather operating guide, parameter descriptions, and generated input
+  schema. Validate both enabled and disabled behavior, including false/0 parsing,
+  preservation of temperatures/coordinates, and disabled weather with one coordinate.
+- Repair the Python 3.8-incompatible context-manager syntax in the harness test
+  introduced in the first repair commit. GitHub job 109036630345 identified that
+  collection error; all modified Python files now parse with Python 3.8 grammar.
+- On the repair branch, 20 targeted tests and two subtests passed (weather parameter
+  behavior, Fervo Cape-5 reference/documentation checks, generated schemas, harness).
+- Cape-5 and Cape-6 full parsed results match their existing saved references,
+  with weather loading mocked to raise if attempted. No weather load was attempted.
 
 ## Merge gate
 
