@@ -26,6 +26,7 @@ from geophires_x_tests.test_options_list import WellDrillingCostCorrelationTestC
 from geophires_x.EconomicsSam import _cash_flow_profile_row
 
 from tests.base_test_case import BaseTestCase
+from tests.example_weather import WEATHER_EXAMPLES, frozen_example_weather
 
 
 # noinspection PyTypeChecker
@@ -213,9 +214,10 @@ class GeophiresXTestCase(BaseTestCase):
                 input_params = GeophiresInputParameters(
                     from_file_path=self._get_test_file_path(Path("examples", example_file_path))
                 )
-                geophires_result: GeophiresXResult = self._sanitize_nan(
-                    self._strip_metadata(client.get_geophires_result(input_params))
-                )
+                with frozen_example_weather(example_file_path):
+                    geophires_result: GeophiresXResult = self._sanitize_nan(
+                        self._strip_metadata(client.get_geophires_result(input_params))
+                    )
                 expected_result: GeophiresXResult = self._sanitize_nan(
                     self._strip_metadata(GeophiresXResult(get_output_file_for_example(example_file_path)))
                 )
@@ -241,6 +243,8 @@ class GeophiresXTestCase(BaseTestCase):
                         else "./tests/regenerate-example-result.ps1"
                     )
                     regenerate_cmd = f"{cmd_script} {example_file_path.split('.')[0]}"
+                    if example_file_path in WEATHER_EXAMPLES:
+                        regenerate_cmd = f"python -m tests.example_weather {example_file_path}"
                     regenerate_cmds.append(regenerate_cmd)
 
                     if allow_almost_equal:

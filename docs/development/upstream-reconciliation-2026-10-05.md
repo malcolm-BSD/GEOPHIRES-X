@@ -35,7 +35,8 @@ Canonical fork: https://github.com/malcolm-BSD/GEOPHIRES-X
 - Apply repository quote formatting to the imported debt-tenor test.
 - Preserve the existing weather opt-out in Cape-5/Cape-6, fork costing behavior,
   PuLP compatibility bound, and previous reconciliation fixes. No example
-  reference outputs or comparison tolerances are changed in this increment.
+  reference outputs or comparison tolerances were changed in the initial merge.
+  The subsequent CI repair below updates four weather-dependent references.
 
 ## Validation
 
@@ -46,7 +47,47 @@ Canonical fork: https://github.com/malcolm-BSD/GEOPHIRES-X
 - Changed files pass pre-commit hooks; imported test quotes were normalized.
 - Both Cape-5 and Cape-6 complete parsed outputs match their saved references
   with weather loading configured to fail if attempted; neither loaded weather.
-- No tracked numerical reference outputs were regenerated.
+- No tracked numerical reference outputs were regenerated in the initial merge.
+
+## CI follow-up: reproducible weather examples
+
+The owner supplied the failed Python 3.8 CI log from build `37342191661`.
+The first failing example was `example1_dispatchable_tess_weather.txt`: its saved
+weather mean was 10.55 C, while the live API yielded 10.57 C. Examples 8, 9, and
+SHR-3 also depended on live weather and had stale reference values.
+
+Tests now use three checked-in historical API responses for these four examples.
+The production normalizer still processes all 8,784 leap-year hours; temperatures
+remain variable, and TESS dispatch still uses hourly weather. Each fixture is
+checked against the input coordinates and year. Missing fixtures fail instead of
+falling back to the network. API retrieval, caches, model calculations, the Fervo
+opt-out, and numerical comparison tolerances are unchanged.
+
+Before updating each reference, complete parsed outputs were compared between
+the pre-increment baseline tree `ec3923dff2511a28878989751e14333863680023` and
+the initial reconciled tree `19bf5a2deed3c541e849acc361dd1e85e7c01e7e` with
+identical weather inputs. All four comparisons were exactly equal after the
+existing metadata/NaN normalization. The references therefore capture existing
+combined-branch behavior, not an unreviewed change in the 17 upstream commits.
+See `tests/fixtures/weather/README.md` for source attribution, checksums, and the
+offline reference regeneration command.
+
+Validation of this repair on Python 3.12:
+
+- 21 weather/fixture/harness tests passed.
+- All four complete weather example comparisons passed with HTTP requests
+  configured to raise if attempted.
+- A diagnostic pass over later examples found an additional inherited S-DAC-GT
+  reference mismatch: summary LCOH is 0.00 instead of -128.08 USD/MMBTU. Baseline
+  and candidate complete outputs are identical; this single parsed field differs
+  from the saved reference. The existing `_build_basis` helper returns zero for
+  nonpositive output. This case has a discounted heat denominator of
+  -74,174,793.41094875 and cost numerator of 32.41348270270895 MUSD; their ratio
+  with the heat price factor would give the legacy negative value. Its reference
+  and calculation remain unchanged pending a separate modeling decision.
+- URL-backed examples 5c and SUTRAExample1a encountered remote-input failures.
+  Example 5c passed on retry; SUTRAExample1a remained blocked by remote-file
+  validation. These results are not a green full-suite claim.
 
 ## Integration and review
 
