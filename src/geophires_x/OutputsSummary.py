@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from io import StringIO
 from io import TextIOWrapper
@@ -10,7 +11,7 @@ import numpy as np
 from geophires_x.OptionList import EndUseOptions, PlantType
 from geophires_x.OutputsReport import field_label
 from geophires_x.OutputsSurface import has_electricity_component
-from geophires_x.OutputsUtils import OutputTableItem
+from geophires_x.OutputsUtils import OutputTableItem, format_heat_price, HEAT_PRICE_UNAVAILABLE_REASON
 
 if TYPE_CHECKING:
     from geophires_x.Model import Model
@@ -115,15 +116,15 @@ def write_summary_of_results(
             f.write(f"      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n")
     elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and \
             model.surfaceplant.plant_type.value not in [PlantType.ABSORPTION_CHILLER]:
-        f.write(f"      {model.economics.LCOH.display_name}:            {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n")
+        f.write(f"      {model.economics.LCOH.display_name}:            {format_heat_price(model.economics.LCOH.value)} {model.economics.LCOH.CurrentUnits.value}\n")
         if model.economics.DoXLCOCalculations.value:
-            f.write(f"      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.XLCOH_Market.display_name}: {format_heat_price(model.economics.XLCOH_Market.value)} {model.economics.XLCOH_Market.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.XLCOH_MarketSocial.display_name}: {format_heat_price(model.economics.XLCOH_MarketSocial.value)} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n")
         if model.economics.DoVALCOCalculations.value:
-            f.write(f"      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH.display_name}: {format_heat_price(model.economics.VALCOH.value)} {model.economics.VALCOH.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_EnergyAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_EnergyAdjustment.value)} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_CapacityAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_CapacityAdjustment.value)} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_FlexibilityAdjustment.value)} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n")
     elif not dispatch_report and model.surfaceplant.enduse_option.value in [EndUseOptions.HEAT] and model.surfaceplant.plant_type.value == PlantType.ABSORPTION_CHILLER:
         f.write(f"      {model.economics.LCOC.display_name}:         {model.economics.LCOC.value:10.2f} {model.economics.LCOC.CurrentUnits.value}\n")
         if model.economics.DoXLCOCalculations.value:
@@ -146,15 +147,18 @@ def write_summary_of_results(
             f.write(f"      {model.economics.VALCOE_EnergyAdjustment.display_name}: {model.economics.VALCOE_EnergyAdjustment.value:10.2f} {model.economics.VALCOE_EnergyAdjustment.CurrentUnits.value}\n")
             f.write(f"      {model.economics.VALCOE_CapacityAdjustment.display_name}: {model.economics.VALCOE_CapacityAdjustment.value:10.2f} {model.economics.VALCOE_CapacityAdjustment.CurrentUnits.value}\n")
             f.write(f"      {model.economics.VALCOE_FlexibilityAdjustment.display_name}: {model.economics.VALCOE_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOE_FlexibilityAdjustment.CurrentUnits.value}\n")
-        f.write(f"      {model.economics.LCOH.display_name}:           {model.economics.LCOH.value:10.2f} {model.economics.LCOH.CurrentUnits.value}\n")
+        f.write(f"      {model.economics.LCOH.display_name}:           {format_heat_price(model.economics.LCOH.value)} {model.economics.LCOH.CurrentUnits.value}\n")
         if model.economics.DoXLCOCalculations.value:
-            f.write(f"      {model.economics.XLCOH_Market.display_name}: {model.economics.XLCOH_Market.value:10.2f} {model.economics.XLCOH_Market.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.XLCOH_MarketSocial.display_name}: {model.economics.XLCOH_MarketSocial.value:10.2f} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.XLCOH_Market.display_name}: {format_heat_price(model.economics.XLCOH_Market.value)} {model.economics.XLCOH_Market.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.XLCOH_MarketSocial.display_name}: {format_heat_price(model.economics.XLCOH_MarketSocial.value)} {model.economics.XLCOH_MarketSocial.CurrentUnits.value}\n")
         if model.economics.DoVALCOCalculations.value:
-            f.write(f"      {model.economics.VALCOH.display_name}: {model.economics.VALCOH.value:10.2f} {model.economics.VALCOH.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_EnergyAdjustment.display_name}: {model.economics.VALCOH_EnergyAdjustment.value:10.2f} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_CapacityAdjustment.display_name}: {model.economics.VALCOH_CapacityAdjustment.value:10.2f} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n")
-            f.write(f"      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {model.economics.VALCOH_FlexibilityAdjustment.value:10.2f} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH.display_name}: {format_heat_price(model.economics.VALCOH.value)} {model.economics.VALCOH.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_EnergyAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_EnergyAdjustment.value)} {model.economics.VALCOH_EnergyAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_CapacityAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_CapacityAdjustment.value)} {model.economics.VALCOH_CapacityAdjustment.CurrentUnits.value}\n")
+            f.write(f"      {model.economics.VALCOH_FlexibilityAdjustment.display_name}: {format_heat_price(model.economics.VALCOH_FlexibilityAdjustment.value)} {model.economics.VALCOH_FlexibilityAdjustment.CurrentUnits.value}\n")
+
+    if math.isnan(model.economics.LCOH.value):
+        f.write(f"      Heat price status: {HEAT_PRICE_UNAVAILABLE_REASON}\n")
 
     if not dispatch_report and is_sam_econ_model:
         f.write(f"      {field_label(econ.capex_total.display_name, 50)}{econ.capex_total.value:10.2f} {econ.capex_total.CurrentUnits.value}\n")

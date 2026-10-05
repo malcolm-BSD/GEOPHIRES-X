@@ -3,12 +3,14 @@
 
 import logging
 import logging.config
+import math
 import os
 import sys
 from pathlib import Path
 
 from geophires_x.Dispatch import build_dispatch_summary_json
 from geophires_x.DispatchReporting import build_dispatch_profile_json
+from geophires_x.OutputsUtils import HEAT_PRICE_UNAVAILABLE_REASON
 import geophires_x.Model as Model
 import geophires_x.OptionList as OptionList
 
@@ -61,10 +63,28 @@ def main(enable_geophires_logging_config=True):
         model.surfaceplant.OutputParameterDict, indent=4, sort_keys=True, supress_warnings=True
     )
     json_economics = jsons.dumps(model.economics.OutputParameterDict, indent=4, sort_keys=True, supress_warnings=True)
+    economics_output = json.loads(json_economics)
+    if math.isnan(model.economics.LCOH.value):
+        for name in (
+            "LCOH", "XLCOH_Market", "XLCOH_MarketSocial", "VALCOH",
+            "VALCOH_EnergyAdjustment", "VALCOH_CapacityAdjustment", "VALCOH_FlexibilityAdjustment",
+        ):
+            output = economics_output.get(name)
+            if output is not None and isinstance(output.get("value"), float) and math.isnan(output["value"]):
+                output["value"] = None
+                output["availability"] = HEAT_PRICE_UNAVAILABLE_REASON
+        # S-DAC's legacy flat JSON also uses LCOH for its separate geothermal
+        # supply cost. Keep an unambiguous project-price entry through that merge.
+        economics_output["Project Heat Price"] = {
+            "value": None,
+            "unit": model.economics.LCOH.CurrentUnits.value,
+            "status": "unavailable",
+            "reason": "net heat output is nonpositive",
+        }
     json_merged = {
         **json.loads(json_resrv),
         **json.loads(json_wells),
-        **json.loads(json_economics),
+        **economics_output,
         **json.loads(json_surfaceplant),
     }
     if model.economics.DoAddOnCalculations.value:

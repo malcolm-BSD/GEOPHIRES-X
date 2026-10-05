@@ -84,10 +84,49 @@ Validation of this repair on Python 3.12:
   nonpositive output. This case has a discounted heat denominator of
   -74,174,793.41094875 and cost numerator of 32.41348270270895 MUSD; their ratio
   with the heat price factor would give the legacy negative value. Its reference
-  and calculation remain unchanged pending a separate modeling decision.
+  and calculation were held unchanged until the owner's decision below.
 - URL-backed examples 5c and SUTRAExample1a encountered remote-input failures.
   Example 5c passed on retry; SUTRAExample1a remained blocked by remote-file
   validation. These results are not a green full-suite claim.
+
+## Owner-approved heat-price availability
+
+On October 5, the owner directed: "explicitly mark heat price as unavailable when
+net heat output is nonpositive."
+
+The shared levelized-cost engine now uses a numeric NaN sentinel for an active
+heat commodity with nonpositive discounted net output. Reports display `N/A`
+and `Heat price status: Unavailable: net heat <= 0`. The client exposes a `None`
+heat price and the status text; optional XLCOH and VALCOH prices and adjustments
+also remain unavailable. Positive heat output still permits zero or negative
+prices when lifecycle cost credits justify them. Inactive commodities keep their
+existing behavior. The heat balance itself is not changed by this reporting fix.
+
+Raw JSON contains a `Project Heat Price` object with `value: null`, units,
+`status: unavailable`, and a reason. Unavailable heat output parameters use JSON
+null. This separate project-price object avoids the legacy S-DAC flat-JSON
+collision: S-DAC also names its distinct geothermal supply-cost metric `LCOH`.
+That geothermal supply cost and its existing JSON key remain available.
+
+Only the S-DAC saved reference's project heat-price line and new status line are
+updated for this decision. All other parsed S-DAC results must match exactly.
+Regression tests cover zero/negative output, positive output with positive/zero/
+negative costs, and S-DAC text/HTML/JSON/client reporting with XLCOH and VALCOH.
+
+The preceding weather-repair CI run `37349815174`, Python 3.11 example job
+`111897522239`, finished with 45 tests passed, 101 subtests passed, and only the
+S-DAC reference mismatch failed. The URL-backed examples passed in that CI job;
+the earlier remote-file failures were not reproduced there.
+
+Local validation of the availability change on Python 3.12:
+
+- 50 levelized-cost, XLCO, and VALCO tests passed.
+- All 37 report tests passed (including two subtests).
+- Six availability tests and 18 client-result tests passed (including three
+  subtests); the availability integration checks text, HTML, raw JSON, and client
+  parsing together.
+- The complete parsed S-DAC example matches its narrowly updated reference.
+- Changed-file pre-commit checks passed. Cross-version CI remains required.
 
 ## Integration and review
 

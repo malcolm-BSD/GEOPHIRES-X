@@ -64,7 +64,9 @@ def _build_basis(
     Returns:
         A populated :class:`LevelizedCostBasis`.
     """
-    public_value = 0.0
+    # A heat price needs positive net heat output. NaN propagates unavailability
+    # through numeric consumers without representing free heat or a negative price.
+    public_value = float("nan") if commodity == HEAT_COMMODITY else 0.0
     if discounted_output > 0.0:
         public_value = baseline_discounted_cost_musd / discounted_output * public_price_factor
 
@@ -341,7 +343,7 @@ def build_levelized_cost_bases(econ: Economics, model: Model) -> dict[str, Level
             discounted_output = float(np.sum(model.surfaceplant.HeatkWhProduced.value))
             bases[HEAT_COMMODITY] = LevelizedCostBasis(
                 commodity=HEAT_COMMODITY,
-                public_value=float(lcoh),
+                public_value=float(lcoh) if discounted_output > 0.0 else float("nan"),
                 baseline_discounted_cost_musd=float(lcoh * discounted_output / _HEAT_AND_COOLING_PRICE_FACTOR),
                 discounted_output=float(discounted_output),
                 public_price_factor=_HEAT_AND_COOLING_PRICE_FACTOR,

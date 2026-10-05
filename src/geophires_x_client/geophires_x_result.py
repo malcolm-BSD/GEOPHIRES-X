@@ -92,6 +92,7 @@ class GeophiresXResult:
                 "Average Direct-Use Heat Production",
                 "Direct-Use heat breakeven price",
                 "Direct-Use heat breakeven price (LCOH)",
+                _StringValueField("Heat price status"),
                 "Direct-Use Cooling Breakeven Price (LCOC)",
                 "Annual District Heating Demand",
                 "Average Cooling Production",
