@@ -128,6 +128,38 @@ Local validation of the availability change on Python 3.12:
 - The complete parsed S-DAC example matches its narrowly updated reference.
 - Changed-file pre-commit checks passed. Cross-version CI remains required.
 
+## PyCharm working-directory and headless plotting repairs
+
+The owner reported missing absorption-chiller example files when PyCharm ran
+from `tests`, and SBT U-loop failures because Agg cannot display GUI windows.
+All six example paths in `test_absorption_chiller_parameters.py` now resolve
+relative to the test file. The canonical-parameter test also checks repository,
+`tests`, and unrelated working directories.
+
+`plt_show` skips display for known noninteractive backends locally as well as in
+CI, and does not retry display after falling back to Agg for a Tcl error.
+Interactive display arguments and unrelated exception propagation are preserved;
+Agg figures remain available for saving. No numerical references are changed.
+
+The preceding availability-change CI build `37352519981` passed its Python 3.11
+example suite, lint, and documentation jobs. The general Python 3.11 job had
+542 passed, 7 skipped, 56 subtests passed, and one failure: the generated result
+schema lacked `Heat price status`. Regenerating the schemas changed only that
+field in the result schema; both request schemas remained identical.
+
+Local validation on Python 3.12:
+
+- All 30 absorption-chiller, plotting, reconciliation, and schema tests passed
+  with the working directory set to `tests` (4.71 seconds).
+- The complete parsed SBT U-loop example exactly matched its saved reference
+  with Agg, no CI environment, and UserWarning treated as an error. DISPLAY was
+  set to exercise the non-GUI warning condition normally suppressed on Linux.
+- The plotting tests verify saved PNG output, interactive display forwarding,
+  Tcl fallback, and propagation of unrelated errors.
+- Changed-file pre-commit and whitespace checks passed.
+
+Cross-version CI and the owner's Windows rerun remain required.
+
 ## Integration and review
 
 The new branch retains both previous PR histories and the new upstream ancestry.
