@@ -1498,7 +1498,20 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ToolTipText='Inflated bond interest rate during construction (for debt/loans)'
         )
-
+        self.debt_tenor = self.ParameterDict[self.debt_tenor.Name] = intParameter(
+            "Debt Tenor",
+            DefaultValue=CALCULATED_PARAMETER_PLACEHOLDER_VALUE,
+            AllowableRange=model.surfaceplant.plant_lifetime.AllowableRange.copy(),
+            UnitType=Units.TIME,
+            PreferredUnits=TimeUnit.YEAR,
+            CurrentUnits=TimeUnit.YEAR,
+            ToolTipText=f"Number of years over which debt is repaid (for debt/loans), counted from the Commercial "
+                        f"Operation Date (COD; Year 1). Construction years are not counted: debt drawn during "
+                        f"construction, including capitalized interest during construction, is effectively refinanced "
+                        f"as term debt at COD and repaid in level annual payments over this tenor. "
+                        f"Defaults to {model.surfaceplant.plant_lifetime.Name} if not provided, "
+                        f"and may not exceed it. SAM Single Owner PPA economic model only."
+        )
         self.EIR = self.ParameterDict[self.EIR.Name] = floatParameter(
             "Inflated Equity Interest Rate",
             DefaultValue=0.1,
@@ -3328,7 +3341,8 @@ class Economics:
                     self.royalty_supplemental_payments,
                     self.construction_capex_schedule,
                     self.bond_financing_start_year,
-                    self.ritc_state_amount
+                    self.ritc_state_amount,
+                    self.debt_tenor
                 ]
                 for sam_em_only_param in sam_em_only_params:
                     if sam_em_only_param.Provided:

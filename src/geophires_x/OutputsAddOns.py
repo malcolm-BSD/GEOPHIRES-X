@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
+import math
 from collections.abc import Sequence
 import pandas as pd
 from geophires_x.Outputs import Outputs
-from geophires_x.OutputsUtils import OutputTableItem
+from geophires_x.OutputsUtils import OutputTableItem, format_heat_price
 
 NL = "\n"
 
@@ -43,9 +44,9 @@ class OutputsAddOns(Outputs):
                 if model.economics.LCOE.value > -999.0:
                     f.write(f"      Adjusted Project LCOE (after incentives, grants, AddOns,etc):     {model.economics.LCOE.value:10.2f} " + model.economics.LCOE.PreferredUnits.value + NL)
                     addon_results.append(OutputTableItem('Adjusted Project LCOE (after incentives, grants, AddOns,etc)', '{0:10.2f}'.format(model.economics.LCOE.value), model.economics.LCOE.PreferredUnits.value))
-                if model.economics.LCOH.value > -999.0:
-                    f.write(f"      Adjusted Project LCOH (after incentives, grants, AddOns,etc):     {model.economics.LCOH.value:10.2f} " + model.economics.LCOH.PreferredUnits.value + NL)
-                    addon_results.append(OutputTableItem('Adjusted Project LCOH (after incentives, grants, AddOns,etc)', '{0:10.2f}'.format(model.economics.LCOH.value), model.economics.LCOH.PreferredUnits.value))
+                if math.isnan(model.economics.LCOH.value) or model.economics.LCOH.value > -999.0:
+                    f.write(f"      Adjusted Project LCOH (after incentives, grants, AddOns,etc):     {format_heat_price(model.economics.LCOH.value)} " + model.economics.LCOH.PreferredUnits.value + NL)
+                    addon_results.append(OutputTableItem('Adjusted Project LCOH (after incentives, grants, AddOns,etc)', format_heat_price(model.economics.LCOH.value), model.economics.LCOH.PreferredUnits.value))
                 f.write(f"      Adjusted Project CAPEX (after incentives, grants, AddOns, etc):   {model.addeconomics.AdjustedProjectCAPEX.value:10.2f} " + model.addeconomics.AdjustedProjectCAPEX.PreferredUnits.value + NL)
                 addon_results.append(OutputTableItem('Adjusted Project CAPEX (after incentives, grants, AddOns, etc)', '{0:10.2f}'.format(model.addeconomics.AdjustedProjectCAPEX.value), model.addeconomics.AdjustedProjectCAPEX.PreferredUnits.value))
                 f.write(f"      Adjusted Project OPEX (after incentives, grants, AddOns, etc):    {model.addeconomics.AdjustedProjectOPEX.value:10.2f} " + model.addeconomics.AdjustedProjectOPEX.PreferredUnits.value + NL)

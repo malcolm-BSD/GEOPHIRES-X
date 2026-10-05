@@ -4,10 +4,10 @@
 
 Simulation Metadata
 ----------------------
- GEOPHIRES Version: 3.13.9
- Simulation Date: 2026-06-10
- Simulation Time:  12:48
- Calculation Time:      8.155 sec
+ GEOPHIRES Version: 3.18.3
+ Simulation Date: 2026-10-05
+ Simulation Time:  17:31
+ Calculation Time:      0.988 sec
 
                            ***SUMMARY OF RESULTS***
 
@@ -23,9 +23,9 @@ Simulation Metadata
 
                            ***WEATHER DATA RESULTS***
 
-      Annual average temperature (from Open-Meteo):          9.77 °C
+      Annual average temperature (from Open-Meteo):          9.79 °C
       Minimum hourly temperature (from Open-Meteo):        -17.70 °C
-      Maximum hourly temperature (from Open-Meteo):         32.90 °C
+      Maximum hourly temperature (from Open-Meteo):         32.97 °C
 
 
                            ***ECONOMIC PARAMETERS***

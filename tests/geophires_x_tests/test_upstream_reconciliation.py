@@ -58,6 +58,7 @@ def test_noninteractive_ci_does_not_show_plot(monkeypatch):
 def test_interactive_tcl_error_retains_fork_backend_fallback(monkeypatch):
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setattr(MatplotlibUtils.matplotlib, "get_backend", lambda: "TkAgg")
     tcl_error = type("TclError", (Exception,), {})
     show = Mock(side_effect=[tcl_error("test backend unavailable"), None])
     switch_backend = Mock()
@@ -67,4 +68,4 @@ def test_interactive_tcl_error_retains_fork_backend_fallback(monkeypatch):
     MatplotlibUtils.plt_show()
 
     switch_backend.assert_called_once_with("Agg")
-    assert show.call_count == 2
+    show.assert_called_once()

@@ -139,6 +139,7 @@
           "description": "LCOH",
           "units": "USD/MMBTU"
         },
+        "Heat price status": {},
         "Direct-Use Cooling Breakeven Price (LCOC)": {
           "type": "number",
           "description": "LCOC",

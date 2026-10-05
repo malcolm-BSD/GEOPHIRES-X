@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -561,8 +562,9 @@ def assign_extended_levelized_cost_outputs(econ: Economics, model: Model) -> dic
 
     econ.XLCOE_Market.value = electricity_costs.market if electricity_costs is not None else 0.0
     econ.XLCOE_MarketSocial.value = electricity_costs.market_social if electricity_costs is not None else 0.0
-    econ.XLCOH_Market.value = heat_costs.market if heat_costs is not None else 0.0
-    econ.XLCOH_MarketSocial.value = heat_costs.market_social if heat_costs is not None else 0.0
+    heat_default = float("nan") if math.isnan(econ.LCOH.value) else 0.0
+    econ.XLCOH_Market.value = heat_costs.market if heat_costs is not None else heat_default
+    econ.XLCOH_MarketSocial.value = heat_costs.market_social if heat_costs is not None else heat_default
     econ.XLCOC_Market.value = cooling_costs.market if cooling_costs is not None else 0.0
     econ.XLCOC_MarketSocial.value = cooling_costs.market_social if cooling_costs is not None else 0.0
     return extended_costs

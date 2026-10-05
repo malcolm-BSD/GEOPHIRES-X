@@ -1,6 +1,8 @@
 import sys
+from pathlib import Path
 
 import numpy as np
+import pytest
 
 from geophires_x.absorption.absorption_chiller import AbsorptionChiller
 from geophires_x.absorption.catalog import Catalog
@@ -12,9 +14,15 @@ from geophires_x.OptionList import OperatingMode
 from geophires_x.Parameter import ParameterEntry
 from geophires_x.SurfacePlantAbsorptionChiller import SurfacePlantAbsorptionChiller
 
+_EXAMPLES_DIR = Path(__file__).resolve().parent / "examples"
 
-def test_dispatch_example_uses_canonical_temperature_profile_parameters():
-    params = read_input_file(input_file_name="tests/examples/example11_new_AC_dispatch.txt")
+
+@pytest.mark.parametrize("working_directory", ["repository", "tests", "elsewhere"])
+def test_dispatch_example_uses_canonical_temperature_profile_parameters(working_directory, monkeypatch, tmp_path):
+    tests_dir = Path(__file__).resolve().parent
+    directories = {"repository": tests_dir.parent, "tests": tests_dir, "elsewhere": tmp_path}
+    monkeypatch.chdir(directories[working_directory])
+    params = read_input_file(input_file_name=str(_EXAMPLES_DIR / "example11_new_AC_dispatch.txt"))
 
     assert not any(name.startswith("Temps.") for name in params)
     assert "Dispatch Strategy" not in params
@@ -161,7 +169,9 @@ def test_catalog_cop_is_not_multiplied_by_default_effect_multiplier():
 
 
 def test_dispatch_absorption_chiller_uses_advanced_bank_for_cooling_output():
-    model = Model(input_file="tests/examples/example11_new_AC_dispatch.txt", enable_geophires_logging_config=False)
+    model = Model(
+        input_file=str(_EXAMPLES_DIR / "example11_new_AC_dispatch.txt"), enable_geophires_logging_config=False
+    )
     model.read_parameters()
     model.reserv.cpwater.value = 4180.0
     model.surfaceplant.CoolingDemand.value = [1000.0]
@@ -181,7 +191,9 @@ def test_dispatch_absorption_chiller_uses_advanced_bank_for_cooling_output():
 
 
 def test_geophires_dispatch_integration_uses_fast_chiller_bank_path(monkeypatch):
-    model = Model(input_file="tests/examples/example11_new_AC_dispatch.txt", enable_geophires_logging_config=False)
+    model = Model(
+        input_file=str(_EXAMPLES_DIR / "example11_new_AC_dispatch.txt"), enable_geophires_logging_config=False
+    )
     model.read_parameters()
     model.reserv.cpwater.value = 4180.0
     model.surfaceplant.CoolingDemand.value = [1000.0]
@@ -218,7 +230,9 @@ def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):
         }
 
     monkeypatch.setattr(AbsorptionChiller, "evaluate_hourly", evaluate_tracking_chiller)
-    model = Model(input_file="tests/examples/example11_new_AC_baseload.txt", enable_geophires_logging_config=False)
+    model = Model(
+        input_file=str(_EXAMPLES_DIR / "example11_new_AC_baseload.txt"), enable_geophires_logging_config=False
+    )
     model.read_parameters()
     model.surfaceplant.operating_mode.value = OperatingMode.DISPATCHABLE
     model.surfaceplant.CoolingDemand.value = [1000.0] * 8760
@@ -233,7 +247,9 @@ def test_surfaceplant_advanced_chiller_converts_between_mw_and_kw(monkeypatch):
 
 
 def test_surfaceplant_advanced_chiller_opt_out_preserves_legacy_cop_calculation():
-    model = Model(input_file="tests/examples/example11_new_AC_baseload.txt", enable_geophires_logging_config=False)
+    model = Model(
+        input_file=str(_EXAMPLES_DIR / "example11_new_AC_baseload.txt"), enable_geophires_logging_config=False
+    )
     model.read_parameters()
     model.surfaceplant.use_advanced_absorption_chiller.value = False
 
@@ -251,7 +267,7 @@ def test_surfaceplant_advanced_chiller_opt_out_preserves_legacy_cop_calculation(
 
 
 def test_legacy_absorption_chiller_example_defaults_to_legacy_cop_calculation():
-    model = Model(input_file="tests/examples/example11_AC.txt", enable_geophires_logging_config=False)
+    model = Model(input_file=str(_EXAMPLES_DIR / "example11_AC.txt"), enable_geophires_logging_config=False)
     model.read_parameters()
 
     model.reserv.Calculate(model)

@@ -33,24 +33,22 @@ def _retry_with_agg_backend(e) -> bool:
 _NON_INTERACTIVE_BACKENDS = frozenset({'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template'})
 
 
-def _is_running_in_ci() -> bool:
-    return os.environ.get('CI', '').lower() == 'true' or os.environ.get('GITHUB_ACTIONS', '').lower() == 'true'
-
-
 def _is_non_interactive_backend() -> bool:
     return matplotlib.get_backend().lower() in _NON_INTERACTIVE_BACKENDS
 
 
 def plt_show(**kw_args):
-    if _is_running_in_ci() and _is_non_interactive_backend():
-        _logger.debug(f'Skipping plt.show() - non-interactive backend ({matplotlib.get_backend()}) in CI')
+    # File-rendering backends cannot open windows, including on local desktops.
+    # Keep figures available for savefig; only skip the display operation.
+    if _is_non_interactive_backend():
+        _logger.debug(f'Skipping plt.show() - non-interactive backend ({matplotlib.get_backend()})')
         return
 
     try:
         plt.show(**kw_args)
     except Exception as e:
         if _retry_with_agg_backend(e):
-            plt.show(**kw_args)
+            # The fallback is non-interactive too; another show would warn/fail.
             return
         _handle_tcl_error_on_windows_github_actions(e)
 
