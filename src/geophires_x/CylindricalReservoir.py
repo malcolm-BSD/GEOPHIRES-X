@@ -7,6 +7,7 @@ import numpy as np
 from pint.facets.plain import PlainQuantity
 
 from geophires_x.GeoPHIRESUtils import density_water_kg_per_m3, quantity, static_pressure_MPa
+from geophires_x.GeoPHIRESUtils import number_of_time_steps
 
 from geophires_x.GeoPHIRESUtils import heat_capacity_water_J_per_kg_per_K
 import geophires_x.Model as Model
@@ -198,7 +199,7 @@ class CylindricalReservoir(Reservoir):
 
         model.logger.info(f'complete {str(__class__)}: {sys._getframe().f_code.co_name}')
 
-    @lru_cache(maxsize=1024)
+    @lru_cache(maxsize=256)
     def Calculate(self, model: Model) -> None:
         """
         The Calculate function is where all the calculations are done.
@@ -221,7 +222,7 @@ class CylindricalReservoir(Reservoir):
         self.timevector.value = np.linspace(
             0,
             model.surfaceplant.plant_lifetime.value,
-            model.economics.timestepsperyear.value * model.surfaceplant.plant_lifetime.value,
+            number_of_time_steps(model),
         )
         self.averagegradient.value = self.gradient.value[0]
 

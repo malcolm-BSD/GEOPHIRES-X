@@ -176,7 +176,7 @@ class GeophiresXTestCase(BaseTestCase):
 
         # fmt:off
         # @formatter:off
-        example_files = list(
+        example_files = sorted(
             filter(
                 lambda example_file_path_: example_file_path_.startswith(
                     ("example", "Beckers_et_al", "SUTRA", "Wanju", "Fervo", "S-DAC-GT")
@@ -186,7 +186,8 @@ class GeophiresXTestCase(BaseTestCase):
                 # Only input files belong in the example regression suite.
                 and example_file_path_.endswith(".txt"),
                 self._list_test_files_dir(test_files_dir="examples"),
-            )
+            ),
+            key=str.lower
         )
         # @formatter:on
         # fmt:on
