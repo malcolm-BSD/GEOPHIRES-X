@@ -279,6 +279,10 @@ class Model(object):
         self.logger.info(f'complete {str(__class__)}: {__name__}')
 
     def _apply_weather_data_if_requested(self) -> None:
+        if not self.surfaceplant.use_weather_data.value:
+            self.weather_data = None
+            return
+
         latitude = getattr(self.surfaceplant, "project_latitude", None)
         longitude = getattr(self.surfaceplant, "project_longitude", None)
         latitude_provided = bool(getattr(latitude, "Provided", False))

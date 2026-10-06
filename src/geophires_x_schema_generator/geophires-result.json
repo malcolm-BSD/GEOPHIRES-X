@@ -139,6 +139,7 @@
           "description": "LCOH",
           "units": "USD/MMBTU"
         },
+        "Heat price status": {},
         "Direct-Use Cooling Breakeven Price (LCOC)": {
           "type": "number",
           "description": "LCOC",
@@ -526,11 +527,19 @@
           "description": "Cost of One Injection Well",
           "units": "MUSD"
         },
-        "Drilling and completion costs per vertical production well": {},
-        "Drilling and completion costs per vertical injection well": {},
+        "Drilling and completion costs per vertical production well": {
+          "type": "number",
+          "description": "Drilling and completion costs per vertical production well section, including indirect costs (default: 5%).",
+          "units": "MUSD"
+        },
+        "Drilling and completion costs per vertical injection well": {
+          "type": "number",
+          "description": "Drilling and completion costs per vertical production well section, including indirect costs (default: 5%).",
+          "units": "MUSD"
+        },
         "Drilling and completion costs per non-vertical section": {
           "type": "number",
-          "description": "",
+          "description": "Drilling and completion costs per non-vertical section (lateral), including indirect costs (default: 5%).",
           "units": "MUSD"
         },
         "Drilling and completion costs (for redrilling)": {},
@@ -704,6 +713,7 @@
           "description": "Total redrilling costs over the Plant Lifetime are calculated as (Drilling and completion costs + Stimulation costs) \u00d7 Number of times redrilling. The total is then divided over Plant Lifetime years to calculate Redrilling costs per year.",
           "units": "MUSD/yr"
         },
+        "Annual License Fees Etc": {},
         "Total Add-on OPEX": {
           "type": "number",
           "description": "AddOn OPEX Total Per Year",

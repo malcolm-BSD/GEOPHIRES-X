@@ -15,7 +15,8 @@ Simulation Metadata
       Average Net Electricity Production:                    19.62 MW
       Average Direct-Use Heat Production:                    13.19 MW
       Electricity breakeven price:                           24.39 cents/kWh
-      Direct-Use heat breakeven price (LCOH):              -128.08 USD/MMBTU
+      Direct-Use heat breakeven price (LCOH):                  N/A USD/MMBTU
+      Heat price status: Unavailable: net heat <= 0
       Number of production wells:                             3
       Number of injection wells:                              3
       Flowrate per production well:                          70.0 kg/sec

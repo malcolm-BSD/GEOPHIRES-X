@@ -35,6 +35,8 @@ class WeatherParametersTestCase(BaseTestCase):
         self.assertEqual(0.0, model.surfaceplant.project_latitude.value)
         self.assertEqual(0.0, model.surfaceplant.project_longitude.value)
         self.assertEqual(2024, model.surfaceplant.weather_data_year.value)
+        self.assertTrue(model.surfaceplant.use_weather_data.value)
+        self.assertFalse(model.surfaceplant.use_weather_data.Provided)
         self.assertFalse(model.surfaceplant.project_latitude.Provided)
         self.assertFalse(model.surfaceplant.project_longitude.Provided)
         self.assertFalse(model.surfaceplant.weather_data_year.Provided)
@@ -78,6 +80,7 @@ class WeatherParametersTestCase(BaseTestCase):
             "Project Latitude": ParameterEntry(Name="Project Latitude", sValue="39.7392"),
             "Project Longitude": ParameterEntry(Name="Project Longitude", sValue="-104.9903"),
             "Weather Data Year": ParameterEntry(Name="Weather Data Year", sValue="2023"),
+            "Use Weather Data": ParameterEntry(Name="Use Weather Data", sValue="True"),
         }
 
         with patch(
@@ -87,6 +90,49 @@ class WeatherParametersTestCase(BaseTestCase):
             model.read_parameters()
 
         fetch_weather.assert_called_once_with(39.7392, -104.9903, year=2023)
+
+    def test_weather_opt_out_preserves_temperatures_and_coordinates(self) -> None:
+        for disabled_value in ["False", "0"]:
+            with self.subTest(disabled_value=disabled_value):
+                model = self._new_model()
+                model.InputParameters = {
+                    "Project Latitude": ParameterEntry(Name="Project Latitude", sValue="38.506196"),
+                    "Project Longitude": ParameterEntry(Name="Project Longitude", sValue="-112.918155"),
+                    "Use Weather Data": ParameterEntry(Name="Use Weather Data", sValue=disabled_value),
+                    "Ambient Temperature": ParameterEntry(Name="Ambient Temperature", sValue="11.17"),
+                    "Surface Temperature": ParameterEntry(Name="Surface Temperature", sValue="15"),
+                }
+                model.weather_data = FakeWeatherData(annual_average_temperature=-10)
+
+                with patch("geophires_x.Model.fetch_open_meteo_weather") as fetch_weather:
+                    model.read_parameters()
+
+                fetch_weather.assert_not_called()
+                self.assertFalse(model.surfaceplant.use_weather_data.value)
+                self.assertTrue(model.surfaceplant.use_weather_data.Provided)
+                self.assertIsNone(model.weather_data)
+                self.assertEqual(11.17, model.surfaceplant.ambient_temperature.value)
+                self.assertEqual(15, model.reserv.Tsurf.value)
+                self.assertEqual(38.506196, model.surfaceplant.project_latitude.value)
+                self.assertEqual(-112.918155, model.surfaceplant.project_longitude.value)
+                self.assertEqual(11.17, model.surfaceplant.ambient_temperature_profile(model, 360))
+
+    def test_weather_opt_out_allows_incomplete_coordinates_and_preserves_defaults(self) -> None:
+        model = self._new_model()
+        model.InputParameters = {
+            "Project Latitude": ParameterEntry(Name="Project Latitude", sValue="38.506196"),
+            "Use Weather Data": ParameterEntry(Name="Use Weather Data", sValue="False"),
+        }
+        default_ambient = model.surfaceplant.ambient_temperature.value
+        default_surface = model.reserv.Tsurf.value
+
+        with patch("geophires_x.Model.fetch_open_meteo_weather") as fetch_weather:
+            model.read_parameters()
+
+        fetch_weather.assert_not_called()
+        self.assertIsNone(model.weather_data)
+        self.assertEqual(default_ambient, model.surfaceplant.ambient_temperature.value)
+        self.assertEqual(default_surface, model.reserv.Tsurf.value)
 
     def test_weather_does_not_overwrite_user_provided_ambient_or_surface_temperature(self) -> None:
         model = self._new_model()

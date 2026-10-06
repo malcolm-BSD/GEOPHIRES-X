@@ -3,7 +3,8 @@
 ## Purpose
 
 GEOPHIRES-X can optionally use project-location historical weather data from
-the Open-Meteo Historical Weather API. When project coordinates are provided,
+the Open-Meteo Historical Weather API. When project coordinates are provided
+and `Use Weather Data` is enabled,
 GEOPHIRES-X downloads one year of hourly weather data, normalizes it to the
 standard 8760-hour annual profile, and uses it where ambient temperature affects
 model calculations.
@@ -13,7 +14,8 @@ not change unless both project coordinates are provided.
 
 ## Required Inputs
 
-Weather data is activated only when both coordinate parameters are supplied:
+Weather data is activated only when `Use Weather Data` is enabled and both
+coordinate parameters are supplied:
 
 ```text
 Project Latitude
@@ -23,9 +25,29 @@ Project Longitude
 `Project Latitude` is an optional float from `-90` to `90`.
 `Project Longitude` is an optional float from `-180` to `180`.
 
-If only one coordinate is supplied, GEOPHIRES-X raises a validation error.
+If weather is enabled and only one coordinate is supplied, GEOPHIRES-X raises
+a validation error.
 
 ## Optional Inputs
+
+`Use Weather Data` defaults to `True`, preserving automatic weather activation
+when both coordinates are supplied. To keep coordinates as project information
+while using fixed temperatures, explicitly disable weather:
+
+```text
+Use Weather Data, False
+Ambient Temperature, 11.17
+Project Latitude, 38.506196
+Project Longitude, -112.918155
+```
+
+With `Use Weather Data, False`, no weather is downloaded or loaded from the
+weather cache, and no weather profile or annual weather average is applied.
+`Ambient Temperature` and `Surface Temperature` retain their supplied values,
+or their normal defaults if omitted. Coordinates remain available as project
+information; a coordinate pair is not required when weather is disabled.
+The Cape-5 and derived Cape-6 case studies use this explicit opt-out to preserve
+their documented fixed-temperature assumptions.
 
 The weather year is controlled by:
 
@@ -51,13 +73,17 @@ historical years whose December 31 data is expected to be available.
 ## Activation Rules
 
 ```text
-If Project Latitude and Project Longitude are provided:
+If Use Weather Data is False:
+    do not download or apply weather data
+else if Project Latitude and Project Longitude are provided:
     download weather data for Weather Data Year, defaulting to 2024
 else:
     do not download weather data
 ```
 
-No network request is made unless both coordinates are present.
+No weather network request is made unless weather is enabled and both
+coordinates are present. Explicitly supplying `Ambient Temperature` alone does
+not disable the weather profile; use the opt-out for a fixed-temperature run.
 
 ## Open-Meteo Data Source
 

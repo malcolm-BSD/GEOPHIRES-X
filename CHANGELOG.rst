@@ -5,6 +5,23 @@ Changelog
 GEOPHIRES v3 (2023-2026)
 ------------------------
 
+3.18
+^^^^
+
+3.18: `Support Debt Tenor parameter <https://github.com/NatLabRockies/GEOPHIRES-X/pull/528>`__; `Ignore default Ending {End-Use} Sale Price if not provided <https://github.com/NatLabRockies/GEOPHIRES-X/pull/525>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.18.3>`__ | **Changed:** An ending sale price that is not explicitly provided no longer caps price escalation. See `the tracking issue <https://github.com/NatLabRockies/GEOPHIRES-X/issues/449>`__ for details.
+
+3.17
+^^^^
+
+3.17: `Warn user if ORC is used with production temperature greater than 200 degrees C <https://github.com/NatLabRockies/GEOPHIRES-X/pull/517>`__; `Include indirect costs in vertical and lateral (non-vertical) section drilling costs <https://github.com/NatLabRockies/GEOPHIRES-X/pull/520>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.17.0>`__
+
+3.16
+^^^^
+
+3.16.2: `Add Number of Multilateral Sections per Vertical Section parameter; Output Annual License Fees Etc in OPEX <https://github.com/NatLabRockies/GEOPHIRES-X/pull/518>`__  | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.16.2>`__
+
+3.16: `Fix Beckers_et_al_2023_Tabulated_Database_Coaxial_sCO2_heat and CLGS Pump Power unit display <https://github.com/NREL/GEOPHIRES-X/pull/515>`__ | `release <https://github.com/NREL/GEOPHIRES-X/releases/tag/v3.16.0>`__
+
 3.15
 ^^^^
 

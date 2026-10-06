@@ -13,6 +13,7 @@ requirements.txt
 .DS_Store
 *.lock
 *.json
+!tests/fixtures/weather/*-open-meteo.json
 all_messages_conf.log
 HDR.out
 src/geophires_x/*.png

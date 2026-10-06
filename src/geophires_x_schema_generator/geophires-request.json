@@ -1035,6 +1035,15 @@
       "minimum": 0,
       "maximum": 1199
     },
+    "Number of Multilateral Sections per Vertical Section": {
+      "description": "Number of nonvertical wellbore sections (aka laterals or horizontals) per vertical section, where the number of vertical sections is the total number of wells (Number of Production Wells + Number of Injection Wells). Pass this parameter instead of Number of Multilateral Sections to define laterals on a per-well basis - the total number of multilateral sections for the project is calculated as this value multiplied by the number of vertical sections. For example, a project with 2 injectors and 2 producers with 3 laterals per well may set Number of Multilateral Sections per Vertical Section = 3, which is equivalent to Number of Multilateral Sections = 2 * 2 * 3 = 12. May not be provided in combination with Number of Multilateral Sections. Not supported by AGS/CLGS models.",
+      "type": "integer",
+      "units": null,
+      "category": "Well Bores",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 1199
+    },
     "Multilaterals Cased": {
       "description": "If set to True, casing & cementing are assumed to comprise 50% of drilling costs (doubling cost compared to uncased).",
       "type": "boolean",
@@ -1313,8 +1322,17 @@
       "minimum": -50,
       "maximum": 50
     },
+    "Use Weather Data": {
+      "description": "Use historical weather when project latitude and longitude are provided. Set False to retain project coordinates without downloading or applying weather data; Ambient Temperature and Surface Temperature then use their input or default values.",
+      "type": "boolean",
+      "units": null,
+      "category": "Surface Plant",
+      "default": true,
+      "minimum": null,
+      "maximum": null
+    },
     "Project Latitude": {
-      "description": "Project latitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "description": "Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
       "type": "number",
       "units": null,
       "category": "Surface Plant",
@@ -1323,7 +1341,7 @@
       "maximum": 90.0
     },
     "Project Longitude": {
-      "description": "Project longitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+      "description": "Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
       "type": "number",
       "units": null,
       "category": "Surface Plant",
@@ -2626,6 +2644,15 @@
       "default": 0.05,
       "minimum": 0.0,
       "maximum": 1.0
+    },
+    "Debt Tenor": {
+      "description": "Number of years over which debt is repaid (for debt/loans), counted from the Commercial Operation Date (COD; Year 1). Construction years are not counted: debt drawn during construction, including capitalized interest during construction, is effectively refinanced as term debt at COD and repaid in level annual payments over this tenor. Defaults to Plant Lifetime if not provided, and may not exceed it. SAM Single Owner PPA economic model only.",
+      "type": "integer",
+      "units": "yr",
+      "category": "Economics",
+      "default": -1,
+      "minimum": 1,
+      "maximum": 100
     },
     "Inflated Equity Interest Rate": {
       "description": "Inflated equity interest rate (see docs)",

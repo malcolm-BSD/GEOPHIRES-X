@@ -11,7 +11,8 @@ import geophires_x.Model as Model
 from geophires_x import EconomicsSam
 from geophires_x.EconomicsSam import calculate_sam_economics
 from geophires_x.EconomicsSamCalculations import SamEconomicsCalculations
-from geophires_x.EconomicsUtils import BuildPricingModel, wacc_output_parameter, nominal_discount_rate_parameter, \
+from geophires_x.EconomicsUtils import BuildPricingModel, end_price_or_max, wacc_output_parameter, \
+    nominal_discount_rate_parameter, \
     real_discount_rate_parameter, after_tax_irr_parameter, moic_parameter, project_vir_parameter, \
     project_payback_period_parameter, inflation_cost_during_construction_output_parameter, \
     interest_during_construction_output_parameter, total_capex_parameter_output_parameter, \
@@ -1497,7 +1498,20 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ToolTipText='Inflated bond interest rate during construction (for debt/loans)'
         )
-
+        self.debt_tenor = self.ParameterDict[self.debt_tenor.Name] = intParameter(
+            "Debt Tenor",
+            DefaultValue=CALCULATED_PARAMETER_PLACEHOLDER_VALUE,
+            AllowableRange=model.surfaceplant.plant_lifetime.AllowableRange.copy(),
+            UnitType=Units.TIME,
+            PreferredUnits=TimeUnit.YEAR,
+            CurrentUnits=TimeUnit.YEAR,
+            ToolTipText=f"Number of years over which debt is repaid (for debt/loans), counted from the Commercial "
+                        f"Operation Date (COD; Year 1). Construction years are not counted: debt drawn during "
+                        f"construction, including capitalized interest during construction, is effectively refinanced "
+                        f"as term debt at COD and repaid in level annual payments over this tenor. "
+                        f"Defaults to {model.surfaceplant.plant_lifetime.Name} if not provided, "
+                        f"and may not exceed it. SAM Single Owner PPA economic model only."
+        )
         self.EIR = self.ParameterDict[self.EIR.Name] = floatParameter(
             "Inflated Equity Interest Rate",
             DefaultValue=0.1,
@@ -2499,6 +2513,9 @@ class Economics:
                         f'Provide {self.ccexplfixed.Name} to override the default correlation and set your own cost.'
         )
 
+        wellfield_indirect_costs_default_note = (f'(default: '
+                                                 f'{self.wellfield_indirect_capital_cost_percentage.DefaultValue}%)')
+
         # noinspection SpellCheckingInspection
         self.Cwell = self.OutputParameterDict[self.Cwell.Name] = OutputParameter(
             Name="Wellfield cost",
@@ -2508,7 +2525,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             ToolTipText=f'Includes total drilling and completion cost of all injection and production wells and '
                         f'laterals, plus indirect costs '
-                        f'(default: {self.wellfield_indirect_capital_cost_percentage.DefaultValue}%).'
+                        f'{wellfield_indirect_costs_default_note}.'
         )
         self.drilling_and_completion_costs_per_well = self.OutputParameterDict[
             self.drilling_and_completion_costs_per_well.Name] = OutputParameter(
@@ -2517,7 +2534,7 @@ class Economics:
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS,
             ToolTipText='Drilling and completion cost per well, including indirect costs '
-                        f'(default: {self.wellfield_indirect_capital_cost_percentage.DefaultValue}%).'
+                        f'{wellfield_indirect_costs_default_note}.'
         )
 
         # noinspection SpellCheckingInspection
@@ -2986,7 +3003,25 @@ class Economics:
             Name='Drilling and completion costs per non-vertical section',
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText=f'Drilling and completion costs per non-vertical section (lateral), '
+                        f'including indirect costs {wellfield_indirect_costs_default_note}.'
+        )
+        self.cost_per_vertical_production_well = self.OutputParameterDict[self.cost_per_vertical_production_well.Name] = OutputParameter(
+            Name="Drilling and completion costs per vertical production well",
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText=f'Drilling and completion costs per vertical production well section, '
+                        f'including indirect costs {wellfield_indirect_costs_default_note}.'
+        )
+        self.cost_per_vertical_injection_well = self.OutputParameterDict[self.cost_per_vertical_injection_well.Name] = OutputParameter(
+            Name="Drilling and completion costs per vertical injection well",
+            UnitType=Units.CURRENCY,
+            PreferredUnits=CurrencyUnit.MDOLLARS,
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            ToolTipText=f'Drilling and completion costs per vertical production well section, '
+                        f'including indirect costs {wellfield_indirect_costs_default_note}.'
         )
         self.cost_to_junction_section = self.OutputParameterDict[self.cost_to_junction_section.Name] = OutputParameter(
             Name="Cost of the entire section of a well from bottom of vertical to junction with laterals",
@@ -3288,10 +3323,10 @@ class Economics:
                                                      " adjustment factor = 1.")
                                 ParameterToModify.value = 1.0
 
-            if self.HeatStartPrice.value > self.HeatEndPrice.value:
-                s = f'{self.HeatStartPrice.Name} ({self.HeatStartPrice.quantity()}) cannot be ' \
-                    f'greater than {self.HeatEndPrice.Name} ({self.HeatEndPrice.quantity()}).  ' \
-                    f'GEOPHIRES will assume {self.HeatStartPrice.Name} is equal to {self.HeatEndPrice.Name}.'
+            if self.HeatEndPrice.Provided and self.HeatStartPrice.value > self.HeatEndPrice.value:
+                s = f'{self.HeatStartPrice.Name} ({self.HeatStartPrice.quantity()}) is greater than ' \
+                    f'{self.HeatEndPrice.Name} ({self.HeatEndPrice.quantity()}), which caps the heat price. ' \
+                    f'GEOPHIRES will use {self.HeatEndPrice.Name} for every year of the project.'
                 model.logger.warning(s)
 
             if self.econmodel.value == EconomicModel.SAM_SINGLE_OWNER_PPA:
@@ -3306,7 +3341,8 @@ class Economics:
                     self.royalty_supplemental_payments,
                     self.construction_capex_schedule,
                     self.bond_financing_start_year,
-                    self.ritc_state_amount
+                    self.ritc_state_amount,
+                    self.debt_tenor
                 ]
                 for sam_em_only_param in sam_em_only_params:
                     if sam_em_only_param.Provided:
@@ -3896,6 +3932,15 @@ class Economics:
             # all other options have power plant
             # TODO migrate relevant constants/calculations below to their respective classes
 
+            def _check_temperature_for_ORC(temperature: float) -> None:
+                if temperature > 200.:
+                    msg = ('The simulated production temperature exceeds 200 degrees Celsius.  The built-in ORC utilization '
+                           'efficiency correlations may not be valid above this temperature.  Consider using a single or double '
+                           'flash plant, or providing a custom correlation via a surface plant module.  For more information, '
+                           'see: https://natlabrockies.github.io/GEOPHIRES-X/Theoretical-Basis-for-GEOPHIRES.html#surface-plant')
+                    print(f'Warning: {msg}')
+                    model.logger.warning(msg)
+
             if model.surfaceplant.plant_type.value == PlantType.SUB_CRITICAL_ORC:
                 MaxProducedTemperature = np.max(model.surfaceplant.TenteringPP.value)
                 if MaxProducedTemperature < 150.:
@@ -3906,6 +3951,7 @@ class Economics:
                     CCAPP1 = C3 * MaxProducedTemperature ** 3 + C2 * MaxProducedTemperature ** 2 + C1 * MaxProducedTemperature + C0
                 else:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
+                    _check_temperature_for_ORC(MaxProducedTemperature)
                 x = design_electricity_produced_mw
                 y = design_electricity_produced_mw
                 if y == 0.0:
@@ -3923,6 +3969,7 @@ class Economics:
                     CCAPP1 = C3 * MaxProducedTemperature ** 3 + C2 * MaxProducedTemperature ** 2 + C1 * MaxProducedTemperature + C0
                 else:
                     CCAPP1 = 2231 - 2 * (MaxProducedTemperature - 150.)
+                    _check_temperature_for_ORC(MaxProducedTemperature)
                 # factor 1.1 to make supercritical 10% more expansive than subcritical
                 self.Cplantcorrelation = 1.1 * CCAPP1 * math.pow(
                     design_electricity_produced_mw / 15., -0.06) * design_electricity_produced_mw * 1000. / 1E6
@@ -4366,19 +4413,19 @@ class Economics:
 
         # build the price models
         self.ElecPrice.value = BuildPricingModel(model.surfaceplant.plant_lifetime.value,
-                                                 self.ElecStartPrice.value, self.ElecEndPrice.value,
+                                                 self.ElecStartPrice.value, end_price_or_max(self.ElecEndPrice),
                                                  self.ElecEscalationStart.value, self.ElecEscalationRate.value,
                                                  self.PTCElecPrice)
         self.HeatPrice.value = BuildPricingModel(model.surfaceplant.plant_lifetime.value,
-                                                 self.HeatStartPrice.value, self.HeatEndPrice.value,
+                                                 self.HeatStartPrice.value, end_price_or_max(self.HeatEndPrice),
                                                  self.HeatEscalationStart.value, self.HeatEscalationRate.value,
                                                  self.PTCHeatPrice)
         self.CoolingPrice.value = BuildPricingModel(model.surfaceplant.plant_lifetime.value,
-                                                    self.CoolingStartPrice.value, self.CoolingEndPrice.value,
+                                                    self.CoolingStartPrice.value, end_price_or_max(self.CoolingEndPrice),
                                                     self.CoolingEscalationStart.value, self.CoolingEscalationRate.value,
                                                     self.PTCCoolingPrice)
         self.CarbonPrice.value = BuildPricingModel(model.surfaceplant.plant_lifetime.value,
-                                                   self.CarbonStartPrice.value, self.CarbonEndPrice.value,
+                                                   self.CarbonStartPrice.value, end_price_or_max(self.CarbonEndPrice),
                                                    self.CarbonEscalationStart.value, self.CarbonEscalationRate.value,
                                                    self.PTCCarbonPrice)
 
@@ -4672,7 +4719,11 @@ class Economics:
             self.cost_per_lateral_section.value = (
                 self.cost_lateral_section.quantity().to(self.cost_per_lateral_section.CurrentUnits).magnitude
                 / model.wellbores.numnonverticalsections.value
-            )
+            ) * self._wellfield_indirect_cost_factor
+            self.cost_per_vertical_production_well.value = self.cost_one_production_well.quantity().to(
+                self.cost_per_vertical_production_well.CurrentUnits).magnitude * self._wellfield_indirect_cost_factor
+            self.cost_per_vertical_injection_well.value = self.cost_one_injection_well.quantity().to(
+                self.cost_per_vertical_injection_well.CurrentUnits).magnitude * self._wellfield_indirect_cost_factor
 
         if hasattr(self, 'discountrate'):
             self.real_discount_rate.value = self.discountrate.quantity().to(convertible_unit(

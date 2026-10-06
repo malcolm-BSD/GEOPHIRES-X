@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -444,6 +445,12 @@ def assign_value_adjusted_levelized_cost_outputs(
     """
     electricity_result = commodity_results.get(ELECTRICITY_COMMODITY, _empty_value_adjustment_result())
     heat_result = commodity_results.get(HEAT_COMMODITY, _empty_value_adjustment_result())
+    if math.isnan(getattr(getattr(econ, "LCOH", None), "value", 0.0)):
+        heat_result = ValueAdjustmentResult(
+            active_base_cost=float("nan"), valco=float("nan"),
+            energy_adjustment=float("nan"), capacity_adjustment=float("nan"),
+            flexibility_adjustment=float("nan"),
+        )
     cooling_result = commodity_results.get(COOLING_COMMODITY, _empty_value_adjustment_result())
     electricity_units = getattr(getattr(econ, "LCOE", None), "CurrentUnits", getattr(getattr(econ, "VALCOE", None), "CurrentUnits", None))
     heat_units = getattr(getattr(econ, "LCOH", None), "CurrentUnits", getattr(getattr(econ, "VALCOH", None), "CurrentUnits", None))

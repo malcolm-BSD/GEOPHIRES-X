@@ -414,6 +414,17 @@ class SurfacePlant:
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
             AllowExtendedInput = True,
         )
+        self.use_weather_data = self.ParameterDict["Use Weather Data"] = boolParameter(
+            "Use Weather Data",
+            DefaultValue=True,
+            Required=False,
+            ErrMessage="assume default Use Weather Data (True)",
+            ToolTipText=(
+                "Use historical weather when project latitude and longitude are provided. "
+                "Set False to retain project coordinates without downloading or applying weather data; "
+                "Ambient Temperature and Surface Temperature then use their input or default values."
+            ),
+        )
         self.project_latitude = self.ParameterDict["Project Latitude"] = floatParameter(
             "Project Latitude",
             DefaultValue=0.0,
@@ -422,7 +433,7 @@ class SurfacePlant:
             Required=False,
             UnitType=Units.NONE,
             ErrMessage="assume default project latitude (0.0)",
-            ToolTipText="Project latitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+            ToolTipText="Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
         )
         self.project_longitude = self.ParameterDict["Project Longitude"] = floatParameter(
             "Project Longitude",
@@ -432,7 +443,7 @@ class SurfacePlant:
             Required=False,
             UnitType=Units.NONE,
             ErrMessage="assume default project longitude (0.0)",
-            ToolTipText="Project longitude in decimal degrees. Providing both project latitude and longitude enables weather data download.",
+            ToolTipText="Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
         )
         self.weather_data_year = self.ParameterDict["Weather Data Year"] = intParameter(
             "Weather Data Year",

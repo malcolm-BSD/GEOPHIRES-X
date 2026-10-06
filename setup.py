@@ -13,7 +13,7 @@ def read(*names, **kwargs):
 
 setup(
     name="geophires-x",
-    version="3.15.3",
+    version="3.18.3",
     license="MIT",
     description="GEOPHIRES is a free and open-source geothermal techno-economic simulator.",
     long_description="{}\n{}".format(
@@ -63,7 +63,8 @@ setup(
     install_requires=[
         'numpy==1.24; python_version == "3.8"',  # Last version compatible with Python 3.8
         'numpy; python_version > "3.8"',
-        "numpy-financial",
+        # TODO upgrade - see https://github.com/NatLabRockies/GEOPHIRES-X/issues/522
+        "numpy-financial==1.0.0",  # Upstream pin: avoid IRR numerical instability in 1.1.0
         "pint",
         "forex_python",
         "jsons",
@@ -96,9 +97,12 @@ setup(
         #   "rst": ["docutils>=0.11"],
         #   ":python_version=="2.6"": ["argparse"],
         "development": [
+            "tox",
+            "pre-commit",
             "bumpversion",
             "sphinx_py3doc_enhanced_theme",
             "opencv-python",  # generate_fervo_project_red_2026_docs
+            "jinja2",  # generate_fervo_project_cape_5_md
         ],
     },
 )
