@@ -25,8 +25,9 @@ Contents
 
    GEOPHIRES-Examples
    Parameter-Formulas
-   Fervo_Project_Cape-5
    Fervo_Project_Red
+   Fervo_Project_Cape-5
+   Fervo_Project_Cape-7
 
 
 ..   reference/index
