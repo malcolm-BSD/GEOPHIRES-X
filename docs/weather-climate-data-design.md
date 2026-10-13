@@ -46,8 +46,8 @@ weather cache, and no weather profile or annual weather average is applied.
 `Ambient Temperature` and `Surface Temperature` retain their supplied values,
 or their normal defaults if omitted. Coordinates remain available as project
 information; a coordinate pair is not required when weather is disabled.
-The Cape-5 and derived Cape-6 case studies use this explicit opt-out to preserve
-their documented fixed-temperature assumptions.
+The Cape-5, derived Cape-6, and Cape-7 case studies use this explicit opt-out to
+preserve their documented fixed-temperature assumptions.
 
 The weather year is controlled by:
 
