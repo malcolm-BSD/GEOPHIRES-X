@@ -256,9 +256,12 @@ def write_capital_costs(model: Model, f: TextIOWrapper, is_sam_econ_model: bool)
             )
 
     if model.economics.totalcapcost.Valid and model.wellbores.redrill.value > 0:
-        f.write(f"         Drilling and completion costs (for redrilling):{econ.Cwell.value:10.2f} {econ.Cwell.CurrentUnits.value}\n")
-        f.write(f"      Drilling and completion costs per redrilled well: {(econ.Cwell.value / (model.wellbores.nprod.value + model.wellbores.ninj.value)):10.2f} {econ.Cwell.CurrentUnits.value}\n")
-        f.write(f"         Stimulation costs (for redrilling):            {econ.Cstim.value:10.2f} {econ.Cstim.CurrentUnits.value}\n")
+        # Per redrilling event, on average (see Redrilling Learning Rate).
+        redrill_well_cost = econ.average_redrilling_event_cost(econ.Cwell, model)
+        f.write(f"         Drilling and completion costs (for redrilling):{redrill_well_cost:10.2f} {econ.Cwell.CurrentUnits.value}\n")
+        f.write(f"      Drilling and completion costs per redrilled well: {(redrill_well_cost / (model.wellbores.nprod.value + model.wellbores.ninj.value)):10.2f} {econ.Cwell.CurrentUnits.value}\n")
+        redrill_stimulation_cost = econ.average_redrilling_event_cost(econ.Cstim, model)
+        f.write(f"         Stimulation costs (for redrilling):            {redrill_stimulation_cost:10.2f} {econ.Cstim.CurrentUnits.value}\n")
 
     if model.economics.RITCValue.value and not is_sam_econ_model:
         # Note ITC is in ECONOMIC PARAMETERS category for SAM-EM (not capital costs)

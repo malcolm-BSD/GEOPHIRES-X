@@ -10,6 +10,7 @@ import numpy_financial as npf
 # ruff: noqa: I001  # Successful module initialization is dependent on this specific import order.
 from geophires_x.Model import Model
 from geophires_x.Economics import CalculateFinancialPerformance
+from geophires_x.EconomicsUtils import redrilling_cost_multipliers
 from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import (
     GeophiresXResult,
@@ -125,6 +126,18 @@ class EconomicsTestCase(BaseTestCase):
         model.economics.read_parameters(model)
 
         self.assertEqual(365, model.economics.timestepsperyear.value)
+
+    def test_redrilling_cost_multipliers(self) -> None:
+        self.assertEqual([1.0, 1.0, 1.0], redrilling_cost_multipliers(3, 0))
+        self.assertEqual([], redrilling_cost_multipliers(0, 0.15))
+
+        multipliers = redrilling_cost_multipliers(3, 0.2)
+        self.assertAlmostEqual(0.8, multipliers[0])  # the site's second wellfield: one doubling
+        self.assertAlmostEqual(0.8 * 0.8, multipliers[2])  # its fourth: two doublings
+        self.assertTrue(multipliers[0] > multipliers[1] > multipliers[2])
+
+        with self.assertRaises(ValueError):
+            redrilling_cost_multipliers(1, 1.0)
 
     def test_peaking_boiler_cost(self):
         def _get_result(peaking_boiler_cost_: int) -> GeophiresXResult:
