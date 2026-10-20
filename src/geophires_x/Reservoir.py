@@ -359,6 +359,7 @@ class Reservoir:
             UnitType=Units.PERCENT,
             CurrentUnits=PercentUnit.TENTH,
             PreferredUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             ErrMessage="assume default water loss fraction (0)",
             ToolTipText="Fraction of water lost in the reservoir defined as "
                         "(total geofluid lost)/(total geofluid produced)."
@@ -372,6 +373,7 @@ class Reservoir:
             UnitType=Units.HEAT_CAPACITY,
             PreferredUnits=HeatCapacityUnit.JPERKGPERK,
             CurrentUnits=HeatCapacityUnit.JPERKGPERK,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage=" assume default reservoir heat capacity (1000 J/kg/K)",
             ToolTipText="Constant and uniform reservoir rock heat capacity"
@@ -385,6 +387,7 @@ class Reservoir:
             UnitType=Units.DENSITY,
             PreferredUnits=DensityUnit.KGPERMETERS3,
             CurrentUnits=DensityUnit.KGPERMETERS3,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default reservoir density (2700 kg/m^3)",
             ToolTipText="Constant and uniform reservoir rock density"
@@ -398,6 +401,7 @@ class Reservoir:
             UnitType=Units.THERMAL_CONDUCTIVITY,
             PreferredUnits=ThermalConductivityUnit.WPERMPERK,
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            AllowFormulaInput=True,
             ErrMessage="assume default reservoir thermal conductivity (3 W/m/K)",
             ToolTipText="Constant and uniform reservoir rock thermal conductivity"
         )
@@ -410,6 +414,7 @@ class Reservoir:
             UnitType=Units.PERMEABILITY,
             PreferredUnits=AreaUnit.METERS2,
             CurrentUnits=AreaUnit.METERS2,
+            AllowFormulaInput=True,
             ErrMessage="assume default reservoir permeability (1E-13 m^2)",
             ToolTipText="Constant and uniform reservoir permeability"
         )
@@ -422,6 +427,7 @@ class Reservoir:
             UnitType=Units.POROSITY,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             ErrMessage="assume default reservoir porosity (0.04)",
             ToolTipText="Constant and uniform reservoir porosity"
         )

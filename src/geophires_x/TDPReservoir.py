@@ -52,6 +52,7 @@ class TDPReservoir(Reservoir):
             UnitType=Units.DRAWDOWN,
             PreferredUnits=DrawdownUnit.PERYEAR,
             CurrentUnits=DrawdownUnit.PERYEAR,
+            AllowFormulaInput=True,
             ErrMessage="assume default drawdown parameter",
             ToolTipText="specify the thermal drawdown for reservoir model 3 and 4"
         )

@@ -767,6 +767,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.INCHES,
             CurrentUnits=LengthUnit.INCHES,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default production well diameter (8 inch)",
             ToolTipText='Inner diameter of production wellbore (assumed constant along the wellbore) to calculate '
@@ -781,6 +782,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.INCHES,
             CurrentUnits=LengthUnit.INCHES,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default injection well diameter (8 inch)",
             ToolTipText='Inner diameter of injection wellbore (assumed constant along the wellbore) to calculate '
@@ -825,6 +827,7 @@ class WellBores:
             UnitType=Units.FLOWRATE,
             PreferredUnits=FlowRateUnit.KGPERSEC,
             CurrentUnits=FlowRateUnit.KGPERSEC,
+            AllowFormulaInput=True,
             ErrMessage="assume default flow rate per production well (50 kg/s)",
             ToolTipText="Geofluid flow rate per production well."
         )
@@ -863,6 +866,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=well_separation_preferred_unit,
             CurrentUnits=well_separation_default_unit,
+            AllowFormulaInput=True,
             ErrMessage=f'assume default well separation ({well_separation_default_value_m} m)',
             ToolTipText=f'Well separation for built-in TOUGH2 doublet reservoir model'
                         f'{well_separation_unit_mismatch_note}'
@@ -965,6 +969,7 @@ class WellBores:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             ErrMessage="assume default maximum drawdown (1)",
             ToolTipText=f"Maximum allowable thermal drawdown before redrilling of all wells into new reservoir "
                         f"(most applicable to EGS-type reservoirs with heat farming strategies). E.g. a value of 0.2 "
@@ -1007,6 +1012,7 @@ class WellBores:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume there is no overpressure",
             ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)"
@@ -1017,6 +1023,7 @@ class WellBores:
             UnitType=Units.DECAY_RATE,
             PreferredUnits=Decay_RateUnit.PERCENTPERYEAR,
             CurrentUnits=Decay_RateUnit.PERCENTPERYEAR,
+            AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume there is no overpressure",
             ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)"
@@ -1093,6 +1100,7 @@ class WellBores:
             UnitType=Units.THERMAL_CONDUCTIVITY,
             PreferredUnits=ThermalConductivityUnit.WPERMPERK,
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            AllowFormulaInput=True,
             ErrMessage="assume default for water thermal conductivity (0.6 W/m/K)",
             ToolTipText="Water Thermal Conductivity"
         )
@@ -1117,6 +1125,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default Nonvertical Length per Multilateral Section (1000 m)"
         )
@@ -1129,6 +1138,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage="assume default for Non-vertical Wellbore Diameter (0.156 m)",
             ToolTipText="Non-vertical Wellbore Diameter"
         )
@@ -1189,6 +1199,7 @@ class WellBores:
             UnitType=Units.THERMAL_CONDUCTIVITY,
             PreferredUnits=ThermalConductivityUnit.WPERMPERK,
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Casing Thermal Conductivity (45 W/m/K)",
             ToolTipText="Thermal conductivity of the steel casing in lateral sections"
         )
@@ -1203,6 +1214,7 @@ class WellBores:
             UnitType=Units.THERMAL_CONDUCTIVITY,
             PreferredUnits=ThermalConductivityUnit.WPERMPERK,
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
+            AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Cement Thermal Conductivity (1 W/m/K)",
             ToolTipText="Thermal conductivity of the cement sheath surrounding lateral casing"
         )
@@ -1217,6 +1229,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Casing Thickness (0 m)",
             ToolTipText="Radial thickness of the lateral casing wall"
         )
@@ -1231,6 +1244,7 @@ class WellBores:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Cement Thickness (0 m)",
             ToolTipText="Radial thickness of the cement sheath outside the lateral casing"
         )

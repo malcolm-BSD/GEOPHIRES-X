@@ -351,6 +351,7 @@ class SurfacePlant:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default circulation pump efficiency (0.75)",
             ToolTipText="Specify the overall efficiency of the injection and production well pumps"
@@ -363,6 +364,7 @@ class SurfacePlant:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default utilization factor (0.9)",
             ToolTipText="Ratio of the time the plant is running in normal production in a 1-year time period. "
@@ -376,6 +378,7 @@ class SurfacePlant:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             ErrMessage="assume default end-use efficiency factor (0.9)",
             ToolTipText="Constant thermal efficiency of the direct-use application"
         )
@@ -387,6 +390,7 @@ class SurfacePlant:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
+            AllowFormulaInput=True,
             ErrMessage="assume default CHP fraction (0.5)",
             ToolTipText="Fraction of produced geofluid flow rate going to direct-use heat application in" +
             " CHP parallel cycle"
@@ -902,6 +906,7 @@ class SurfacePlant:
             DefaultValue=4200.0,
             Min=0.0,
             Max=10_000.0,
+            AllowFormulaInput=True,
             ErrMessage="assume default working fluid heat capacity (4200)",
             ToolTipText="Heat capacity of the working fluid"
         )
@@ -913,6 +918,7 @@ class SurfacePlant:
             DefaultValue=1000.0,
             Min=0.0,
             Max=10_000.0,
+            AllowFormulaInput=True,
             ErrMessage="assume default working fluid density (1000)",
             ToolTipText="Density of the working fluid"
         )
@@ -924,6 +930,7 @@ class SurfacePlant:
             DefaultValue=0.68,
             Min=0.0,
             Max=10.0,
+            AllowFormulaInput=True,
             ErrMessage="assume default working fluid thermal conductivity (0.68)",
             ToolTipText="Thermal conductivity of the working fluid"
         )
@@ -935,6 +942,7 @@ class SurfacePlant:
             DefaultValue=600*10**-6,
             Min=0.0,
             Max=1,
+            AllowFormulaInput=True,
             ErrMessage="assume default fluid dynamic density (600*10**-6)",
             ToolTipText="Dynamic viscosity of the working fluid"
         )

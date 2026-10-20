@@ -532,6 +532,7 @@ class Economics:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             ToolTipText=f'The indirect capital cost for reservoir stimulation, '
                         f'calculated as a percentage of the direct cost. '
                         f'(Not applied if {self.ccstimfixed.Name} is provided.)'
@@ -1704,6 +1705,7 @@ class Economics:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             ToolTipText='The contingency percentage applied to the direct capital costs for stimulation, '
                         'field gathering system, exploration, and surface plant. '
                         '(Note: well drilling and completion costs do not have contingency applied and are not '
@@ -1790,6 +1792,7 @@ class Economics:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             ToolTipText=f'The indirect capital cost for well drilling and completion of all wells (the wellfield), '
                         f'calculated as a percentage of the direct cost.'
         )
@@ -1804,6 +1807,7 @@ class Economics:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
+            AllowFormulaInput=True,
             ToolTipText=f'The indirect cost percentage applied to capital costs '
                         f'(default {default_indirect_capital_cost_percentage}%). '
                         f'This value is used for all cost categories including surface plant, field gathering system, '

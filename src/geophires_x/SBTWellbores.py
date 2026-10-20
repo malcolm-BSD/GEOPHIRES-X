@@ -65,6 +65,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Vertical Section Length (2000.0 meters)',
             ToolTipText='length/depth to the bottom of the vertical wellbores'
         )
@@ -76,6 +77,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Vertical Wellbore Spacing (100.0 meters)',
             ToolTipText='Horizontal distance between vertical wellbores'
         )
@@ -87,6 +89,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Lateral Spacing (100.0 meters)',
             ToolTipText='Horizontal distance between laterals'
         )
@@ -109,6 +112,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Discretization Length (250.0 meters)',
             ToolTipText='distance between sample point along length of model'
         )
@@ -120,6 +124,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Junction Depth (4000.0 meters)',
             ToolTipText='vertical depth where the different laterals branch out (where the multilateral section starts, second deepest depth of model)'
         )
@@ -131,6 +136,7 @@ class SBTWellbores(WellBores):
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
+            AllowFormulaInput=True,
             ErrMessage='assume default for Lateral Endpoint Depth (7000.0 meters)',
             ToolTipText='vertical depth where the lateral section ends (tip of the multilateral section, deepest depth of model)'
         )

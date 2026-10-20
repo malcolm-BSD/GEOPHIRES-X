@@ -180,6 +180,159 @@ class ParameterTestCase(BaseTestCase):
         finally:
             Path(input_file).unlink()
 
+    def test_sbt_geometry_parameters_allow_chained_formulas(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tmp:
+            tmp.write("Reservoir Model, 8\n")
+            tmp.write("Vertical Section Length, = junction_depth - 1000\n")
+            tmp.write("Vertical Wellbore Spacing, = vertical_section_length / 2\n")
+            tmp.write("Lateral Spacing, = vertical_wellbore_spacing / 10\n")
+            tmp.write('Discretization Length, "= min(250, lateral_spacing)"\n')
+            tmp.write("Junction Depth, = lateral_endpoint_depth - 2000\n")
+            tmp.write("Lateral Endpoint Depth, = 5000\n")
+            input_file = tmp.name
+
+        expected_values = {
+            "Vertical Section Length": 2000.0,
+            "Vertical Wellbore Spacing": 1000.0,
+            "Lateral Spacing": 100.0,
+            "Discretization Length": 100.0,
+            "Junction Depth": 3000.0,
+            "Lateral Endpoint Depth": 5000.0,
+        }
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            for parameter_name, expected_value in expected_values.items():
+                parameter = model.wellbores.ParameterDict[parameter_name]
+                self.assertEqual(expected_value, parameter.value)
+                self.assertEqual(LengthUnit.METERS, parameter.CurrentUnits)
+                self.assertTrue(parameter.EvaluatedFromFormula)
+                self.assertTrue(parameter.Valid)
+        finally:
+            Path(input_file).unlink()
+
+    def test_leaf_parameter_groups_allow_formulas(self):
+        formulas = {
+            # Dimensionless performance parameters
+            "Water Loss Fraction": "= 0.02",
+            "Reservoir Porosity": "= water_loss_fraction * 2",
+            "Drawdown Parameter": "= reservoir_porosity / 8",
+            "Maximum Drawdown": "= 0.2",
+            "Overpressure Percentage": "= 120",
+            "Overpressure Depletion Rate": "= 2",
+            "Circulation Pump Efficiency": "= 0.8",
+            "Utilization Factor": "= circulation_pump_efficiency + 0.1",
+            "End-Use Efficiency Factor": "= 0.85",
+            "CHP Fraction": "= 0.5",
+            # Thermophysical properties
+            "Reservoir Heat Capacity": "= working_fluid_heat_capacity / 4",
+            "Reservoir Density": "= 2600",
+            "Reservoir Thermal Conductivity": "= 2.5",
+            "Reservoir Permeability": "= 1e-14",
+            "Water Thermal Conductivity": "= working_fluid_thermal_conductivity + 0.05",
+            "Working Fluid Heat Capacity": "= 4100",
+            "Working Fluid Density": "= 990",
+            "Working Fluid Thermal Conductivity": "= 0.6",
+            "Working Fluid Dynamic Viscosity": "= 0.001",
+            # Passive wellbore dimensions and construction properties
+            "Production Well Diameter": "= 7.5",
+            "Injection Well Diameter": "= production_well_diameter + 0.5",
+            "Production Flow Rate per Well": "= 60",
+            "Well Separation": "= 40000",
+            "Nonvertical Length per Multilateral Section": "= 1200",
+            "Nonvertical Wellbore Diameter": "= 0.2",
+            "Lateral Casing Thermal Conductivity": "= 40",
+            "Lateral Cement Thermal Conductivity": "= 1.5",
+            "Lateral Casing Thickness": "= 0.02",
+            "Lateral Cement Thickness": "= lateral_casing_thickness * 2",
+            # Independent economic percentages
+            "Contingency Percentage": "= indirect_capital_cost_percentage - 5",
+            "Indirect Capital Cost Percentage": "= 15",
+            "Well Drilling and Completion Indirect Capital Cost Percentage": "= indirect_capital_cost_percentage / 3",
+            "Reservoir Stimulation Indirect Capital Cost Percentage": "= 6",
+        }
+        expected_values = {
+            "Water Loss Fraction": 0.02,
+            "Reservoir Porosity": 0.04,
+            "Drawdown Parameter": 0.005,
+            "Maximum Drawdown": 0.2,
+            "Overpressure Percentage": 120.0,
+            "Overpressure Depletion Rate": 2.0,
+            "Circulation Pump Efficiency": 0.8,
+            "Utilization Factor": 0.9,
+            "End-Use Efficiency Factor": 0.85,
+            "CHP Fraction": 0.5,
+            "Reservoir Heat Capacity": 1025.0,
+            "Reservoir Density": 2600.0,
+            "Reservoir Thermal Conductivity": 2.5,
+            "Reservoir Permeability": 1e-14,
+            "Water Thermal Conductivity": 0.65,
+            "Working Fluid Heat Capacity": 4100.0,
+            "Working Fluid Density": 990.0,
+            "Working Fluid Thermal Conductivity": 0.6,
+            "Working Fluid Dynamic Viscosity": 0.001,
+            "Production Well Diameter": 7.5,
+            "Injection Well Diameter": 8.0,
+            "Production Flow Rate per Well": 60.0,
+            "Well Separation": 40000.0,
+            "Nonvertical Length per Multilateral Section": 1200.0,
+            "Nonvertical Wellbore Diameter": 0.2,
+            "Lateral Casing Thermal Conductivity": 40.0,
+            "Lateral Cement Thermal Conductivity": 1.5,
+            "Lateral Casing Thickness": 0.02,
+            "Lateral Cement Thickness": 0.04,
+            "Contingency Percentage": 10.0,
+            "Indirect Capital Cost Percentage": 15.0,
+            "Well Drilling and Completion Indirect Capital Cost Percentage": 5.0,
+            "Reservoir Stimulation Indirect Capital Cost Percentage": 6.0,
+        }
+
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tmp:
+            tmp.write("Reservoir Model, 4\n")
+            for parameter_name, formula in formulas.items():
+                tmp.write(f"{parameter_name}, {formula}\n")
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            parameters_by_name = {
+                parameter.Name: parameter
+                for component in (model.reserv, model.wellbores, model.surfaceplant, model.economics)
+                for parameter in component.ParameterDict.values()
+            }
+            self.assertEqual(set(expected_values), set(formulas))
+            for parameter_name, expected_value in expected_values.items():
+                parameter = parameters_by_name[parameter_name]
+                self.assertTrue(
+                    np.isclose(expected_value, parameter.value, rtol=1e-12, atol=0.0),
+                    msg=f"Unexpected resolved value for {parameter_name}: {parameter.value}",
+                )
+                self.assertTrue(parameter.AllowFormulaInput)
+                self.assertTrue(parameter.EvaluatedFromFormula)
+                self.assertTrue(parameter.Valid)
+        finally:
+            Path(input_file).unlink()
+
+    def test_drawdown_parameter_formula_is_supported_by_single_fracture_reservoir(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tmp:
+            tmp.write("Reservoir Model, 3\n")
+            tmp.write("Drawdown Parameter, = 0.01\n")
+            input_file = tmp.name
+
+        try:
+            model = Model(enable_geophires_logging_config=False, input_file=input_file)
+            model.read_parameters()
+
+            self.assertEqual(0.01, model.reserv.drawdp.value)
+            self.assertTrue(model.reserv.drawdp.EvaluatedFromFormula)
+            self.assertTrue(model.reserv.drawdp.Valid)
+        finally:
+            Path(input_file).unlink()
+
     def test_number_of_production_wells_formula_unknown_symbol_raises_clear_error(self):
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tmp:
             tmp.write("Number of Production Wells, = unknown_parameter * 1.5\n")
