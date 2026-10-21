@@ -114,6 +114,7 @@ class Outputs:
                 DefaultValue='GEOPHIRES_Text.rtf',
                 Required=False,
                 Provided=False,
+                AllowExtendedInput=False,
                 ErrMessage='assume no rich text output',
                 ToolTipText='Provide any value to enable rich text output written next to the main .out file as .rtf',
         ))
@@ -123,6 +124,7 @@ class Outputs:
                 DefaultValue='GEOPHIRES.html',
                 Required=False,
                 Provided=False,
+                AllowExtendedInput=False,
                 ErrMessage='assume no HTML output',
                 ToolTipText='Provide any value to enable HTML output written next to the main .out file as .html',
         ))
@@ -135,6 +137,7 @@ class Outputs:
                 DefaultValue='dispatch_profile.csv',
                 Required=False,
                 Provided=False,
+                AllowExtendedInput=False,
                 ErrMessage='assume no dispatch profile csv output',
                 ToolTipText=(
                     'Provide a CSV output filename if you want hourly dispatch profile export '

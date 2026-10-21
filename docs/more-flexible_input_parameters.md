@@ -2,7 +2,7 @@
 
 ## Objective
 
-Extend GEOPHIRES parameters so they can optionally read their data from Files or URLs. Also allow for standardization inputs from canonical sources instead of just scalars from files. The data from those new sources must come with the standard associated unit parsing and normalization. The extension is done on a case-by-case basis with a boolean flag. It is assumed that it will generally be OK to allow a scalar to be read from a file or URL instead of directly from the parameter file/list, since that is a like-for-like substitution. The extension to allow for arrays is trickier, and must be accounted for in the code. The addition of the new parameter type, Filename, allows for smarter use of filenames/URLs. Previously, we used strings to hold file names, but there was no validity checking.
+Extend GEOPHIRES parameters so they can read their data from files or URLs. Also allow for standardized inputs from canonical sources instead of just scalars from files. Data from those sources retains the usual type, unit, range, and normalization checks. `AllowExtendedInput` is the single switch controlling all extended-input forms. It defaults to `True` for user-input parameters; output-destination strings explicitly opt out. Scalars remain scalars, while arrays are accepted only by list/time-series parameters and scalar parameters with a dedicated collection mode. The `Filename` parameter type provides validity checking while preserving filename/URL references for the consuming code.
 
 This proposal is implementation-oriented and staged to minimize risk and preserve backward compatibility. It includes full unit testing and sample data.
 
@@ -22,7 +22,30 @@ These will initially be added and tested but not implemented in any existing cod
 
 This can strengthen the model's ability to use real-world data and reduce manual pre-processing, but requires careful handling of parsing, unit normalization, and error handling. It is also easy to refer to a single canonical source for a value via URL but access it from various configuration files. If that canonical source is upgraded, then all parameters that reference that canonical source are also upgraded without remembering to update several input parameter lists/files.
 
-The upgrade is opt-in on a per-parameter basis, with a boolean flag in the parameter metadata to enable Extended Input like reading from files or URLS. By default, Extended Input is disabled for all parameters, preserving existing behavior. This allows for a gradual migration path and minimizes risk of unintended consequences.
+Extended input is controlled on a per-parameter basis by the `AllowExtendedInput` metadata flag. It is enabled by default for all user inputs. The three output-destination strings (`Improved Text Output File`, `HTML Output File`, and `Dispatch Profile Output File`) explicitly set it to `False`, so a destination path is never mistaken for a source to read.
+
+### Selecting a value from a JSON file or URL
+
+An extended-input parameter can select one value from a JSON document by appending an
+[RFC 6901 JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) after `#`:
+
+```text
+Reservoir Depth, D:\Work\ProjectFalco\inputs\geophires\profiles\edwards.json#/target_depth_km
+Project Latitude, D:\Work\ProjectFalco\inputs\geophires\profiles\edwards.json#/latitude
+Project Longitude, D:\Work\ProjectFalco\inputs\geophires\profiles\edwards.json#/longitude
+Surface Temperature, D:\Work\ProjectFalco\inputs\geophires\profiles\edwards.json#/surface_temperature_c
+Ambient Temperature, D:\Work\ProjectFalco\inputs\geophires\profiles\edwards.json#/ambient_temperature_c
+```
+
+The source can be an absolute path, a path relative to the GEOPHIRES input file, or an HTTP(S) URL. Nested values use
+paths such as `profile.json#/site/location/latitude`; array entries use paths such as `profile.json#/temperatures/0`.
+JSON Pointer escaping is supported (`~1` for `/` and `~0` for `~`). The selected JSON value is processed exactly like
+a literal parameter value, including the parameter's normal type, range, and unit handling. JSON objects and `null`
+cannot be assigned directly; select a scalar or array value within the document. Scalar parameters reject JSON arrays,
+and list/time-series parameters require arrays. Invalid boolean spellings are rejected rather than replaced by a default.
+A source without a `#/...` selector retains the existing whole-file extended-input behavior, except for a `Filename`
+parameter: its bare filename or URL remains the value to be consumed later. A JSON selector may select a string filename
+for a `Filename` parameter, after which the normal file/URL validation is applied.
 
 ### Existing parameters to upgrade for array support
 

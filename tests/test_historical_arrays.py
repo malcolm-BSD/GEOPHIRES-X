@@ -360,6 +360,7 @@ class HistoricalArrayTestCase(unittest.TestCase):
             PreferredUnits=TemperatureUnit.CELSIUS,
             AllowExtendedInput=True,
         )
+        param.AllowPairVectorInput = True
         ReadParameter(
             ParameterEntry(
                 Name="Ambient Temperature",

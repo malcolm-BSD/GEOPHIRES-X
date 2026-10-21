@@ -416,7 +416,6 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default ambient temperature (15 deg.C)",
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
-            AllowExtendedInput = True,
         )
         self.use_weather_data = self.ParameterDict["Use Weather Data"] = boolParameter(
             "Use Weather Data",
@@ -841,7 +840,6 @@ class SurfacePlant:
             UnitType=Units.ENERGY,
             PreferredUnits=EnergyUnit.KWH,
             CurrentUnits=EnergyUnit.KWH,
-            AllowExtendedInput=True,
             PreferredXUnits="hr",
             PreferredYUnits="kWh",
             ResampleToHourlyYear=True,
@@ -857,7 +855,6 @@ class SurfacePlant:
             UnitType=Units.ENERGY,
             PreferredUnits=EnergyUnit.KWH,
             CurrentUnits=EnergyUnit.KWH,
-            AllowExtendedInput=True,
             PreferredXUnits="hr",
             PreferredYUnits="kWh",
             ResampleToHourlyYear=True,
@@ -872,7 +869,6 @@ class SurfacePlant:
             UnitType=Units.ENERGY,
             PreferredUnits=EnergyUnit.KWH,
             CurrentUnits=EnergyUnit.KWH,
-            AllowExtendedInput=True,
             PreferredXUnits="hr",
             PreferredYUnits="kWh",
             ResampleToHourlyYear=True,

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
 from geophires_x.EconomicsUtils import total_capex_parameter_output_parameter
 from geophires_x.formula_evaluator import evaluate_formula_expression
 from geophires_x.formula_evaluator import resolve_parameter_formulas
+from geophires_x.GeoPHIRESUtils import read_input_file
 from geophires_x.Model import Model
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
@@ -19,6 +22,7 @@ from geophires_x.Parameter import ParameterEntry
 from geophires_x.Parameter import ReadParameter
 from geophires_x.Parameter import TemperatureGradientUnit
 from geophires_x.Parameter import boolParameter
+from geophires_x.Parameter import filenameParameter
 from geophires_x.Parameter import floatParameter
 from geophires_x.Parameter import intParameter
 from geophires_x.Parameter import listParameter
@@ -776,6 +780,250 @@ class ParameterTestCase(BaseTestCase):
 
         self.assertIsInstance(param.value, list)
         self.assertEqual(345, param.value[0])
+
+    def test_read_parameter_values_from_json_file_by_pointer(self):
+        model = self._new_model()
+        profile = {
+            "number": 3.14156,
+            "count": 113,
+            "enabled": False,
+            "label": "Edwards profile",
+            "values": [1, 2, 3],
+            "distance": "5000 m",
+            "nested": {"a/b": {"~value": 7}},
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            profile_path = Path(temp_dir) / "profile.json"
+            profile_path.write_text(json.dumps(profile), encoding="utf-8")
+            cases = [
+                (floatParameter("Number", DefaultValue=0.0, AllowExtendedInput=True), "/number", 3.14156),
+                (
+                    intParameter("Count", DefaultValue=0, AllowableRange=[0, 7, 113], AllowExtendedInput=True),
+                    "/count",
+                    113,
+                ),
+                (boolParameter("Enabled", DefaultValue=True, AllowExtendedInput=True), "/enabled", False),
+                (strParameter("Label", DefaultValue="", AllowExtendedInput=True), "/label", "Edwards profile"),
+                (listParameter("Values", DefaultValue=[], AllowExtendedInput=True), "/values", [1, 2, 3]),
+                (
+                    floatParameter(
+                        "Distance",
+                        DefaultValue=0.0,
+                        UnitType=Units.LENGTH,
+                        PreferredUnits=LengthUnit.KILOMETERS,
+                        CurrentUnits=LengthUnit.KILOMETERS,
+                        AllowExtendedInput=True,
+                    ),
+                    "/distance",
+                    5.0,
+                ),
+                (
+                    intParameter("Escaped", DefaultValue=0, AllowableRange=[0, 7], AllowExtendedInput=True),
+                    "/nested/a~1b/~0value",
+                    7,
+                ),
+            ]
+
+            for param, pointer, expected in cases:
+                with self.subTest(parameter=param.Name):
+                    ReadParameter(
+                        ParameterEntry(Name=param.Name, sValue=f"{profile_path}#{pointer}"),
+                        param,
+                        model,
+                    )
+                    self.assertEqual(expected, param.value)
+
+    def test_extended_input_is_enabled_by_default_except_for_output_destinations(self):
+        model = self._new_model()
+        parameters = {}
+        for component in vars(model).values():
+            parameter_dict = getattr(component, "ParameterDict", None)
+            if parameter_dict is not None:
+                parameters.update(parameter_dict)
+
+        disabled_parameters = {name for name, parameter in parameters.items() if not parameter.AllowExtendedInput}
+
+        self.assertEqual(
+            {
+                "Improved Text Output File",
+                "HTML Output File",
+                "Dispatch Profile Output File",
+            },
+            disabled_parameters,
+        )
+
+    def test_json_array_is_rejected_for_an_ordinary_scalar_parameter(self):
+        model = self._new_model()
+        param = floatParameter("Number", DefaultValue=0.0)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            profile_path = Path(temp_dir) / "profile.json"
+            profile_path.write_text('{"values": [1, 2, 3]}', encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "requires a scalar value"):
+                ReadParameter(
+                    ParameterEntry(Name=param.Name, sValue=f"{profile_path}#/values"),
+                    param,
+                    model,
+                )
+
+    def test_json_scalar_is_rejected_for_a_list_parameter(self):
+        model = self._new_model()
+        param = listParameter("Values", DefaultValue=[])
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            profile_path = Path(temp_dir) / "profile.json"
+            profile_path.write_text('{"value": 1}', encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "requires an array"):
+                ReadParameter(
+                    ParameterEntry(Name=param.Name, sValue=f"{profile_path}#/value"),
+                    param,
+                    model,
+                )
+
+    def test_invalid_boolean_value_is_rejected(self):
+        model = self._new_model()
+        param = boolParameter("Enabled", DefaultValue=True)
+
+        with self.assertRaisesRegex(ValueError, "not a recognized boolean value"):
+            ReadParameter(ParameterEntry(Name=param.Name, sValue="maybe"), param, model)
+
+        self.assertFalse(param.Valid)
+
+    def test_filename_parameter_retains_a_bare_file_reference(self):
+        model = self._new_model()
+        param = filenameParameter("Input File", DefaultValue="")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_path = Path(temp_dir) / "data.csv"
+            data_path.write_text("1,2,3", encoding="utf-8")
+
+            ReadParameter(ParameterEntry(Name=param.Name, sValue=str(data_path)), param, model)
+
+        self.assertEqual(str(data_path), param.value)
+
+    def test_filename_parameter_can_be_selected_from_json(self):
+        model = self._new_model()
+        param = filenameParameter("Input File", DefaultValue="")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_path = Path(temp_dir) / "data.csv"
+            data_path.write_text("1,2,3", encoding="utf-8")
+            profile_path = Path(temp_dir) / "profile.json"
+            profile_path.write_text(json.dumps({"filename": str(data_path)}), encoding="utf-8")
+
+            ReadParameter(
+                ParameterEntry(Name=param.Name, sValue=f"{profile_path}#/filename"),
+                param,
+                model,
+            )
+
+        self.assertEqual(str(data_path), param.value)
+
+    def test_read_parameter_value_from_relative_json_file_by_pointer(self):
+        model = self._new_model()
+        param = floatParameter("Number", DefaultValue=0.0, AllowExtendedInput=True)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            profile_path = Path(temp_dir) / "profile.json"
+            profile_path.write_text('{"nested": {"number": 2.5}}', encoding="utf-8")
+            model.input_file_path = str(Path(temp_dir) / "model-input.txt")
+
+            ReadParameter(
+                ParameterEntry(Name="Number", sValue="profile.json#/nested/number"),
+                param,
+                model,
+            )
+
+        self.assertEqual(2.5, param.value)
+
+    def test_read_parameter_value_from_json_url_by_pointer(self):
+        model = self._new_model()
+        param = floatParameter("Number", DefaultValue=0.0, AllowExtendedInput=True)
+        url = "https://example.com/profile.json#/number"
+
+        with patch(
+            "geophires_x.Parameter.get_data_from_file_or_url_as_string",
+            return_value='{"number": 2.5}',
+        ) as get_content:
+            ReadParameter(ParameterEntry(Name="Number", sValue=url), param, model)
+
+        get_content.assert_called_once_with("https://example.com/profile.json")
+        self.assertEqual(2.5, param.value)
+
+    def test_json_pointer_parameter_input_reports_invalid_sources_and_values(self):
+        model = self._new_model()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            invalid_json_path = Path(temp_dir) / "invalid.json"
+            invalid_json_path.write_text('{"number":', encoding="utf-8")
+            object_path = Path(temp_dir) / "object.json"
+            object_path.write_text('{"object": {"number": 2.5}, "null_value": null}', encoding="utf-8")
+
+            cases = [
+                (f"{invalid_json_path}#/number", "not valid JSON"),
+                (f"{object_path}#/missing", "key was not found"),
+                (f"{object_path}#/object", "select one of its values"),
+                (f"{object_path}#/null_value", "selected JSON value is null"),
+            ]
+            for reference, message in cases:
+                with self.subTest(reference=reference), self.assertRaisesRegex(ValueError, message):
+                    ReadParameter(
+                        ParameterEntry(Name="Number", sValue=reference),
+                        floatParameter("Number", DefaultValue=0.0, AllowExtendedInput=True),
+                        model,
+                    )
+
+    def test_profile_parameters_allow_json_pointer_extended_input(self):
+        model = self._new_model()
+        profile_parameters = [
+            model.reserv.depth,
+            model.reserv.Tsurf,
+            model.surfaceplant.ambient_temperature,
+            model.surfaceplant.project_latitude,
+            model.surfaceplant.project_longitude,
+        ]
+
+        self.assertTrue(all(parameter.AllowExtendedInput for parameter in profile_parameters))
+
+        profile = {
+            "target_depth_km": 5,
+            "latitude": 34.90808838,
+            "longitude": -117.88552852,
+            "surface_temperature_c": 14.8,
+            "ambient_temperature_c": 14.8,
+        }
+        parameter_pointers = [
+            (model.reserv.depth, "/target_depth_km"),
+            (model.reserv.Tsurf, "/surface_temperature_c"),
+            (model.surfaceplant.ambient_temperature, "/ambient_temperature_c"),
+            (model.surfaceplant.project_latitude, "/latitude"),
+            (model.surfaceplant.project_longitude, "/longitude"),
+        ]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            profile_path = Path(temp_dir) / "edwards.json"
+            profile_path.write_text(json.dumps(profile), encoding="utf-8")
+            input_path = Path(temp_dir) / "model-input.txt"
+            input_path.write_text(
+                "\n".join(f"{parameter.Name}, {profile_path}#{pointer}" for parameter, pointer in parameter_pointers),
+                encoding="utf-8",
+            )
+            parsed_inputs = read_input_file(model.logger, input_path)
+            for parameter, _ in parameter_pointers:
+                ReadParameter(
+                    parsed_inputs[parameter.Name],
+                    parameter,
+                    model,
+                )
+
+        self.assertEqual(5.0, model.reserv.depth.value)
+        self.assertEqual(14.8, model.reserv.Tsurf.value)
+        self.assertEqual(14.8, model.surfaceplant.ambient_temperature.value)
+        self.assertEqual(34.90808838, model.surfaceplant.project_latitude.value)
+        self.assertEqual(-117.88552852, model.surfaceplant.project_longitude.value)
 
     def test_read_bool_from_URL(self):
         model = self._new_model()

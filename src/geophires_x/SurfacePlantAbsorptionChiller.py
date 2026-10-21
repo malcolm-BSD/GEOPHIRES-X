@@ -199,7 +199,6 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UnitType=Units.TEMPERATURE,
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
-            AllowExtendedInput=True,
             ErrMessage="assume geothermal production temperature for the absorption chiller generator profile",
             ToolTipText="Hourly absorption chiller generator inlet temperature profile.",
         )
@@ -212,7 +211,6 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UnitType=Units.TEMPERATURE,
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
-            AllowExtendedInput=True,
             ErrMessage="assume default absorption chiller evaporator temperature profile (7 degC)",
             ToolTipText="Hourly absorption chiller evaporator or chilled-water supply temperature profile.",
         )
@@ -225,7 +223,6 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UnitType=Units.TEMPERATURE,
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
-            AllowExtendedInput=True,
             ErrMessage="assume default absorption chiller condenser temperature profile (30 degC)",
             ToolTipText="Hourly absorption chiller condenser or ambient temperature profile.",
         )

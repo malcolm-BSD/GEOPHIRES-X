@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import json
 import re
 import sys
 import csv
@@ -13,7 +14,7 @@ import os
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from urllib.request import urlopen
 import numpy as np
 import ast
@@ -40,6 +41,10 @@ _JSON_PARAMETER_TYPE_NUMBER = 'number'
 _JSON_PARAMETER_TYPE_ARRAY = 'array'
 _JSON_PARAMETER_TYPE_BOOLEAN = 'boolean'
 _JSON_PARAMETER_TYPE_OBJECT = 'object'
+
+_FALSE_BOOL_INPUTS = frozenset({'0', 'false', 'f', 'no', 'n'})
+_TRUE_BOOL_INPUTS = frozenset({'1', 'true', 't', 'yes', 'y'})
+_VALID_BOOL_INPUTS = _FALSE_BOOL_INPUTS | _TRUE_BOOL_INPUTS
 
 
 def _resolve_input_source(candidate: str, model) -> str:
@@ -80,6 +85,131 @@ def _resolve_input_source(candidate: str, model) -> str:
         return candidate
 
     return candidate
+
+
+def _json_pointer_value(document: Any, pointer: str) -> Any:
+    """Resolve an RFC 6901 JSON Pointer against an already-decoded JSON document."""
+    if pointer == '':
+        return document
+    if not pointer.startswith('/'):
+        raise ValueError(f'JSON Pointer must start with "/": {pointer}')
+
+    current = document
+    for encoded_token in pointer[1:].split('/'):
+        if re.search(r'~(?![01])', encoded_token):
+            raise ValueError(f'Invalid escape sequence in JSON Pointer token: {encoded_token}')
+        token = encoded_token.replace('~1', '/').replace('~0', '~')
+
+        if isinstance(current, dict):
+            if token not in current:
+                raise ValueError(f'JSON Pointer key was not found: {token}')
+            current = current[token]
+        elif isinstance(current, list):
+            if token == '-' or not token.isdigit() or (len(token) > 1 and token.startswith('0')):
+                raise ValueError(f'Invalid JSON Pointer array index: {token}')
+            index = int(token)
+            if index >= len(current):
+                raise ValueError(f'JSON Pointer array index is out of range: {token}')
+            current = current[index]
+        else:
+            raise ValueError(f'JSON Pointer cannot traverse through {type(current).__name__}: {token}')
+
+    return current
+
+
+def _parameter_allows_collection_value(parameter) -> bool:
+    return (
+        isinstance(parameter, listParameter)
+        or getattr(parameter, 'AllowPairVectorInput', False)
+        or getattr(parameter, 'AllowHistoricalArrayInput', False)
+    )
+
+
+def _parameter_text_from_json_value(value: Any, parameter) -> str:
+    """Validate and convert a selected JSON value into normal parameter input text."""
+    if value is None:
+        raise ValueError('The selected JSON value is null')
+    if isinstance(value, dict):
+        raise ValueError('The selected JSON value is an object; select one of its values instead')
+
+    if isinstance(value, list):
+        if not _parameter_allows_collection_value(parameter):
+            raise ValueError(
+                f'The selected JSON value is an array, but {parameter.Name} requires a scalar value'
+            )
+        if any(item is None or isinstance(item, dict) for item in _flatten_json_array(value)):
+            raise ValueError('The selected JSON array contains an object or null value')
+        return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+    if isinstance(parameter, listParameter):
+        raise ValueError(f'The selected JSON value is not an array, but {parameter.Name} requires an array')
+
+    if isinstance(parameter, (strParameter, filenameParameter)):
+        if not isinstance(value, str):
+            raise ValueError(
+                f'The selected JSON value is {type(value).__name__}, but {parameter.Name} requires a string'
+            )
+        return value
+
+    if isinstance(parameter, boolParameter):
+        if isinstance(value, bool):
+            return json.dumps(value)
+        if isinstance(value, int) and value in (0, 1):
+            return str(value)
+        if isinstance(value, str) and value.strip().lower() in _VALID_BOOL_INPUTS:
+            return value
+        raise ValueError(f'The selected JSON value is not a valid boolean for {parameter.Name}')
+
+    if isinstance(parameter, (intParameter, floatParameter)):
+        if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+            raise ValueError(
+                f'The selected JSON value is {type(value).__name__}, but {parameter.Name} requires a number'
+            )
+        return value if isinstance(value, str) else json.dumps(value)
+
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+
+def _flatten_json_array(value: list) -> Iterable[Any]:
+    for item in value:
+        if isinstance(item, list):
+            yield from _flatten_json_array(item)
+        else:
+            yield item
+
+
+def _load_json_pointer_parameter_value(reference: str, parameter, model) -> Optional[str]:
+    """Load ``source#/pointer`` and return the selected value as parameter input text."""
+    source, separator, fragment = reference.partition('#')
+    if not separator or not fragment.startswith('/'):
+        return None
+    if source.strip() == '':
+        raise ValueError('A JSON Pointer parameter reference must include a file path or URL before "#"')
+
+    resolved_source = _resolve_input_source(source, model)
+    cache = getattr(model, '_extended_input_json_cache', None)
+    if cache is None:
+        cache = {}
+        setattr(model, '_extended_input_json_cache', cache)
+
+    if resolved_source not in cache:
+        content = get_data_from_file_or_url_as_string(resolved_source)
+        if not content:
+            raise ValueError(f'JSON input source is empty or unavailable: {resolved_source}')
+        try:
+            cache[resolved_source] = json.loads(content)
+        except json.JSONDecodeError as ex:
+            raise ValueError(
+                f'JSON input source is not valid JSON: {resolved_source} '
+                f'(line {ex.lineno}, column {ex.colno})'
+            ) from ex
+
+    pointer = unquote(f'/{fragment[1:]}')
+    selected_value = _json_pointer_value(cache[resolved_source], pointer)
+    return _parameter_text_from_json_value(selected_value, parameter)
+
 
 class HasQuantity(ABC):
 
@@ -204,14 +334,11 @@ class Parameter(HasQuantity):
         PreferredUnits (Enum): The units as required by GEOPHIRES (or your algorithms)
         CurrentUnits (Enum): The units that the parameter is provided in (usually the same PreferredUnits)
         UnitsMatch (boolean): Internal flag set when units are different
-        AllowExtendedInput (boolean, False): Whether to allow extended input for this parameter, such as a list of values,
-             a filename, or a URL, instead of a single value.  If True, the code will check if the user provided value is
-             a list of values (in the form of a string), a filename, or a URL, and if so, it will try to read the content
-             and use that as the value for this parameter instead of the original value.  This allows for more flexible input
-             for parameters that may need to be provided as a list of values or as a file or URL containing the values,
-             but it also bypasses the normal validation and conversion of the value, so it should be used with caution
-             and only for parameters where this kind of input is appropriate. Note that the code that uses this parameter
-             MUST know how to handle the values that were in the list, file, or URL correctly!
+        AllowExtendedInput (boolean, True): Whether to allow extended input for this parameter, such as a list of values,
+             a filename, a URL, or a ``file-or-URL#/JSON/Pointer`` reference instead of a single value. If True, the code
+             will resolve those sources and then apply the parameter's normal type, range, and unit validation. Collection
+             values are accepted only by list/time-series parameters and scalar parameters with a dedicated collection mode.
+             Filename parameters retain bare file/URL references and may select a filename from a JSON document.
     """
 
     Name: str = ""
@@ -223,7 +350,7 @@ class Parameter(HasQuantity):
     ToolTipText: str = Name
     UnitType: IntEnum = Units.NONE
     PreferredUnits: Enum = None
-    AllowExtendedInput: bool = False
+    AllowExtendedInput: bool = True
 
     # set to PreferredUnits assuming that the current units are the preferred units
     # - they will only change if the read function reads a different unit associated with a parameter
@@ -483,13 +610,28 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
     if ParamToModify.AllowExtendedInput:
         seems_like_file = seems_like_URL = False
         content = ""
-        if ParameterReadIn.sValue.startswith('http'):
+        try:
+            json_pointer_value = _load_json_pointer_parameter_value(ParameterReadIn.sValue, ParamToModify, model)
+        except (OSError, ValueError) as ex:
+            err_msg = (
+                f'Error: Could not read JSON value ({ParameterReadIn.sValue}) for '
+                f'{ParamToModify.Name}: {ex}'
+            )
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg) from ex
+
+        if json_pointer_value is not None:
+            ParameterReadIn.sValue = json_pointer_value
+            extended_input_loaded = True
+        elif not isinstance(ParamToModify, filenameParameter) and ParameterReadIn.sValue.startswith('http'):
             content = get_data_from_file_or_url_as_string(ParameterReadIn.sValue)
             if content:
                 seems_like_URL = True
                 ParameterReadIn.sValue = content
                 extended_input_loaded = True
-        else:
+        elif not isinstance(ParamToModify, filenameParameter):
             resolved_source = _resolve_input_source(ParameterReadIn.sValue, model)
             if resolved_source != ParameterReadIn.sValue:
                 ParameterReadIn.sValue = resolved_source
@@ -526,12 +668,21 @@ def ReadParameter(ParameterReadIn: ParameterEntry, ParamToModify, model) -> None
             return
 
     elif isinstance(ParamToModify, boolParameter):
-        if ParameterReadIn.sValue.strip() in ['0', 'false', 'False', 'f', 'F', 'no', 'No', 'n', 'N']:
+        normalized_value = ParameterReadIn.sValue.strip().lower()
+        if normalized_value in _FALSE_BOOL_INPUTS:
             ParamToModify.value = False
-        elif ParameterReadIn.sValue.strip() in ['1', 'true', 'True', 't', 'T', 'yes', 'Yes', 'y', 'Y']:
+        elif normalized_value in _TRUE_BOOL_INPUTS:
             ParamToModify.value = True
         else:
-            ParamToModify.value = ParamToModify.DefaultValue
+            ParamToModify.Valid = False
+            err_msg = (
+                f'Error: Parameter given ({ParameterReadIn.sValue}) for {ParamToModify.Name} '
+                f'is not a recognized boolean value.'
+            )
+            print(err_msg)
+            model.logger.fatal(err_msg)
+            model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
+            raise ValueError(err_msg)
         ParamToModify.Provided = True  # set provided to true because we are using a user provide value now
         ParamToModify.Valid = True  # set Valid to true because it passed the validation tests
         model.logger.info(f'Complete {str(__name__)}: {sys._getframe().f_code.co_name}')
@@ -1670,6 +1821,11 @@ def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_m
             if is_numeric_sequence_string(parameter_read_in.sValue):  # must be a simple list without units
                 result = parse_container_string_simple(parameter_read_in.sValue, param_to_modify, model)
                 if result is not None:
+                    if not _parameter_allows_collection_value(param_to_modify):
+                        raise ValueError(
+                            f'Parameter given ({parameter_read_in.sValue}) for {param_to_modify.Name} is a collection, '
+                            'but this parameter requires a scalar value.'
+                        )
                     param_to_modify.value = result
                     is_list = True
                 # if it is None, then it did not successfully parse out as a list, so it is likely just a simple value with units,
@@ -1680,7 +1836,12 @@ def process_int_or_float_parameter(parameter_read_in: ParameterEntry, param_to_m
                     param_to_modify.value = get_data_from_file_or_url(resolved_source, param_to_modify, model)
 
                     # the file or URl may have returned a list, so set the flag
-                    is_list = is_numeric_sequence_string(str(param_to_modify.value))
+                    is_list = isinstance(param_to_modify.value, (list, tuple, np.ndarray))
+                    if is_list and not _parameter_allows_collection_value(param_to_modify):
+                        raise ValueError(
+                            f'Extended input for {param_to_modify.Name} produced a collection, '
+                            'but this parameter requires a scalar value.'
+                        )
 
         # deal with the case where the user has provided units. That will be indicated by a space in it
         # the strategy is to look for a space in the value, and if there is one, then we will assume that the value has a unit in it,
