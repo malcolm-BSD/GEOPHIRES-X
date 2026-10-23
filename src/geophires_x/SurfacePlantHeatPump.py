@@ -48,7 +48,13 @@ class SurfacePlantHeatPump(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default heat pump COP (5)",
-            ToolTipText="Specify the coefficient of performance (COP) of the heat pump"
+            ToolTipText="Specify the coefficient of performance (COP) of the heat pump",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # Results - used by other objects or printed in output downstream

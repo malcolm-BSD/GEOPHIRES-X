@@ -53,7 +53,13 @@ class MPFReservoir(Reservoir):
                         '(Stehfest algorithm) used in the Gringarten calculation for the Multiple Parallel Fractures '
                         'Reservoir Model. '
                         'The default value provides maximum result stability; '
-                        'lower values calculate faster but may reduce consistency.'
+                        'lower values calculate faster but may reduce consistency.',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 370,
+            },
         )
 
 

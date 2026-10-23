@@ -331,7 +331,13 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default end-use option (1: electricity only)",
             ToolTipText="Select the end-use application of the geofluid heat: " +
-                        '; '.join([f'{it.int_value}: {it.value}' for it in EndUseOptions])
+                        '; '.join([f'{it.int_value}: {it.value}' for it in EndUseOptions]),
+            UI={
+                "tab": "Project",
+                "group": "Model controls",
+                "is_controller": True,
+                "order": 30,
+            },
         )
         self.plant_type = self.ParameterDict[self.plant_type.Name] = intParameter(
             "Power Plant Type",
@@ -341,7 +347,13 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default power plant type (1: subcritical ORC)",
             ToolTipText="Specify the type of physical plant. " +
-                        '; '.join([f'{it.int_value}: {it.value}' for it in PlantType])
+                        '; '.join([f'{it.int_value}: {it.value}' for it in PlantType]),
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant configuration",
+                "is_controller": True,
+                "order": 20,
+            },
         )
         self.pump_efficiency = self.ParameterDict[self.pump_efficiency.Name] = floatParameter(
             "Circulation Pump Efficiency",
@@ -354,7 +366,13 @@ class SurfacePlant:
             AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default circulation pump efficiency (0.75)",
-            ToolTipText="Specify the overall efficiency of the injection and production well pumps"
+            ToolTipText="Specify the overall efficiency of the injection and production well pumps",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 40,
+            },
         )
         self.utilization_factor = self.ParameterDict[self.utilization_factor.Name] = floatParameter(
             "Utilization Factor",
@@ -368,7 +386,13 @@ class SurfacePlant:
             Required=True,
             ErrMessage="assume default utilization factor (0.9)",
             ToolTipText="Ratio of the time the plant is running in normal production in a 1-year time period. "
-                        "Synonymous with capacity factor."
+                        "Synonymous with capacity factor.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 50,
+            },
         )
         self.enduse_efficiency_factor = self.ParameterDict[self.enduse_efficiency_factor.Name] = floatParameter(
             "End-Use Efficiency Factor",
@@ -380,7 +404,13 @@ class SurfacePlant:
             CurrentUnits=PercentUnit.TENTH,
             AllowFormulaInput=True,
             ErrMessage="assume default end-use efficiency factor (0.9)",
-            ToolTipText="Constant thermal efficiency of the direct-use application"
+            ToolTipText="Constant thermal efficiency of the direct-use application",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 60,
+            },
         )
         self.chp_fraction = self.ParameterDict[self.chp_fraction.Name] = floatParameter(
             "CHP Fraction",
@@ -393,7 +423,13 @@ class SurfacePlant:
             AllowFormulaInput=True,
             ErrMessage="assume default CHP fraction (0.5)",
             ToolTipText="Fraction of produced geofluid flow rate going to direct-use heat application in" +
-            " CHP parallel cycle"
+            " CHP parallel cycle",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 70,
+            },
         )
         self.T_chp_bottom = self.ParameterDict[self.T_chp_bottom.Name] = floatParameter(
             "CHP Bottoming Entering Temperature",
@@ -404,7 +440,13 @@ class SurfacePlant:
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default CHP bottom temperature (150 deg.C)",
-            ToolTipText="Power plant entering geofluid temperature used in CHP bottoming cycle"
+            ToolTipText="Power plant entering geofluid temperature used in CHP bottoming cycle",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 80,
+            },
         )
         self.ambient_temperature = self.ParameterDict[self.ambient_temperature.Name] = floatParameter(
             "Ambient Temperature",
@@ -416,6 +458,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default ambient temperature (15 deg.C)",
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 90,
+            },
         )
         self.use_weather_data = self.ParameterDict["Use Weather Data"] = boolParameter(
             "Use Weather Data",
@@ -427,6 +475,12 @@ class SurfacePlant:
                 "Set False to retain project coordinates without downloading or applying weather data; "
                 "Ambient Temperature and Surface Temperature then use their input or default values."
             ),
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 100,
+            },
         )
         self.project_latitude = self.ParameterDict["Project Latitude"] = floatParameter(
             "Project Latitude",
@@ -437,6 +491,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default project latitude (0.0)",
             ToolTipText="Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
+            UI={
+                "tab": "Project",
+                "group": "Project location",
+                "is_controller": False,
+                "order": 50,
+            },
         )
         self.project_longitude = self.ParameterDict["Project Longitude"] = floatParameter(
             "Project Longitude",
@@ -447,6 +507,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default project longitude (0.0)",
             ToolTipText="Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
+            UI={
+                "tab": "Project",
+                "group": "Project location",
+                "is_controller": False,
+                "order": 60,
+            },
         )
         self.weather_data_year = self.ParameterDict["Weather Data Year"] = intParameter(
             "Weather Data Year",
@@ -456,6 +522,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default weather data year (2024)",
             ToolTipText="Historical weather year to request when project latitude and longitude are provided.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 110,
+            },
         )
         self.plant_lifetime = self.ParameterDict[self.plant_lifetime.Name] = intParameter(
             "Plant Lifetime",
@@ -466,7 +538,13 @@ class SurfacePlant:
             CurrentUnits=TimeUnit.YEAR,
             Required=True,
             ErrMessage="assume default plant lifetime (30 years)",
-            ToolTipText="System lifetime"
+            ToolTipText="System lifetime",
+            UI={
+                "tab": "Project",
+                "group": "Project settings",
+                "is_controller": False,
+                "order": 70,
+            },
         )
         self.piping_length = self.ParameterDict[self.piping_length.Name] = floatParameter(
             "Surface Piping Length",
@@ -476,7 +554,13 @@ class SurfacePlant:
             UnitType=Units.LENGTH,
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
-            ErrMessage="assume default piping length (0km)"
+            ErrMessage="assume default piping length (0km)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 120,
+            },
         )
         self.plant_outlet_pressure = self.ParameterDict[self.plant_outlet_pressure.Name] = floatParameter(
             "Plant Outlet Pressure",
@@ -487,7 +571,13 @@ class SurfacePlant:
             PreferredUnits=PressureUnit.KPASCAL,
             CurrentUnits=PressureUnit.KPASCAL,
             ErrMessage="assume default plant outlet pressure (100 kPa)",
-            ToolTipText="Constant plant outlet pressure equal to injection well pump(s) suction pressure"
+            ToolTipText="Constant plant outlet pressure equal to injection well pump(s) suction pressure",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 130,
+            },
         )
         self.electricity_cost_to_buy = self.ParameterDict[self.electricity_cost_to_buy.Name] = floatParameter(
             "Electricity Rate",
@@ -500,6 +590,12 @@ class SurfacePlant:
             ErrMessage="assume default electricity rate ($0.07/kWh)",
                         ToolTipText="Price of electricity to calculate pumping costs in direct-use heat only mode or revenue "
                         "from electricity sales in CHP mode.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 140,
+            },
         )
         self.heat_price = self.ParameterDict[self.heat_price.Name] = floatParameter(
             "Heat Rate",
@@ -511,6 +607,12 @@ class SurfacePlant:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default heat rate ($0.02/kWh)",
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 150,
+            },
         )
         self.operating_mode = self.ParameterDict["Operating Mode"] = strParameter(
             "Operating Mode",
@@ -518,6 +620,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default operating mode (Baseload)",
             ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 160,
+            },
         )
         self.dispatch_demand_source = self.ParameterDict["Dispatch Demand Source"] = strParameter(
             "Dispatch Demand Source",
@@ -525,6 +633,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default dispatch demand source (Annual Heat Demand)",
             ToolTipText="Select the demand profile source used by dispatchable mode.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 170,
+            },
         )
         self.dispatch_flow_strategy = self.ParameterDict["Dispatch Flow Strategy"] = strParameter(
             "Dispatch Flow Strategy",
@@ -532,6 +646,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default dispatch flow strategy (Demand Following)",
             ToolTipText="Select the dispatch control strategy used by dispatchable mode.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 180,
+            },
         )
         self.maximum_dispatch_flow_fraction = self.ParameterDict["Maximum Dispatch Flow Fraction"] = floatParameter(
             "Maximum Dispatch Flow Fraction",
@@ -542,6 +662,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default maximum dispatch flow fraction (1.0)",
             ToolTipText="Maximum production flow multiplier available to dispatchable operation.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 190,
+            },
         )
         self.minimum_dispatch_flow_fraction = self.ParameterDict["Minimum Dispatch Flow Fraction"] = floatParameter(
             "Minimum Dispatch Flow Fraction",
@@ -552,6 +678,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default minimum dispatch flow fraction (0.0)",
             ToolTipText="Minimum production flow fraction when dispatchable operation is on.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 200,
+            },
         )
         self.minimum_dispatch_runtime_fraction = self.ParameterDict["Minimum Dispatch Runtime Fraction"] = floatParameter(
             "Minimum Dispatch Runtime Fraction",
@@ -562,6 +694,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default minimum dispatch runtime fraction (0.0)",
             ToolTipText="Minimum on-hour runtime fraction when dispatchable operation is on.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 210,
+            },
         )
         self.dispatch_analysis_start_year = self.ParameterDict["Dispatch Analysis Start Year"] = intParameter(
             "Dispatch Analysis Start Year",
@@ -571,6 +709,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default dispatch analysis start year (1)",
             ToolTipText="First operating year included in dispatch analysis output.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 220,
+            },
         )
         self.dispatch_analysis_end_year = self.ParameterDict["Dispatch Analysis End Year"] = intParameter(
             "Dispatch Analysis End Year",
@@ -583,6 +727,12 @@ class SurfacePlant:
                 "Exclusive operating-year end for dispatch analysis output. "
                 "For example, start year 1 and end year 2 runs one operating year."
             ),
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 230,
+            },
         )
         self.tess_enabled = self.ParameterDict["TESS Enabled"] = boolParameter(
             "TESS Enabled",
@@ -590,6 +740,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default TESS Enabled (False)",
             ToolTipText="Enable the thermal energy storage system dispatch layer.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 240,
+            },
         )
         self.tess_volume = self.ParameterDict["TESS Volume"] = floatParameter(
             "TESS Volume",
@@ -602,6 +758,12 @@ class SurfacePlant:
             CurrentUnits=VolumeUnit.METERS3,
             ErrMessage="assume default TESS volume (1000 m3)",
             ToolTipText="Usable thermal energy storage tank fluid volume.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 250,
+            },
         )
         self.tess_cost_per_cubic_meter = self.ParameterDict["TESS Cost per Cubic Meter"] = floatParameter(
             "TESS Cost per Cubic Meter",
@@ -618,6 +780,12 @@ class SurfacePlant:
                 "foundations, insulation, heat exchangers, controls, and balance-of-plant items included "
                 "in the user's estimate."
             ),
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 260,
+            },
         )
         self.tess_fixed_om_fraction = self.ParameterDict["TESS Fixed O&M Fraction"] = floatParameter(
             "TESS Fixed O&M Fraction",
@@ -628,6 +796,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS fixed O&M fraction (0.01)",
             ToolTipText="Annual TESS fixed O&M cost as a fraction of TESS capital cost.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 270,
+            },
         )
         self.tess_working_fluid = self.ParameterDict["TESS Working Fluid"] = strParameter(
             "TESS Working Fluid",
@@ -635,6 +809,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default TESS working fluid (Water)",
             ToolTipText="Working fluid used in the TESS tank. The initial implementation supports water only.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 280,
+            },
         )
         self.tess_pressure_mode = self.ParameterDict["TESS Pressure Mode"] = strParameter(
             "TESS Pressure Mode",
@@ -642,6 +822,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default TESS pressure mode (Auto)",
             ToolTipText="Select whether TESS pressure is computed automatically or supplied by the user.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 290,
+            },
         )
         self.tess_pressure = self.ParameterDict["TESS Pressure"] = floatParameter(
             "TESS Pressure",
@@ -654,6 +840,12 @@ class SurfacePlant:
             CurrentUnits=PressureUnit.MPASCAL,
             ErrMessage="assume default TESS pressure (1.0 MPa)",
             ToolTipText="TESS tank pressure. Used directly when TESS Pressure Mode is User Specified.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 300,
+            },
         )
         self.tess_pressure_safety_factor = self.ParameterDict["TESS Pressure Safety Factor"] = floatParameter(
             "TESS Pressure Safety Factor",
@@ -664,6 +856,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS pressure safety factor (1.10)",
             ToolTipText="Multiplier applied to water saturation pressure for TESS pressure validation.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 310,
+            },
         )
         self.tess_minimum_useful_temperature = self.ParameterDict["TESS Minimum Useful Temperature"] = floatParameter(
             "TESS Minimum Useful Temperature",
@@ -676,6 +874,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default TESS minimum useful temperature (120 degC)",
             ToolTipText="Lower tank temperature bound for usable stored thermal energy.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 320,
+            },
         )
         self.tess_maximum_temperature = self.ParameterDict["TESS Maximum Temperature"] = floatParameter(
             "TESS Maximum Temperature",
@@ -688,6 +892,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default TESS maximum temperature (160 degC)",
             ToolTipText="Upper tank operating temperature.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 330,
+            },
         )
         self.tess_target_temperature = self.ParameterDict["TESS Target Temperature"] = floatParameter(
             "TESS Target Temperature",
@@ -700,6 +910,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default TESS target temperature (150 degC)",
             ToolTipText="Preferred tank control temperature.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 340,
+            },
         )
         self.tess_initial_temperature = self.ParameterDict["TESS Initial Temperature"] = floatParameter(
             "TESS Initial Temperature",
@@ -712,6 +928,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default TESS initial temperature (150 degC)",
             ToolTipText="Initial tank temperature at the start of dispatch analysis.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 350,
+            },
         )
         self.tess_deadband_range = self.ParameterDict["TESS Deadband Range"] = floatParameter(
             "TESS Deadband Range",
@@ -724,6 +946,12 @@ class SurfacePlant:
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default TESS deadband range (10 degC)",
             ToolTipText="Total thermostat hysteresis range around the TESS target temperature.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 360,
+            },
         )
         self.tess_charge_efficiency = self.ParameterDict["TESS Charge Efficiency"] = floatParameter(
             "TESS Charge Efficiency",
@@ -734,6 +962,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS charge efficiency (0.98)",
             ToolTipText="Fraction of geothermal heat accepted into useful TESS stored energy.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 370,
+            },
         )
         self.tess_discharge_efficiency = self.ParameterDict["TESS Discharge Efficiency"] = floatParameter(
             "TESS Discharge Efficiency",
@@ -744,6 +978,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS discharge efficiency (0.98)",
             ToolTipText="Fractional efficiency from useful TESS stored energy to delivered thermal demand.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 380,
+            },
         )
         self.tess_daily_heat_loss_fraction = self.ParameterDict["TESS Daily Heat Loss Fraction"] = floatParameter(
             "TESS Daily Heat Loss Fraction",
@@ -754,6 +994,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS daily heat loss fraction (0.005)",
             ToolTipText="Fraction of useful stored TESS energy lost per day.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 390,
+            },
         )
         self.tess_maximum_charge_power = self.ParameterDict["TESS Maximum Charge Power"] = floatParameter(
             "TESS Maximum Charge Power",
@@ -766,6 +1012,12 @@ class SurfacePlant:
             CurrentUnits=PowerUnit.MW,
             ErrMessage="assume default TESS maximum charge power (-1 means unlimited by TESS)",
             ToolTipText="Maximum tank-side charging power. -1 means no TESS-side limit beyond geothermal production and available storage capacity.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 400,
+            },
         )
         self.tess_maximum_discharge_power = self.ParameterDict["TESS Maximum Discharge Power"] = floatParameter(
             "TESS Maximum Discharge Power",
@@ -781,6 +1033,12 @@ class SurfacePlant:
                 "Maximum tank-side discharge power. -1 means auto-size to peak hourly thermal demand times "
                 "TESS Subhourly Demand Peak Multiplier."
             ),
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 410,
+            },
         )
         self.tess_subhourly_demand_peak_multiplier = self.ParameterDict[
             "TESS Subhourly Demand Peak Multiplier"
@@ -793,6 +1051,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS subhourly demand peak multiplier (1.0)",
             ToolTipText="Multiplier used by TESS automatic discharge-power sizing and subhourly peak checks.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 420,
+            },
         )
         self.tess_charge_control_strategy = self.ParameterDict["TESS Charge Control Strategy"] = strParameter(
             "TESS Charge Control Strategy",
@@ -800,6 +1064,12 @@ class SurfacePlant:
             Required=False,
             ErrMessage="assume default TESS charge control strategy (Temperature Band)",
             ToolTipText="Control strategy used to charge TESS from geothermal output.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 430,
+            },
         )
         self.tess_charge_flow_fraction = self.ParameterDict["TESS Charge Flow Fraction"] = floatParameter(
             "TESS Charge Flow Fraction",
@@ -810,6 +1080,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS charge flow fraction (1.0)",
             ToolTipText="Geothermal production flow fraction used while temperature-band TESS charging is active.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 440,
+            },
         )
         self.tess_moving_average_window = self.ParameterDict["TESS Moving Average Window"] = intParameter(
             "TESS Moving Average Window",
@@ -821,6 +1097,12 @@ class SurfacePlant:
             CurrentUnits=TimeUnit.HOUR,
             ErrMessage="assume default TESS moving average window (24 hours)",
             ToolTipText="Moving-average window for TESS moving-average charge control.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 450,
+            },
         )
         self.tess_soc_control_gain = self.ParameterDict["TESS SOC Control Gain"] = floatParameter(
             "TESS SOC Control Gain",
@@ -831,6 +1113,12 @@ class SurfacePlant:
             UnitType=Units.NONE,
             ErrMessage="assume default TESS SOC control gain (0.25)",
             ToolTipText="State-of-charge correction gain for TESS moving-average charge control.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 460,
+            },
         )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
             "Annual Heat Demand",
@@ -844,7 +1132,13 @@ class SurfacePlant:
             PreferredYUnits="kWh",
             ResampleToHourlyYear=True,
             ErrMessage="assume default annual heat demand profile (none)",
-            ToolTipText="Historical annual heating demand profile"
+            ToolTipText="Historical annual heating demand profile",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 470,
+            },
         )
         self.HeatDemand = self.HeatingDemand
         self.CoolingDemand = self.ParameterDict["Annual Cooling Demand"] = TimeSeriesParameter(
@@ -860,6 +1154,12 @@ class SurfacePlant:
             ResampleToHourlyYear=True,
             ErrMessage="assume default annual cooling demand profile (none)",
             ToolTipText="Historical annual cooling demand profile",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Direct-use systems",
+                "is_controller": False,
+                "order": 480,
+            },
         )
         self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = TimeSeriesParameter(
             "Annual Electricity Demand",
@@ -874,6 +1174,12 @@ class SurfacePlant:
             ResampleToHourlyYear=True,
             ErrMessage="assume default annual electricity demand profile (none)",
             ToolTipText="Historical annual electricity demand profile",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 490,
+            },
         )
         self.electricitydemand = self.ElectricityDemand
 
@@ -891,7 +1197,13 @@ class SurfacePlant:
                         f'costs are $500M and there are 2 construction years, '
                         f'then $250M will be spent in both the first and second construction years. '
                         f'For SAM Economic Models, provide {CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME} to use a '
-                        f'custom spread instead.'
+                        f'custom spread instead.',
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 500,
+            },
         )
 
         self.cp_fluid = self.ParameterDict[self.cp_fluid.Name] = floatParameter(
@@ -904,7 +1216,13 @@ class SurfacePlant:
             Max=10_000.0,
             AllowFormulaInput=True,
             ErrMessage="assume default working fluid heat capacity (4200)",
-            ToolTipText="Heat capacity of the working fluid"
+            ToolTipText="Heat capacity of the working fluid",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 510,
+            },
         )
         self.rho_fluid = self.ParameterDict[self.rho_fluid.Name] = floatParameter(
             "Working Fluid Density",
@@ -916,7 +1234,13 @@ class SurfacePlant:
             Max=10_000.0,
             AllowFormulaInput=True,
             ErrMessage="assume default working fluid density (1000)",
-            ToolTipText="Density of the working fluid"
+            ToolTipText="Density of the working fluid",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 520,
+            },
         )
         self.k_fluid = self.ParameterDict[self.k_fluid.Name] = floatParameter(
             "Working Fluid Thermal Conductivity",
@@ -928,7 +1252,13 @@ class SurfacePlant:
             Max=10.0,
             AllowFormulaInput=True,
             ErrMessage="assume default working fluid thermal conductivity (0.68)",
-            ToolTipText="Thermal conductivity of the working fluid"
+            ToolTipText="Thermal conductivity of the working fluid",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 530,
+            },
         )
         self.mu_fluid = self.ParameterDict[self.mu_fluid.Name] = floatParameter(
             "Working Fluid Dynamic Viscosity",
@@ -940,7 +1270,13 @@ class SurfacePlant:
             Max=1,
             AllowFormulaInput=True,
             ErrMessage="assume default fluid dynamic density (600*10**-6)",
-            ToolTipText="Dynamic viscosity of the working fluid"
+            ToolTipText="Dynamic viscosity of the working fluid",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 540,
+            },
         )
 
         # local variable initialization

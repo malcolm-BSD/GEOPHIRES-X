@@ -58,7 +58,13 @@ class EconomicsAddOns(Economics.Economics):
             UnitType=Units.NONE,
             Min=0.0,
             Max=1000.0,
-            ToolTipText=multi_addon_tooltip_text("AddOn Nickname")
+            ToolTipText=multi_addon_tooltip_text("AddOn Nickname"),
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1600,
+            },
         )
         self.AddOnCAPEX = self.ParameterDict[self.AddOnCAPEX.Name] = listParameter(
             "AddOn CAPEX",
@@ -67,7 +73,13 @@ class EconomicsAddOns(Economics.Economics):
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS,
-            ToolTipText=multi_addon_tooltip_text("AddOn CAPEX")
+            ToolTipText=multi_addon_tooltip_text("AddOn CAPEX"),
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1610,
+            },
         )
         self.AddOnOPEXPerYear = self.ParameterDict[self.AddOnOPEXPerYear.Name] = listParameter(
             "AddOn OPEX",
@@ -76,7 +88,13 @@ class EconomicsAddOns(Economics.Economics):
             UnitType=Units.CURRENCYFREQUENCY,
             PreferredUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
-            ToolTipText=f'Annual operating cost. {multi_addon_tooltip_text("AddOn OPEX")}'
+            ToolTipText=f'Annual operating cost. {multi_addon_tooltip_text("AddOn OPEX")}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1620,
+            },
         )
         self.AddOnElecGainedPerYear = self.ParameterDict[self.AddOnElecGainedPerYear.Name] = listParameter(
             "AddOn Electricity Gained",
@@ -85,7 +103,13 @@ class EconomicsAddOns(Economics.Economics):
             UnitType=Units.ENERGYFREQUENCY,
             PreferredUnits=EnergyFrequencyUnit.KWPERYEAR,
             CurrentUnits=EnergyFrequencyUnit.KWPERYEAR,
-            ToolTipText=f'Annual electricity gained. {multi_addon_tooltip_text("AddOn Electricity Gained")}'
+            ToolTipText=f'Annual electricity gained. {multi_addon_tooltip_text("AddOn Electricity Gained")}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1630,
+            },
         )
         self.AddOnHeatGainedPerYear = self.ParameterDict[self.AddOnHeatGainedPerYear.Name] = listParameter(
             "AddOn Heat Gained",
@@ -94,7 +118,13 @@ class EconomicsAddOns(Economics.Economics):
             UnitType=Units.ENERGYFREQUENCY,
             PreferredUnits=EnergyFrequencyUnit.KWPERYEAR,
             CurrentUnits=EnergyFrequencyUnit.KWPERYEAR,
-            ToolTipText=f'Annual heat gained. {multi_addon_tooltip_text("AddOn Heat Gained")}'
+            ToolTipText=f'Annual heat gained. {multi_addon_tooltip_text("AddOn Heat Gained")}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1640,
+            },
         )
         self.AddOnProfitGainedPerYear = self.ParameterDict[self.AddOnProfitGainedPerYear.Name] = listParameter(
             "AddOn Profit Gained",
@@ -107,7 +137,13 @@ class EconomicsAddOns(Economics.Economics):
                         f'named \'Profit\', this value is treated mathematically as top-line revenue in economic '
                         f'calculations. Do not subtract Add-On OPEX from this value, as the model accounts for '
                         f'Add-On OPEX separately. '
-                        f'{multi_addon_tooltip_text("AddOn Profit Gained")}'
+                        f'{multi_addon_tooltip_text("AddOn Profit Gained")}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1650,
+            },
         )
 
         # local variables that need initialization

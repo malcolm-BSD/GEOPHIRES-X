@@ -59,7 +59,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
             ErrMessage="assume default Weighted Average Cost of Capital (10%)",
-            ToolTipText="Weighted Average Cost of Capital (percent)"
+            ToolTipText="Weighted Average Cost of Capital (percent)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.CAPEX = self.ParameterDict[self.CAPEX.Name] = floatParameter(
             "S-DAC-GT CAPEX",
@@ -70,7 +76,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default CAPEX (1379 USD per tonne CO2 capacity)",
-            ToolTipText="CAPEX (USD per tonne CO2 capacity)"
+            ToolTipText="CAPEX (USD per tonne CO2 capacity)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.OPEX = self.ParameterDict[self.OPEX.Name] = floatParameter(
             "S-DAC-GT OPEX",
@@ -81,7 +93,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default OPEX (56 USD per tonne CO2)",
-            ToolTipText="OPEX (USD per tonne CO2)"
+            ToolTipText="OPEX (USD per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.elec = self.ParameterDict[self.elec.Name] = floatParameter(
             "S-DAC-GT Electrical Energy",
@@ -91,7 +109,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=EnergyPerCO2Unit.KWHEPERTONNE,
             CurrentUnits=EnergyPerCO2Unit.KWHEPERTONNE,
             ErrMessage="assume default Electrical Energy (916 kWh_e per tonne CO2)",
-            ToolTipText="Electrical Energy (kWh_e per tonne CO2)"
+            ToolTipText="Electrical Energy (kWh_e per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.therm = self.ParameterDict[self.therm.Name] = floatParameter(
             "S-DAC-GT Thermal Energy",
@@ -102,7 +126,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=EnergyPerCO2Unit.KWTHPERTONNE,
             CurrentUnits=EnergyPerCO2Unit.KWTHPERTONNE,
             ErrMessage="assume default Thermal Energy (1447 kW_th per tonne CO2)",
-            ToolTipText="Thermal Energy (kW_th per tonne CO2)"
+            ToolTipText="Thermal Energy (kW_th per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.NG_price = self.ParameterDict[self.NG_price.Name] = floatParameter(
             "S-DAC-GT Natural Gas Price",
@@ -113,7 +143,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=EnergyCostUnit.DOLLARSPERMCF,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMCF,
             ErrMessage="assume default Natural Gas Price (5 USD per MCF)",
-            ToolTipText="Natural Gas Price (USD per MCF)"
+            ToolTipText="Natural Gas Price (USD per MCF)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.power_co2intensity = self.ParameterDict[self.power_co2intensity.Name] = floatParameter(
             "S-DAC-GT CO2 Intensity of Electricity",
@@ -124,7 +160,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
             CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
             ErrMessage="assume default CO2 Intensity of Electricity (0.4 tonne CO2 emitted per MWh)",
-            ToolTipText="CO2 Intensity of Electricity (tonne CO2 emitted per MWh)"
+            ToolTipText="CO2 Intensity of Electricity (tonne CO2 emitted per MWh)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.NG_co2intensity = self.ParameterDict[self.NG_co2intensity.Name] = floatParameter(
             "S-DAC-GT CO2 Intensity of Natural Gas",
@@ -135,7 +177,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CO2ProductionUnit.TONNEPERMWH,
             CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
             ErrMessage="assume default Natural Gas Intensity of Electricity (0.194965384 tonne CO2 emitted per MWh)",
-            ToolTipText="CO2 Intensity of Natural Gas (tonne CO2 emitted per MWh)"
+            ToolTipText="CO2 Intensity of Natural Gas (tonne CO2 emitted per MWh)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.NG_EnergyDensity = self.ParameterDict[self.NG_EnergyDensity.Name] = floatParameter(
             "S-DAC-GT Natural Gas Energy Density",
@@ -147,7 +195,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=EnergyDensityUnit.KWHPERMCF,
             CurrentUnits=EnergyDensityUnit.KWHPERMCF,
             ErrMessage="assume default Natural Gas Energy Density (282.6142719 kWh per MCF)",
-            ToolTipText="Natural Gas Energy Density (kWh per MCF)"
+            ToolTipText="Natural Gas Energy Density (kWh per MCF)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.CAPEX_mult = self.ParameterDict[self.CAPEX_mult.Name] = floatParameter(
             "S-DAC-GT CAPEX Multiplier",
@@ -159,7 +213,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default CAPEX Multiplier (1.0)",
-            ToolTipText="CAPEX Multiplier"
+            ToolTipText="CAPEX Multiplier",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.OPEX_mult = self.ParameterDict[self.OPEX_mult.Name] = floatParameter(
             "S-DAC-GT OPEX Multiplier",
@@ -171,7 +231,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default OPEX Multiplier (1.0)",
-            ToolTipText="OPEX Multiplier"
+            ToolTipText="OPEX Multiplier",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.therm_index = self.ParameterDict[self.therm_index.Name] = floatParameter(
             "S-DAC-GT Thermal Energy Multiplier",
@@ -183,7 +249,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default S-DAC Thermal Energy Multiplier (1.0)",
-            ToolTipText="S-DAC Thermal Energy Multiplier [usually due to avg humidity/temperature]"
+            ToolTipText="S-DAC Thermal Energy Multiplier [usually due to avg humidity/temperature]",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.transport = self.ParameterDict[self.transport.Name] = floatParameter(
             "S-DAC-GT CO2 Transportation Cost",
@@ -195,7 +267,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default CO2 Transportation Cost (10 USD per tonne CO2)",
-            ToolTipText="CO2 Transportation Cost (USD per tonne CO2)"
+            ToolTipText="CO2 Transportation Cost (USD per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.storage = self.ParameterDict[self.storage.Name] = floatParameter(
             "S-DAC-GT CO2 Storage Cost",
@@ -207,7 +285,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default CO2 Storage Cost (10 USD per tonne CO2)",
-            ToolTipText="CO2 Storage Cost (USD per tonne CO2)"
+            ToolTipText="CO2 Storage Cost (USD per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.EnergySplit = self.ParameterDict[self.EnergySplit.Name] = floatParameter(
             "S-DAC-GT CO2 Percent Energy Devoted To Process",
@@ -219,7 +303,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default Percent Energy Devoted To Process (50%)",
-            ToolTipText="Percent Energy Devoted To Process (%)"
+            ToolTipText="Percent Energy Devoted To Process (%)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.carbon_credit_price = self.ParameterDict[self.carbon_credit_price.Name] = floatParameter(
             "S-DAC-GT Carbon Credit Price",
@@ -231,7 +321,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default Carbon Credit Price (180 USD per tonne CO2)",
-            ToolTipText="Carbon Credit or Market Price (USD per tonne CO2)"
+            ToolTipText="Carbon Credit or Market Price (USD per tonne CO2)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.carbon_credit_duration = self.ParameterDict[self.carbon_credit_duration.Name] = floatParameter(
@@ -244,7 +340,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default Carbon Credit Duration (12 years)",
-            ToolTipText="Duration for which the carbon credit can be claimed (e.g., 12 years for US 45Q)"
+            ToolTipText="Duration for which the carbon credit can be claimed (e.g., 12 years for US 45Q)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.sorbent_replacement_frequency = self.ParameterDict[self.sorbent_replacement_frequency.Name] = intParameter(
@@ -256,7 +358,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default Sorbent Replacement Frequency (0 years - no discrete replacement)",
-            ToolTipText="Frequency of solid sorbent replacement in years (0 disables step-function replacement costs)"
+            ToolTipText="Frequency of solid sorbent replacement in years (0 disables step-function replacement costs)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.sorbent_replacement_cost = self.ParameterDict[self.sorbent_replacement_cost.Name] = floatParameter(
@@ -269,7 +377,13 @@ class EconomicsS_DAC_GT(Economics.Economics):
             PreferredUnits=CostPerMassUnit.DOLLARSPERTONNE,
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             ErrMessage="assume default Sorbent Replacement Cost (0 USD per tonne CO2)",
-            ToolTipText="Cost to replace solid sorbent (USD per tonne CO2 capacity)"
+            ToolTipText="Cost to replace solid sorbent (USD per tonne CO2 capacity)",
+            UI={
+                "tab": "Economics",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # local variable initiation

@@ -62,7 +62,13 @@ class AGSEconomics(Economics.Economics):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             Required=True,
-            ErrMessage="assume default Operation & Maintenance cost of surface plant expressed as fraction of total surface plant capital cost (0.015)"
+            ErrMessage="assume default Operation & Maintenance cost of surface plant expressed as fraction of total surface plant capital cost (0.015)",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 1580,
+            },
         )
 
         # TODO migrate to parent class and integrate for CHP
@@ -76,7 +82,13 @@ class AGSEconomics(Economics.Economics):
             PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKW,
             Required=False,
-            ErrMessage="assume default Capital cost for surface plant for direct-use system (100 $/kWth)"
+            ErrMessage="assume default Capital cost for surface plant for direct-use system (100 $/kWth)",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1590,
+            },
         )
         self.Power_plant_cost_per_kWe.Required = True
 

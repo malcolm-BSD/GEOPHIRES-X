@@ -48,6 +48,12 @@ class SUTRAWellBores(WellBores):
             Required=True,
             ErrMessage="assume default number of production wells (1)",
             ToolTipText="Number of (identical) production wells",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 50,
+            },
         )
         self.ninj = self.ParameterDict[self.ninj.Name] = intParameter(
             "Number of Injection Wells",
@@ -58,6 +64,12 @@ class SUTRAWellBores(WellBores):
             Required=True,
             ErrMessage="assume default number of injection wells (1)",
             ToolTipText="Number of (identical) injection wells",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 60,
+            },
         )
         self.prodwelldiam = self.ParameterDict[self.prodwelldiam.Name] = floatParameter(
             "Production Well Diameter",
@@ -72,6 +84,12 @@ class SUTRAWellBores(WellBores):
             ErrMessage="assume default production well diameter (8 inch)",
             ToolTipText="Inner diameter of production wellbore (assumed constant along the wellbore) to calculate \
             frictional pressure drop and wellbore heat transmission with Rameys model",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 90,
+            },
         )
         self.injwelldiam = self.ParameterDict[self.injwelldiam.Name] = floatParameter(
             "Injection Well Diameter",
@@ -86,6 +104,12 @@ class SUTRAWellBores(WellBores):
             ErrMessage="assume default injection well diameter (8 inch)",
             ToolTipText="Inner diameter of production wellbore (assumed constant along the wellbore) to calculate \
             frictional pressure drop and wellbore heat transmission with Rameys model",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 100,
+            },
         )
 
         self.impedance = self.ParameterDict[self.impedance.Name] = floatParameter(
@@ -101,6 +125,12 @@ class SUTRAWellBores(WellBores):
             ToolTipText='Reservoir resistance to flow per well-pair. For EGS-type reservoirs when the injection well '
                         'is in hydraulic communication with the production well, this parameter specifies the overall '
                         'pressure drop in the reservoir between injection well and production well (see docs)',
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 40,
+            },
         )
 
         # local variable initiation

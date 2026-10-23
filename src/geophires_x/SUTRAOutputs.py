@@ -43,6 +43,12 @@ class SUTRAOutputs(Outputs):
                 Provided=False,
                 ErrMessage='assume no output to console',
                 ToolTipText='Provide a 0 if you do not want to print output to the console',
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
             )
 
         model.logger.info(f'Complete {str(__class__)}: {sys._getframe().f_code.co_name}')

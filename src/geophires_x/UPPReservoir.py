@@ -36,6 +36,12 @@ class UPPReservoir(Reservoir):
             UnitType=Units.NONE,
             ErrMessage="assume default reservoir output file name (ReservoirOutput.txt)",
             ToolTipText="File name of reservoir output in case reservoir model 5 is selected",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 380,
+            },
         )
 
         reservoir_output_profile_param_name = 'Reservoir Output Profile'
@@ -55,6 +61,12 @@ class UPPReservoir(Reservoir):
             f'and {reservoir_output_profile_time_step_param_name}. '
             f'If the profile is shorter than the plant lifetime, the temperature trend is extrapolated '
             f'based on the last ~20% of the data, with the injection temperature used as a minimum. ',
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 390,
+            },
         )
 
         self.reservoir_output_time_step = self.ParameterDict[self.reservoir_output_time_step.Name] = floatParameter(
@@ -68,6 +80,12 @@ class UPPReservoir(Reservoir):
             ToolTipText=f'Time interval between temperature values in the {reservoir_output_profile_param_name}. '
             f'For example, if set to 0.25, the profile values represent temperatures at '
             f'0, 0.25, 0.5, 0.75, 1.0 years, etc.',
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 400,
+            },
         )
 
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')

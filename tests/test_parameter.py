@@ -43,6 +43,20 @@ from tests.base_test_case import BaseTestCase
 
 
 class ParameterTestCase(BaseTestCase):
+    def test_parameter_ui_defaults_are_owned_by_each_parameter(self):
+        parameter = Parameter()
+
+        self.assertEqual(
+            {
+                "tab": "Project",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
+            parameter.UI,
+        )
+        self.assertIsNot(parameter.UI, Parameter().UI)
+
     def test_evaluate_formula_expression_supports_numeric_literals(self):
         result = evaluate_formula_expression("42.5", lambda _: None)
 

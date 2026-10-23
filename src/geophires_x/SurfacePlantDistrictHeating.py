@@ -46,14 +46,26 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=[1, 2],
             UnitType=Units.NONE,
             ErrMessage="assume default district heating demand option (1: known heat demand profile)",
-            ToolTipText="Select the method to provide the district heating demand to GEOPHIRES"
+            ToolTipText="Select the method to provide the district heating demand to GEOPHIRES",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_demand_filename = self.ParameterDict[self.dh_demand_filename.Name] = strParameter(
             "District Heating Demand File Name",
             value='HeatDemand.csv',
             UnitType=Units.NONE,
             ErrMessage="assume default district heating demand filename (HeatDemand.csv)",
-            ToolTipText="Provide district heating demand in csv file in MW or MWh per day (if district heating demand option is set to 1)"
+            ToolTipText="Provide district heating demand in csv file in MW or MWh per day (if district heating demand option is set to 1)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_demand_time_resolution = self.ParameterDict[self.dh_demand_time_resolution.Name] = intParameter(
             "District Heating Demand Data Time Resolution",
@@ -61,7 +73,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=[1, 2],
             UnitType=Units.NONE,
             ErrMessage="assume default district heating data time resolution (1: hourly data)",
-            ToolTipText="Provide time interval for thermal demand data: 1 = hourly (data provided as MW = MWh' 2 = daily (data provided as MWh/day) (if district heating demand option is set to 1)"
+            ToolTipText="Provide time interval for thermal demand data: 1 = hourly (data provided as MW = MWh' 2 = daily (data provided as MWh/day) (if district heating demand option is set to 1)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_demand_data_column_number = self.ParameterDict[self.dh_demand_data_column_number.Name] = intParameter(
             "District Heating Demand Data Column Number",
@@ -69,14 +87,26 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=list(range(1, 101, 1)),
             UnitType=Units.NONE,
             ErrMessage="assume default district heating demand data column number (2)",
-            ToolTipText="Select the column number of the hourly or daily data in the district heating demand csv file (if district heating demand option is set to 1)"
+            ToolTipText="Select the column number of the hourly or daily data in the district heating demand csv file (if district heating demand option is set to 1)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_temperature_filename = self.ParameterDict[self.dh_temperature_filename.Name] = strParameter(
             "Temperature File Name",
             value='Temperature.csv',
             UnitType=Units.NONE,
             ErrMessage="assume default temperature filename (Temperature.csv)",
-            ToolTipText="Provide filename of temperature file with hourly temperature to calculate district heating demand (if district heating demand option is set to 2)"
+            ToolTipText="Provide filename of temperature file with hourly temperature to calculate district heating demand (if district heating demand option is set to 2)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_temperature_data_column_number = self.ParameterDict[
             self.dh_temperature_data_column_number.Name] = intParameter(
@@ -85,7 +115,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=list(range(1, 101, 1)),
             UnitType=Units.NONE,
             ErrMessage="assume default temperature data column number (2)",
-            ToolTipText="Select the column number of the hourly temperature data in the temperature csv file (if district heating demand option is set to 2)"
+            ToolTipText="Select the column number of the hourly temperature data in the temperature csv file (if district heating demand option is set to 2)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_number_of_housing_units = self.ParameterDict[self.dh_number_of_housing_units.Name] = intParameter(
             "Number of Housing Units",
@@ -93,7 +129,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=list(range(0, 1000000, 1)),
             UnitType=Units.NONE,
             ErrMessage="assume default number of housing units (100)",
-            ToolTipText="Specify the number of housing units to calculate district heating demand (if district heating demand option is set to 2)"
+            ToolTipText="Specify the number of housing units to calculate district heating demand (if district heating demand option is set to 2)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_constant_anchor_demand = self.ParameterDict[self.dh_constant_anchor_demand.Name] = floatParameter(
             "Constant Anchor Demand",
@@ -104,7 +146,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             PreferredUnits=PowerUnit.MW,
             CurrentUnits=PowerUnit.MW,
             ErrMessage="assume default constant anchor demand (10 MWth)",
-            ToolTipText="Specify the constant anchor demand to calculate the district heating demand (if district heating demand option is set to 2)"
+            ToolTipText="Specify the constant anchor demand to calculate the district heating demand (if district heating demand option is set to 2)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
         self.dh_us_census_division = self.ParameterDict[self.dh_us_census_division.Name] = intParameter(
             "US Census Division",
@@ -112,7 +160,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             AllowableRange=[1, 2, 3, 4, 5, 6, 7, 8, 9],
             UnitType=Units.NONE,
             ErrMessage="assume default U.S. census division (1)",
-            ToolTipText="Select the U.S. census division to calculate district heating demand (if district heating demand option is set to 2)"
+            ToolTipText="Select the U.S. census division to calculate district heating demand (if district heating demand option is set to 2)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
             )
 
         # Results - used by other objects or printed in output downstream

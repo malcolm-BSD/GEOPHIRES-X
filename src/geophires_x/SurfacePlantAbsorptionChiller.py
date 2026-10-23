@@ -50,7 +50,13 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH, CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default absorption chiller COP (0.7)",
-            ToolTipText="Specify the coefficient of performance (COP) of the absorption chiller"
+            ToolTipText="Specify the coefficient of performance (COP) of the absorption chiller",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # Opt-in advanced absorption chiller subsystem. Legacy absorption
@@ -61,7 +67,13 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             value=False,
             Required=False,
             ErrMessage="Enable advanced absorption chiller subsystem (default: False)",
-            ToolTipText="If True use the advanced AbsorptionChiller subsystem (opt-in)."
+            ToolTipText="If True use the advanced AbsorptionChiller subsystem (opt-in).",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # Canonical top-level absorption chiller configuration parameters
@@ -72,6 +84,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="Enable Pint units handling for Absorption Chiller (default: True)",
             ToolTipText="Enable Pint units handling for the Absorption Chiller (recommended).",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_use_coolprop = self.ParameterDict["Absorption Chiller Use CoolProp"] = boolParameter(
@@ -81,6 +99,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="Enable CoolProp for fluid properties (default: True)",
             ToolTipText="Enable CoolProp for fluid properties used by the Absorption Chiller (best-effort).",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_refrigerant_family = self.ParameterDict["Absorption Chiller Refrigerant Family"] = strParameter(
@@ -89,6 +113,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default refrigerant family (LiBr-water)",
             ToolTipText="Refrigerant family for Absorption Chiller (e.g., 'LiBr-water' or 'NH3-water').",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_effect_type = self.ParameterDict["Absorption Chiller Effect Type"] = strParameter(
@@ -97,6 +127,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default effect type (single)",
             ToolTipText="Absorption chiller effect type: 'single' | 'double' | 'triple'.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_effect_multiplier_override = self.ParameterDict["Absorption Chiller Effect Multiplier Override"] = floatParameter(
@@ -106,6 +142,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="optional override of effect multiplier (leave blank to use defaults)",
             ToolTipText="Optional override of the effect multiplier used to scale COPs.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_min_plr = self.ParameterDict["Absorption Chiller Min Part Load Ratio"] = floatParameter(
@@ -116,6 +158,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default min part-load ratio (0.2)",
             ToolTipText="Minimum part-load ratio for Absorption Chiller operation.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_turndown = self.ParameterDict["Absorption Chiller Turndown Ratio"] = floatParameter(
@@ -125,6 +173,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default turndown ratio (3.0)",
             ToolTipText="Turndown ratio for Absorption Chiller (max/min PLR ratio).",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_chilled_deltaT = self.ParameterDict["Absorption Chiller Chilled DeltaT"] = floatParameter(
@@ -134,6 +188,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default chilled deltaT (5.0 K)",
             ToolTipText="Design chilled-water delta-T used to compute chilled mass flow.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_pump_head = self.ParameterDict["Absorption Chiller Pump Head"] = floatParameter(
@@ -143,6 +203,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default pump head (30 m)",
             ToolTipText="Pump head used for auxiliary pumping power estimates.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_pump_efficiency = self.ParameterDict["Absorption Chiller Pump Efficiency"] = floatParameter(
@@ -153,6 +219,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default pump efficiency (0.70)",
             ToolTipText="Pump efficiency used for auxiliary power estimates.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_catalog_path = self.ParameterDict["Absorption Chiller Catalog Path"] = strParameter(
@@ -161,6 +233,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default embedded catalog path",
             ToolTipText="Path to user-supplied absorption chiller catalog CSV (optional).",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # Advanced chiller MILP tuning: number of PLR segments used in piecewise-linear COP approximation
@@ -170,6 +248,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="assume default absorption chiller dispatch strategy (min_cost)",
             ToolTipText="Absorption chiller dispatch strategy: 'min_cost' | 'min_units' | 'follow_heat'.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_n_segments = self.ParameterDict["Absorption Chiller PLR Segments"] = intParameter(
@@ -179,6 +263,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UnitType=Units.NONE,
             ErrMessage="number of PLR segments must be >=1",
             ToolTipText="Number of PLR segments used for piecewise-linear COP approximation in MILP dispatch (default 5)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # Whether to evaluate segment COPs using per-hour temperatures passed in 'temps'
@@ -189,6 +279,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             Required=False,
             ErrMessage="If True, use hourly absorption chiller temperature profiles when provided",
             ToolTipText="When True, the MILP will evaluate COP segments using the absorption chiller hourly temperature profile parameters.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_generator_temperature = self.ParameterDict[
@@ -201,6 +297,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume geothermal production temperature for the absorption chiller generator profile",
             ToolTipText="Hourly absorption chiller generator inlet temperature profile.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_evaporator_temperature = self.ParameterDict[
@@ -213,6 +315,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default absorption chiller evaporator temperature profile (7 degC)",
             ToolTipText="Hourly absorption chiller evaporator or chilled-water supply temperature profile.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.absorption_chiller_condenser_temperature = self.ParameterDict[
@@ -225,6 +333,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default absorption chiller condenser temperature profile (30 degC)",
             ToolTipText="Hourly absorption chiller condenser or ambient temperature profile.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         # NOTE: legacy dotted-key aliases (e.g. 'AbsorptionChiller.*') were removed

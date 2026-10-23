@@ -36,13 +36,25 @@ class TOUGH2Reservoir(Reservoir):
             "TOUGH2 Executable Path",
             DefaultValue='xt2_eos1.exe',
             UnitType=Units.NONE,
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 580,
+            },
         )
         self.tough2modelfilename = self.ParameterDict[self.tough2modelfilename.Name] = strParameter(
             "TOUGH2 Model/File Name",
             value='Doublet',
             UnitType=Units.NONE,
             ErrMessage="assume default built-in TOUGH2 model (Doublet).",
-            ToolTipText="File name of reservoir output in case reservoir model 5 is selected"
+            ToolTipText="File name of reservoir output in case reservoir model 5 is selected",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 590,
+            },
         )
         self.resthickness = self.ParameterDict[self.resthickness.Name] = floatParameter(
             "Reservoir Thickness",
@@ -53,7 +65,13 @@ class TOUGH2Reservoir(Reservoir):
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
             ErrMessage="assume default reservoir thickness (250 m)",
-            ToolTipText="Reservoir thickness for built-in TOUGH2 doublet reservoir model"
+            ToolTipText="Reservoir thickness for built-in TOUGH2 doublet reservoir model",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 600,
+            },
         )
         self.reswidth = self.ParameterDict[self.reswidth.Name] = floatParameter(
             "Reservoir Width",
@@ -63,7 +81,13 @@ class TOUGH2Reservoir(Reservoir):
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
             ErrMessage="assume default reservoir width (500 m)",
-            ToolTipText="Reservoir width for built-in TOUGH2 doublet reservoir model"
+            ToolTipText="Reservoir width for built-in TOUGH2 doublet reservoir model",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 610,
+            },
         )
 
         model.logger.info("Complete " + str(__class__) + ": " + sys._getframe().f_code.co_name)

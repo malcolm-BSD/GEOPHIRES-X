@@ -722,7 +722,13 @@ class WellBores:
             AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume default number of production wells (2)",
-            ToolTipText="Number of (identical) production wells"
+            ToolTipText="Number of (identical) production wells",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 50,
+            },
         )
         # noinspection SpellCheckingInspection
         self.ninj = self.ParameterDict[self.ninj.Name] = intParameter(
@@ -733,7 +739,13 @@ class WellBores:
             AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume default number of injection wells (2)",
-            ToolTipText="Number of (identical) injection wells"
+            ToolTipText="Number of (identical) injection wells",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 60,
+            },
         )
         self.doublets_count = self.ParameterDict[self.doublets_count.Name] = intParameter(
             "Number of Doublets",
@@ -742,7 +754,13 @@ class WellBores:
             UnitType=Units.NONE,
             AllowFormulaInput=True,
             ToolTipText="Pass this parameter to set the Number of Production Wells and Number of Injection Wells to "
-                        "same value."
+                        "same value.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 70,
+            },
         )
         # noinspection SpellCheckingInspection
         self.ninj_per_production_well = self.ParameterDict[self.ninj_per_production_well.Name] = floatParameter(
@@ -755,7 +773,13 @@ class WellBores:
             Required=False,
             ToolTipText="Number of (identical) injection wells per production well. "
                         "For example, provide 0.666 to specify a 3:2 production:injection well ratio. "
-                        "The number of injection wells will be rounded up to the nearest integer."
+                        "The number of injection wells will be rounded up to the nearest integer.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 80,
+            },
         )
 
         # noinspection SpellCheckingInspection
@@ -771,7 +795,13 @@ class WellBores:
             Required=True,
             ErrMessage="assume default production well diameter (8 inch)",
             ToolTipText='Inner diameter of production wellbore (assumed constant along the wellbore) to calculate '
-                        'frictional pressure drop and wellbore heat transmission with Rameys model'
+                        'frictional pressure drop and wellbore heat transmission with Rameys model',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 90,
+            },
         )
         # noinspection SpellCheckingInspection
         self.injwelldiam = self.ParameterDict[self.injwelldiam.Name] = floatParameter(
@@ -786,7 +816,13 @@ class WellBores:
             Required=True,
             ErrMessage="assume default injection well diameter (8 inch)",
             ToolTipText='Inner diameter of injection wellbore (assumed constant along the wellbore) to calculate '
-                        'frictional pressure drop and wellbore heat transmission with Rameys model'
+                        'frictional pressure drop and wellbore heat transmission with Rameys model',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 100,
+            },
         )
         self.rameyoptionprod = self.ParameterDict[self.rameyoptionprod.Name] = boolParameter(
             "Ramey Production Wellbore Model",
@@ -795,7 +831,13 @@ class WellBores:
             Required=True,
             ErrMessage="assume default production wellbore model (Ramey model active)",
             ToolTipText="Select whether to use Rameys model to estimate the geofluid temperature drop in the "
-                        "production wells"
+                        "production wells",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore configuration",
+                "is_controller": True,
+                "order": 110,
+            },
         )
         self.tempdropprod = self.ParameterDict[self.tempdropprod.Name] = floatParameter(
             "Production Wellbore Temperature Drop",
@@ -806,7 +848,13 @@ class WellBores:
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default production wellbore temperature drop (5 deg.C)",
-            ToolTipText="Specify constant production well geofluid temperature drop in case Rameys model is disabled."
+            ToolTipText="Specify constant production well geofluid temperature drop in case Rameys model is disabled.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 120,
+            },
         )
         self.tempgaininj = self.ParameterDict[self.tempgaininj.Name] = floatParameter(
             "Injection Wellbore Temperature Gain",
@@ -817,7 +865,13 @@ class WellBores:
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
             ErrMessage="assume default injection wellbore temperature gain (0 deg.C)",
-            ToolTipText="Specify constant injection well geofluid temperature gain."
+            ToolTipText="Specify constant injection well geofluid temperature gain.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 130,
+            },
         )
         self.prodwellflowrate = self.ParameterDict[self.prodwellflowrate.Name] = floatParameter(
             "Production Flow Rate per Well",
@@ -829,7 +883,13 @@ class WellBores:
             CurrentUnits=FlowRateUnit.KGPERSEC,
             AllowFormulaInput=True,
             ErrMessage="assume default flow rate per production well (50 kg/s)",
-            ToolTipText="Geofluid flow rate per production well."
+            ToolTipText="Geofluid flow rate per production well.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore hydraulics",
+                "is_controller": False,
+                "order": 140,
+            },
         )
         self.impedance = self.ParameterDict[self.impedance.Name] = floatParameter(
             "Reservoir Impedance",
@@ -847,7 +907,13 @@ class WellBores:
             ToolTipText='Reservoir resistance to flow per well-pair. '
                         'For EGS-type reservoirs when the injection well is in hydraulic communication with the '
                         'production well, this parameter specifies the overall pressure drop in the reservoir between '
-                        'injection well and production well (see docs)'
+                        'injection well and production well (see docs)',
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 40,
+            },
         )
 
         well_separation_default_value_m = 1000
@@ -869,7 +935,13 @@ class WellBores:
             AllowFormulaInput=True,
             ErrMessage=f'assume default well separation ({well_separation_default_value_m} m)',
             ToolTipText=f'Well separation for built-in TOUGH2 doublet reservoir model'
-                        f'{well_separation_unit_mismatch_note}'
+                        f'{well_separation_unit_mismatch_note}',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 150,
+            },
         )
 
         self.Tinj = self.ParameterDict[self.Tinj.Name] = floatParameter(
@@ -907,9 +979,15 @@ class WellBores:
                         "downstream of the power plant, altering this parameter directly impacts heat production but "
                         "does not affect electricity generation. If not provided (or if the default "
                         "exceeds the model-calculated reinjection temperature), the resulting direct-use heat "
-                        "production will be marginal."
+                        "production will be marginal.",
                         # TODO re-assess tooltip text when FGEM is incorporated
                         #  https://github.com/NatLabRockies/GEOPHIRES-X/issues/395?title=FGEM/flexible+geothermal+systems
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Injection conditions",
+                "is_controller": False,
+                "order": 30,
+            },
         )
         self.Phydrostatic = self.ParameterDict[self.Phydrostatic.Name] = floatParameter(
             "Reservoir Hydrostatic Pressure",
@@ -921,7 +999,13 @@ class WellBores:
             CurrentUnits=PressureUnit.KPASCAL,
             ErrMessage="calculate reservoir hydrostatic pressure using built-in correlation",
             ToolTipText="Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified "
-                        "Xie-Bloomfield-Shook equation (DOE, 2016)."
+                        "Xie-Bloomfield-Shook equation (DOE, 2016).",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore hydraulics",
+                "is_controller": False,
+                "order": 160,
+            },
         )
         self.ppwellhead = self.ParameterDict[self.ppwellhead.Name] = floatParameter(
             "Production Wellhead Pressure",
@@ -932,7 +1016,13 @@ class WellBores:
             PreferredUnits=PressureUnit.KPASCAL,
             CurrentUnits=PressureUnit.KPASCAL,
             ErrMessage="using Water vapor pressure (101.3200; at 100 C) + 344.7 kPa (50 psi).",
-            ToolTipText="Constant production wellhead pressure; Required if specifying productivity index"
+            ToolTipText="Constant production wellhead pressure; Required if specifying productivity index",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore hydraulics",
+                "is_controller": False,
+                "order": 40,
+            },
         )
         self.II = self.ParameterDict[self.II.Name] = floatParameter(
             "Injectivity Index",
@@ -944,7 +1034,13 @@ class WellBores:
             CurrentUnits=InjectivityIndexUnit.KGPERSECPERBAR,
             ErrMessage="assume default injectivity index (10 kg/s/bar)",
             ToolTipText="Injectivity index defined as ratio of injection well flow rate over injection well outflow "
-                        "pressure drop (flowing bottom hole pressure - hydrostatic reservoir pressure)."
+                        "pressure drop (flowing bottom hole pressure - hydrostatic reservoir pressure).",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 50,
+            },
         )
         self.PI = self.ParameterDict[self.PI.Name] = floatParameter(
             "Productivity Index",
@@ -956,7 +1052,13 @@ class WellBores:
             CurrentUnits=ProductivityIndexUnit.KGPERSECPERBAR,
             ErrMessage="assume default productivity index (10 kg/s/bar)",
             ToolTipText="Productivity index defined as ratio of production well flow rate over production well inflow "
-                        "pressure drop (see docs)"
+                        "pressure drop (see docs)",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 60,
+            },
         )
 
         well_integrity_max_lifetime_param_name = "Well Integrity Maximum Lifetime"
@@ -976,7 +1078,13 @@ class WellBores:
                         f"means that all wells are redrilled after the production temperature (at the wellhead) has "
                         f"dropped by 20% of its initial temperature. "
                         f"Note that redrilling is triggered by whichever occurs first: this thermal drawdown limit or "
-                        f"the chronological limit defined by {well_integrity_max_lifetime_param_name}."
+                        f"the chronological limit defined by {well_integrity_max_lifetime_param_name}.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 170,
+            },
         )
         self.well_integrity_max_lifetime = self.ParameterDict[self.well_integrity_max_lifetime.Name] = floatParameter(
             well_integrity_max_lifetime_param_name,
@@ -995,7 +1103,13 @@ class WellBores:
                         f"particularly relevant for Superhot Rock systems where wellbore infrastructure "
                         f"may typically fail before thermal depletion. Redrilling is triggered at the minimum of the "
                         f"thermal drawdown index defined by {self.maxdrawdown.Name} and this chronological index. "
-                        f"If not provided, defaults to project lifetime (no mechanical failure)."
+                        f"If not provided, defaults to project lifetime (no mechanical failure).",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 180,
+            },
         )
 
         self.IsAGS = self.ParameterDict[self.IsAGS.Name] = boolParameter(
@@ -1004,7 +1118,13 @@ class WellBores:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default is not AGS",
-            ToolTipText="Set to true if the model is for an Advanced Geothermal System (AGS)"
+            ToolTipText="Set to true if the model is for an Advanced Geothermal System (AGS)",
+            UI={
+                "tab": "Project",
+                "group": "Model controls",
+                "is_controller": True,
+                "order": 20,
+            },
         )
         self.overpressure_percentage = self.ParameterDict[self.overpressure_percentage.Name] = floatParameter(
             "Overpressure Percentage",
@@ -1015,7 +1135,13 @@ class WellBores:
             AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume there is no overpressure",
-            ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)"
+            ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 70,
+            },
         )
         self.overpressure_depletion_rate = self.ParameterDict[self.overpressure_depletion_rate.Name] = floatParameter(
             "Overpressure Depletion Rate",
@@ -1026,7 +1152,13 @@ class WellBores:
             AllowFormulaInput=True,
             Required=False,
             ErrMessage="assume there is no overpressure",
-            ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)"
+            ToolTipText="enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir hydraulics",
+                "is_controller": False,
+                "order": 80,
+            },
         )
         self.injection_reservoir_temperature = self.ParameterDict[self.injection_reservoir_temperature.Name] = floatParameter(
             "Injection Reservoir Temperature",
@@ -1036,7 +1168,13 @@ class WellBores:
             CurrentUnits=TemperatureUnit.CELSIUS,
             Required=False,
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir temperature",
-            ToolTipText="enter the temperature of the injection reservoir (100 C)"
+            ToolTipText="enter the temperature of the injection reservoir (100 C)",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 190,
+            },
         )
         self.injection_reservoir_depth = self.ParameterDict[self.injection_reservoir_depth.Name] = floatParameter(
             "Injection Reservoir Depth",
@@ -1046,7 +1184,13 @@ class WellBores:
             CurrentUnits=LengthUnit.METERS,
             Required=False,
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir depth",
-            ToolTipText="enter the depth of the injection reservoir (1000 m)"
+            ToolTipText="enter the depth of the injection reservoir (1000 m)",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 200,
+            },
         )
         self.injection_reservoir_initial_pressure = self.ParameterDict[self.injection_reservoir_initial_pressure.Name] = floatParameter(
             "Injection Reservoir Initial Pressure",
@@ -1057,7 +1201,13 @@ class WellBores:
             Required=False,
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir initial "
                        "pressure",
-            ToolTipText="enter the depth of the injection reservoir initial pressure (use lithostatic pressure)"
+            ToolTipText="enter the depth of the injection reservoir initial pressure (use lithostatic pressure)",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore hydraulics",
+                "is_controller": False,
+                "order": 210,
+            },
         )
         self.injection_reservoir_inflation_rate = self.ParameterDict[self.injection_reservoir_inflation_rate.Name] = floatParameter(
             "Injection Reservoir Inflation Rate",
@@ -1067,7 +1217,13 @@ class WellBores:
             Required=False,
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir inflation rate",
             ToolTipText="enter the rate at which the pressure increases per year in the injection reservoir "
-                        "(1000 kPa/yr)"
+                        "(1000 kPa/yr)",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 220,
+            },
         )
         # This is a alias for "Well Geometry Configuration" - putting it here for backwards compatibility
         self.Configuration = self.ParameterDict[self.Configuration.Name] = intParameter(
@@ -1078,7 +1234,13 @@ class WellBores:
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume simple vertical well (3)",
-            ToolTipText = '; '.join([f'{it.int_value}: {it.value}' for it in Configuration])
+            ToolTipText = '; '.join([f'{it.int_value}: {it.value}' for it in Configuration]),
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore configuration",
+                "is_controller": True,
+                "order": 10,
+            },
         )
         # This is a alias for "Closed-loop Configuration" - putting it here for backwards compatibility
         self.Configuration = self.ParameterDict[self.Configuration.Name] = intParameter(
@@ -1089,7 +1251,13 @@ class WellBores:
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume simple vertical well (3)",
-            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in Configuration])
+            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in Configuration]),
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore configuration",
+                "is_controller": True,
+                "order": 230,
+            },
         )
 
         self.WaterThermalConductivity = self.ParameterDict[self.WaterThermalConductivity.Name] = floatParameter(
@@ -1102,7 +1270,13 @@ class WellBores:
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
             AllowFormulaInput=True,
             ErrMessage="assume default for water thermal conductivity (0.6 W/m/K)",
-            ToolTipText="Water Thermal Conductivity"
+            ToolTipText="Water Thermal Conductivity",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 240,
+            },
         )
 
         self.Fluid = self.ParameterDict[self.Fluid.Name] = intParameter(
@@ -1113,7 +1287,13 @@ class WellBores:
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume default Heat transfer fluid is water (1)",
-            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in WorkingFluid])
+            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in WorkingFluid]),
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": True,
+                "order": 30,
+            },
         )
 
         # Input data for subsurface condition
@@ -1127,7 +1307,13 @@ class WellBores:
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             Required=True,
-            ErrMessage="assume default Nonvertical Length per Multilateral Section (1000 m)"
+            ErrMessage="assume default Nonvertical Length per Multilateral Section (1000 m)",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 250,
+            },
         )
 
         self.nonverticalwellborediameter = self.ParameterDict[self.nonverticalwellborediameter.Name] = floatParameter(
@@ -1140,7 +1326,13 @@ class WellBores:
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage="assume default for Non-vertical Wellbore Diameter (0.156 m)",
-            ToolTipText="Non-vertical Wellbore Diameter"
+            ToolTipText="Non-vertical Wellbore Diameter",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 260,
+            },
         )
 
         max_allowed_total_wells = max(self.nprod.AllowableRange) + max(self.ninj.AllowableRange)
@@ -1157,7 +1349,13 @@ class WellBores:
             ToolTipText='Number of Nonvertical Wellbore Sections, aka laterals or horizontals. '
                         'Note that this is the total number of sections for the entire project and not the number of '
                         'sections per well. For example, a project with 2 injectors and 2 producers with 3 laterals '
-                        'per well should set Number of Multilateral Sections = 2 * 2 * 3 = 12.'
+                        'per well should set Number of Multilateral Sections = 2 * 2 * 3 = 12.',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 270,
+            },
         )
 
         # noinspection SpellCheckingInspection
@@ -1177,7 +1375,13 @@ class WellBores:
                         f'with 3 laterals per well may set Number of Multilateral Sections per Vertical Section = 3, '
                         f'which is equivalent to {self.numnonverticalsections.Name} = 2 * 2 * 3 = 12. '
                         f'May not be provided in combination with {self.numnonverticalsections.Name}. '
-                        f'Not supported by AGS/CLGS models.'
+                        f'Not supported by AGS/CLGS models.',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 280,
+            },
         )
 
         self.NonverticalsCased = self.ParameterDict[self.NonverticalsCased.Name] = boolParameter(
@@ -1188,7 +1392,13 @@ class WellBores:
             Valid=True,
             ErrMessage="assume default value (False)",
             ToolTipText="If set to True, casing & cementing are assumed to comprise 50% of drilling costs "
-                        "(doubling cost compared to uncased)."
+                        "(doubling cost compared to uncased).",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 290,
+            },
         )
 
         lateral_casing_k = floatParameter(
@@ -1201,7 +1411,13 @@ class WellBores:
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
             AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Casing Thermal Conductivity (45 W/m/K)",
-            ToolTipText="Thermal conductivity of the steel casing in lateral sections"
+            ToolTipText="Thermal conductivity of the steel casing in lateral sections",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 300,
+            },
         )
         self.lateral_casing_thermal_conductivity = lateral_casing_k
         self.ParameterDict[lateral_casing_k.Name] = lateral_casing_k
@@ -1216,7 +1432,13 @@ class WellBores:
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
             AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Cement Thermal Conductivity (1 W/m/K)",
-            ToolTipText="Thermal conductivity of the cement sheath surrounding lateral casing"
+            ToolTipText="Thermal conductivity of the cement sheath surrounding lateral casing",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore thermal behavior",
+                "is_controller": False,
+                "order": 310,
+            },
         )
         self.lateral_cement_thermal_conductivity = lateral_cement_k
         self.ParameterDict[lateral_cement_k.Name] = lateral_cement_k
@@ -1231,7 +1453,13 @@ class WellBores:
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Casing Thickness (0 m)",
-            ToolTipText="Radial thickness of the lateral casing wall"
+            ToolTipText="Radial thickness of the lateral casing wall",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 320,
+            },
         )
         self.lateral_casing_thickness = lateral_casing_thickness
         self.ParameterDict[lateral_casing_thickness.Name] = lateral_casing_thickness
@@ -1246,7 +1474,13 @@ class WellBores:
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage="assume default for Lateral Cement Thickness (0 m)",
-            ToolTipText="Radial thickness of the cement sheath outside the lateral casing"
+            ToolTipText="Radial thickness of the cement sheath outside the lateral casing",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 330,
+            },
         )
         self.lateral_cement_thickness = lateral_cement_thickness
         self.ParameterDict[lateral_cement_thickness.Name] = lateral_cement_thickness

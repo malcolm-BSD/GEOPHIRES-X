@@ -529,7 +529,13 @@ class AGSWellBores(WellBores):
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default for Closed Loop Calculation Start Year (0.01)",
-            ToolTipText="Closed Loop Calculation Start Year"
+            ToolTipText="Closed Loop Calculation Start Year",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore parameters",
+                "is_controller": False,
+                "order": 340,
+            },
         )
 
         # local variable initiation

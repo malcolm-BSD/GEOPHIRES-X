@@ -54,6 +54,12 @@ class CylindricalReservoir(Reservoir):
             Required=True,
             ErrMessage="assume default cylindrical reservoir depth (3 km)",
             ToolTipText="Depth of the inflow end of a cylindrical reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 410,
+            },
         )
 
         self.OutputDepth = self.ParameterDict[self.OutputDepth.Name] = floatParameter(
@@ -68,6 +74,12 @@ class CylindricalReservoir(Reservoir):
             Required=True,
             ErrMessage="assume default cylindrical reservoir input depth (3 km)",
             ToolTipText="Depth of the outflow end of a cylindrical reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 420,
+            },
         )
         self.Length = self.ParameterDict[self.Length.Name] = floatParameter(
             "Cylindrical Reservoir Length",
@@ -81,6 +93,12 @@ class CylindricalReservoir(Reservoir):
             Required=True,
             ErrMessage="assume default cylindrical reservoir length (4 km)",
             ToolTipText="Length of cylindrical reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 430,
+            },
         )
         self.RadiusOfEffect = self.ParameterDict[self.RadiusOfEffect.Name] = floatParameter(
             "Cylindrical Reservoir Radius of Effect",
@@ -94,6 +112,12 @@ class CylindricalReservoir(Reservoir):
             ErrMessage="assume default cylindrical reservoir radius of effect (30 m)",
             ToolTipText="The radius of effect - the distance into the rock from the center of the cylinder that will"
                         + " be perturbed by at least 1 C",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 440,
+            },
         )
         self.RadiusOfEffectFactor = self.ParameterDict[self.RadiusOfEffectFactor.Name] = floatParameter(
             "Cylindrical Reservoir Radius of Effect Factor",
@@ -107,6 +131,12 @@ class CylindricalReservoir(Reservoir):
             ErrMessage="assume default cyclindrical reservoir radius of effect reduction factor (0.1)",
             ToolTipText="The radius of effect reduction factor - to account for the fact that we cannot extract 100%"
                         + " of the heat in the cylinder.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 450,
+            },
         )
 
         sclass = str(__class__).replace("<class \'", "")
@@ -125,6 +155,12 @@ class CylindricalReservoir(Reservoir):
             Required=True,
             ErrMessage="assume default cyclindrical reservoir depth (3 km)",
             ToolTipText="Depth of the inflow end of a cyclindrical reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 460,
+            },
         )
         self.waterloss = self.ParameterDict[self.waterloss.Name] = floatParameter(
             "Water Loss Fraction",
@@ -137,6 +173,12 @@ class CylindricalReservoir(Reservoir):
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default water loss fraction (0)",
             ToolTipText="Fraction of water lost in the reservoir defined as (total geofluid lost)/(total geofluid produced).",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 280,
+            },
         )
 
         # Results - used by other objects or printed in output downstream

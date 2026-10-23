@@ -67,7 +67,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Vertical Section Length (2000.0 meters)',
-            ToolTipText='length/depth to the bottom of the vertical wellbores'
+            ToolTipText='length/depth to the bottom of the vertical wellbores',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 350,
+            },
         )
         self.vertical_wellbore_spacing = self.ParameterDict[self.vertical_wellbore_spacing.Name] = floatParameter(
             'Vertical Wellbore Spacing',
@@ -79,7 +85,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Vertical Wellbore Spacing (100.0 meters)',
-            ToolTipText='Horizontal distance between vertical wellbores'
+            ToolTipText='Horizontal distance between vertical wellbores',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 360,
+            },
         )
         self.lateral_spacing = self.ParameterDict[self.lateral_spacing.Name] = floatParameter(
             'Lateral Spacing',
@@ -91,7 +103,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Lateral Spacing (100.0 meters)',
-            ToolTipText='Horizontal distance between laterals'
+            ToolTipText='Horizontal distance between laterals',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 370,
+            },
         )
         self.lateral_inclination_angle = self.ParameterDict[self.lateral_inclination_angle.Name] = floatParameter(
             'Lateral Inclination Angle',
@@ -102,7 +120,13 @@ class SBTWellbores(WellBores):
             PreferredUnits=AngleUnit.DEGREES,
             CurrentUnits=AngleUnit.DEGREES,
             ErrMessage='assume default for Lateral Inclination Angle (20.0 degrees)',
-            ToolTipText='Inclination of the lateral section, where 0 degrees would mean vertical while 90 degrees is pure horizontal'
+            ToolTipText='Inclination of the lateral section, where 0 degrees would mean vertical while 90 degrees is pure horizontal',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 380,
+            },
         )
         self.element_length = self.ParameterDict[self.element_length.Name] = floatParameter(
             'Discretization Length',
@@ -114,7 +138,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Discretization Length (250.0 meters)',
-            ToolTipText='distance between sample point along length of model'
+            ToolTipText='distance between sample point along length of model',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 390,
+            },
         )
         self.junction_depth = self.ParameterDict[self.junction_depth.Name] = floatParameter(
             'Junction Depth',
@@ -126,7 +156,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Junction Depth (4000.0 meters)',
-            ToolTipText='vertical depth where the different laterals branch out (where the multilateral section starts, second deepest depth of model)'
+            ToolTipText='vertical depth where the different laterals branch out (where the multilateral section starts, second deepest depth of model)',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 400,
+            },
         )
         self.lateral_endpoint_depth = self.ParameterDict[self.lateral_endpoint_depth.Name] = floatParameter(
             'Lateral Endpoint Depth',
@@ -138,7 +174,13 @@ class SBTWellbores(WellBores):
             CurrentUnits=LengthUnit.METERS,
             AllowFormulaInput=True,
             ErrMessage='assume default for Lateral Endpoint Depth (7000.0 meters)',
-            ToolTipText='vertical depth where the lateral section ends (tip of the multilateral section, deepest depth of model)'
+            ToolTipText='vertical depth where the lateral section ends (tip of the multilateral section, deepest depth of model)',
+            UI={
+                "tab": "WellBores",
+                "group": "Wellfield layout",
+                "is_controller": False,
+                "order": 410,
+            },
         )
 
         model.logger.info(f'complete {__class__!s}: {sys._getframe().f_code.co_name}')

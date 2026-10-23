@@ -66,7 +66,13 @@ class Reservoir:
             ValuesEnum=ReservoirModel,
             Required=True,
             ErrMessage="run default reservoir model (Thermal Drawdown Percentage Model)",
-            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in ReservoirModel])
+            ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in ReservoirModel]),
+            UI={
+                "tab": "Project",
+                "group": "Model controls",
+                "is_controller": True,
+                "order": 10,
+            },
         )
 
         self.depth = self.ParameterDict[self.depth.Name] = floatParameter(
@@ -80,7 +86,13 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             Required=True,
             ErrMessage="assume default reservoir depth (3 km)",
-            ToolTipText="Depth of the reservoir"
+            ToolTipText="Depth of the reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 10,
+            },
         )
 
         self.Tmax = self.ParameterDict[self.Tmax.Name] = floatParameter(
@@ -94,7 +106,13 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default maximum temperature (400 deg.C)",
             ToolTipText="Maximum allowable reservoir temperature (e.g. due to drill bit or logging tools constraints). "
-                        "GEOPHIRES will cap the drilling depth to stay below this maximum temperature."
+                        "GEOPHIRES will cap the drilling depth to stay below this maximum temperature.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 90,
+            },
         )
 
         self.numseg = self.ParameterDict[self.numseg.Name] = intParameter(
@@ -104,7 +122,13 @@ class Reservoir:
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume default number of segments (1)",
-            ToolTipText="Number of rock segments from surface to reservoir depth with specific geothermal gradient"
+            ToolTipText="Number of rock segments from surface to reservoir depth with specific geothermal gradient",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 100,
+            },
         )
 
         self.gradient = self.ParameterDict[self.gradient.Name] = listParameter(
@@ -118,6 +142,12 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradients 1 (50 deg.C/km)",
             ToolTipText="Geothermal gradient(s)",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 110,
+            },
         )
 
         self.gradient1 = self.ParameterDict[self.gradient1.Name] = floatParameter(
@@ -130,7 +160,13 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 1 (50 deg.C/km)",
-            ToolTipText="Geothermal gradient 1 in rock segment 1"
+            ToolTipText="Geothermal gradient 1 in rock segment 1",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 120,
+            },
         )
 
         self.gradient2 = self.ParameterDict[self.gradient2.Name] = floatParameter(
@@ -143,7 +179,13 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 2 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 2 in rock segment 2"
+            ToolTipText="Geothermal gradient 2 in rock segment 2",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 130,
+            },
         )
 
         self.gradient3 = self.ParameterDict[self.gradient3.Name] = floatParameter(
@@ -156,7 +198,13 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 3 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 3 in rock segment 3"
+            ToolTipText="Geothermal gradient 3 in rock segment 3",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 140,
+            },
         )
 
         self.gradient4 = self.ParameterDict[self.gradient4.Name] = floatParameter(
@@ -169,7 +217,13 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 4 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 4 in rock segment 4"
+            ToolTipText="Geothermal gradient 4 in rock segment 4",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 150,
+            },
         )
 
         self.layerthickness = self.ParameterDict[self.layerthickness.Name] = listParameter(
@@ -184,6 +238,12 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thicknesses (100,000, 0, 0, 0 km)",
             ToolTipText="Thicknesses of rock segments",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 160,
+            },
         )
 
         self.layerthickness1 = self.ParameterDict[self.layerthickness1.Name] = floatParameter(
@@ -195,7 +255,13 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 1 (2 km)",
-            ToolTipText="Thickness of rock segment 1"
+            ToolTipText="Thickness of rock segment 1",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 170,
+            },
         )
 
         self.layerthickness2 = self.ParameterDict[self.layerthickness2.Name] = floatParameter(
@@ -207,7 +273,13 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 2 (0 km)",
-            ToolTipText="Thickness of rock segment 2"
+            ToolTipText="Thickness of rock segment 2",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 180,
+            },
         )
 
         self.layerthickness3 = self.ParameterDict[self.layerthickness3.Name] = floatParameter(
@@ -219,7 +291,13 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 3 (0 km)",
-            ToolTipText="Thickness of rock segment 3"
+            ToolTipText="Thickness of rock segment 3",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 190,
+            },
         )
 
         self.layerthickness4 = self.ParameterDict[self.layerthickness4.Name] = floatParameter(
@@ -231,7 +309,13 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 4 (0 km)",
-            ToolTipText="Thickness of rock segment 4"
+            ToolTipText="Thickness of rock segment 4",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 200,
+            },
         )
 
         # noinspection SpellCheckingInspection
@@ -247,7 +331,13 @@ class Reservoir:
                         "are calculated. The reservoir volume is used by GEOPHIRES to estimate the stored "
                         "heat in place. The fracture distribution is needed as input for the EGS fracture-based "
                         "reservoir models 1 and 2. " +
-                        '; '.join([f'{it.int_value}: {it.name}: {it.value}' for it in ReservoirVolume])
+                        '; '.join([f'{it.int_value}: {it.name}: {it.value}' for it in ReservoirVolume]),
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": True,
+                "order": 30,
+            },
         )
 
         self.fracshape = self.ParameterDict[self.fracshape.Name] = intParameter(
@@ -258,7 +348,13 @@ class Reservoir:
             UnitType=Units.NONE,
             ErrMessage="assume default fracture shape (1)",
             ToolTipText="Specifies the shape of the (identical) fractures in a fracture-based reservoir: " +
-                        '; '.join([f'{it.int_value}: {it.value}' for it in FractureShape])
+                        '; '.join([f'{it.int_value}: {it.value}' for it in FractureShape]),
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": True,
+                "order": 20,
+            },
         )
 
         self.fracarea = self.ParameterDict[self.fracarea.Name] = floatParameter(
@@ -270,7 +366,13 @@ class Reservoir:
             PreferredUnits=AreaUnit.METERS2,
             CurrentUnits=AreaUnit.METERS2,
             ErrMessage="assume default fracture shape (1)",
-            ToolTipText="Effective heat transfer area per fracture"
+            ToolTipText="Effective heat transfer area per fracture",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 210,
+            },
         )
 
         self.fracheight = self.ParameterDict[self.fracheight.Name] = floatParameter(
@@ -282,7 +384,13 @@ class Reservoir:
             PreferredUnits=LengthUnit.METERS,
             CurrentUnits=LengthUnit.METERS,
             ErrMessage="assume default fracture height (500 m)",
-            ToolTipText="Diameter (if fracture shape = 2) or height (if fracture shape = 3 or 4) of each fracture"
+            ToolTipText="Diameter (if fracture shape = 2) or height (if fracture shape = 3 or 4) of each fracture",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 220,
+            },
         )
 
         self.fracwidth = self.ParameterDict[self.fracwidth.Name] = floatParameter(
@@ -296,7 +404,13 @@ class Reservoir:
             ErrMessage="assume default fracture width (500 m)",
             ToolTipText="Total horizontal length of each fracture plane (from tip to tip). "
                         "Note: In some contexts this is called 'Fracture Length'; it refers to the fracture's lateral "
-                        "extent, not its aperture or thickness."
+                        "extent, not its aperture or thickness.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 230,
+            },
         )
 
         fracnumb_allowable_range = list(range(1, _MAX_ALLOWED_FRACTURES + 1, 1))
@@ -306,7 +420,13 @@ class Reservoir:
             AllowableRange=fracnumb_allowable_range,
             UnitType=Units.NONE,
             ErrMessage="assume default number of fractures (10)",
-            ToolTipText="Number of identical parallel fractures in EGS fracture-based reservoir model."
+            ToolTipText="Number of identical parallel fractures in EGS fracture-based reservoir model.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 240,
+            },
         )
 
         # Variable is a workaround for the fact that model.economics has not been initialized yet.
@@ -322,7 +442,13 @@ class Reservoir:
                         f'in EGS fracture-based reservoir model. '
                         f'(Note that injection wells are assumed to be stimulated by default; '
                         f'production wells are assumed to be stimulated if '
-                        f'{model_economics_stimulation_cost_per_production_well_name} is provided.)'
+                        f'{model_economics_stimulation_cost_per_production_well_name} is provided.)',
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 250,
+            },
         )
 
         self.fracsep = self.ParameterDict[self.fracsep.Name] = floatParameter(
@@ -335,7 +461,13 @@ class Reservoir:
             CurrentUnits=LengthUnit.METERS,
             ErrMessage="assume default fracture separation (50 m)",
             ToolTipText="Separation of identical parallel fractures with uniform spatial distribution \
-            in EGS fracture-based reservoir"
+            in EGS fracture-based reservoir",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 260,
+            },
         )
 
         self.resvol = self.ParameterDict[self.resvol.Name] = floatParameter(
@@ -347,7 +479,13 @@ class Reservoir:
             PreferredUnits=VolumeUnit.METERS3,
             CurrentUnits=VolumeUnit.METERS3,
             ErrMessage="assume default reservoir volume (1.25E8 m3)",
-            ToolTipText="Geothermal reservoir volume"
+            ToolTipText="Geothermal reservoir volume",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir geometry",
+                "is_controller": False,
+                "order": 270,
+            },
         )
 
         # noinspection SpellCheckingInspection
@@ -362,7 +500,13 @@ class Reservoir:
             AllowFormulaInput=True,
             ErrMessage="assume default water loss fraction (0)",
             ToolTipText="Fraction of water lost in the reservoir defined as "
-                        "(total geofluid lost)/(total geofluid produced)."
+                        "(total geofluid lost)/(total geofluid produced).",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 280,
+            },
         )
 
         self.cprock = self.ParameterDict[self.cprock.Name] = floatParameter(
@@ -376,7 +520,13 @@ class Reservoir:
             AllowFormulaInput=True,
             Required=True,
             ErrMessage=" assume default reservoir heat capacity (1000 J/kg/K)",
-            ToolTipText="Constant and uniform reservoir rock heat capacity"
+            ToolTipText="Constant and uniform reservoir rock heat capacity",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 290,
+            },
         )
 
         self.rhorock = self.ParameterDict[self.rhorock.Name] = floatParameter(
@@ -390,7 +540,13 @@ class Reservoir:
             AllowFormulaInput=True,
             Required=True,
             ErrMessage="assume default reservoir density (2700 kg/m^3)",
-            ToolTipText="Constant and uniform reservoir rock density"
+            ToolTipText="Constant and uniform reservoir rock density",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 300,
+            },
         )
 
         self.krock = self.ParameterDict[self.krock.Name] = floatParameter(
@@ -403,7 +559,13 @@ class Reservoir:
             CurrentUnits=ThermalConductivityUnit.WPERMPERK,
             AllowFormulaInput=True,
             ErrMessage="assume default reservoir thermal conductivity (3 W/m/K)",
-            ToolTipText="Constant and uniform reservoir rock thermal conductivity"
+            ToolTipText="Constant and uniform reservoir rock thermal conductivity",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 310,
+            },
         )
 
         self.permrock = self.ParameterDict[self.permrock.Name] = floatParameter(
@@ -416,7 +578,13 @@ class Reservoir:
             CurrentUnits=AreaUnit.METERS2,
             AllowFormulaInput=True,
             ErrMessage="assume default reservoir permeability (1E-13 m^2)",
-            ToolTipText="Constant and uniform reservoir permeability"
+            ToolTipText="Constant and uniform reservoir permeability",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 320,
+            },
         )
 
         self.porrock = self.ParameterDict[self.porrock.Name] = floatParameter(
@@ -429,7 +597,13 @@ class Reservoir:
             CurrentUnits=PercentUnit.TENTH,
             AllowFormulaInput=True,
             ErrMessage="assume default reservoir porosity (0.04)",
-            ToolTipText="Constant and uniform reservoir porosity"
+            ToolTipText="Constant and uniform reservoir porosity",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 330,
+            },
         )
 
         self.Tsurf = self.ParameterDict[self.Tsurf.Name] = floatParameter(
@@ -444,6 +618,12 @@ class Reservoir:
             ErrMessage="assume default surface temperature (15 deg.C)",
             ToolTipText="Surface temperature used for calculating bottom-hole temperature "
                         "(with geothermal gradient and reservoir depth)",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 340,
+            },
         )
 
         self.usebuiltintough2model = False
@@ -505,27 +685,51 @@ class Reservoir:
             value=self.resvol.value,
             UnitType=Units.VOLUME,
             PreferredUnits=VolumeUnit.METERS3,
-            CurrentUnits=VolumeUnit.METERS3
+            CurrentUnits=VolumeUnit.METERS3,
+            UI={
+                "tab": "Reservoir",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.cpwater = self.OutputParameterDict[self.cpwater.Name] = floatParameter(
             "cpwater",
             value=0.0,
             UnitType=Units.NONE,
-            ToolTipText='water heat capacity'
+            ToolTipText='water heat capacity',
+            UI={
+                "tab": "Reservoir",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.rhowater = self.OutputParameterDict[self.rhowater.Name] = floatParameter(
             "rhowater",
             value=0.0,
             UnitType=Units.NONE,
-            ToolTipText='water density'
+            ToolTipText='water density',
+            UI={
+                "tab": "Reservoir",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.averagegradient = self.OutputParameterDict[self.averagegradient.Name] = floatParameter(
             "averagegradient",
             value=0.0,
-            UnitType=Units.NONE
+            UnitType=Units.NONE,
+            UI={
+                "tab": "Reservoir",
+                "group": "",
+                "is_controller": False,
+                "order": 1,
+            },
         )
 
         self.Trock = self.OutputParameterDict[self.Trock.Name] = OutputParameter(

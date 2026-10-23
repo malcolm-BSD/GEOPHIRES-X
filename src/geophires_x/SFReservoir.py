@@ -46,7 +46,13 @@ class SFReservoir(Reservoir):
             CurrentUnits=DrawdownUnit.PERYEAR,
             AllowFormulaInput=True,
             ErrMessage="assume default drawdown parameter",
-            ToolTipText="specify the thermal drawdown for reservoir model 3 and 4"
+            ToolTipText="specify the thermal drawdown for reservoir model 3 and 4",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 350,
+            },
         )
 
         model.logger.info(f'Complete {__class__}: {sys._getframe().f_code.co_name}')

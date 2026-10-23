@@ -339,6 +339,9 @@ class Parameter(HasQuantity):
              will resolve those sources and then apply the parameter's normal type, range, and unit validation. Collection
              values are accepted only by list/time-series parameters and scalar parameters with a dedicated collection mode.
              Filename parameters retain bare file/URL references and may select a filename from a JSON document.
+        UI (dict): Presentation metadata kept with the parameter definition. The dictionary contains ``tab``, ``group``,
+             ``is_controller``, and ``order``. Parameter declarations should normally override the default tab with the
+             name of their owning model object (Reservoir, WellBores, SurfacePlant, or Economics).
     """
 
     Name: str = ""
@@ -351,6 +354,14 @@ class Parameter(HasQuantity):
     UnitType: IntEnum = Units.NONE
     PreferredUnits: Enum = None
     AllowExtendedInput: bool = True
+    UI: dict[str, object] = field(
+        default_factory=lambda: {
+            "tab": "Project",
+            "group": "",
+            "is_controller": False,
+            "order": 1,
+        }
+    )
 
     # set to PreferredUnits assuming that the current units are the preferred units
     # - they will only change if the read function reads a different unit associated with a parameter

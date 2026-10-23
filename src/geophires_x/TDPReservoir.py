@@ -54,7 +54,13 @@ class TDPReservoir(Reservoir):
             CurrentUnits=DrawdownUnit.PERYEAR,
             AllowFormulaInput=True,
             ErrMessage="assume default drawdown parameter",
-            ToolTipText="specify the thermal drawdown for reservoir model 3 and 4"
+            ToolTipText="specify the thermal drawdown for reservoir model 3 and 4",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 350,
+            },
         )
 
         self.drawdown_parameter_schedule = self.ParameterDict['Drawdown Parameter Schedule'] = listParameter(
@@ -67,6 +73,12 @@ class TDPReservoir(Reservoir):
             CurrentUnits=DrawdownUnit.PERYEAR,
             auto_raise_exception_on_invalid_read=True,
             ToolTipText='Thermal drawdown schedule for reservoir model 3 and 4 using DSL syntax',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": True,
+                "order": 360,
+            },
         )
 
         model.logger.info(f'Complete {__class__!s}: {sys._getframe().f_code.co_name}')

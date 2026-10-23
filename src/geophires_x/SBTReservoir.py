@@ -531,14 +531,26 @@ class SBTReservoir(CylindricalReservoir):
             UnitType=Units.NONE,
             ErrMessage="assume constant user-provided flowrate (1)",
             ToolTipText="Must be 1 or 2. '1' means the user provides a constant mass flow rate. "
-                        "'1' means the user provides an excel file with a mass flow rate profile."
+                        "'1' means the user provides an excel file with a mass flow rate profile.",
+            UI={
+                "tab": "WellBores",
+                "group": "Wellbore hydraulics",
+                "is_controller": True,
+                "order": 20,
+            },
         )
         self.flow_rate_file = self.ParameterDict[self.flow_rate_file.Name] = strParameter(
             "Flowrate File",
             DefaultValue="",
             UnitType=Units.NONE,
             ErrMessage="assume no flowrate file",
-            ToolTipText="Excel file with a mass flow rate profile"
+            ToolTipText="Excel file with a mass flow rate profile",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir properties",
+                "is_controller": False,
+                "order": 470,
+            },
         )
         self.injection_temperature_model = self.ParameterDict[self.injection_temperature_model.Name] = intParameter(
             "Injection Temperature Model",
@@ -547,14 +559,26 @@ class SBTReservoir(CylindricalReservoir):
             UnitType=Units.NONE,
             ErrMessage="assume constant user-provided injection temperature (1)",
             ToolTipText="Must be 1 or 2. '1' means the user provides a constant injection temperature. "
-                        "'1' means the user provides an excel file with an injection temperature profile."
+                        "'1' means the user provides an excel file with an injection temperature profile.",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Injection conditions",
+                "is_controller": True,
+                "order": 10,
+            },
         )
         self.injection_temperature_file = self.ParameterDict[self.injection_temperature_file.Name] = strParameter(
             "Injection Temperature File",
             DefaultValue="",
             UnitType=Units.NONE,
             ErrMessage="assume no injection temperature file",
-            ToolTipText="Excel file with an injection temperature profile"
+            ToolTipText="Excel file with an injection temperature profile",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 480,
+            },
         )
         self.SBTAccuracyDesired = self.ParameterDict[self.SBTAccuracyDesired.Name] = intParameter(
             "SBT Accuracy Desired",
@@ -564,7 +588,13 @@ class SBTReservoir(CylindricalReservoir):
             ErrMessage="assume default SBT accuracy desired (1)",
             ToolTipText="Must be 1, 2, 3, 4 or 5 with 1 lowest accuracy and 5 highest accuracy. "
                         "Lowest accuracy runs fastest. Accuracy level impacts number of discretizations for "
-                        "numerical integration and decision tree thresholds in SBT algorithm."
+                        "numerical integration and decision tree thresholds in SBT algorithm.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 490,
+            },
         )
         self.percent_implicit = self.ParameterDict[self.percent_implicit.Name] = floatParameter(
             "SBT Percent Implicit Euler Scheme",
@@ -579,7 +609,13 @@ class SBTReservoir(CylindricalReservoir):
                         "a fully implicit Euler scheme when calculating the fluid temperature at each time step. "
                         "With a value of 0, the convective term is modelled using explicit Euler. "
                         "A value of 0.5 would model the convective term 50% explicit and 50% implicit, "
-                        "which may be slightly more accurate than fully implicit."
+                        "which may be slightly more accurate than fully implicit.",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 500,
+            },
         )
         self.initial_timestep_count = self.ParameterDict[self.initial_timestep_count.Name] = intParameter(
             'SBT Initial Timestep Count',
@@ -587,7 +623,13 @@ class SBTReservoir(CylindricalReservoir):
             AllowableRange = [1,150],
             UnitType=Units.NONE,
             ErrMessage='assume default for Initial Timestep Count (5)',
-            ToolTipText='The number of timesteps in the first ~3 hours of model'
+            ToolTipText='The number of timesteps in the first ~3 hours of model',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 510,
+            },
         )
         self.final_timestep_count = self.ParameterDict[self.final_timestep_count.Name] = floatParameter(
             'SBT Final Timestep Count',
@@ -596,7 +638,13 @@ class SBTReservoir(CylindricalReservoir):
             Max=1000,
             UnitType=Units.NONE,
             ErrMessage='assume default for Final Timestep Count 70)',
-            ToolTipText='The number of timesteps after the first ~3 hours of model'
+            ToolTipText='The number of timesteps after the first ~3 hours of model',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 520,
+            },
         )
         self.initial_final_timestep_transition = self.ParameterDict[self.initial_final_timestep_transition.Name] = floatParameter(
             'SBT Initial to Final Timestep Transition',
@@ -607,14 +655,26 @@ class SBTReservoir(CylindricalReservoir):
             PreferredUnits=TimeUnit.SECOND,
             CurrentUnits=TimeUnit.SECOND,
             ErrMessage='assume default for Initial to Final Timestep Transition (9900 seconds)',
-            ToolTipText='The time in secs at which the time arrays switches from closely spaced linear to logarithmic'
+            ToolTipText='The time in secs at which the time arrays switches from closely spaced linear to logarithmic',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 530,
+            },
         )
         self.generate_wireframe_graphics = self.ParameterDict[self.generate_wireframe_graphics.Name] = boolParameter(
             'SBT Generate Wireframe Graphics',
             DefaultValue=False,
             UnitType=Units.NONE,
             ErrMessage='assume default for SBT Generate Wireframe Graphics (False)',
-            ToolTipText='Switch to control the generation of a wireframe drawing of a SBT wells configuration'
+            ToolTipText='Switch to control the generation of a wireframe drawing of a SBT wells configuration',
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 540,
+            },
         )
 
         sclass = str(__class__).replace("<class \'", "")

@@ -445,7 +445,13 @@ class Economics:
             Required=True,
             ErrMessage="assume default economic model (2)",
             ToolTipText="Specify the economic model to calculate the levelized cost of energy. " +
-                        '; '.join([f'{it.int_value}: {it.value}' for it in EconomicModel])
+                        '; '.join([f'{it.int_value}: {it.value}' for it in EconomicModel]),
+            UI={
+                "tab": "Project",
+                "group": "Model controls",
+                "is_controller": True,
+                "order": 40,
+            },
         )
 
         self.ccstimfixed = self.ParameterDict[self.ccstimfixed.Name] = floatParameter(
@@ -459,7 +465,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ToolTipText='Total reservoir stimulation capital cost, including indirect costs and contingency. '
-                        f'For traditional hydrothermal reservoirs, this parameter should be set to $0.'
+                        f'For traditional hydrothermal reservoirs, this parameter should be set to $0.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 30,
+            },
         )
 
         before_stim_modifiers_note = f'before adjustment factor, indirect costs, and contingency'
@@ -475,7 +487,13 @@ class Economics:
             PreferredUnits=CurrencyUnit.MDOLLARS,
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
-            ToolTipText=f'Reservoir stimulation capital cost per injection well {before_stim_modifiers_note}'
+            ToolTipText=f'Reservoir stimulation capital cost per injection well {before_stim_modifiers_note}',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 40,
+            },
         )
 
         stimulation_cost_per_production_well_default_value_MUSD = 0
@@ -493,7 +511,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             auto_raise_exception_on_invalid_read=True,
             ToolTipText=f'Reservoir stimulation capital cost per production well {before_stim_modifiers_note}'
-                        f'{stimulation_cost_per_production_well_default_value_note}'
+                        f'{stimulation_cost_per_production_well_default_value_note}',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 50,
+            },
         )
 
         self.stimulation_cost_per_fracture_surface_area = \
@@ -507,7 +531,13 @@ class Economics:
             CurrentUnits=CostPerAreaUnit.DOLLARSPERMETERS2,
             ToolTipText=f'Direct reservoir stimulation cost per fracture surface area {before_stim_modifiers_note}. '
                         f'By default, this applies only to injection wells. To include production wells, set '
-                        f'{self.stimulation_cost_per_production_well.Name} = {CALCULATED_PARAMETER_PLACEHOLDER_VALUE}.'
+                        f'{self.stimulation_cost_per_production_well.Name} = {CALCULATED_PARAMETER_PLACEHOLDER_VALUE}.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 60,
+            },
         )
 
         # noinspection SpellCheckingInspection
@@ -521,7 +551,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for reservoir stimulation capital cost correlation"
+            ToolTipText="Multiplier for reservoir stimulation capital cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 70,
+            },
         )
         self.stimulation_indirect_capital_cost_percentage = \
           self.ParameterDict[self.stimulation_indirect_capital_cost_percentage.Name] = floatParameter(
@@ -535,7 +571,13 @@ class Economics:
             AllowFormulaInput=True,
             ToolTipText=f'The indirect capital cost for reservoir stimulation, '
                         f'calculated as a percentage of the direct cost. '
-                        f'(Not applied if {self.ccstimfixed.Name} is provided.)'
+                        f'(Not applied if {self.ccstimfixed.Name} is provided.)',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 80,
+            },
         )
 
         self.ccexplfixed = self.ParameterDict[self.ccexplfixed.Name] = floatParameter(
@@ -548,7 +590,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
             Valid=False,
-            ToolTipText="Total exploration capital cost"
+            ToolTipText="Total exploration capital cost",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 90,
+            },
         )
         self.ccexpladjfactor = self.ParameterDict[self.ccexpladjfactor.Name] = floatParameter(
             "Exploration Capital Cost Adjustment Factor",
@@ -560,7 +608,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for built-in exploration capital cost correlation"
+            ToolTipText="Multiplier for built-in exploration capital cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 100,
+            },
         )
 
         per_injection_well_cost_name = 'Injection Well Drilling and Completion Capital Cost'
@@ -576,7 +630,13 @@ class Economics:
             Valid=False,
             ToolTipText=f'Well drilling and completion capital cost per well including indirect costs and contingency. '
                         f'Applied to production wells; also applied to injection wells unless '
-                        f'{per_injection_well_cost_name} is provided.'
+                        f'{per_injection_well_cost_name} is provided.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 110,
+            },
         )
         self.per_injection_well_cost = self.ParameterDict[self.per_injection_well_cost.Name] = floatParameter(
             per_injection_well_cost_name,
@@ -589,7 +649,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ToolTipText='Injection well drilling and completion capital cost per well '
-                        'including indirect costs and contingency'
+                        'including indirect costs and contingency',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 120,
+            },
         )
 
         inj_well_cost_adjustment_factor_name = "Injection Well Drilling and Completion Capital Cost Adjustment Factor"
@@ -605,7 +671,13 @@ class Economics:
             Valid=True,
             ToolTipText=f'Well Drilling and Completion Capital Cost Adjustment Factor. Applies to production wells; '
                         f'also applies to injection wells unless a value is provided for '
-                        f'{inj_well_cost_adjustment_factor_name}.'
+                        f'{inj_well_cost_adjustment_factor_name}.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 130,
+            },
         )
         self.injection_well_cost_adjustment_factor = self.ParameterDict[self.injection_well_cost_adjustment_factor.Name] = floatParameter(
             inj_well_cost_adjustment_factor_name,
@@ -619,7 +691,13 @@ class Economics:
             Valid=True,
             ToolTipText="Injection Well Drilling and Completion Capital Cost Adjustment Factor. "
                         f"If not provided, this value will be set automatically to the same value as "
-                        f"{self.production_well_cost_adjustment_factor.Name}."
+                        f"{self.production_well_cost_adjustment_factor.Name}.",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 140,
+            },
         )
 
         self.oamwellfixed = self.ParameterDict[self.oamwellfixed.Name] = floatParameter(
@@ -632,7 +710,13 @@ class Economics:
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             Provided=False,
             Valid=False,
-            ToolTipText="Total annual wellfield O&M cost"
+            ToolTipText="Total annual wellfield O&M cost",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 150,
+            },
         )
         self.oamwelladjfactor = self.ParameterDict[self.oamwelladjfactor.Name] = floatParameter(
             "Wellfield O&M Cost Adjustment Factor",
@@ -644,7 +728,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for built-in wellfield O&M cost correlation"
+            ToolTipText="Multiplier for built-in wellfield O&M cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 160,
+            },
         )
         self.redrilling_learning_rate = self.ParameterDict[self.redrilling_learning_rate.Name] = floatParameter(
             "Redrilling Learning Rate",
@@ -662,7 +752,13 @@ class Economics:
                         "(k + 1)^log2(1 - Redrilling Learning Rate) times the drilling and completion cost plus the "
                         "stimulation cost of the original wellfield. For example, at 0.15 the first redrilling costs "
                         "85% of the original wellfield and the third 72%. At 0 (the default), every redrilling event "
-                        "costs as much as the original wellfield."
+                        "costs as much as the original wellfield.",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 170,
+            },
         )
 
         self.ccplantfixed = self.ParameterDict[self.ccplantfixed.Name] = floatParameter(
@@ -675,7 +771,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
             Valid=False,
-            ToolTipText="Total surface plant capital cost"
+            ToolTipText="Total surface plant capital cost",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 180,
+            },
         )
         self.ccplantadjfactor = self.ParameterDict[self.ccplantadjfactor.Name] = floatParameter(
             "Surface Plant Capital Cost Adjustment Factor",
@@ -687,7 +789,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier applied to surface plant capital cost, whether calculated by the built-in correlation or derived from a provided Capital Cost for Power Plant for Electricity Generation. Not applied when Surface Plant Capital Cost (total) is provided."
+            ToolTipText="Multiplier applied to surface plant capital cost, whether calculated by the built-in correlation or derived from a provided Capital Cost for Power Plant for Electricity Generation. Not applied when Surface Plant Capital Cost (total) is provided.",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 190,
+            },
         )
         self._default_Power_plant_cost_USD_per_kWe = 3000
         self.Power_plant_cost_per_kWe = self.ParameterDict[self.Power_plant_cost_per_kWe.Name] = floatParameter(
@@ -699,7 +807,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKW,
             ErrMessage=f'assume default Power plant capital cost per kWe '
-                       f'({self._default_Power_plant_cost_USD_per_kWe} USD/kWe)'
+                       f'({self._default_Power_plant_cost_USD_per_kWe} USD/kWe)',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 200,
+            },
         )
 
         self.ccgathfixed = self.ParameterDict[self.ccgathfixed.Name] = floatParameter(
@@ -712,7 +826,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
             Valid=False,
-            ToolTipText="Total field gathering system capital cost"
+            ToolTipText="Total field gathering system capital cost",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 210,
+            },
         )
         self.ccgathadjfactor = self.ParameterDict[self.ccgathadjfactor.Name] = floatParameter(
             "Field Gathering System Capital Cost Adjustment Factor",
@@ -724,7 +844,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for built-in field gathering system capital cost correlation"
+            ToolTipText="Multiplier for built-in field gathering system capital cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 220,
+            },
         )
         self.oamplantfixed = self.ParameterDict[self.oamplantfixed.Name] = floatParameter(
             "Surface Plant O&M Cost",
@@ -736,7 +862,13 @@ class Economics:
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             Provided=False,
             Valid=False,
-            ToolTipText="Total annual surface plant O&M cost"
+            ToolTipText="Total annual surface plant O&M cost",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 230,
+            },
         )
         self.oamplantadjfactor = self.ParameterDict[self.oamplantadjfactor.Name] = floatParameter(
             "Surface Plant O&M Cost Adjustment Factor",
@@ -748,7 +880,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for built-in surface plant O&M cost correlation"
+            ToolTipText="Multiplier for built-in surface plant O&M cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 240,
+            },
         )
         self.oamwaterfixed = self.ParameterDict[self.oamwaterfixed.Name] = floatParameter(
             "Water Cost",
@@ -760,7 +898,13 @@ class Economics:
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             Provided=False,
             Valid=False,
-            ToolTipText="Total annual make-up water cost"
+            ToolTipText="Total annual make-up water cost",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 250,
+            },
         )
         self.oamwateradjfactor = self.ParameterDict[self.oamwateradjfactor.Name] = floatParameter(
             "Water Cost Adjustment Factor",
@@ -772,7 +916,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             Valid=True,
-            ToolTipText="Multiplier for built-in make-up water cost correlation"
+            ToolTipText="Multiplier for built-in make-up water cost correlation",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 260,
+            },
         )
         self.totalcapcost = self.ParameterDict[self.totalcapcost.Name] = floatParameter(
             "Total Capital Cost",
@@ -788,7 +938,13 @@ class Economics:
             ErrMessage="calculate total capital cost using user-provided costs or" +
                        " built-in correlations for each category.",
             ToolTipText=f'Total initial capital cost. For SAM Economic Models, '
-                        f'this is treated as the {overnight_capital_cost_output_parameter().Name}.'
+                        f'this is treated as the {overnight_capital_cost_output_parameter().Name}.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 270,
+            },
         )
         self.oamtotalfixed = self.ParameterDict[self.oamtotalfixed.Name] = floatParameter(
             "Total O&M Cost",
@@ -801,7 +957,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ErrMessage="calculate total O&M cost using user-provided costs or built-in correlations for each category.",
-            ToolTipText="Total initial O&M cost."
+            ToolTipText="Total initial O&M cost.",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 280,
+            },
         )
         self.timestepsperyear = self.ParameterDict[self.timestepsperyear.Name] = intParameter(
             "Time steps per year",
@@ -821,7 +983,13 @@ class Economics:
                         'summer, the user can select a smaller time step, e.g., a month (or 12 time steps per year). '
                         'For even shorter timescale effects, e.g., to account for an hourly varying ambient '
                         'temperature or investigate the response in plant operation to a fluctuating revenue rate), '
-                        'the user can select an even smaller time step, e.g., 1 h (or 8760 time steps per year).'
+                        'the user can select an even smaller time step, e.g., 1 h (or 8760 time steps per year).',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 290,
+            },
         )
         self.FCR = self.ParameterDict[self.FCR.Name] = floatParameter(
             "Fixed Charge Rate",
@@ -832,7 +1000,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default fixed charge rate (0.1)",
-            ToolTipText="Fixed charge rate (FCR) used in the Fixed Charge Rate Model"
+            ToolTipText="Fixed charge rate (FCR) used in the Fixed Charge Rate Model",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 300,
+            },
         )
 
         discount_rate_default_val = 0.07
@@ -847,7 +1021,13 @@ class Economics:
             ErrMessage=f'assume default discount rate ({discount_rate_default_val})',
             ToolTipText="Discount rate used in the Standard Levelized Cost Model and SAM Economic Models. "
                         "Discount Rate is synonymous with Fixed Internal Rate. If one is provided, the other's value "
-                        "will be automatically set to the same value."
+                        "will be automatically set to the same value.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 310,
+            },
         )
         self.social_discountrate = self.ParameterDict[self.social_discountrate.Name] = floatParameter(
             "Social Discount Rate",
@@ -859,7 +1039,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage=f'assume default social discount rate ({discount_rate_default_val})',
             ToolTipText="Social discount rate for XLCOE Market + Social calculations. "
-                        "This parameter is ignored unless XLCOE calculations are enabled."
+                        "This parameter is ignored unless XLCOE calculations are enabled.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 320,
+            },
         )
         self.DoXLCOCalculations = self.ParameterDict[self.DoXLCOCalculations.Name] = boolParameter(
             "Do XLCO(E|H|C) Calculations",
@@ -867,7 +1053,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default: no XLCO(E|H|C) calculations",
-            ToolTipText="Enable Extended Levelized Cost of Electricity|Hear|Cooling (XLCO(E|H|C)) calculations. "
+            ToolTipText="Enable Extended Levelized Cost of Electricity|Hear|Cooling (XLCO(E|H|C)) calculations. ",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 330,
+            },
         )
         self.XLCOEAvoidedEmissionsIntensity = self.ParameterDict[self.XLCOEAvoidedEmissionsIntensity.Name] = floatParameter(
             "XLCOE Avoided Emissions Intensity",
@@ -878,7 +1070,13 @@ class Economics:
             CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
             Required=False,
             ErrMessage="assume default avoided emissions intensity (0.0 tCO2/MWh) for electricity production",
-            ToolTipText="Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits."
+            ToolTipText="Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 340,
+            },
         )
         self.XLCOCarbonPrice = self.ParameterDict[self.XLCOCarbonPrice.Name] = floatParameter(
             "XLCO(E|H|C) Carbon Price",
@@ -889,7 +1087,13 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERTONNE,
             Required=False,
             ErrMessage="assume default carbon price (0.0 USD/tonne)",
-            ToolTipText="Carbon price used for XLCO(E|H|C) market carbon-offset benefits."
+            ToolTipText="Carbon price used for XLCO(E|H|C) market carbon-offset benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 350,
+            },
         )
         self.XLCOERECPrice = self.ParameterDict[self.XLCOERECPrice.Name] = floatParameter(
             "XLCOE REC Price",
@@ -900,7 +1104,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
             Required=False,
             ErrMessage="assume default REC price (0.0 USD/MWh)",
-            ToolTipText="Renewable Energy Credit price used for XLCOE market benefits."
+            ToolTipText="Renewable Energy Credit price used for XLCOE market benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 360,
+            },
         )
         self.XLCOEDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOEDisplacedWaterUseIntensity.Name] = floatParameter(
             "XLCOE Displaced Water Use Intensity",
@@ -909,7 +1119,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default displaced water use intensity (0.0 m3/MWh) for electrity",
-            ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh."
+            ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 370,
+            },
         )
         self.XLCOWaterShadowPrice = self.ParameterDict[self.XLCOWaterShadowPrice.Name] = floatParameter(
             "XLCO(E|H|C) Water Shadow Price",
@@ -920,7 +1136,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.DOLLARS,
             Required=False,
             ErrMessage="assume default water shadow price (0.0 USD per m3)",
-            ToolTipText="Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3."
+            ToolTipText="Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 380,
+            },
         )
         self.IdleRigDiscountRate = self.ParameterDict[self.IdleRigDiscountRate.Name] = floatParameter(
             "Idle Rig Discount Rate",
@@ -932,7 +1154,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Required=False,
             ErrMessage="assume default idle rig discount rate (0.0)",
-            ToolTipText="XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only."
+            ToolTipText="XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 390,
+            },
         )
         self.XLCOConstructionJobsPerRig = self.ParameterDict[self.XLCOConstructionJobsPerRig.Name] = floatParameter(
             "XLCO(E|H|C) Construction Jobs Per Rig",
@@ -941,7 +1169,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default construction jobs per rig (0.0)",
-            ToolTipText="Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits."
+            ToolTipText="Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 400,
+            },
         )
         self.XLCOOperationsJobsPerMW = self.ParameterDict[self.XLCOOperationsJobsPerMW.Name] = floatParameter(
             "XLCO(E|H|C) Operations Jobs Per MW",
@@ -950,7 +1184,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default operations jobs per MW (0.0)",
-            ToolTipText="Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits."
+            ToolTipText="Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 410,
+            },
         )
         self.XLCOIndirectJobsMultiplier = self.ParameterDict[self.XLCOIndirectJobsMultiplier.Name] = floatParameter(
             "XLCO(E|H|C) Indirect Jobs Multiplier",
@@ -959,7 +1199,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default indirect jobs multiplier (1.0)",
-            ToolTipText="Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits."
+            ToolTipText="Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 420,
+            },
         )
         self.XLCOAverageMonthlyWage = self.ParameterDict[self.XLCOAverageMonthlyWage.Name] = floatParameter(
             "XLCO(E|H|C) Average Monthly Wage",
@@ -970,7 +1216,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.DOLLARS,
             Required=False,
             ErrMessage="assume default average monthly wage (0.0 USD)",
-            ToolTipText="Average monthly wage used for XLCO(E|H|C) social jobs benefits."
+            ToolTipText="Average monthly wage used for XLCO(E|H|C) social jobs benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 430,
+            },
         )
         self.XLCOHAvoidedEmissionsIntensity = self.ParameterDict[self.XLCOHAvoidedEmissionsIntensity.Name] = floatParameter(
             "XLCOH Avoided Emissions Intensity",
@@ -981,7 +1233,13 @@ class Economics:
             CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
             Required=False,
             ErrMessage="assume default heat avoided emissions intensity (0.0 tCO2/MWh)",
-            ToolTipText="Avoided emissions intensity used for future XLCOH carbon-offset benefits."
+            ToolTipText="Avoided emissions intensity used for future XLCOH carbon-offset benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 440,
+            },
         )
         self.XLCOHDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOHDisplacedWaterUseIntensity.Name] = floatParameter(
             "XLCOH Displaced Water Use Intensity",
@@ -990,7 +1248,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default XLCOH displaced water use intensity (0.0 m3/MWh)",
-            ToolTipText="Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh."
+            ToolTipText="Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 450,
+            },
         )
         self.XLCOHREC = self.ParameterDict[self.XLCOHREC.Name] = floatParameter(
             "XLCOH Thermal REC",
@@ -1001,7 +1265,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
             Required=False,
             ErrMessage="assume default XLCOH Renewable Energy Credit (0.0 USD/MWh)",
-            ToolTipText="Thermal Energy Credit used for future XLCOH market benefits."
+            ToolTipText="Thermal Energy Credit used for future XLCOH market benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 460,
+            },
         )
         self.XLCOCAvoidedEmissionsIntensity = self.ParameterDict["XLCOC Avoided Emissions Intensity"] = floatParameter(
             "XLCOC Avoided Emissions Intensity",
@@ -1012,7 +1282,13 @@ class Economics:
             CurrentUnits=CO2ProductionUnit.TONNEPERMWH,
             Required=False,
             ErrMessage="assume default cooling avoided emissions intensity (0.0 tCO2/MWh)",
-            ToolTipText="Avoided emissions intensity used for future XLCOC carbon-offset benefits."
+            ToolTipText="Avoided emissions intensity used for future XLCOC carbon-offset benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 470,
+            },
         )
         self.XLCOCREC = self.ParameterDict[self.XLCOCREC.Name] = floatParameter(
             "XLCOC Thermal REC",
@@ -1023,7 +1299,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMWH,
             Required=False,
             ErrMessage="assume default XLCOC Renewable Energy Credit (0.0 USD/MWh)",
-            ToolTipText="Cooling Renewable Energy Credit used for future XLCOC market benefits."
+            ToolTipText="Cooling Renewable Energy Credit used for future XLCOC market benefits.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 480,
+            },
         )
         self.XLCOCDisplacedWaterUseIntensity = self.ParameterDict["XLCOC Displaced Water Use Intensity"] = floatParameter(
             "XLCOC Displaced Water Use Intensity",
@@ -1032,7 +1314,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default XLCOC displaced water use intensity (0.0 m3/MWh)",
-            ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh."
+            ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 490,
+            },
         )
         self.DoVALCOCalculations = self.ParameterDict[self.DoVALCOCalculations.Name] = boolParameter(
             "Do VALCO(E|H|C) Calculations",
@@ -1040,7 +1328,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default: no VALCO(E|H|C) calculations",
-            ToolTipText="Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations."
+            ToolTipText="Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 500,
+            },
         )
         self.VALCOCalculationMode = self.ParameterDict[self.VALCOCalculationMode.Name] = strParameter(
             "VALCO Calculation Mode",
@@ -1048,7 +1342,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCO calculation mode (Direct)",
-            ToolTipText="VALCO calculation mode. Direct is the v1 supported mode."
+            ToolTipText="VALCO calculation mode. Direct is the v1 supported mode.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 510,
+            },
         )
         self.VALCOESystemAverageEnergyValue = self.ParameterDict[self.VALCOESystemAverageEnergyValue.Name] = floatParameter(
             "VALCOE System Average Energy Value",
@@ -1059,7 +1359,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE system average energy value (0.0 cents/kWh)",
-            ToolTipText="Direct-input system average energy value used in VALCOE calculations."
+            ToolTipText="Direct-input system average energy value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 520,
+            },
         )
         self.VALCOETechnologyEnergyValue = self.ParameterDict[self.VALCOETechnologyEnergyValue.Name] = floatParameter(
             "VALCOE Technology Energy Value",
@@ -1070,7 +1376,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE technology energy value (0.0 cents/kWh)",
-            ToolTipText="Direct-input technology energy value used in VALCOE calculations."
+            ToolTipText="Direct-input technology energy value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 530,
+            },
         )
         self.VALCOESystemAverageCapacityValue = self.ParameterDict[self.VALCOESystemAverageCapacityValue.Name] = floatParameter(
             "VALCOE System Average Capacity Value",
@@ -1081,7 +1393,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE system average capacity value (0.0 cents/kWh)",
-            ToolTipText="Direct-input system average capacity value used in VALCOE calculations."
+            ToolTipText="Direct-input system average capacity value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 540,
+            },
         )
         self.VALCOETechnologyCapacityValue = self.ParameterDict[self.VALCOETechnologyCapacityValue.Name] = floatParameter(
             "VALCOE Technology Capacity Value",
@@ -1092,7 +1410,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE technology capacity value (0.0 cents/kWh)",
-            ToolTipText="Direct-input technology capacity value used in VALCOE calculations."
+            ToolTipText="Direct-input technology capacity value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 550,
+            },
         )
         self.VALCOESystemAverageFlexibilityValue = self.ParameterDict[self.VALCOESystemAverageFlexibilityValue.Name] = floatParameter(
             "VALCOE System Average Flexibility Value",
@@ -1103,7 +1427,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE system average flexibility value (0.0 cents/kWh)",
-            ToolTipText="Direct-input system average flexibility value used in VALCOE calculations."
+            ToolTipText="Direct-input system average flexibility value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 560,
+            },
         )
         self.VALCOETechnologyFlexibilityValue = self.ParameterDict[self.VALCOETechnologyFlexibilityValue.Name] = floatParameter(
             "VALCOE Technology Flexibility Value",
@@ -1114,7 +1444,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.CENTSSPERKWH,
             Required=False,
             ErrMessage="assume default VALCOE technology flexibility value (0.0 cents/kWh)",
-            ToolTipText="Direct-input technology flexibility value used in VALCOE calculations."
+            ToolTipText="Direct-input technology flexibility value used in VALCOE calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 570,
+            },
         )
         self.VALCOEBasisCapacityValue = self.ParameterDict[self.VALCOEBasisCapacityValue.Name] = floatParameter(
             "VALCOE Basis Capacity Value",
@@ -1123,7 +1459,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOE basis capacity value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr."
+            ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 580,
+            },
         )
         self.VALCOECapacityCredit = self.ParameterDict[self.VALCOECapacityCredit.Name] = floatParameter(
             "VALCOE Capacity Credit",
@@ -1133,7 +1475,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOE capacity credit (0.0)",
-            ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value."
+            ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 590,
+            },
         )
         self.VALCOEBaseFlexibilityValue = self.ParameterDict[self.VALCOEBaseFlexibilityValue.Name] = floatParameter(
             "VALCOE Base Flexibility Value",
@@ -1142,7 +1490,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOE base flexibility value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr."
+            ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 600,
+            },
         )
         self.VALCOEFlexibilityMultiplier = self.ParameterDict[self.VALCOEFlexibilityMultiplier.Name] = floatParameter(
             "VALCOE Flexibility Multiplier",
@@ -1151,7 +1505,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOE flexibility multiplier (0.0)",
-            ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value."
+            ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 610,
+            },
         )
         self.VALCOHSystemAverageEnergyValue = self.ParameterDict[self.VALCOHSystemAverageEnergyValue.Name] = floatParameter(
             "VALCOH System Average Energy Value",
@@ -1162,7 +1522,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH system average energy value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average energy value used in VALCOH calculations."
+            ToolTipText="Direct-input system average energy value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 620,
+            },
         )
         self.VALCOHTechnologyEnergyValue = self.ParameterDict[self.VALCOHTechnologyEnergyValue.Name] = floatParameter(
             "VALCOH Technology Energy Value",
@@ -1173,7 +1539,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH technology energy value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology energy value used in VALCOH calculations."
+            ToolTipText="Direct-input technology energy value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 630,
+            },
         )
         self.VALCOHSystemAverageCapacityValue = self.ParameterDict[self.VALCOHSystemAverageCapacityValue.Name] = floatParameter(
             "VALCOH System Average Capacity Value",
@@ -1184,7 +1556,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH system average capacity value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average capacity value used in VALCOH calculations."
+            ToolTipText="Direct-input system average capacity value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 640,
+            },
         )
         self.VALCOHTechnologyCapacityValue = self.ParameterDict[self.VALCOHTechnologyCapacityValue.Name] = floatParameter(
             "VALCOH Technology Capacity Value",
@@ -1195,7 +1573,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH technology capacity value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology capacity value used in VALCOH calculations."
+            ToolTipText="Direct-input technology capacity value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 650,
+            },
         )
         self.VALCOHSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOHSystemAverageFlexibilityValue.Name] = floatParameter(
             "VALCOH System Average Flexibility Value",
@@ -1206,7 +1590,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH system average flexibility value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average flexibility value used in VALCOH calculations."
+            ToolTipText="Direct-input system average flexibility value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 660,
+            },
         )
         self.VALCOHTechnologyFlexibilityValue = self.ParameterDict[self.VALCOHTechnologyFlexibilityValue.Name] = floatParameter(
             "VALCOH Technology Flexibility Value",
@@ -1217,7 +1607,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOH technology flexibility value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology flexibility value used in VALCOH calculations."
+            ToolTipText="Direct-input technology flexibility value used in VALCOH calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 670,
+            },
         )
         self.VALCOHBasisCapacityValue = self.ParameterDict[self.VALCOHBasisCapacityValue.Name] = floatParameter(
             "VALCOH Basis Capacity Value",
@@ -1226,7 +1622,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOH basis capacity value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr."
+            ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 680,
+            },
         )
         self.VALCOHCapacityCredit = self.ParameterDict[self.VALCOHCapacityCredit.Name] = floatParameter(
             "VALCOH Capacity Credit",
@@ -1236,7 +1638,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOH capacity credit (0.0)",
-            ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value."
+            ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 690,
+            },
         )
         self.VALCOHBaseFlexibilityValue = self.ParameterDict[self.VALCOHBaseFlexibilityValue.Name] = floatParameter(
             "VALCOH Base Flexibility Value",
@@ -1245,7 +1653,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOH base flexibility value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr."
+            ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 700,
+            },
         )
         self.VALCOHFlexibilityMultiplier = self.ParameterDict[self.VALCOHFlexibilityMultiplier.Name] = floatParameter(
             "VALCOH Flexibility Multiplier",
@@ -1254,7 +1668,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOH flexibility multiplier (0.0)",
-            ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value."
+            ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 710,
+            },
         )
         self.VALCOCSystemAverageEnergyValue = self.ParameterDict[self.VALCOCSystemAverageEnergyValue.Name] = floatParameter(
             "VALCOC System Average Energy Value",
@@ -1265,7 +1685,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC system average energy value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average energy value used in VALCOC calculations."
+            ToolTipText="Direct-input system average energy value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 720,
+            },
         )
         self.VALCOCTechnologyEnergyValue = self.ParameterDict[self.VALCOCTechnologyEnergyValue.Name] = floatParameter(
             "VALCOC Technology Energy Value",
@@ -1276,7 +1702,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC technology energy value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology energy value used in VALCOC calculations."
+            ToolTipText="Direct-input technology energy value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 730,
+            },
         )
         self.VALCOCSystemAverageCapacityValue = self.ParameterDict[self.VALCOCSystemAverageCapacityValue.Name] = floatParameter(
             "VALCOC System Average Capacity Value",
@@ -1287,7 +1719,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC system average capacity value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average capacity value used in VALCOC calculations."
+            ToolTipText="Direct-input system average capacity value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 740,
+            },
         )
         self.VALCOCTechnologyCapacityValue = self.ParameterDict[self.VALCOCTechnologyCapacityValue.Name] = floatParameter(
             "VALCOC Technology Capacity Value",
@@ -1298,7 +1736,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC technology capacity value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology capacity value used in VALCOC calculations."
+            ToolTipText="Direct-input technology capacity value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 750,
+            },
         )
         self.VALCOCSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOCSystemAverageFlexibilityValue.Name] = floatParameter(
             "VALCOC System Average Flexibility Value",
@@ -1309,7 +1753,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC system average flexibility value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input system average flexibility value used in VALCOC calculations."
+            ToolTipText="Direct-input system average flexibility value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 760,
+            },
         )
         self.VALCOCTechnologyFlexibilityValue = self.ParameterDict[self.VALCOCTechnologyFlexibilityValue.Name] = floatParameter(
             "VALCOC Technology Flexibility Value",
@@ -1320,7 +1770,13 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             Required=False,
             ErrMessage="assume default VALCOC technology flexibility value (0.0 $/MMBTU)",
-            ToolTipText="Direct-input technology flexibility value used in VALCOC calculations."
+            ToolTipText="Direct-input technology flexibility value used in VALCOC calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 770,
+            },
         )
         self.VALCOCBasisCapacityValue = self.ParameterDict[self.VALCOCBasisCapacityValue.Name] = floatParameter(
             "VALCOC Basis Capacity Value",
@@ -1329,7 +1785,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOC basis capacity value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr."
+            ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 780,
+            },
         )
         self.VALCOCCapacityCredit = self.ParameterDict[self.VALCOCCapacityCredit.Name] = floatParameter(
             "VALCOC Capacity Credit",
@@ -1339,7 +1801,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOC capacity credit (0.0)",
-            ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value."
+            ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 790,
+            },
         )
         self.VALCOCBaseFlexibilityValue = self.ParameterDict[self.VALCOCBaseFlexibilityValue.Name] = floatParameter(
             "VALCOC Base Flexibility Value",
@@ -1348,7 +1816,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOC base flexibility value (0.0 USD/kW-yr)",
-            ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr."
+            ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 800,
+            },
         )
         self.VALCOCFlexibilityMultiplier = self.ParameterDict[self.VALCOCFlexibilityMultiplier.Name] = floatParameter(
             "VALCOC Flexibility Multiplier",
@@ -1357,7 +1831,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCOC flexibility multiplier (0.0)",
-            ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value."
+            ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 810,
+            },
         )
 
         royalty_rate_and_schedule_mutual_exclusivity_note = ("Note: Providing both Royalty Rate and Royalty Rate "
@@ -1374,7 +1854,13 @@ class Economics:
             ToolTipText="The fraction of the project's gross annual revenue paid to the royalty holder. "
                         "This is modeled as a variable production-based operating expense, reducing the developer's "
                         "taxable income. It is calculated in addition to any scheduled Royalty Supplemental Payments. "
-                        f"{royalty_rate_and_schedule_mutual_exclusivity_note}"
+                        f"{royalty_rate_and_schedule_mutual_exclusivity_note}",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 820,
+            },
         )
 
         rate_based_only_param_note = (f'Note: This parameter only applies if {self.royalty_rate.Name} is provided '
@@ -1390,7 +1876,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ToolTipText=f"The additive amount the royalty rate increases each year. For example, a value of 0.001 "
                         f"increases a 4% rate (0.04) to 4.1% (0.041) in the next year. "
-                        f"{rate_based_only_param_note}"
+                        f"{rate_based_only_param_note}",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 830,
+            },
         )
 
         self.royalty_escalation_rate_start_year = self.ParameterDict[self.royalty_escalation_rate_start_year.Name] = intParameter(
@@ -1402,7 +1894,13 @@ class Economics:
             CurrentUnits=TimeUnit.YEAR,
             ToolTipText=f'The first year that the {self.royalty_escalation_rate.Name} is applied. '
                         f'{_YEAR_INDEX_VALUE_EXPLANATION_SNIPPET}. '
-                        f'{rate_based_only_param_note}'
+                        f'{rate_based_only_param_note}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 840,
+            },
         )
 
         maximum_royalty_rate_default_val = 1.0
@@ -1416,7 +1914,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ToolTipText=f"The maximum royalty rate after escalation, expressed as a fraction (e.g., 0.06 for a 6% cap)."
                         f"{' Defaults to 100% (no effective cap).' if maximum_royalty_rate_default_val == 1.0 else ''} "
-                        f"{rate_based_only_param_note}"
+                        f"{rate_based_only_param_note}",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 850,
+            },
         )
 
         self.royalty_rate_schedule = self.ParameterDict[self.royalty_rate_schedule.Name] = listParameter(
@@ -1431,7 +1935,13 @@ class Economics:
                         f'starting at the first year of plant operations (Year 1, post-construction). '
                         f'Syntax: "<rate> * <years>, <rate> * <years>, ..., <terminal_rate>". '
                         f'For example "0.0175 * 10, 0.035" means 1.75% for 10 years then 3.5% thereafter. '
-                        f'{royalty_rate_and_schedule_mutual_exclusivity_note}'
+                        f'{royalty_rate_and_schedule_mutual_exclusivity_note}',
+            UI={
+                "tab": "Economics",
+                "group": "Economic model settings",
+                "is_controller": True,
+                "order": 860,
+            },
         )
 
         self.royalty_supplemental_payments = self.ParameterDict[self.royalty_supplemental_payments.Name] = listParameter(
@@ -1448,7 +1958,13 @@ class Economics:
                         f'this schedule begins at the first year of project construction. '
                         f'Syntax: "<amount> * <years>, <amount> * <years>, ..., <terminal_amount_per_year>". '
                         f'For example "1 * 2, 0.25" means $1M for 2 years (e.g., during construction) then $250k/year '
-                        f'thereafter.'
+                        f'thereafter.',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 870,
+            },
         )
 
         self.royalty_holder_discount_rate = self.ParameterDict[self.royalty_holder_discount_rate.Name] = floatParameter(
@@ -1461,7 +1977,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             ToolTipText="The discount rate used to calculate the Net Present Value (NPV) of the royalty holder's "
                         "income stream. This rate should reflect the royalty holder's specific risk profile and is "
-                        "separate from the main project discount rate."
+                        "separate from the main project discount rate.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 880,
+            },
         )
 
 
@@ -1478,7 +2000,13 @@ class Economics:
                         'Although NREL\'s NPV convention may typically be considered more technically correct, '
                         'Excel-style NPV calculation might be preferred for familiarity '
                         'or compatibility with existing business processes. '
-                        'See https://github.com/NREL/GEOPHIRES-X/discussions/344 for further details.'
+                        'See https://github.com/NREL/GEOPHIRES-X/discussions/344 for further details.',
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 890,
+            },
         )
 
         default_fraction_in_bonds = 0.5
@@ -1491,7 +2019,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage=f"assume default fraction of investment in bonds ({default_fraction_in_bonds})",
-            ToolTipText="Fraction of geothermal project financing through bonds (debt/loans)."
+            ToolTipText="Fraction of geothermal project financing through bonds (debt/loans).",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 900,
+            },
         )
 
         default_bond_interest_rate = 0.05
@@ -1504,7 +2038,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage=f"assume default inflated bond interest rate ({default_bond_interest_rate})",
-            ToolTipText="Inflated bond interest rate (for debt/loans)"
+            ToolTipText="Inflated bond interest rate (for debt/loans)",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 910,
+            },
         )
 
         self.bond_interest_rate_during_construction = self.ParameterDict[self.bond_interest_rate_during_construction.Name] = floatParameter(
@@ -1515,7 +2055,13 @@ class Economics:
             UnitType=Units.PERCENT,
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
-            ToolTipText='Inflated bond interest rate during construction (for debt/loans)'
+            ToolTipText='Inflated bond interest rate during construction (for debt/loans)',
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 920,
+            },
         )
         self.debt_tenor = self.ParameterDict[self.debt_tenor.Name] = intParameter(
             "Debt Tenor",
@@ -1529,7 +2075,13 @@ class Economics:
                         f"construction, including capitalized interest during construction, is effectively refinanced "
                         f"as term debt at COD and repaid in level annual payments over this tenor. "
                         f"Defaults to {model.surfaceplant.plant_lifetime.Name} if not provided, "
-                        f"and may not exceed it. SAM Single Owner PPA economic model only."
+                        f"and may not exceed it. SAM Single Owner PPA economic model only.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 930,
+            },
         )
         self.depreciation_schedule = self.ParameterDict[self.depreciation_schedule.Name] = intParameter(
             "Depreciation Schedule",
@@ -1544,7 +2096,13 @@ class Economics:
                         "clean electricity credits (IRC sections 48E and 45Y). It front-loads deductions, and the "
                         "resulting tax losses are counted as tax benefits in the years they occur, which assumes the "
                         "owner can use them (for example, against other taxable income or through a tax equity "
-                        "partner). SAM Single Owner PPA economic model only."
+                        "partner). SAM Single Owner PPA economic model only.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": True,
+                "order": 10,
+            },
         )
         self.salvage_value_rate = self.ParameterDict[self.salvage_value_rate.Name] = floatParameter(
             "Salvage Value Rate",
@@ -1557,7 +2115,13 @@ class Economics:
             ToolTipText="Net pre-tax salvage value at the end of the plant lifetime, as a fraction of total installed "
                         "cost, credited as revenue in the final year. Decommissioning costs (such as well plugging and "
                         "abandonment and site restoration) are not modeled separately, so this value should be net of "
-                        "them. SAM Single Owner PPA economic model only."
+                        "them. SAM Single Owner PPA economic model only.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 940,
+            },
         )
         self.EIR = self.ParameterDict[self.EIR.Name] = floatParameter(
             "Inflated Equity Interest Rate",
@@ -1568,7 +2132,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default inflated equity interest rate (0.1)",
-            ToolTipText="Inflated equity interest rate (see docs)"
+            ToolTipText="Inflated equity interest rate (see docs)",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 950,
+            },
         )
         self.RINFL = self.ParameterDict[self.RINFL.Name] = floatParameter(
             "Inflation Rate",
@@ -1579,7 +2149,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default inflation rate (0.02)",
-            ToolTipText="Inflation rate"
+            ToolTipText="Inflation rate",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 960,
+            },
         )
         self.CTR = self.ParameterDict[self.CTR.Name] = floatParameter(
             "Combined Income Tax Rate",
@@ -1590,7 +2166,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default combined income tax rate (0.3)",
-            ToolTipText="Combined income tax rate (see docs)"
+            ToolTipText="Combined income tax rate (see docs)",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 970,
+            },
         )
         self.GTR = self.ParameterDict[self.GTR.Name] = floatParameter(
             "Gross Revenue Tax Rate",
@@ -1601,7 +2183,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default gross revenue tax rate (0)",
-            ToolTipText="Gross revenue tax rate (see docs)"
+            ToolTipText="Gross revenue tax rate (see docs)",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 980,
+            },
         )
         self.RITC = self.ParameterDict[self.RITC.Name] = floatParameter(
             "Investment Tax Credit Rate",
@@ -1612,7 +2200,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default investment tax credit rate (0)",
-            ToolTipText="Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate."
+            ToolTipText="Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate.",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 990,
+            },
         )
         self.ritc_state_amount = self.ParameterDict[self.ritc_state_amount.Name] = floatParameter(
             'State Investment Tax Credit Amount',
@@ -1622,7 +2216,13 @@ class Economics:
             UnitType=self.totalcapcost.UnitType,
             PreferredUnits=self.totalcapcost.PreferredUnits,
             CurrentUnits=self.totalcapcost.CurrentUnits,
-            ToolTipText='State investment tax credit amount (state ITC).'
+            ToolTipText='State investment tax credit amount (state ITC).',
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1000,
+            },
         )
         self.PTR = self.ParameterDict[self.PTR.Name] = floatParameter(
             "Property Tax Rate",
@@ -1633,7 +2233,13 @@ class Economics:
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default property tax rate (0)",
-            ToolTipText="Property tax rate (see docs)"
+            ToolTipText="Property tax rate (see docs)",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1010,
+            },
         )
         # noinspection SpellCheckingInspection
         self.inflrateconstruction = self.ParameterDict[self.inflrateconstruction.Name] = floatParameter(
@@ -1649,7 +2255,13 @@ class Economics:
                         'entered as a fraction (e.g., 0.15 for 15%). '
                         'This value defines the Accrued financing during construction output. '
                         'Note: For SAM Economic Models, if this parameter is not provided, inflation costs will be '
-                        'calculated automatically by compounding Inflation Rate over Construction Years.'
+                        'calculated automatically by compounding Inflation Rate over Construction Years.',
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1020,
+            },
         )
 
         self.construction_capex_schedule = self.ParameterDict[self.construction_capex_schedule.Name] = listParameter(
@@ -1661,7 +2273,13 @@ class Economics:
                         f'For example, for 3 construction years with 10% in the first year, 40% in the second, '
                         f'and 50% in the third, provide {CONSTRUCTION_CAPEX_SCHEDULE_PARAMETER_NAME} = 0.1,0.4,0.5. '
                         f'The schedule will be automatically interpolated to match the number of construction years '
-                        f'and normalized to sum to 1.0.'
+                        f'and normalized to sum to 1.0.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": True,
+                "order": 1030,
+            },
         )
 
         bond_financing_start_year_name = 'Bond Financing Start Year'
@@ -1694,7 +2312,13 @@ class Economics:
                         f'the second year is Year -2, and the final 2 bond-financed construction years are Year -1 '
                         f'and Year 0. '
                         f'Bond financing will start on the first construction year if the specified year index is '
-                        f'prior to the first construction year.'
+                        f'prior to the first construction year.',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1040,
+            },
         )
 
         self.contingency_percentage = self.ParameterDict[self.contingency_percentage.Name] = floatParameter(
@@ -1709,7 +2333,13 @@ class Economics:
             ToolTipText='The contingency percentage applied to the direct capital costs for stimulation, '
                         'field gathering system, exploration, and surface plant. '
                         '(Note: well drilling and completion costs do not have contingency applied and are not '
-                        'affected by this parameter.)'
+                        'affected by this parameter.)',
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1050,
+            },
         )
 
         self.wellcorrelation = self.ParameterDict[self.wellcorrelation.Name] = intParameter(
@@ -1726,8 +2356,13 @@ class Economics:
                         f'Baseline correlations (1-4) are from '
                         f'{_WellDrillingCostCorrelationCitation.NREL_COST_CURVE_2025.value}.'
                         f' Intermediate and ideal correlations (6-17) are from '
-                        f'{_WellDrillingCostCorrelationCitation.GEOVISION.value}.'
-
+                        f'{_WellDrillingCostCorrelationCitation.GEOVISION.value}.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": True,
+                "order": 20,
+            },
         )
         self.DoAddOnCalculations = self.ParameterDict[self.DoAddOnCalculations.Name] = boolParameter(
             "Do AddOn Calculations",
@@ -1736,7 +2371,13 @@ class Economics:
             Required=False,
             ToolTipText="By default, add-on calculations are automatically enabled if add-ons parameters are provided. "
                         "Set this value to false to disable add-on economics calculations. "
-                        "(If, for example, you wish to quickly compare between economics with and without add-ons.)"
+                        "(If, for example, you wish to quickly compare between economics with and without add-ons.)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1060,
+            },
         )
         self.DoCarbonCalculations = self.ParameterDict[self.DoCarbonCalculations.Name] = boolParameter(
             "Do Carbon Price Calculations",
@@ -1746,7 +2387,13 @@ class Economics:
             ErrMessage="assume default: no Carbon Credit calculations",
             ToolTipText="By default, carbon credit calculations are automatically enabled if carbon credit parameters "
                         "are provided. "
-                        "Set this value to false to disable carbon credit calculations."
+                        "Set this value to false to disable carbon credit calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1070,
+            },
         )
         self.DoSDACGTCalculations = self.ParameterDict[self.DoSDACGTCalculations.Name] = boolParameter(
             "Do S-DAC-GT Calculations",
@@ -1756,7 +2403,13 @@ class Economics:
             ErrMessage="assume default: no S-DAC-GT calculations",
             ToolTipText="By default, S-DAC-GT economics calculations are automatically enabled if S-DAC-GT parameters "
                         "are provided. "
-                        "Set this value to false to disable S-DAC-GT economics calculations."
+                        "Set this value to false to disable S-DAC-GT economics calculations.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1080,
+            },
         )
 
         self.Vertical_drilling_cost_per_m = self.ParameterDict[self.Vertical_drilling_cost_per_m.Name] = floatParameter(
@@ -1769,7 +2422,13 @@ class Economics:
             CurrentUnits=CostPerDistanceUnit.DOLLARSPERM,
             ErrMessage="assume default all-in cost for drill vertical well segment(s) (1000 $/m)",
             ToolTipText="Set user specified all-in cost per meter of vertical drilling, including drilling, casing, "
-                        "cement, insulated insert"
+                        "cement, insulated insert",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1090,
+            },
         )
         self.Nonvertical_drilling_cost_per_m = self.ParameterDict[
             self.Nonvertical_drilling_cost_per_m.Name] = floatParameter(
@@ -1782,7 +2441,13 @@ class Economics:
             CurrentUnits=CostPerDistanceUnit.DOLLARSPERM,
             ErrMessage="assume default all-in cost for drill non-vertical well segment(s) ($1300/m)",
             ToolTipText="Set user specified all-in cost per meter of non-vertical drilling, including drilling, "
-                        "casing, cement, insulated insert"
+                        "casing, cement, insulated insert",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1100,
+            },
         )
         self.wellfield_indirect_capital_cost_percentage = self.ParameterDict[self.wellfield_indirect_capital_cost_percentage.Name] = floatParameter(
             'Well Drilling and Completion Indirect Capital Cost Percentage',
@@ -1794,7 +2459,13 @@ class Economics:
             CurrentUnits=PercentUnit.PERCENT,
             AllowFormulaInput=True,
             ToolTipText=f'The indirect capital cost for well drilling and completion of all wells (the wellfield), '
-                        f'calculated as a percentage of the direct cost.'
+                        f'calculated as a percentage of the direct cost.',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1110,
+            },
         )
 
         default_indirect_capital_cost_percentage = 12
@@ -1816,7 +2487,13 @@ class Economics:
                         f'Wellfield costs use {self.wellfield_indirect_capital_cost_percentage.Name} '
                         f'(default {self.wellfield_indirect_capital_cost_percentage.DefaultValue}%). '
                         f'Stimulation costs use {self.stimulation_indirect_capital_cost_percentage.Name} '
-                        f'(default {self.stimulation_indirect_capital_cost_percentage.DefaultValue}%).'
+                        f'(default {self.stimulation_indirect_capital_cost_percentage.DefaultValue}%).',
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1120,
+            },
         )
 
         # absorption chiller
@@ -1831,7 +2508,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
             Valid=False,
-            ToolTipText="Absorption chiller capital cost"
+            ToolTipText="Absorption chiller capital cost",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1130,
+            },
         )
         self.chilleropex = self.ParameterDict[self.chilleropex.Name] = floatParameter(
             "Absorption Chiller O&M Cost",
@@ -1844,7 +2527,13 @@ class Economics:
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             Provided=False,
             Valid=False,
-            ToolTipText="Absorption chiller O&M cost"
+            ToolTipText="Absorption chiller O&M cost",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 1140,
+            },
         )
 
         # heat pump
@@ -1859,7 +2548,13 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             Provided=False,
             Valid=False,
-            ToolTipText="Heat pump capital cost"
+            ToolTipText="Heat pump capital cost",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1150,
+            },
         )
 
         # district heating
@@ -1872,7 +2567,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default peaking fuel rate ($0.034/kWh)",
-            ToolTipText="Price of peaking fuel for peaking boilers"
+            ToolTipText="Price of peaking fuel for peaking boilers",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1160,
+            },
         )
         self.peakingboilerefficiency = self.ParameterDict[self.peakingboilerefficiency.Name] = floatParameter(
             "Peaking Boiler Efficiency",
@@ -1885,7 +2586,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ErrMessage="assume default peaking boiler efficiency (85%)",
-            ToolTipText="Peaking boiler efficiency"
+            ToolTipText="Peaking boiler efficiency",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1170,
+            },
         )
         self._default_peaking_boiler_cost_USD_per_kW = 65
         self.peaking_boiler_cost_per_kW = self.ParameterDict[self.peaking_boiler_cost_per_kW.Name] = floatParameter(
@@ -1897,7 +2604,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKW,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKW,
             Required=False,
-            ToolTipText="Peaking boiler cost per kW of maximum peaking boiler demand"
+            ToolTipText="Peaking boiler cost per kW of maximum peaking boiler demand",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1180,
+            },
         )
         self.dhpipingcostrate = self.ParameterDict[self.dhpipingcostrate.Name] = floatParameter(
             "District Heating Piping Cost Rate",
@@ -1910,7 +2623,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ErrMessage="assume default district heating piping cost rate ($1,200/m)",
-            ToolTipText="District heating piping cost rate ($/m)"
+            ToolTipText="District heating piping cost rate ($/m)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1190,
+            },
         )
         self.CPipelineCost = self.ParameterDict[self.CPipelineCost.Name] = floatParameter(
             "Transmission/pipeline Cost",
@@ -1921,7 +2640,13 @@ class Economics:
             PreferredUnits=CostPerDistanceUnit.KDOLLARSPERKM,
             CurrentUnits=CostPerDistanceUnit.KDOLLARSPERKM,
             ErrMessage="assume default Transmission/pipeline Cost rate (KUSD750/km)",
-            ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km."
+            ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1200,
+            },
         )
         self.dhtotaldistrictnetworkcost = self.ParameterDict[self.dhtotaldistrictnetworkcost.Name] = floatParameter(
             "Total District Heating Network Cost",
@@ -1934,7 +2659,13 @@ class Economics:
             Provided=False,
             Valid=False,
             ErrMessage="assume default district heating network cost ($10M)",
-            ToolTipText="Total district heating network cost ($M)"
+            ToolTipText="Total district heating network cost ($M)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1210,
+            },
         )
         self.dhoandmcost = self.ParameterDict[self.dhoandmcost.Name] = floatParameter(
             "District Heating O&M Cost",
@@ -1945,7 +2676,13 @@ class Economics:
             PreferredUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             CurrentUnits=CurrencyFrequencyUnit.MDOLLARSPERYEAR,
             Provided=False, Valid=False,
-            ToolTipText="Total annual district heating O&M cost ($M/year)"
+            ToolTipText="Total annual district heating O&M cost ($M/year)",
+            UI={
+                "tab": "Economics",
+                "group": "Operating costs",
+                "is_controller": False,
+                "order": 1220,
+            },
         )
         self.dhpipinglength = self.ParameterDict[self.dhpipinglength.Name] = floatParameter(
             "District Heating Network Piping Length",
@@ -1956,7 +2693,13 @@ class Economics:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default district heating network piping length (10 km)",
-            ToolTipText="District heating network piping length (km)"
+            ToolTipText="District heating network piping length (km)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1230,
+            },
         )
         self.dhroadlength = self.ParameterDict[self.dhroadlength.Name] = floatParameter(
             "District Heating Road Length",
@@ -1967,7 +2710,13 @@ class Economics:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default district heating road length (10 km)",
-            ToolTipText="District heating road length (km)"
+            ToolTipText="District heating road length (km)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1240,
+            },
         )
         self.dhlandarea = self.ParameterDict[self.dhlandarea.Name] = floatParameter(
             "District Heating Land Area",
@@ -1978,7 +2727,13 @@ class Economics:
             PreferredUnits=AreaUnit.KILOMETERS2,
             CurrentUnits=AreaUnit.KILOMETERS2,
             ErrMessage="assume default district heating land area (10 km2)",
-            ToolTipText="District heating land area (km2)"
+            ToolTipText="District heating land area (km2)",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1250,
+            },
         )
         self.dhpopulation = self.ParameterDict[self.dhpopulation.Name] = floatParameter(
             "District Heating Population",
@@ -1987,7 +2742,13 @@ class Economics:
             Max=1000000,
             UnitType=Units.NONE,
             ErrMessage="assume default population (200)",
-            ToolTipText="Specify the population in the district heating network"
+            ToolTipText="Specify the population in the district heating network",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1260,
+            },
         )
 
         self.HeatStartPrice = self.ParameterDict[self.HeatStartPrice.Name] = floatParameter(
@@ -1997,7 +2758,13 @@ class Economics:
             Max=100,
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1270,
+            },
         )
         self.HeatEndPrice = self.ParameterDict[self.HeatEndPrice.Name] = floatParameter(
             "Ending Heat Sale Price",
@@ -2006,7 +2773,13 @@ class Economics:
             Max=100,
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1280,
+            },
         )
         self.HeatEscalationStart = self.ParameterDict[self.HeatEscalationStart.Name] = intParameter(
             "Heat Escalation Start Year",
@@ -2016,7 +2789,13 @@ class Economics:
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default heat escalation delay time (5 years)",
-            ToolTipText="Number of years after start of project before start of escalation"
+            ToolTipText="Number of years after start of project before start of escalation",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1290,
+            },
         )
         self.HeatEscalationRate = self.ParameterDict[self.HeatEscalationRate.Name] = floatParameter(
             "Heat Escalation Rate Per Year",
@@ -2027,7 +2806,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume no heat price escalation (0.0)",
-            ToolTipText="additional cost per year of price after escalation starts"
+            ToolTipText="additional cost per year of price after escalation starts",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1300,
+            },
         )
         self.ElecStartPrice = self.ParameterDict[self.ElecStartPrice.Name] = floatParameter(
             "Starting Electricity Sale Price",
@@ -2036,7 +2821,13 @@ class Economics:
             Max=100,
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1310,
+            },
         )
         self.ElecEndPrice = self.ParameterDict[self.ElecEndPrice.Name] = floatParameter(
             "Ending Electricity Sale Price",
@@ -2051,7 +2842,13 @@ class Economics:
                         "0.01 USD/kWh/yr: Electricity Price will reach 0.15 USD/kWh after 4 years of escalation. "
                         "The price will then remain at 0.15 USD/kWh for the remaining years of the project lifetime. "
                         "If the Ending Electricity Sale Price is not reached by escalation during the project "
-                        "lifetime, then the value will have no effect beyond allowing escalation to occur every year."
+                        "lifetime, then the value will have no effect beyond allowing escalation to occur every year.",
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1320,
+            },
         )
         self.ElecEscalationStart = self.ParameterDict[self.ElecEscalationStart.Name] = intParameter(
             "Electricity Escalation Start Year",
@@ -2061,7 +2858,13 @@ class Economics:
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default electricity escalation delay time (5 years)",
-            ToolTipText="Number of years after start of project before start of escalation"
+            ToolTipText="Number of years after start of project before start of escalation",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1330,
+            },
         )
         self.ElecEscalationRate = self.ParameterDict[self.ElecEscalationRate.Name] = floatParameter(
             "Electricity Escalation Rate Per Year",
@@ -2072,7 +2875,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume no electricity price escalation (0.0)",
-            ToolTipText="additional cost per year of price after escalation starts"
+            ToolTipText="additional cost per year of price after escalation starts",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1340,
+            },
         )
         self.CoolingStartPrice = self.ParameterDict[self.CoolingStartPrice.Name] = floatParameter(
             "Starting Cooling Sale Price",
@@ -2081,7 +2890,13 @@ class Economics:
             Max=100,
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1350,
+            },
         )
         self.CoolingEndPrice = self.ParameterDict[self.CoolingEndPrice.Name] = floatParameter(
             "Ending Cooling Sale Price",
@@ -2090,7 +2905,13 @@ class Economics:
             Max=100,
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
-            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH
+            CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1360,
+            },
         )
         self.CoolingEscalationStart = self.ParameterDict[self.CoolingEscalationStart.Name] = intParameter(
             "Cooling Escalation Start Year",
@@ -2100,7 +2921,13 @@ class Economics:
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default cooling escalation delay time (5 years)",
-            ToolTipText="Number of years after start of project before start of escalation"
+            ToolTipText="Number of years after start of project before start of escalation",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1370,
+            },
         )
         self.CoolingEscalationRate = self.ParameterDict[self.CoolingEscalationRate.Name] = floatParameter(
             "Cooling Escalation Rate Per Year",
@@ -2111,7 +2938,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume no cooling price escalation (0.0)",
-            ToolTipText="additional cost per year of price after escalation starts"
+            ToolTipText="additional cost per year of price after escalation starts",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1380,
+            },
         )
         self.CarbonStartPrice = self.ParameterDict[self.CarbonStartPrice.Name] = floatParameter(
             "Starting Carbon Credit Value",
@@ -2120,7 +2953,13 @@ class Economics:
             Max=1000,
             UnitType=Units.COSTPERMASS,
             PreferredUnits=CostPerMassUnit.DOLLARSPERLB,
-            CurrentUnits=CostPerMassUnit.DOLLARSPERLB
+            CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1390,
+            },
         )
         self.CarbonEndPrice = self.ParameterDict[self.CarbonEndPrice.Name] = floatParameter(
             "Ending Carbon Credit Value",
@@ -2129,7 +2968,13 @@ class Economics:
             Max=1000,
             UnitType=Units.COSTPERMASS,
             PreferredUnits=CostPerMassUnit.DOLLARSPERLB,
-            CurrentUnits=CostPerMassUnit.DOLLARSPERLB
+            CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
+            UI={
+                "tab": "Economics",
+                "group": "Revenue and pricing",
+                "is_controller": False,
+                "order": 1400,
+            },
         )
         self.CarbonEscalationStart = self.ParameterDict[self.CarbonEscalationStart.Name] = intParameter(
             "Carbon Escalation Start Year",
@@ -2139,7 +2984,13 @@ class Economics:
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default Carbon escalation delay time (5 years)",
-            ToolTipText="Number of years after start of project before start of Carbon incentives"
+            ToolTipText="Number of years after start of project before start of Carbon incentives",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1410,
+            },
             )
         self.CarbonEscalationRate = self.ParameterDict[self.CarbonEscalationRate.Name] = floatParameter(
             "Carbon Escalation Rate Per Year",
@@ -2150,7 +3001,13 @@ class Economics:
             PreferredUnits=CostPerMassUnit.DOLLARSPERLB,
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
             ErrMessage="assume no Carbon credit escalation (0.0)",
-            ToolTipText="additional value per year of price after escalation starts"
+            ToolTipText="additional value per year of price after escalation starts",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1420,
+            },
         )
         self.GridCO2Intensity = self.ParameterDict[self.GridCO2Intensity.Name] = floatParameter(
             "Current Grid CO2 production",
@@ -2161,7 +3018,13 @@ class Economics:
             PreferredUnits=CO2ProductionUnit.LBSPERKWH,
             CurrentUnits=CO2ProductionUnit.LBSPERKWH,
             ErrMessage="assume the grid carbon intensity of Texas ERCOT by grid (0.93916924 lbs/kWh)",  #LBSPERKWH https://uh.edu/uh-energy-innovation/uh-energy/energy-research/white-papers/white-paper-files/net-zero-in-texas-electric-grid.pdf
-            ToolTipText="CO2 intensity of the grid (how much CO2 is produced per kWh of electricity produced (0.93916924 lbs/kWh for Texas ERCOT))"
+            ToolTipText="CO2 intensity of the grid (how much CO2 is produced per kWh of electricity produced (0.93916924 lbs/kWh for Texas ERCOT))",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1430,
+            },
         )
         self.NaturalGasCO2Intensity = self.ParameterDict[self.NaturalGasCO2Intensity.Name] = floatParameter(
             "CO2 produced by Natural Gas",
@@ -2173,7 +3036,13 @@ class Economics:
             CurrentUnits=CO2ProductionUnit.LBSPERKWH,
             ErrMessage="assume the default value CO2 production for burning natural gas (0.070324961 lbs/kWh)",
             ToolTipText="CO2 intensity of burning natural gas (how much CO2 is produced per kWh of heat produced "
-                        "(0.070324961 lbs/kWh; https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references))"
+                        "(0.070324961 lbs/kWh; https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references))",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1440,
+            },
         )
 
         self.AnnualLicenseEtc = self.ParameterDict[self.AnnualLicenseEtc.Name] = floatParameter(
@@ -2183,7 +3052,13 @@ class Economics:
             Max=1000.0,
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1450,
+            },
         )
         self.FlatLicenseEtc = self.ParameterDict[self.FlatLicenseEtc.Name] = floatParameter(
             "One-time Flat License Fees Etc",
@@ -2191,7 +3066,13 @@ class Economics:
             Max=1000.0,
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1460,
+            },
         )
         self.OtherIncentives = self.ParameterDict[self.OtherIncentives.Name] = floatParameter(
             "Other Incentives",
@@ -2199,7 +3080,13 @@ class Economics:
             Max=1000.0,
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1470,
+            },
         )
         self.TaxRelief = self.ParameterDict[self.TaxRelief.Name] = floatParameter(
             "Tax Relief Per Year",
@@ -2210,7 +3097,13 @@ class Economics:
             PreferredUnits=PercentUnit.PERCENT,
             CurrentUnits=PercentUnit.PERCENT,
             ErrMessage="assume no tax relief (0.0)",
-            ToolTipText="Fixed percent reduction in annual tax rate"
+            ToolTipText="Fixed percent reduction in annual tax rate",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1480,
+            },
         )
         self.TotalGrant = self.ParameterDict[self.TotalGrant.Name] = floatParameter(
             "One-time Grants Etc",
@@ -2218,7 +3111,13 @@ class Economics:
             Max=1000.0,
             UnitType=Units.CURRENCY,
             PreferredUnits=CurrencyUnit.MDOLLARS,
-            CurrentUnits=CurrencyUnit.MDOLLARS
+            CurrentUnits=CurrencyUnit.MDOLLARS,
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1490,
+            },
         )
 
         fir_default_unit = PercentUnit.PERCENT
@@ -2234,7 +3133,13 @@ class Economics:
             ErrMessage=f'assume default for fixed internal rate ({fir_default_val}%)',
             ToolTipText="Fixed Internal Rate (used in NPV calculation). "
                         "Fixed Internal Rate is synonymous with Discount Rate. If one is provided, the other's value "
-                        "will be automatically set to the same value."
+                        "will be automatically set to the same value.",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1500,
+            },
         )
         self.CAPEX_heat_electricity_plant_ratio = self.ParameterDict[self.CAPEX_heat_electricity_plant_ratio.Name] = floatParameter(
             "CHP Electrical Plant Cost Allocation Ratio",
@@ -2246,7 +3151,13 @@ class Economics:
             CurrentUnits=PercentUnit.TENTH,
             Provided=False,
             ErrMessage="assume calculation for CHP Electrical Plant Cost Allocation Ratio (cost electrical plant/total CAPEX)",
-            ToolTipText="CHP Electrical Plant Cost Allocation Ratio (cost electrical plant/total CAPEX)"
+            ToolTipText="CHP Electrical Plant Cost Allocation Ratio (cost electrical plant/total CAPEX)",
+            UI={
+                "tab": "Economics",
+                "group": "Capital costs",
+                "is_controller": False,
+                "order": 1510,
+            },
         )
         self.PTCElec = self.ParameterDict[self.PTCElec.Name] = floatParameter(
             "Production Tax Credit Electricity",
@@ -2257,7 +3168,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             ErrMessage="assume default for Production Tax Credit Electricity ($0.04/kWh)",
-            ToolTipText="Production tax credit for electricity in $/kWh"
+            ToolTipText="Production tax credit for electricity in $/kWh",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1520,
+            },
         )
         self.PTCHeat = self.ParameterDict[self.PTCHeat.Name] = floatParameter(
             "Production Tax Credit Heat",
@@ -2268,7 +3185,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             ErrMessage="assume default for Production Tax Credit Heat ($0.0/MMBTU)",
-            ToolTipText="Production tax credit for heat in $/MMBTU"
+            ToolTipText="Production tax credit for heat in $/MMBTU",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1530,
+            },
         )
         self.PTCCooling = self.ParameterDict[self.PTCCooling.Name] = floatParameter(
             "Production Tax Credit Cooling",
@@ -2279,7 +3202,13 @@ class Economics:
             PreferredUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             CurrentUnits=EnergyCostUnit.DOLLARSPERMMBTU,
             ErrMessage="assume default for Production Tax Credit Cooling ($0.0/MMBTU)",
-            ToolTipText="Production tax credit for cooling in $/MMBTU"
+            ToolTipText="Production tax credit for cooling in $/MMBTU",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1540,
+            },
         )
         self.PTCDuration = self.ParameterDict[self.PTCDuration.Name] = intParameter(
             "Production Tax Credit Duration",
@@ -2289,7 +3218,13 @@ class Economics:
             PreferredUnits=TimeUnit.YEAR,
             CurrentUnits=TimeUnit.YEAR,
             ErrMessage="assume default for Production Tax Credit Duration (10 years)",
-            ToolTipText="Production tax credit for duration in years"
+            ToolTipText="Production tax credit for duration in years",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1550,
+            },
         )
         self.PTCInflationAdjusted = self.ParameterDict[self.PTCInflationAdjusted.Name] = boolParameter(
             "Production Tax Credit Inflation Adjusted",
@@ -2297,7 +3232,13 @@ class Economics:
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default for Production Tax Credit Inflation Adjusted (False)",
-            ToolTipText="Production tax credit inflation adjusted"
+            ToolTipText="Production tax credit inflation adjusted",
+            UI={
+                "tab": "Economics",
+                "group": "Financing and tax",
+                "is_controller": False,
+                "order": 1560,
+            },
         )
 
         self.jobs_created_per_MW_electricity = self.ParameterDict[
@@ -2306,7 +3247,13 @@ class Economics:
             DefaultValue=2.13,
             UnitType=Units.NONE,
             Required=False,
-            ToolTipText="Estimated jobs created per MW of electricity produced, per https://geothermal.org/resources/geothermal-basics"
+            ToolTipText="Estimated jobs created per MW of electricity produced, per https://geothermal.org/resources/geothermal-basics",
+            UI={
+                "tab": "Economics",
+                "group": "Economic parameters",
+                "is_controller": False,
+                "order": 1570,
+            },
         )
 
         # local variable initialization

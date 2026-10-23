@@ -113,7 +113,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             ErrMessage="assume default end-use efficiency factor (0.9)",
-            ToolTipText="Constant thermal efficiency of the direct-use application"
+            ToolTipText="Constant thermal efficiency of the direct-use application",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 60,
+            },
         )
 
         self.P0 = self.ParameterDict[self.P0.Name] = floatParameter(
@@ -126,7 +132,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PressureUnit.PASCAL,
             CurrentUnits=PressureUnit.PASCAL,
             Required=True,
-            ErrMessage="assume default Dead-state pressure (1e5 Pa)"
+            ErrMessage="assume default Dead-state pressure (1e5 Pa)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 550,
+            },
         )
 
         # Input data for electricity generation with CO2
@@ -141,7 +153,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             Required=False,
-            ErrMessage="assume default Isentropic efficiency for turbine when CO2 is working fluid (0.9)"
+            ErrMessage="assume default Isentropic efficiency for turbine when CO2 is working fluid (0.9)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 560,
+            },
         )
         self.Generator_efficiency = self.ParameterDict[self.Generator_efficiency.Name] = floatParameter(
             "Generator Conversion Efficiency",
@@ -153,7 +171,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             Required=False,
-            ErrMessage="assume default Conversion efficiency from mechanical turbine work to electricity (0.98)"
+            ErrMessage="assume default Conversion efficiency from mechanical turbine work to electricity (0.98)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 570,
+            },
         )
         self.Compressor_isentropic_efficiency = self.ParameterDict[
             self.Compressor_isentropic_efficiency.Name] = floatParameter(
@@ -166,7 +190,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PercentUnit.TENTH,
             CurrentUnits=PercentUnit.TENTH,
             Required=False,
-            ErrMessage="assume default Isentropic efficiency for compressor when CO2 is working fluid (0.9)"
+            ErrMessage="assume default Isentropic efficiency for compressor when CO2 is working fluid (0.9)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Plant operating assumptions",
+                "is_controller": False,
+                "order": 580,
+            },
         )
         self.Pre_Cooling_Delta_T = self.ParameterDict[self.Pre_Cooling_Delta_T.Name] = floatParameter(
             "CO2 Temperature Decline with Cooling",
@@ -178,7 +208,14 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=TemperatureUnit.CELSIUS,
             CurrentUnits=TemperatureUnit.CELSIUS,
             Required=False,
-            ErrMessage="assume default CO2 temperature decline with cooling after turbine and before compressor (12 degC)")
+            ErrMessage="assume default CO2 temperature decline with cooling after turbine and before compressor (12 degC)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Direct-use systems",
+                "is_controller": False,
+                "order": 590,
+            },
+        )
         self.Turbine_outlet_pressure = self.ParameterDict[self.Turbine_outlet_pressure.Name] = floatParameter(
             "CO2 Turbine Outlet Pressure",
             value=81.0,
@@ -189,7 +226,13 @@ class SurfacePlantAGS(SurfacePlant):
             PreferredUnits=PressureUnit.BAR,
             CurrentUnits=PressureUnit.BAR,
             Required=False,
-            ErrMessage="assume default CO2 turbine outlet pressure (81 bar)"
+            ErrMessage="assume default CO2 turbine outlet pressure (81 bar)",
+            UI={
+                "tab": "SurfacePlant",
+                "group": "Surface plant parameters",
+                "is_controller": False,
+                "order": 600,
+            },
         )
 
         # local variable initiation

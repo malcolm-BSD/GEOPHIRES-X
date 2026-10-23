@@ -48,7 +48,13 @@ class SUTRAReservoir(Reservoir):
             value='annual_heat.csv',
             UnitType=Units.NONE,
             ErrMessage="assume default SUTRA annual heat output file name (annual_heat.csv)",
-            ToolTipText="SUTRA file with heat stored, heat supplied and efficiency for each year"
+            ToolTipText="SUTRA file with heat stored, heat supplied and efficiency for each year",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 550,
+            },
         )
 
         self.sutraheatbudgetfilename = self.ParameterDict[self.sutraheatbudgetfilename.Name] = filenameParameter(
@@ -56,7 +62,13 @@ class SUTRAReservoir(Reservoir):
             value='heat_budget.csv',
             UnitType=Units.NONE,
             ErrMessage="assume default SUTRA heat budget output file name (heat_budget.csv)",
-            ToolTipText="SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime"
+            ToolTipText="SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime",
+            UI={
+                "tab": "Reservoir",
+                "group": "Reservoir thermal properties",
+                "is_controller": False,
+                "order": 560,
+            },
         )
 
         self.sutrabalanceandstoragewelloutputfilename = self.ParameterDict[self.sutrabalanceandstoragewelloutputfilename.Name] = filenameParameter(
@@ -64,7 +76,13 @@ class SUTRAReservoir(Reservoir):
             value='annual_heat.csv',
             UnitType=Units.NONE,
             ErrMessage="assume default SUTRA balance and storage well output file name (balance_and_storage_well_output.csv)",
-            ToolTipText="SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime"
+            ToolTipText="SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime",
+            UI={
+                "tab": "Reservoir",
+                "group": "Model-specific reservoir settings",
+                "is_controller": False,
+                "order": 570,
+            },
         )
 
         self.AnnualHeatStored = self.OutputParameterDict[self.AnnualHeatStored.Name] = OutputParameter(

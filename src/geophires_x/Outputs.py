@@ -117,6 +117,12 @@ class Outputs:
                 AllowExtendedInput=False,
                 ErrMessage='assume no rich text output',
                 ToolTipText='Provide any value to enable rich text output written next to the main .out file as .rtf',
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
         ))
 
         self.html_output_file = self.ParameterDict[self.html_output_file.Name] = filepath_parameter(strParameter(
@@ -127,6 +133,12 @@ class Outputs:
                 AllowExtendedInput=False,
                 ErrMessage='assume no HTML output',
                 ToolTipText='Provide any value to enable HTML output written next to the main .out file as .html',
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
         ))
 
         self.dispatch_profile_output_file = self.ParameterDict[
@@ -143,6 +155,12 @@ class Outputs:
                     'Provide a CSV output filename if you want hourly dispatch profile export '
                     '(no dispatch profile CSV output if not provided)'
                 ),
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
             )
         )
 
@@ -154,6 +172,12 @@ class Outputs:
                 Provided=False,
                 ErrMessage='assume no output to console',
                 ToolTipText='Provide a 0 if you do not want to print output to the console',
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
             )
 
         self.generate_dispatch_html_graphs = self.ParameterDict[self.generate_dispatch_html_graphs.Name] = boolParameter(
@@ -163,6 +187,12 @@ class Outputs:
                 Provided=False,
                 ErrMessage='assume no dispatch html graphs',
                 ToolTipText='Provide a 1 to generate optional dispatch graphs in HTML output',
+                UI={
+                    "tab": "Project",
+                    "group": "",
+                    "is_controller": False,
+                    "order": 1,
+                },
             )
 
         model.logger.info(f'Complete {__class__!s}: {__name__}')
