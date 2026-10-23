@@ -2,10 +2,101 @@ import json
 import unittest
 
 from geophires_x_schema_generator import GeophiresXSchemaGenerator
+from geophires_x_schema_generator import HipRaXSchemaGenerator
 from tests.base_test_case import BaseTestCase
 
 
 class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
+    def test_geophires_x_enablement_dependencies_are_explicit(self):
+        request_schema, _ = GeophiresXSchemaGenerator().generate_json_schema()
+
+        self.assertEqual(
+            [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
+            request_schema["properties"]["TOUGH2 Executable Path"]["x-dependencies"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                {"parameter": "Flowrate Model", "operator": "in", "values": [2]},
+            ],
+            request_schema["properties"]["Flowrate File"]["x-dependencies"]["conditions"],
+        )
+        self.assertEqual(
+            "enable",
+            request_schema["properties"]["Drawdown Parameter"]["x-dependencies"]["effect"],
+        )
+
+    def test_geophires_x_ui_metadata_promotes_controllers_to_project(self):
+        generator = GeophiresXSchemaGenerator()
+        input_parameters_json, _ = generator.get_parameters_json()
+        input_parameters = json.loads(input_parameters_json)
+        request_schema, _ = generator.generate_json_schema()
+        properties = request_schema["properties"]
+
+        self.assertEqual(334, len(properties))
+        self.assertTrue(all("x-ui" in definition for definition in properties.values()))
+        self.assertTrue(all("UI" in definition for definition in input_parameters.values()))
+        self.assertEqual("Project", input_parameters["Is AGS"]["UI"]["tab"])
+        self.assertEqual(
+            {"tab", "group", "is_controller", "order"},
+            set(input_parameters["Reservoir Depth"]["UI"]),
+        )
+        self.assertEqual("project", properties["Economic Model"]["x-ui"]["tab"])
+        self.assertTrue(properties["Economic Model"]["x-ui"]["is_controller"])
+        self.assertEqual("project", properties["Reservoir Model"]["x-ui"]["tab"])
+        self.assertTrue(properties["Is AGS"]["x-ui"]["is_controller"])
+        self.assertEqual("project", properties["Project Latitude"]["x-ui"]["tab"])
+        self.assertEqual("reservoir", properties["Reservoir Depth"]["x-ui"]["tab"])
+        self.assertEqual(10, properties["Reservoir Depth"]["x-ui"]["order"])
+        self.assertEqual("wellbores", properties["Number of Production Wells"]["x-ui"]["tab"])
+        self.assertEqual("economics", properties["Fixed Internal Rate"]["x-ui"]["tab"])
+
+        expected_tabs = {
+            "Is AGS": "project",
+            "Fracture Shape": "reservoir",
+            "Reservoir Volume Option": "reservoir",
+            "Reservoir Impedance": "reservoir",
+            "Injectivity Index": "reservoir",
+            "Productivity Index": "reservoir",
+            "Overpressure Percentage": "reservoir",
+            "Overpressure Depletion Rate": "reservoir",
+            "Injection Temperature Model": "surface-plant",
+            "Power Plant Type": "surface-plant",
+            "Injection Temperature": "surface-plant",
+            "Closed-loop Configuration": "wellbores",
+            "Flowrate Model": "wellbores",
+            "Heat Transfer Fluid": "wellbores",
+            "Production Wellhead Pressure": "wellbores",
+            "Depreciation Schedule": "economics",
+            "Well Drilling Cost Correlation": "economics",
+        }
+        for parameter, expected_tab in expected_tabs.items():
+            with self.subTest(parameter=parameter):
+                self.assertEqual(expected_tab, properties[parameter]["x-ui"]["tab"])
+
+        orders_by_tab: dict[str, list[int]] = {}
+        for definition in properties.values():
+            ui_metadata = definition["x-ui"]
+            self.assertGreater(ui_metadata["order"], 0)
+            self.assertIsInstance(ui_metadata["group"], str)
+            orders_by_tab.setdefault(ui_metadata["tab"], []).append(ui_metadata["order"])
+        self.assertTrue(all(len(orders) == len(set(orders)) for orders in orders_by_tab.values()))
+
+    def test_hip_ra_x_dependency_metadata_is_explicit(self):
+        request_schema, _ = HipRaXSchemaGenerator().generate_json_schema()
+
+        self.assertEqual(
+            {
+                "depends_on": ["Reservoir Temperature"],
+                "behavior": "derived_when_omitted",
+            },
+            request_schema["properties"]["Reservoir Depth"]["x-dependencies"],
+        )
+        self.assertEqual(
+            ["Reservoir Temperature", "Reservoir Pressure"],
+            request_schema["properties"]["Density Of Reservoir Fluid"]["x-dependencies"]["depends_on"],
+        )
+
     def test_parameters_rst(self):
         g = GeophiresXSchemaGenerator()
         rst = g.generate_parameters_reference_rst()

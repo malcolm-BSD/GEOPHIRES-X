@@ -94,7 +94,13 @@
           "value": "SBT",
           "int_value": 8
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "project",
+        "group": "Model controls",
+        "is_controller": true,
+        "order": 10
+      }
     },
     "Reservoir Depth": {
       "description": "Depth of the reservoir",
@@ -103,7 +109,13 @@
       "category": "Reservoir",
       "default": 3.0,
       "minimum": 0.1,
-      "maximum": 15
+      "maximum": 15,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 10
+      }
     },
     "Maximum Temperature": {
       "description": "Maximum allowable reservoir temperature (e.g. due to drill bit or logging tools constraints). GEOPHIRES will cap the drilling depth to stay below this maximum temperature.",
@@ -112,7 +124,13 @@
       "category": "Reservoir",
       "default": 400.0,
       "minimum": 50,
-      "maximum": 600
+      "maximum": 600,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 90
+      }
     },
     "Number of Segments": {
       "description": "Number of rock segments from surface to reservoir depth with specific geothermal gradient",
@@ -121,7 +139,13 @@
       "category": "Reservoir",
       "default": 1,
       "minimum": 1,
-      "maximum": 1
+      "maximum": 1,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 100
+      }
     },
     "Gradients": {
       "description": "Geothermal gradient(s)",
@@ -132,7 +156,13 @@
         0.05
       ],
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 110
+      }
     },
     "Gradient 1": {
       "description": "Geothermal gradient 1 in rock segment 1",
@@ -141,7 +171,13 @@
       "category": "Reservoir",
       "default": 50,
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 120
+      }
     },
     "Gradient 2": {
       "description": "Geothermal gradient 2 in rock segment 2",
@@ -150,7 +186,13 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 130
+      }
     },
     "Gradient 3": {
       "description": "Geothermal gradient 3 in rock segment 3",
@@ -159,7 +201,13 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 140
+      }
     },
     "Gradient 4": {
       "description": "Geothermal gradient 4 in rock segment 4",
@@ -168,7 +216,13 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 150
+      }
     },
     "Thicknesses": {
       "description": "Thicknesses of rock segments",
@@ -183,7 +237,13 @@
         0.01
       ],
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 160
+      }
     },
     "Thickness 1": {
       "description": "Thickness of rock segment 1",
@@ -192,7 +252,13 @@
       "category": "Reservoir",
       "default": 2.0,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 170
+      }
     },
     "Thickness 2": {
       "description": "Thickness of rock segment 2",
@@ -201,7 +267,13 @@
       "category": "Reservoir",
       "default": 0.01,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 180
+      }
     },
     "Thickness 3": {
       "description": "Thickness of rock segment 3",
@@ -210,7 +282,13 @@
       "category": "Reservoir",
       "default": 0.01,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 190
+      }
     },
     "Thickness 4": {
       "description": "Thickness of rock segment 4",
@@ -219,7 +297,13 @@
       "category": "Reservoir",
       "default": 0.01,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 200
+      }
     },
     "Reservoir Volume Option": {
       "description": "Specifies how the reservoir volume, and fracture distribution (for reservoir models 1 and 2) are calculated. The reservoir volume is used by GEOPHIRES to estimate the stored heat in place. The fracture distribution is needed as input for the EGS fracture-based reservoir models 1 and 2. 1: FRAC_NUM_SEP: Specify number of fractures and fracture separation; 2: RES_VOL_FRAC_SEP: Specify reservoir volume and fracture separation; 3: RES_VOL_FRAC_NUM: Specify reservoir volume and number of fractures; 4: RES_VOL_ONLY: Specify reservoir volume only",
@@ -250,7 +334,13 @@
           "value": "Specify reservoir volume only",
           "int_value": 4
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": true,
+        "order": 30
+      }
     },
     "Fracture Shape": {
       "description": "Specifies the shape of the (identical) fractures in a fracture-based reservoir: 1: Circular fracture with known area; 2: Circular fracture with known diameter; 3: Square; 4: Rectangular",
@@ -281,7 +371,13 @@
           "value": "Rectangular",
           "int_value": 4
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": true,
+        "order": 20
+      }
     },
     "Fracture Area": {
       "description": "Effective heat transfer area per fracture",
@@ -290,7 +386,13 @@
       "category": "Reservoir",
       "default": 250000.0,
       "minimum": 1,
-      "maximum": 100000000.0
+      "maximum": 100000000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 210
+      }
     },
     "Fracture Height": {
       "description": "Diameter (if fracture shape = 2) or height (if fracture shape = 3 or 4) of each fracture",
@@ -299,7 +401,13 @@
       "category": "Reservoir",
       "default": 500.0,
       "minimum": 1,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 220
+      }
     },
     "Fracture Width": {
       "description": "Total horizontal length of each fracture plane (from tip to tip). Note: In some contexts this is called 'Fracture Length'; it refers to the fracture's lateral extent, not its aperture or thickness.",
@@ -308,7 +416,13 @@
       "category": "Reservoir",
       "default": 500.0,
       "minimum": 1,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 230
+      }
     },
     "Number of Fractures": {
       "description": "Number of identical parallel fractures in EGS fracture-based reservoir model.",
@@ -317,7 +431,13 @@
       "category": "Reservoir",
       "default": 10,
       "minimum": 1,
-      "maximum": 1000000
+      "maximum": 1000000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 240
+      }
     },
     "Number of Fractures per Stimulated Well": {
       "description": "Number of identical parallel fractures per stimulated well in EGS fracture-based reservoir model. (Note that injection wells are assumed to be stimulated by default; production wells are assumed to be stimulated if Reservoir Stimulation Capital Cost per Production Well is provided.)",
@@ -326,7 +446,13 @@
       "category": "Reservoir",
       "default": 10,
       "minimum": 1,
-      "maximum": 1000000
+      "maximum": 1000000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 250
+      }
     },
     "Fracture Separation": {
       "description": "Separation of identical parallel fractures with uniform spatial distribution             in EGS fracture-based reservoir",
@@ -335,7 +461,13 @@
       "category": "Reservoir",
       "default": 50.0,
       "minimum": 1,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 260
+      }
     },
     "Reservoir Volume": {
       "description": "Geothermal reservoir volume",
@@ -344,7 +476,13 @@
       "category": "Reservoir",
       "default": 125000000.0,
       "minimum": 10,
-      "maximum": 1000000000000.0
+      "maximum": 1000000000000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 270
+      }
     },
     "Water Loss Fraction": {
       "description": "Fraction of water lost in the reservoir defined as (total geofluid lost)/(total geofluid produced).",
@@ -353,7 +491,13 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 0.99
+      "maximum": 0.99,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 280
+      }
     },
     "Reservoir Heat Capacity": {
       "description": "Constant and uniform reservoir rock heat capacity",
@@ -362,7 +506,13 @@
       "category": "Reservoir",
       "default": 1000.0,
       "minimum": 100,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 290
+      }
     },
     "Reservoir Density": {
       "description": "Constant and uniform reservoir rock density",
@@ -371,7 +521,13 @@
       "category": "Reservoir",
       "default": 2700.0,
       "minimum": 100,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 300
+      }
     },
     "Reservoir Thermal Conductivity": {
       "description": "Constant and uniform reservoir rock thermal conductivity",
@@ -380,7 +536,13 @@
       "category": "Reservoir",
       "default": 3.0,
       "minimum": 0.01,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 310
+      }
     },
     "Reservoir Permeability": {
       "description": "Constant and uniform reservoir permeability",
@@ -389,7 +551,13 @@
       "category": "Reservoir",
       "default": 1e-13,
       "minimum": 1e-20,
-      "maximum": 1e-05
+      "maximum": 1e-05,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 320
+      }
     },
     "Reservoir Porosity": {
       "description": "Constant and uniform reservoir porosity",
@@ -398,7 +566,13 @@
       "category": "Reservoir",
       "default": 0.04,
       "minimum": 0.001,
-      "maximum": 0.99
+      "maximum": 0.99,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 330
+      }
     },
     "Surface Temperature": {
       "description": "Surface temperature used for calculating bottom-hole temperature (with geothermal gradient and reservoir depth)",
@@ -407,7 +581,13 @@
       "category": "Reservoir",
       "default": 15.0,
       "minimum": -50,
-      "maximum": 50
+      "maximum": 50,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 340
+      }
     },
     "Drawdown Parameter": {
       "description": "specify the thermal drawdown for reservoir model 3 and 4",
@@ -416,7 +596,31 @@
       "category": "Reservoir",
       "default": 0.005,
       "minimum": 0,
-      "maximum": 0.2
+      "maximum": 0.2,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              3,
+              4
+            ]
+          }
+        ],
+        "reason": "Used by the single-fracture and annual-percentage thermal drawdown models."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 350
+      }
     },
     "Drawdown Parameter Schedule": {
       "description": "Thermal drawdown schedule for reservoir model 3 and 4 using DSL syntax",
@@ -427,7 +631,30 @@
         0.005
       ],
       "minimum": 0.0,
-      "maximum": 0.2
+      "maximum": 0.2,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              4
+            ]
+          }
+        ],
+        "reason": "Used only by the annual-percentage thermal drawdown model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": true,
+        "order": 360
+      }
     },
     "Gringarten-Stehfest Precision": {
       "description": "Sets the numerical precision (decimal places) for the inverse Laplace transform (Stehfest algorithm) used in the Gringarten calculation for the Multiple Parallel Fractures Reservoir Model. The default value provides maximum result stability; lower values calculate faster but may reduce consistency.",
@@ -436,7 +663,30 @@
       "category": "Reservoir",
       "default": 15,
       "minimum": 8,
-      "maximum": 15
+      "maximum": 15,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          }
+        ],
+        "reason": "Used only by the multiple-parallel-fractures reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 370
+      }
     },
     "Reservoir Output File Name": {
       "description": "File name of reservoir output in case reservoir model 5 is selected",
@@ -445,7 +695,30 @@
       "category": "Reservoir",
       "default": null,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              5
+            ]
+          }
+        ],
+        "reason": "Used only by the user-provided temperature-profile reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 380
+      }
     },
     "Reservoir Output Profile": {
       "description": "Temperature profile data as a comma-separated list of values in Celsius. Example: 200,195,190,185 for a 4-point temperature decline profile. Values are interpolated over the time range determined by the number of profile data points and Reservoir Output Profile Time Step. If the profile is shorter than the plant lifetime, the temperature trend is extrapolated based on the last ~20% of the data, with the injection temperature used as a minimum. ",
@@ -454,7 +727,30 @@
       "category": "Reservoir",
       "default": [],
       "minimum": 0,
-      "maximum": 600
+      "maximum": 600,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              5
+            ]
+          }
+        ],
+        "reason": "Used only by the user-provided temperature-profile reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 390
+      }
     },
     "Reservoir Output Profile Time Step": {
       "description": "Time interval between temperature values in the Reservoir Output Profile. For example, if set to 0.25, the profile values represent temperatures at 0, 0.25, 0.5, 0.75, 1.0 years, etc.",
@@ -463,7 +759,30 @@
       "category": "Reservoir",
       "default": 1.0,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              5
+            ]
+          }
+        ],
+        "reason": "Used only by the user-provided temperature-profile reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 400
+      }
     },
     "Cylindrical Reservoir Input Depth": {
       "description": "Depth of the inflow end of a cylindrical reservoir",
@@ -472,7 +791,30 @@
       "category": "Reservoir",
       "default": 3.0,
       "minimum": 0.1,
-      "maximum": 15
+      "maximum": 15,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 410
+      }
     },
     "Cylindrical Reservoir Output Depth": {
       "description": "Depth of the outflow end of a cylindrical reservoir",
@@ -481,7 +823,30 @@
       "category": "Reservoir",
       "default": 3.0,
       "minimum": 0.1,
-      "maximum": 15
+      "maximum": 15,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 420
+      }
     },
     "Cylindrical Reservoir Length": {
       "description": "Length of cylindrical reservoir",
@@ -490,7 +855,30 @@
       "category": "Reservoir",
       "default": 4.0,
       "minimum": 0.1,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 430
+      }
     },
     "Cylindrical Reservoir Radius of Effect": {
       "description": "The radius of effect - the distance into the rock from the center of the cylinder that will be perturbed by at least 1 C",
@@ -499,7 +887,30 @@
       "category": "Reservoir",
       "default": 30.0,
       "minimum": 0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 440
+      }
     },
     "Cylindrical Reservoir Radius of Effect Factor": {
       "description": "The radius of effect reduction factor - to account for the fact that we cannot extract 100% of the heat in the cylinder.",
@@ -508,7 +919,30 @@
       "category": "Reservoir",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 450
+      }
     },
     "Drilled length": {
       "description": "Depth of the inflow end of a cyclindrical reservoir",
@@ -517,7 +951,30 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 150
+      "maximum": 150,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0
+            ]
+          }
+        ],
+        "reason": "Used only by the simple cylindrical reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 460
+      }
     },
     "Flowrate Model": {
       "description": "Must be 1 or 2. '1' means the user provides a constant mass flow rate. '1' means the user provides an excel file with a mass flow rate profile.",
@@ -526,7 +983,30 @@
       "category": "Reservoir",
       "default": "",
       "minimum": 1,
-      "maximum": 2
+      "maximum": 2,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore hydraulics",
+        "is_controller": true,
+        "order": 20
+      }
     },
     "Flowrate File": {
       "description": "Excel file with a mass flow rate profile",
@@ -535,7 +1015,38 @@
       "category": "Reservoir",
       "default": "",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model",
+          "Flowrate Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          },
+          {
+            "parameter": "Flowrate Model",
+            "operator": "in",
+            "values": [
+              2
+            ]
+          }
+        ],
+        "reason": "Used only when SBT flow rates come from a file."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir properties",
+        "is_controller": false,
+        "order": 470
+      }
     },
     "Injection Temperature Model": {
       "description": "Must be 1 or 2. '1' means the user provides a constant injection temperature. '1' means the user provides an excel file with an injection temperature profile.",
@@ -544,7 +1055,30 @@
       "category": "Reservoir",
       "default": "",
       "minimum": 1,
-      "maximum": 2
+      "maximum": 2,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Injection conditions",
+        "is_controller": true,
+        "order": 10
+      }
     },
     "Injection Temperature File": {
       "description": "Excel file with an injection temperature profile",
@@ -553,7 +1087,38 @@
       "category": "Reservoir",
       "default": "",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model",
+          "Injection Temperature Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          },
+          {
+            "parameter": "Injection Temperature Model",
+            "operator": "in",
+            "values": [
+              2
+            ]
+          }
+        ],
+        "reason": "Used only when SBT injection temperatures come from a file."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 480
+      }
     },
     "SBT Accuracy Desired": {
       "description": "Must be 1, 2, 3, 4 or 5 with 1 lowest accuracy and 5 highest accuracy. Lowest accuracy runs fastest. Accuracy level impacts number of discretizations for numerical integration and decision tree thresholds in SBT algorithm.",
@@ -562,7 +1127,30 @@
       "category": "Reservoir",
       "default": 1,
       "minimum": 1,
-      "maximum": 5
+      "maximum": 5,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 490
+      }
     },
     "SBT Percent Implicit Euler Scheme": {
       "description": "Should be between 0 and 1. Most stable is setting it to 1 which results in a fully implicit Euler scheme when calculating the fluid temperature at each time step. With a value of 0, the convective term is modelled using explicit Euler. A value of 0.5 would model the convective term 50% explicit and 50% implicit, which may be slightly more accurate than fully implicit.",
@@ -571,7 +1159,30 @@
       "category": "Reservoir",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 500
+      }
     },
     "SBT Initial Timestep Count": {
       "description": "The number of timesteps in the first ~3 hours of model",
@@ -580,7 +1191,30 @@
       "category": "Reservoir",
       "default": 5,
       "minimum": 1,
-      "maximum": 150
+      "maximum": 150,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 510
+      }
     },
     "SBT Final Timestep Count": {
       "description": "The number of timesteps after the first ~3 hours of model",
@@ -589,7 +1223,30 @@
       "category": "Reservoir",
       "default": 70,
       "minimum": 5,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 520
+      }
     },
     "SBT Initial to Final Timestep Transition": {
       "description": "The time in secs at which the time arrays switches from closely spaced linear to logarithmic",
@@ -598,7 +1255,30 @@
       "category": "Reservoir",
       "default": 9900,
       "minimum": 1,
-      "maximum": 40000000
+      "maximum": 40000000,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 530
+      }
     },
     "SBT Generate Wireframe Graphics": {
       "description": "Switch to control the generation of a wireframe drawing of a SBT wells configuration",
@@ -607,7 +1287,30 @@
       "category": "Reservoir",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 540
+      }
     },
     "SUTRA Annual Heat File Name": {
       "description": "SUTRA file with heat stored, heat supplied and efficiency for each year",
@@ -616,7 +1319,30 @@
       "category": "Reservoir",
       "default": null,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              7
+            ]
+          }
+        ],
+        "reason": "Used only by the SUTRA reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 550
+      }
     },
     "SUTRA Heat Budget File Name": {
       "description": "SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime",
@@ -625,7 +1351,30 @@
       "category": "Reservoir",
       "default": null,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              7
+            ]
+          }
+        ],
+        "reason": "Used only by the SUTRA reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir thermal properties",
+        "is_controller": false,
+        "order": 560
+      }
     },
     "SUTRA Balance and Storage Well Output File Name": {
       "description": "SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime",
@@ -634,7 +1383,30 @@
       "category": "Reservoir",
       "default": null,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              7
+            ]
+          }
+        ],
+        "reason": "Used only by the SUTRA reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 570
+      }
     },
     "TOUGH2 Executable Path": {
       "description": "",
@@ -643,7 +1415,30 @@
       "category": "Reservoir",
       "default": "xt2_eos1.exe",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "reason": "Used only by the TOUGH2 reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 580
+      }
     },
     "TOUGH2 Model/File Name": {
       "description": "File name of reservoir output in case reservoir model 5 is selected",
@@ -652,7 +1447,30 @@
       "category": "Reservoir",
       "default": null,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "reason": "Used only by the TOUGH2 reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Model-specific reservoir settings",
+        "is_controller": false,
+        "order": 590
+      }
     },
     "Reservoir Thickness": {
       "description": "Reservoir thickness for built-in TOUGH2 doublet reservoir model",
@@ -661,7 +1479,30 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 10,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "reason": "Used only by the TOUGH2 reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 600
+      }
     },
     "Reservoir Width": {
       "description": "Reservoir width for built-in TOUGH2 doublet reservoir model",
@@ -670,7 +1511,30 @@
       "category": "Reservoir",
       "default": 0.0,
       "minimum": 10,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "reason": "Used only by the TOUGH2 reservoir model."
+      },
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir geometry",
+        "is_controller": false,
+        "order": 610
+      }
     },
     "Number of Production Wells": {
       "description": "Number of (identical) production wells",
@@ -679,7 +1543,13 @@
       "category": "Well Bores",
       "default": 1,
       "minimum": 1,
-      "maximum": 200
+      "maximum": 200,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 50
+      }
     },
     "Number of Injection Wells": {
       "description": "Number of (identical) injection wells",
@@ -688,7 +1558,13 @@
       "category": "Well Bores",
       "default": 1,
       "minimum": 0,
-      "maximum": 200
+      "maximum": 200,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 60
+      }
     },
     "Number of Doublets": {
       "description": "Pass this parameter to set the Number of Production Wells and Number of Injection Wells to same value.",
@@ -697,7 +1573,13 @@
       "category": "Well Bores",
       "default": 2,
       "minimum": 0,
-      "maximum": 200
+      "maximum": 200,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 70
+      }
     },
     "Number of Injection Wells per Production Well": {
       "description": "Number of (identical) injection wells per production well. For example, provide 0.666 to specify a 3:2 production:injection well ratio. The number of injection wells will be rounded up to the nearest integer.",
@@ -706,7 +1588,13 @@
       "category": "Well Bores",
       "default": 1,
       "minimum": 0,
-      "maximum": 199
+      "maximum": 199,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 80
+      }
     },
     "Production Well Diameter": {
       "description": "Inner diameter of production wellbore (assumed constant along the wellbore) to calculate             frictional pressure drop and wellbore heat transmission with Rameys model",
@@ -715,7 +1603,13 @@
       "category": "Well Bores",
       "default": 8.0,
       "minimum": 1.0,
-      "maximum": 30.0
+      "maximum": 30.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 90
+      }
     },
     "Injection Well Diameter": {
       "description": "Inner diameter of production wellbore (assumed constant along the wellbore) to calculate             frictional pressure drop and wellbore heat transmission with Rameys model",
@@ -724,7 +1618,13 @@
       "category": "Well Bores",
       "default": 8.0,
       "minimum": 1.0,
-      "maximum": 30.0
+      "maximum": 30.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 100
+      }
     },
     "Ramey Production Wellbore Model": {
       "description": "Select whether to use Rameys model to estimate the geofluid temperature drop in the production wells",
@@ -733,7 +1633,13 @@
       "category": "Well Bores",
       "default": true,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore configuration",
+        "is_controller": true,
+        "order": 110
+      }
     },
     "Production Wellbore Temperature Drop": {
       "description": "Specify constant production well geofluid temperature drop in case Rameys model is disabled.",
@@ -742,7 +1648,13 @@
       "category": "Well Bores",
       "default": 5.0,
       "minimum": -5.0,
-      "maximum": 50.0
+      "maximum": 50.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 120
+      }
     },
     "Injection Wellbore Temperature Gain": {
       "description": "Specify constant injection well geofluid temperature gain.",
@@ -751,7 +1663,13 @@
       "category": "Well Bores",
       "default": 0.0,
       "minimum": -5.0,
-      "maximum": 50.0
+      "maximum": 50.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 130
+      }
     },
     "Production Flow Rate per Well": {
       "description": "Geofluid flow rate per production well.",
@@ -760,7 +1678,13 @@
       "category": "Well Bores",
       "default": 50.0,
       "minimum": 1.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore hydraulics",
+        "is_controller": false,
+        "order": 140
+      }
     },
     "Reservoir Impedance": {
       "description": "Reservoir resistance to flow per well-pair. For EGS-type reservoirs when the injection well is in hydraulic communication with the production well, this parameter specifies the overall pressure drop in the reservoir between injection well and production well (see docs)",
@@ -769,7 +1693,13 @@
       "category": "Well Bores",
       "default": 1000.0,
       "minimum": 0.0001,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir hydraulics",
+        "is_controller": false,
+        "order": 40
+      }
     },
     "Well Separation": {
       "description": "Well separation for built-in TOUGH2 doublet reservoir model. (Note that the default unit is inches.)",
@@ -778,7 +1708,13 @@
       "category": "Well Bores",
       "default": 39370,
       "minimum": 10.0,
-      "maximum": 393700
+      "maximum": 393700,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 150
+      }
     },
     "Injection Temperature": {
       "description": "Constant geofluid injection temperature at injection wellhead. This is the temperature to which the geofluid is cooled before being reinjected into the reservoir. It directly affects total heat extraction: HeatExtracted = flow_rate * cp * (ProducedTemperature - InjectionTemperature). For direct-use heat end-use options (including heat pump, absorption chiller, and district heating), this parameter directly controls how much thermal energy is extracted from the geofluid for the surface application. A lower injection temperature means more heat is extracted. For end-use options with a power plant (electricity, CHP), the model calculates a reinjection temperature from power plant correlations representing the thermodynamic optimum exhaust temperature. If the provided injection temperature exceeds the model-calculated reinjection temperature, the provided value is ignored and the model-calculated value is used instead (a warning will be logged). For pure electricity end-use, the injection temperature does not affect electricity production; it only affects heat extraction accounting and First Law Efficiency reporting. Providing an injection temperature lower than the model-calculated reinjection temperature represents additional thermal losses between the power plant and the injection wellhead (e.g. surface piping losses). For CHP topping cycle configurations, providing an injection temperature lower than the model-calculated reinjection temperature is necessary to model direct-use heat extraction; the difference between the reinjection temperature and the injection temperature determines the heat available for the direct-use application. Because the direct-use application sits downstream of the power plant, altering this parameter directly impacts heat production but does not affect electricity generation. If not provided (or if the default exceeds the model-calculated reinjection temperature), the resulting direct-use heat production will be marginal.",
@@ -787,7 +1723,13 @@
       "category": "Well Bores",
       "default": 70.0,
       "minimum": 0.0,
-      "maximum": 200.0
+      "maximum": 200.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Injection conditions",
+        "is_controller": false,
+        "order": 30
+      }
     },
     "Reservoir Hydrostatic Pressure": {
       "description": "Reservoir hydrostatic far-field pressure.  Default value is calculated with built-in modified Xie-Bloomfield-Shook equation (DOE, 2016).",
@@ -796,7 +1738,13 @@
       "category": "Well Bores",
       "default": 29430,
       "minimum": 100.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore hydraulics",
+        "is_controller": false,
+        "order": 160
+      }
     },
     "Production Wellhead Pressure": {
       "description": "Constant production wellhead pressure; Required if specifying productivity index",
@@ -805,7 +1753,13 @@
       "category": "Well Bores",
       "default": 446.02,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore hydraulics",
+        "is_controller": false,
+        "order": 40
+      }
     },
     "Injectivity Index": {
       "description": "Injectivity index defined as ratio of injection well flow rate over injection well outflow pressure drop (flowing bottom hole pressure - hydrostatic reservoir pressure).",
@@ -814,7 +1768,13 @@
       "category": "Well Bores",
       "default": 10.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir hydraulics",
+        "is_controller": false,
+        "order": 50
+      }
     },
     "Productivity Index": {
       "description": "Productivity index defined as ratio of production well flow rate over production well inflow pressure drop (see docs)",
@@ -823,7 +1783,13 @@
       "category": "Well Bores",
       "default": 10.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir hydraulics",
+        "is_controller": false,
+        "order": 60
+      }
     },
     "Maximum Drawdown": {
       "description": "Maximum allowable thermal drawdown before redrilling of all wells into new reservoir (most applicable to EGS-type reservoirs with heat farming strategies). E.g. a value of 0.2 means that all wells are redrilled after the production temperature (at the wellhead) has dropped by 20% of its initial temperature. Note that redrilling is triggered by whichever occurs first: this thermal drawdown limit or the chronological limit defined by Well Integrity Maximum Lifetime.",
@@ -832,7 +1798,13 @@
       "category": "Well Bores",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": "1.0"
+      "maximum": "1.0",
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 170
+      }
     },
     "Well Integrity Maximum Lifetime": {
       "description": "Maximum chronological lifetime of the wellbore infrastructure before mechanical/chemical failure forces a redrilling event, independent of thermal drawdown. Models a deterministic first-order approximation of well integrity failure (compressive yielding, high-temperature creep, low-cycle fatigue, cement degradation, sulfide stress cracking, etc.) that is particularly relevant for Superhot Rock systems where wellbore infrastructure may typically fail before thermal depletion. Redrilling is triggered at the minimum of the thermal drawdown index defined by Maximum Drawdown and this chronological index. If not provided, defaults to project lifetime (no mechanical failure).",
@@ -841,7 +1813,13 @@
       "category": "Well Bores",
       "default": -1.0,
       "minimum": 0.1,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 180
+      }
     },
     "Is AGS": {
       "description": "Set to true if the model is for an Advanced Geothermal System (AGS)",
@@ -850,7 +1828,13 @@
       "category": "Well Bores",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "project",
+        "group": "Model controls",
+        "is_controller": true,
+        "order": 20
+      }
     },
     "Overpressure Percentage": {
       "description": "enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)",
@@ -859,7 +1843,13 @@
       "category": "Well Bores",
       "default": 100.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir hydraulics",
+        "is_controller": false,
+        "order": 70
+      }
     },
     "Overpressure Depletion Rate": {
       "description": "enter the amount of pressure over the hydrostatic pressure in the reservoir (100%=hydrostatic)",
@@ -868,7 +1858,13 @@
       "category": "Well Bores",
       "default": 0.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "reservoir",
+        "group": "Reservoir hydraulics",
+        "is_controller": false,
+        "order": 80
+      }
     },
     "Injection Reservoir Temperature": {
       "description": "enter the temperature of the injection reservoir (100 C)",
@@ -877,7 +1873,13 @@
       "category": "Well Bores",
       "default": 100.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 190
+      }
     },
     "Injection Reservoir Depth": {
       "description": "enter the depth of the injection reservoir (1000 m)",
@@ -886,7 +1888,13 @@
       "category": "Well Bores",
       "default": 1000.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 200
+      }
     },
     "Injection Reservoir Initial Pressure": {
       "description": "enter the depth of the injection reservoir initial pressure (use lithostatic pressure)",
@@ -895,7 +1903,13 @@
       "category": "Well Bores",
       "default": 0.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore hydraulics",
+        "is_controller": false,
+        "order": 210
+      }
     },
     "Injection Reservoir Inflation Rate": {
       "description": "enter the rate at which the pressure increases per year in the injection reservoir (1000 kPa/yr)",
@@ -904,7 +1918,13 @@
       "category": "Well Bores",
       "default": 1000.0,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 220
+      }
     },
     "Closed-loop Configuration": {
       "description": "1: utube; 2: coaxial; 3: vertical; 4: L; 5: EavorLoop",
@@ -940,7 +1960,13 @@
           "value": "EavorLoop",
           "int_value": 5
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore configuration",
+        "is_controller": true,
+        "order": 10
+      }
     },
     "Well Geometry Configuration": {
       "description": "1: utube; 2: coaxial; 3: vertical; 4: L; 5: EavorLoop",
@@ -976,7 +2002,13 @@
           "value": "EavorLoop",
           "int_value": 5
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore configuration",
+        "is_controller": true,
+        "order": 230
+      }
     },
     "Water Thermal Conductivity": {
       "description": "Water Thermal Conductivity",
@@ -985,7 +2017,13 @@
       "category": "Well Bores",
       "default": 0.6,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 240
+      }
     },
     "Heat Transfer Fluid": {
       "description": "1: water; 2: sCO2",
@@ -1006,7 +2044,13 @@
           "value": "sCO2",
           "int_value": 2
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": true,
+        "order": 30
+      }
     },
     "Nonvertical Length per Multilateral Section": {
       "description": "",
@@ -1015,7 +2059,13 @@
       "category": "Well Bores",
       "default": 1000.0,
       "minimum": 50.0,
-      "maximum": 20000.0
+      "maximum": 20000.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 250
+      }
     },
     "Nonvertical Wellbore Diameter": {
       "description": "Non-vertical Wellbore Diameter",
@@ -1024,7 +2074,13 @@
       "category": "Well Bores",
       "default": 0.156,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 260
+      }
     },
     "Number of Multilateral Sections": {
       "description": "Number of Nonvertical Wellbore Sections, aka laterals or horizontals. Note that this is the total number of sections for the entire project and not the number of sections per well. For example, a project with 2 injectors and 2 producers with 3 laterals per well should set Number of Multilateral Sections = 2 * 2 * 3 = 12.",
@@ -1033,7 +2089,13 @@
       "category": "Well Bores",
       "default": 0,
       "minimum": 0,
-      "maximum": 1199
+      "maximum": 1199,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 270
+      }
     },
     "Number of Multilateral Sections per Vertical Section": {
       "description": "Number of nonvertical wellbore sections (aka laterals or horizontals) per vertical section, where the number of vertical sections is the total number of wells (Number of Production Wells + Number of Injection Wells). Pass this parameter instead of Number of Multilateral Sections to define laterals on a per-well basis - the total number of multilateral sections for the project is calculated as this value multiplied by the number of vertical sections. For example, a project with 2 injectors and 2 producers with 3 laterals per well may set Number of Multilateral Sections per Vertical Section = 3, which is equivalent to Number of Multilateral Sections = 2 * 2 * 3 = 12. May not be provided in combination with Number of Multilateral Sections. Not supported by AGS/CLGS models.",
@@ -1042,7 +2104,13 @@
       "category": "Well Bores",
       "default": 0,
       "minimum": 0,
-      "maximum": 1199
+      "maximum": 1199,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 280
+      }
     },
     "Multilaterals Cased": {
       "description": "If set to True, casing & cementing are assumed to comprise 50% of drilling costs (doubling cost compared to uncased).",
@@ -1051,7 +2119,13 @@
       "category": "Well Bores",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 290
+      }
     },
     "Lateral Casing Thermal Conductivity": {
       "description": "Thermal conductivity of the steel casing in lateral sections",
@@ -1060,7 +2134,13 @@
       "category": "Well Bores",
       "default": 45.0,
       "minimum": 0.0,
-      "maximum": 500.0
+      "maximum": 500.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 300
+      }
     },
     "Lateral Cement Thermal Conductivity": {
       "description": "Thermal conductivity of the cement sheath surrounding lateral casing",
@@ -1069,7 +2149,13 @@
       "category": "Well Bores",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 50.0
+      "maximum": 50.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore thermal behavior",
+        "is_controller": false,
+        "order": 310
+      }
     },
     "Lateral Casing Thickness": {
       "description": "Radial thickness of the lateral casing wall",
@@ -1078,7 +2164,13 @@
       "category": "Well Bores",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 5.0
+      "maximum": 5.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 320
+      }
     },
     "Lateral Cement Thickness": {
       "description": "Radial thickness of the cement sheath outside the lateral casing",
@@ -1087,7 +2179,13 @@
       "category": "Well Bores",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 5.0
+      "maximum": 5.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 330
+      }
     },
     "Closed Loop Calculation Start Year": {
       "description": "Closed Loop Calculation Start Year",
@@ -1096,7 +2194,13 @@
       "category": "Well Bores",
       "default": 0.01,
       "minimum": 0.01,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellbore parameters",
+        "is_controller": false,
+        "order": 340
+      }
     },
     "Vertical Section Length": {
       "description": "length/depth to the bottom of the vertical wellbores",
@@ -1105,7 +2209,30 @@
       "category": "Well Bores",
       "default": 2000.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 350
+      }
     },
     "Vertical Wellbore Spacing": {
       "description": "Horizontal distance between vertical wellbores",
@@ -1114,7 +2241,30 @@
       "category": "Well Bores",
       "default": 100.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 360
+      }
     },
     "Lateral Spacing": {
       "description": "Horizontal distance between laterals",
@@ -1123,7 +2273,30 @@
       "category": "Well Bores",
       "default": 100.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 370
+      }
     },
     "Lateral Inclination Angle": {
       "description": "Inclination of the lateral section, where 0 degrees would mean vertical while 90 degrees is pure horizontal",
@@ -1132,7 +2305,30 @@
       "category": "Well Bores",
       "default": 20.0,
       "minimum": 0.0,
-      "maximum": 89.999999
+      "maximum": 89.999999,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 380
+      }
     },
     "Discretization Length": {
       "description": "distance between sample point along length of model",
@@ -1141,7 +2337,30 @@
       "category": "Well Bores",
       "default": 250.0,
       "minimum": 0.01,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 390
+      }
     },
     "Junction Depth": {
       "description": "vertical depth where the different laterals branch out (where the multilateral section starts, second deepest depth of model)",
@@ -1150,7 +2369,30 @@
       "category": "Well Bores",
       "default": 4000.0,
       "minimum": 1000,
-      "maximum": 15000.0
+      "maximum": 15000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 400
+      }
     },
     "Lateral Endpoint Depth": {
       "description": "vertical depth where the lateral section ends (tip of the multilateral section, deepest depth of model)",
@@ -1159,7 +2401,30 @@
       "category": "Well Bores",
       "default": 7000.0,
       "minimum": 1000,
-      "maximum": 15000.0
+      "maximum": 15000.0,
+      "x-dependencies": {
+        "depends_on": [
+          "Reservoir Model"
+        ],
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              8
+            ]
+          }
+        ],
+        "reason": "Used only by the SBT reservoir model."
+      },
+      "x-ui": {
+        "tab": "wellbores",
+        "group": "Wellfield layout",
+        "is_controller": false,
+        "order": 410
+      }
     },
     "End-Use Option": {
       "description": "Select the end-use application of the geofluid heat: 1: Electricity; 2: Direct-Use Heat; 31: Cogeneration Topping Cycle, Heat sales considered as extra income; 32: Cogeneration Topping Cycle, Electricity sales considered as extra income; 41: Cogeneration Bottoming Cycle, Heat sales considered as extra income; 42: Cogeneration Bottoming Cycle, Electricity sales considered as extra income; 51: Cogeneration Parallel Cycle, Heat sales considered as extra income; 52: Cogeneration Parallel Cycle, Electricity sales considered as extra income",
@@ -1210,7 +2475,13 @@
           "value": "Cogeneration Parallel Cycle, Electricity sales considered as extra income",
           "int_value": 52
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "project",
+        "group": "Model controls",
+        "is_controller": true,
+        "order": 30
+      }
     },
     "Power Plant Type": {
       "description": "Specify the type of physical plant. 1: Subcritical ORC; 2: Supercritical ORC; 3: Single-Flash; 4: Double-Flash; 5: Absorption Chiller; 6: Heat Pump; 7: District Heating; 8: Reservoir Thermal Energy Storage; 9: Industrial",
@@ -1266,7 +2537,13 @@
           "value": "Industrial",
           "int_value": 9
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant configuration",
+        "is_controller": true,
+        "order": 20
+      }
     },
     "Circulation Pump Efficiency": {
       "description": "Specify the overall efficiency of the injection and production well pumps",
@@ -1275,7 +2552,13 @@
       "category": "Surface Plant",
       "default": 0.75,
       "minimum": 0.1,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 40
+      }
     },
     "Utilization Factor": {
       "description": "Ratio of the time the plant is running in normal production in a 1-year time period. Synonymous with capacity factor.",
@@ -1284,7 +2567,13 @@
       "category": "Surface Plant",
       "default": 0.9,
       "minimum": 0.1,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 50
+      }
     },
     "End-Use Efficiency Factor": {
       "description": "Constant thermal efficiency of the direct-use application",
@@ -1293,7 +2582,13 @@
       "category": "Surface Plant",
       "default": 0.9,
       "minimum": 0.1,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 60
+      }
     },
     "CHP Fraction": {
       "description": "Fraction of produced geofluid flow rate going to direct-use heat application in CHP parallel cycle",
@@ -1302,7 +2597,13 @@
       "category": "Surface Plant",
       "default": 0.5,
       "minimum": 0.0001,
-      "maximum": 0.9999
+      "maximum": 0.9999,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 70
+      }
     },
     "CHP Bottoming Entering Temperature": {
       "description": "Power plant entering geofluid temperature used in CHP bottoming cycle",
@@ -1311,7 +2612,13 @@
       "category": "Surface Plant",
       "default": 150.0,
       "minimum": 0,
-      "maximum": 400
+      "maximum": 400,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 80
+      }
     },
     "Ambient Temperature": {
       "description": "Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
@@ -1320,7 +2627,13 @@
       "category": "Surface Plant",
       "default": 15.0,
       "minimum": -50,
-      "maximum": 50
+      "maximum": 50,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 90
+      }
     },
     "Use Weather Data": {
       "description": "Use historical weather when project latitude and longitude are provided. Set False to retain project coordinates without downloading or applying weather data; Ambient Temperature and Surface Temperature then use their input or default values.",
@@ -1329,7 +2642,13 @@
       "category": "Surface Plant",
       "default": true,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 100
+      }
     },
     "Project Latitude": {
       "description": "Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
@@ -1338,7 +2657,13 @@
       "category": "Surface Plant",
       "default": 0.0,
       "minimum": -90.0,
-      "maximum": 90.0
+      "maximum": 90.0,
+      "x-ui": {
+        "tab": "project",
+        "group": "Project location",
+        "is_controller": false,
+        "order": 50
+      }
     },
     "Project Longitude": {
       "description": "Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
@@ -1347,7 +2672,13 @@
       "category": "Surface Plant",
       "default": 0.0,
       "minimum": -180.0,
-      "maximum": 180.0
+      "maximum": 180.0,
+      "x-ui": {
+        "tab": "project",
+        "group": "Project location",
+        "is_controller": false,
+        "order": 60
+      }
     },
     "Weather Data Year": {
       "description": "Historical weather year to request when project latitude and longitude are provided.",
@@ -1356,7 +2687,13 @@
       "category": "Surface Plant",
       "default": 2024,
       "minimum": 1900,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 110
+      }
     },
     "Plant Lifetime": {
       "description": "System lifetime",
@@ -1365,7 +2702,13 @@
       "category": "Surface Plant",
       "default": 30,
       "minimum": 1,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "project",
+        "group": "Project settings",
+        "is_controller": false,
+        "order": 70
+      }
     },
     "Surface Piping Length": {
       "description": "",
@@ -1374,7 +2717,13 @@
       "category": "Surface Plant",
       "default": 0.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 120
+      }
     },
     "Plant Outlet Pressure": {
       "description": "Constant plant outlet pressure equal to injection well pump(s) suction pressure",
@@ -1383,7 +2732,13 @@
       "category": "Surface Plant",
       "default": 100.0,
       "minimum": 0.01,
-      "maximum": 15000.0
+      "maximum": 15000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 130
+      }
     },
     "Electricity Rate": {
       "description": "Price of electricity to calculate pumping costs in direct-use heat only mode or revenue from electricity sales in CHP mode.",
@@ -1392,7 +2747,13 @@
       "category": "Surface Plant",
       "default": 0.07,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 140
+      }
     },
     "Heat Rate": {
       "description": "Price of heat to calculate revenue from heat sales in CHP mode.",
@@ -1401,7 +2762,13 @@
       "category": "Surface Plant",
       "default": 0.02,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 150
+      }
     },
     "Operating Mode": {
       "description": "Select the simulation operating mode: Baseload or Dispatchable",
@@ -1410,7 +2777,13 @@
       "category": "Surface Plant",
       "default": "Baseload",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 160
+      }
     },
     "Dispatch Demand Source": {
       "description": "Select the demand profile source used by dispatchable mode.",
@@ -1419,7 +2792,13 @@
       "category": "Surface Plant",
       "default": "Annual Heat Demand",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 170
+      }
     },
     "Dispatch Flow Strategy": {
       "description": "Select the dispatch control strategy used by dispatchable mode.",
@@ -1428,7 +2807,13 @@
       "category": "Surface Plant",
       "default": "Demand Following",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 180
+      }
     },
     "Maximum Dispatch Flow Fraction": {
       "description": "Maximum production flow multiplier available to dispatchable operation.",
@@ -1437,7 +2822,13 @@
       "category": "Surface Plant",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 190
+      }
     },
     "Minimum Dispatch Flow Fraction": {
       "description": "Minimum production flow fraction when dispatchable operation is on.",
@@ -1446,7 +2837,13 @@
       "category": "Surface Plant",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 200
+      }
     },
     "Minimum Dispatch Runtime Fraction": {
       "description": "Minimum on-hour runtime fraction when dispatchable operation is on.",
@@ -1455,7 +2852,13 @@
       "category": "Surface Plant",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 210
+      }
     },
     "Dispatch Analysis Start Year": {
       "description": "First operating year included in dispatch analysis output.",
@@ -1464,7 +2867,13 @@
       "category": "Surface Plant",
       "default": 1,
       "minimum": 1,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 220
+      }
     },
     "Dispatch Analysis End Year": {
       "description": "Exclusive operating-year end for dispatch analysis output. For example, start year 1 and end year 2 runs one operating year.",
@@ -1473,7 +2882,13 @@
       "category": "Surface Plant",
       "default": 2,
       "minimum": 2,
-      "maximum": 10001
+      "maximum": 10001,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 230
+      }
     },
     "TESS Enabled": {
       "description": "Enable the thermal energy storage system dispatch layer.",
@@ -1482,7 +2897,13 @@
       "category": "Surface Plant",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 240
+      }
     },
     "TESS Volume": {
       "description": "Usable thermal energy storage tank fluid volume.",
@@ -1491,7 +2912,13 @@
       "category": "Surface Plant",
       "default": 1000.0,
       "minimum": 1.0,
-      "maximum": 10000000.0
+      "maximum": 10000000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 250
+      }
     },
     "TESS Cost per Cubic Meter": {
       "description": "Complete installed thermal energy storage system cost per cubic meter, including tank, foundations, insulation, heat exchangers, controls, and balance-of-plant items included in the user's estimate.",
@@ -1500,7 +2927,13 @@
       "category": "Surface Plant",
       "default": 500.0,
       "minimum": 0.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 260
+      }
     },
     "TESS Fixed O&M Fraction": {
       "description": "Annual TESS fixed O&M cost as a fraction of TESS capital cost.",
@@ -1509,7 +2942,13 @@
       "category": "Surface Plant",
       "default": 0.01,
       "minimum": 0.0,
-      "maximum": 0.2
+      "maximum": 0.2,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 270
+      }
     },
     "TESS Working Fluid": {
       "description": "Working fluid used in the TESS tank. The initial implementation supports water only.",
@@ -1518,7 +2957,13 @@
       "category": "Surface Plant",
       "default": "Water",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 280
+      }
     },
     "TESS Pressure Mode": {
       "description": "Select whether TESS pressure is computed automatically or supplied by the user.",
@@ -1527,7 +2972,13 @@
       "category": "Surface Plant",
       "default": "Auto",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 290
+      }
     },
     "TESS Pressure": {
       "description": "TESS tank pressure. Used directly when TESS Pressure Mode is User Specified.",
@@ -1536,7 +2987,13 @@
       "category": "Surface Plant",
       "default": 1.0,
       "minimum": 0.1,
-      "maximum": 25.0
+      "maximum": 25.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 300
+      }
     },
     "TESS Pressure Safety Factor": {
       "description": "Multiplier applied to water saturation pressure for TESS pressure validation.",
@@ -1545,7 +3002,13 @@
       "category": "Surface Plant",
       "default": 1.1,
       "minimum": 1.0,
-      "maximum": 3.0
+      "maximum": 3.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 310
+      }
     },
     "TESS Minimum Useful Temperature": {
       "description": "Lower tank temperature bound for usable stored thermal energy.",
@@ -1554,7 +3017,13 @@
       "category": "Surface Plant",
       "default": 120.0,
       "minimum": 0.0,
-      "maximum": 370.0
+      "maximum": 370.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 320
+      }
     },
     "TESS Maximum Temperature": {
       "description": "Upper tank operating temperature.",
@@ -1563,7 +3032,13 @@
       "category": "Surface Plant",
       "default": 160.0,
       "minimum": 1.0,
-      "maximum": 370.0
+      "maximum": 370.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 330
+      }
     },
     "TESS Target Temperature": {
       "description": "Preferred tank control temperature.",
@@ -1572,7 +3047,13 @@
       "category": "Surface Plant",
       "default": 150.0,
       "minimum": 0.0,
-      "maximum": 370.0
+      "maximum": 370.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 340
+      }
     },
     "TESS Initial Temperature": {
       "description": "Initial tank temperature at the start of dispatch analysis.",
@@ -1581,7 +3062,13 @@
       "category": "Surface Plant",
       "default": 150.0,
       "minimum": 0.0,
-      "maximum": 370.0
+      "maximum": 370.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 350
+      }
     },
     "TESS Deadband Range": {
       "description": "Total thermostat hysteresis range around the TESS target temperature.",
@@ -1590,7 +3077,13 @@
       "category": "Surface Plant",
       "default": 10.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 360
+      }
     },
     "TESS Charge Efficiency": {
       "description": "Fraction of geothermal heat accepted into useful TESS stored energy.",
@@ -1599,7 +3092,13 @@
       "category": "Surface Plant",
       "default": 0.98,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 370
+      }
     },
     "TESS Discharge Efficiency": {
       "description": "Fractional efficiency from useful TESS stored energy to delivered thermal demand.",
@@ -1608,7 +3107,13 @@
       "category": "Surface Plant",
       "default": 0.98,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 380
+      }
     },
     "TESS Daily Heat Loss Fraction": {
       "description": "Fraction of useful stored TESS energy lost per day.",
@@ -1617,7 +3122,13 @@
       "category": "Surface Plant",
       "default": 0.005,
       "minimum": 0.0,
-      "maximum": 0.1
+      "maximum": 0.1,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 390
+      }
     },
     "TESS Maximum Charge Power": {
       "description": "Maximum tank-side charging power. -1 means no TESS-side limit beyond geothermal production and available storage capacity.",
@@ -1626,7 +3137,13 @@
       "category": "Surface Plant",
       "default": -1.0,
       "minimum": -1.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 400
+      }
     },
     "TESS Maximum Discharge Power": {
       "description": "Maximum tank-side discharge power. -1 means auto-size to peak hourly thermal demand times TESS Subhourly Demand Peak Multiplier.",
@@ -1635,7 +3152,13 @@
       "category": "Surface Plant",
       "default": -1.0,
       "minimum": -1.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 410
+      }
     },
     "TESS Subhourly Demand Peak Multiplier": {
       "description": "Multiplier used by TESS automatic discharge-power sizing and subhourly peak checks.",
@@ -1644,7 +3167,13 @@
       "category": "Surface Plant",
       "default": 1.0,
       "minimum": 1.0,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 420
+      }
     },
     "TESS Charge Control Strategy": {
       "description": "Control strategy used to charge TESS from geothermal output.",
@@ -1653,7 +3182,13 @@
       "category": "Surface Plant",
       "default": "Temperature Band",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 430
+      }
     },
     "TESS Charge Flow Fraction": {
       "description": "Geothermal production flow fraction used while temperature-band TESS charging is active.",
@@ -1662,7 +3197,13 @@
       "category": "Surface Plant",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 440
+      }
     },
     "TESS Moving Average Window": {
       "description": "Moving-average window for TESS moving-average charge control.",
@@ -1671,7 +3212,13 @@
       "category": "Surface Plant",
       "default": 24,
       "minimum": 1,
-      "maximum": 8760
+      "maximum": 8760,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 450
+      }
     },
     "TESS SOC Control Gain": {
       "description": "State-of-charge correction gain for TESS moving-average charge control.",
@@ -1680,7 +3227,13 @@
       "category": "Surface Plant",
       "default": 0.25,
       "minimum": 0.0,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 460
+      }
     },
     "Annual Heat Demand": {
       "description": "Historical annual heating demand profile",
@@ -1689,7 +3242,13 @@
       "category": "Surface Plant",
       "default": [],
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 470
+      }
     },
     "Annual Cooling Demand": {
       "description": "Historical annual cooling demand profile",
@@ -1698,7 +3257,13 @@
       "category": "Surface Plant",
       "default": [],
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Direct-use systems",
+        "is_controller": false,
+        "order": 480
+      }
     },
     "Annual Electricity Demand": {
       "description": "Historical annual electricity demand profile",
@@ -1707,7 +3272,13 @@
       "category": "Surface Plant",
       "default": [],
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 490
+      }
     },
     "Construction Years": {
       "description": "Number of years spent in construction (assumes whole years, no fractions). By default, capital costs are spread evenly over construction years e.g. if total capital costs are $500M and there are 2 construction years, then $250M will be spent in both the first and second construction years. For SAM Economic Models, provide Construction CAPEX Schedule to use a custom spread instead.",
@@ -1716,7 +3287,13 @@
       "category": "Surface Plant",
       "default": 1,
       "minimum": 1,
-      "maximum": 15
+      "maximum": 15,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 500
+      }
     },
     "Working Fluid Heat Capacity": {
       "description": "Heat capacity of the working fluid",
@@ -1725,7 +3302,13 @@
       "category": "Surface Plant",
       "default": 4200.0,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 510
+      }
     },
     "Working Fluid Density": {
       "description": "Density of the working fluid",
@@ -1734,7 +3317,13 @@
       "category": "Surface Plant",
       "default": 1000.0,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 520
+      }
     },
     "Working Fluid Thermal Conductivity": {
       "description": "Thermal conductivity of the working fluid",
@@ -1743,7 +3332,13 @@
       "category": "Surface Plant",
       "default": 0.68,
       "minimum": 0.0,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 530
+      }
     },
     "Working Fluid Dynamic Viscosity": {
       "description": "Dynamic viscosity of the working fluid",
@@ -1752,7 +3347,13 @@
       "category": "Surface Plant",
       "default": 0.0006,
       "minimum": 0.0,
-      "maximum": 1
+      "maximum": 1,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 540
+      }
     },
     "Dead-state Pressure": {
       "description": "",
@@ -1761,7 +3362,13 @@
       "category": "Surface Plant",
       "default": 100000.0,
       "minimum": 80000.0,
-      "maximum": 110000.0
+      "maximum": 110000.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 550
+      }
     },
     "Isentropic Efficiency for CO2 Turbine": {
       "description": "",
@@ -1770,7 +3377,13 @@
       "category": "Surface Plant",
       "default": 0.9,
       "minimum": 0.8,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 560
+      }
     },
     "Generator Conversion Efficiency": {
       "description": "",
@@ -1779,7 +3392,13 @@
       "category": "Surface Plant",
       "default": 0.98,
       "minimum": 0.8,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 570
+      }
     },
     "Isentropic Efficiency for CO2 Compressor": {
       "description": "",
@@ -1788,7 +3407,13 @@
       "category": "Surface Plant",
       "default": 0.9,
       "minimum": 0.8,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Plant operating assumptions",
+        "is_controller": false,
+        "order": 580
+      }
     },
     "CO2 Temperature Decline with Cooling": {
       "description": "",
@@ -1797,7 +3422,13 @@
       "category": "Surface Plant",
       "default": 12.0,
       "minimum": 0.0,
-      "maximum": 15.0
+      "maximum": 15.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Direct-use systems",
+        "is_controller": false,
+        "order": 590
+      }
     },
     "CO2 Turbine Outlet Pressure": {
       "description": "",
@@ -1806,7 +3437,13 @@
       "category": "Surface Plant",
       "default": 81.0,
       "minimum": 75.0,
-      "maximum": 200.0
+      "maximum": 200.0,
+      "x-ui": {
+        "tab": "surface-plant",
+        "group": "Surface plant parameters",
+        "is_controller": false,
+        "order": 600
+      }
     },
     "Economic Model": {
       "description": "Specify the economic model to calculate the levelized cost of energy. 1: Fixed Charge Rate (FCR); 2: Standard Levelized Cost; 3: BICYCLE; 4: Simple (CLGS); 5: SAM Single Owner PPA",
@@ -1842,7 +3479,13 @@
           "value": "SAM Single Owner PPA",
           "int_value": 5
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "project",
+        "group": "Model controls",
+        "is_controller": true,
+        "order": 40
+      }
     },
     "Reservoir Stimulation Capital Cost": {
       "description": "Total reservoir stimulation capital cost, including indirect costs and contingency. For traditional hydrothermal reservoirs, this parameter should be set to $0.",
@@ -1851,7 +3494,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 30
+      }
     },
     "Reservoir Stimulation Capital Cost per Injection Well": {
       "description": "Reservoir stimulation capital cost per injection well before adjustment factor, indirect costs, and contingency",
@@ -1860,7 +3509,13 @@
       "category": "Economics",
       "default": 1.25,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 40
+      }
     },
     "Reservoir Stimulation Capital Cost per Production Well": {
       "description": "Reservoir stimulation capital cost per production well before adjustment factor, indirect costs, and contingency. By default, only the injection wells are assumed to be stimulated unless this parameter is provided.",
@@ -1869,7 +3524,13 @@
       "category": "Economics",
       "default": 0,
       "minimum": -1,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 50
+      }
     },
     "Reservoir Stimulation Capital Cost per Fracture Surface Area": {
       "description": "Direct reservoir stimulation cost per fracture surface area before adjustment factor, indirect costs, and contingency. By default, this applies only to injection wells. To include production wells, set Reservoir Stimulation Capital Cost per Production Well = -1.",
@@ -1878,7 +3539,13 @@
       "category": "Economics",
       "default": 0.9,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 60
+      }
     },
     "Reservoir Stimulation Capital Cost Adjustment Factor": {
       "description": "Multiplier for reservoir stimulation capital cost correlation",
@@ -1887,7 +3554,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 70
+      }
     },
     "Reservoir Stimulation Indirect Capital Cost Percentage": {
       "description": "The indirect capital cost for reservoir stimulation, calculated as a percentage of the direct cost. (Not applied if Reservoir Stimulation Capital Cost is provided.)",
@@ -1896,7 +3569,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 80
+      }
     },
     "Exploration Capital Cost": {
       "description": "Total exploration capital cost",
@@ -1905,7 +3584,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 90
+      }
     },
     "Exploration Capital Cost Adjustment Factor": {
       "description": "Multiplier for built-in exploration capital cost correlation",
@@ -1914,7 +3599,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 100
+      }
     },
     "Well Drilling and Completion Capital Cost": {
       "description": "Well drilling and completion capital cost per well including indirect costs and contingency. Applied to production wells; also applied to injection wells unless Injection Well Drilling and Completion Capital Cost is provided.",
@@ -1923,7 +3614,13 @@
       "category": "Economics",
       "default": -1,
       "minimum": 0,
-      "maximum": 200
+      "maximum": 200,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 110
+      }
     },
     "Injection Well Drilling and Completion Capital Cost": {
       "description": "Injection well drilling and completion capital cost per well including indirect costs and contingency",
@@ -1932,7 +3629,13 @@
       "category": "Economics",
       "default": -1,
       "minimum": 0,
-      "maximum": 200
+      "maximum": 200,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 120
+      }
     },
     "Well Drilling and Completion Capital Cost Adjustment Factor": {
       "description": "Well Drilling and Completion Capital Cost Adjustment Factor. Applies to production wells; also applies to injection wells unless a value is provided for Injection Well Drilling and Completion Capital Cost Adjustment Factor.",
@@ -1941,7 +3644,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 130
+      }
     },
     "Injection Well Drilling and Completion Capital Cost Adjustment Factor": {
       "description": "Injection Well Drilling and Completion Capital Cost Adjustment Factor. If not provided, this value will be set automatically to the same value as Well Drilling and Completion Capital Cost Adjustment Factor.",
@@ -1950,7 +3659,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 140
+      }
     },
     "Wellfield O&M Cost": {
       "description": "Total annual wellfield O&M cost",
@@ -1959,7 +3674,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 150
+      }
     },
     "Wellfield O&M Cost Adjustment Factor": {
       "description": "Multiplier for built-in wellfield O&M cost correlation",
@@ -1968,7 +3689,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 160
+      }
     },
     "Redrilling Learning Rate": {
       "description": "Learning rate of redrilling at the site (Wright's law): each doubling of the number of wellfields drilled at the site lowers the cost of the next by this fraction. Redrilling event k (k = 1, 2, ...) drills the site's (k + 1)th wellfield, at (k + 1)^log2(1 - Redrilling Learning Rate) times the drilling and completion cost plus the stimulation cost of the original wellfield. For example, at 0.15 the first redrilling costs 85% of the original wellfield and the third 72%. At 0 (the default), every redrilling event costs as much as the original wellfield.",
@@ -1977,7 +3704,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 0.99
+      "maximum": 0.99,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 170
+      }
     },
     "Surface Plant Capital Cost": {
       "description": "Total surface plant capital cost",
@@ -1986,7 +3719,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 180
+      }
     },
     "Surface Plant Capital Cost Adjustment Factor": {
       "description": "Multiplier applied to surface plant capital cost, whether calculated by the built-in correlation or derived from a provided Capital Cost for Power Plant for Electricity Generation. Not applied when Surface Plant Capital Cost (total) is provided.",
@@ -1995,7 +3734,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 190
+      }
     },
     "Capital Cost for Power Plant for Electricity Generation": {
       "description": "",
@@ -2004,7 +3749,13 @@
       "category": "Economics",
       "default": 3000,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 200
+      }
     },
     "Field Gathering System Capital Cost": {
       "description": "Total field gathering system capital cost",
@@ -2013,7 +3764,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 210
+      }
     },
     "Field Gathering System Capital Cost Adjustment Factor": {
       "description": "Multiplier for built-in field gathering system capital cost correlation",
@@ -2022,7 +3779,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 220
+      }
     },
     "Surface Plant O&M Cost": {
       "description": "Total annual surface plant O&M cost",
@@ -2031,7 +3794,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 230
+      }
     },
     "Surface Plant O&M Cost Adjustment Factor": {
       "description": "Multiplier for built-in surface plant O&M cost correlation",
@@ -2040,7 +3809,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 240
+      }
     },
     "Water Cost": {
       "description": "Total annual make-up water cost",
@@ -2049,7 +3824,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 250
+      }
     },
     "Water Cost Adjustment Factor": {
       "description": "Multiplier for built-in make-up water cost correlation",
@@ -2058,7 +3839,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0,
-      "maximum": 10
+      "maximum": 10,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 260
+      }
     },
     "Total Capital Cost": {
       "description": "Total initial capital cost. For SAM Economic Models, this is treated as the Overnight Capital Cost.",
@@ -2067,7 +3854,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 270
+      }
     },
     "Total O&M Cost": {
       "description": "Total initial O&M cost.",
@@ -2076,7 +3869,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 280
+      }
     },
     "Time steps per year": {
       "description": "Number of internal simulation time steps per year. GEOPHIRES assumes linear time discretization with a user-provided number of time steps per year over the lifetime of the plant. The default is four time steps per year, meaning a time step of 3 months. At every time step, GEOPHIRES calculates the reservoir output temperature, production wellhead temperature, direct-use heat and/or electricity power output (in MW), pressure drops and pumping power. On an annual basis, GEOPHIRES calculates the O&M costs and direct-use heat and/or electricity production. To investigate seasonal effects, e.g., to assess the impact of more geothermal heat demand for district heating in winter than in summer, the user can select a smaller time step, e.g., a month (or 12 time steps per year). For even shorter timescale effects, e.g., to account for an hourly varying ambient temperature or investigate the response in plant operation to a fluctuating revenue rate), the user can select an even smaller time step, e.g., 1 h (or 8760 time steps per year).",
@@ -2085,7 +3884,13 @@
       "category": "Economics",
       "default": 4,
       "minimum": 1,
-      "maximum": 8760
+      "maximum": 8760,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 290
+      }
     },
     "Fixed Charge Rate": {
       "description": "Fixed charge rate (FCR) used in the Fixed Charge Rate Model",
@@ -2094,7 +3899,13 @@
       "category": "Economics",
       "default": 0.1,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 300
+      }
     },
     "Discount Rate": {
       "description": "Discount rate used in the Standard Levelized Cost Model and SAM Economic Models. Discount Rate is synonymous with Fixed Internal Rate. If one is provided, the other's value will be automatically set to the same value.",
@@ -2103,7 +3914,13 @@
       "category": "Economics",
       "default": 0.07,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 310
+      }
     },
     "Social Discount Rate": {
       "description": "Social discount rate for XLCOE Market + Social calculations. This parameter is ignored unless XLCOE calculations are enabled.",
@@ -2112,7 +3929,13 @@
       "category": "Economics",
       "default": 0.07,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 320
+      }
     },
     "Do XLCO(E|H|C) Calculations": {
       "description": "Enable Extended Levelized Cost of Electricity|Hear|Cooling (XLCO(E|H|C)) calculations. ",
@@ -2121,7 +3944,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 330
+      }
     },
     "XLCOE Avoided Emissions Intensity": {
       "description": "Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits.",
@@ -2130,7 +3959,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 340
+      }
     },
     "XLCO(E|H|C) Carbon Price": {
       "description": "Carbon price used for XLCO(E|H|C) market carbon-offset benefits.",
@@ -2139,7 +3974,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 350
+      }
     },
     "XLCOE REC Price": {
       "description": "Renewable Energy Credit price used for XLCOE market benefits.",
@@ -2148,7 +3989,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 360
+      }
     },
     "XLCOE Displaced Water Use Intensity": {
       "description": "Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh.",
@@ -2157,7 +4004,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 370
+      }
     },
     "XLCO(E|H|C) Water Shadow Price": {
       "description": "Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3.",
@@ -2166,7 +4019,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 380
+      }
     },
     "Idle Rig Discount Rate": {
       "description": "XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only.",
@@ -2175,7 +4034,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 390
+      }
     },
     "XLCO(E|H|C) Construction Jobs Per Rig": {
       "description": "Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits.",
@@ -2184,7 +4049,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 400
+      }
     },
     "XLCO(E|H|C) Operations Jobs Per MW": {
       "description": "Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits.",
@@ -2193,7 +4064,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 410
+      }
     },
     "XLCO(E|H|C) Indirect Jobs Multiplier": {
       "description": "Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits.",
@@ -2202,7 +4079,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 420
+      }
     },
     "XLCO(E|H|C) Average Monthly Wage": {
       "description": "Average monthly wage used for XLCO(E|H|C) social jobs benefits.",
@@ -2211,7 +4094,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 430
+      }
     },
     "XLCOH Avoided Emissions Intensity": {
       "description": "Avoided emissions intensity used for future XLCOH carbon-offset benefits.",
@@ -2220,7 +4109,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 440
+      }
     },
     "XLCOH Displaced Water Use Intensity": {
       "description": "Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh.",
@@ -2229,7 +4124,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 450
+      }
     },
     "XLCOH Thermal REC": {
       "description": "Thermal Energy Credit used for future XLCOH market benefits.",
@@ -2238,7 +4139,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 460
+      }
     },
     "XLCOC Avoided Emissions Intensity": {
       "description": "Avoided emissions intensity used for future XLCOC carbon-offset benefits.",
@@ -2247,7 +4154,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 470
+      }
     },
     "XLCOC Thermal REC": {
       "description": "Cooling Renewable Energy Credit used for future XLCOC market benefits.",
@@ -2256,7 +4169,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 480
+      }
     },
     "XLCOC Displaced Water Use Intensity": {
       "description": "Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh.",
@@ -2265,7 +4184,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 490
+      }
     },
     "Do VALCO(E|H|C) Calculations": {
       "description": "Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations.",
@@ -2274,7 +4199,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 500
+      }
     },
     "VALCO Calculation Mode": {
       "description": "VALCO calculation mode. Direct is the v1 supported mode.",
@@ -2283,7 +4214,13 @@
       "category": "Economics",
       "default": "Direct",
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 510
+      }
     },
     "VALCOE System Average Energy Value": {
       "description": "Direct-input system average energy value used in VALCOE calculations.",
@@ -2292,7 +4229,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 520
+      }
     },
     "VALCOE Technology Energy Value": {
       "description": "Direct-input technology energy value used in VALCOE calculations.",
@@ -2301,7 +4244,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 530
+      }
     },
     "VALCOE System Average Capacity Value": {
       "description": "Direct-input system average capacity value used in VALCOE calculations.",
@@ -2310,7 +4259,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 540
+      }
     },
     "VALCOE Technology Capacity Value": {
       "description": "Direct-input technology capacity value used in VALCOE calculations.",
@@ -2319,7 +4274,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 550
+      }
     },
     "VALCOE System Average Flexibility Value": {
       "description": "Direct-input system average flexibility value used in VALCOE calculations.",
@@ -2328,7 +4289,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 560
+      }
     },
     "VALCOE Technology Flexibility Value": {
       "description": "Direct-input technology flexibility value used in VALCOE calculations.",
@@ -2337,7 +4304,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 570
+      }
     },
     "VALCOE Basis Capacity Value": {
       "description": "Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr.",
@@ -2346,7 +4319,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 580
+      }
     },
     "VALCOE Capacity Credit": {
       "description": "Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value.",
@@ -2355,7 +4334,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 590
+      }
     },
     "VALCOE Base Flexibility Value": {
       "description": "Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr.",
@@ -2364,7 +4349,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 600
+      }
     },
     "VALCOE Flexibility Multiplier": {
       "description": "Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value.",
@@ -2373,7 +4364,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 610
+      }
     },
     "VALCOH System Average Energy Value": {
       "description": "Direct-input system average energy value used in VALCOH calculations.",
@@ -2382,7 +4379,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 620
+      }
     },
     "VALCOH Technology Energy Value": {
       "description": "Direct-input technology energy value used in VALCOH calculations.",
@@ -2391,7 +4394,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 630
+      }
     },
     "VALCOH System Average Capacity Value": {
       "description": "Direct-input system average capacity value used in VALCOH calculations.",
@@ -2400,7 +4409,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 640
+      }
     },
     "VALCOH Technology Capacity Value": {
       "description": "Direct-input technology capacity value used in VALCOH calculations.",
@@ -2409,7 +4424,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 650
+      }
     },
     "VALCOH System Average Flexibility Value": {
       "description": "Direct-input system average flexibility value used in VALCOH calculations.",
@@ -2418,7 +4439,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 660
+      }
     },
     "VALCOH Technology Flexibility Value": {
       "description": "Direct-input technology flexibility value used in VALCOH calculations.",
@@ -2427,7 +4454,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 670
+      }
     },
     "VALCOH Basis Capacity Value": {
       "description": "Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr.",
@@ -2436,7 +4469,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 680
+      }
     },
     "VALCOH Capacity Credit": {
       "description": "Derived-mode heat capacity credit used to calculate VALCOH technology capacity value.",
@@ -2445,7 +4484,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 690
+      }
     },
     "VALCOH Base Flexibility Value": {
       "description": "Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr.",
@@ -2454,7 +4499,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 700
+      }
     },
     "VALCOH Flexibility Multiplier": {
       "description": "Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value.",
@@ -2463,7 +4514,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 710
+      }
     },
     "VALCOC System Average Energy Value": {
       "description": "Direct-input system average energy value used in VALCOC calculations.",
@@ -2472,7 +4529,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 720
+      }
     },
     "VALCOC Technology Energy Value": {
       "description": "Direct-input technology energy value used in VALCOC calculations.",
@@ -2481,7 +4544,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 730
+      }
     },
     "VALCOC System Average Capacity Value": {
       "description": "Direct-input system average capacity value used in VALCOC calculations.",
@@ -2490,7 +4559,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 740
+      }
     },
     "VALCOC Technology Capacity Value": {
       "description": "Direct-input technology capacity value used in VALCOC calculations.",
@@ -2499,7 +4574,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 750
+      }
     },
     "VALCOC System Average Flexibility Value": {
       "description": "Direct-input system average flexibility value used in VALCOC calculations.",
@@ -2508,7 +4589,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 760
+      }
     },
     "VALCOC Technology Flexibility Value": {
       "description": "Direct-input technology flexibility value used in VALCOC calculations.",
@@ -2517,7 +4604,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 770
+      }
     },
     "VALCOC Basis Capacity Value": {
       "description": "Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr.",
@@ -2526,7 +4619,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 780
+      }
     },
     "VALCOC Capacity Credit": {
       "description": "Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value.",
@@ -2535,7 +4634,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 790
+      }
     },
     "VALCOC Base Flexibility Value": {
       "description": "Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr.",
@@ -2544,7 +4649,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 800
+      }
     },
     "VALCOC Flexibility Multiplier": {
       "description": "Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value.",
@@ -2553,7 +4664,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 810
+      }
     },
     "Royalty Rate": {
       "description": "The fraction of the project's gross annual revenue paid to the royalty holder. This is modeled as a variable production-based operating expense, reducing the developer's taxable income. It is calculated in addition to any scheduled Royalty Supplemental Payments. Note: Providing both Royalty Rate and Royalty Rate Schedule is invalid and will result in an error.",
@@ -2562,7 +4679,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 820
+      }
     },
     "Royalty Rate Escalation": {
       "description": "The additive amount the royalty rate increases each year. For example, a value of 0.001 increases a 4% rate (0.04) to 4.1% (0.041) in the next year. Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
@@ -2571,7 +4694,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 830
+      }
     },
     "Royalty Rate Escalation Start Year": {
       "description": "The first year that the Royalty Rate Escalation is applied. The value is specified as a project year index corresponding to the Year row in the cash flow profile. Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
@@ -2580,7 +4709,13 @@
       "category": "Economics",
       "default": 1,
       "minimum": 1,
-      "maximum": 99
+      "maximum": 99,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 840
+      }
     },
     "Royalty Rate Maximum": {
       "description": "The maximum royalty rate after escalation, expressed as a fraction (e.g., 0.06 for a 6% cap). Defaults to 100% (no effective cap). Note: This parameter only applies if Royalty Rate is provided and is invalid if Royalty Rate Schedule is provided.",
@@ -2589,7 +4724,13 @@
       "category": "Economics",
       "default": 1.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 850
+      }
     },
     "Royalty Rate Schedule": {
       "description": "A schedule DSL string defining the royalty rate for each year of the project, starting at the first year of plant operations (Year 1, post-construction). Syntax: \"<rate> * <years>, <rate> * <years>, ..., <terminal_rate>\". For example \"0.0175 * 10, 0.035\" means 1.75% for 10 years then 3.5% thereafter. Note: Providing both Royalty Rate and Royalty Rate Schedule is invalid and will result in an error.",
@@ -2598,7 +4739,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic model settings",
+        "is_controller": true,
+        "order": 860
+      }
     },
     "Royalty Supplemental Payments": {
       "description": "A schedule DSL string defining the royalty supplemental payments for each year of the project. Unlike the Royalty Rate Schedule which begins at operations, this schedule begins at the first year of project construction. Syntax: \"<amount> * <years>, <amount> * <years>, ..., <terminal_amount_per_year>\". For example \"1 * 2, 0.25\" means $1M for 2 years (e.g., during construction) then $250k/year thereafter.",
@@ -2607,7 +4754,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 870
+      }
     },
     "Royalty Holder Discount Rate": {
       "description": "The discount rate used to calculate the Net Present Value (NPV) of the royalty holder's income stream. This rate should reflect the royalty holder's specific risk profile and is separate from the main project discount rate.",
@@ -2616,7 +4769,13 @@
       "category": "Economics",
       "default": 0.05,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 880
+      }
     },
     "Discount Initial Year Cashflow": {
       "description": "Whether to discount cashflow in the initial project year when calculating NPV (Net Present Value). The default value of False conforms to NREL's standard convention for NPV calculation (Short W et al, 1995. https://www.nrel.gov/docs/legosti/old/5173.pdf). A value of True will, by contrast, cause NPV calculation to follow the convention used by Excel, Google Sheets, and other common spreadsheet software. Although NREL's NPV convention may typically be considered more technically correct, Excel-style NPV calculation might be preferred for familiarity or compatibility with existing business processes. See https://github.com/NREL/GEOPHIRES-X/discussions/344 for further details.",
@@ -2625,7 +4784,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 890
+      }
     },
     "Fraction of Investment in Bonds": {
       "description": "Fraction of geothermal project financing through bonds (debt/loans).",
@@ -2634,7 +4799,13 @@
       "category": "Economics",
       "default": 0.5,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 900
+      }
     },
     "Inflated Bond Interest Rate": {
       "description": "Inflated bond interest rate (for debt/loans)",
@@ -2643,7 +4814,13 @@
       "category": "Economics",
       "default": 0.05,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 910
+      }
     },
     "Inflated Bond Interest Rate During Construction": {
       "description": "Inflated bond interest rate during construction (for debt/loans)",
@@ -2652,7 +4829,13 @@
       "category": "Economics",
       "default": 0.05,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 920
+      }
     },
     "Debt Tenor": {
       "description": "Number of years over which debt is repaid (for debt/loans), counted from the Commercial Operation Date (COD; Year 1). Construction years are not counted: debt drawn during construction, including capitalized interest during construction, is effectively refinanced as term debt at COD and repaid in level annual payments over this tenor. Defaults to Plant Lifetime if not provided, and may not exceed it. SAM Single Owner PPA economic model only.",
@@ -2661,7 +4844,13 @@
       "category": "Economics",
       "default": -1,
       "minimum": 1,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 930
+      }
     },
     "Depreciation Schedule": {
       "description": "Tax depreciation schedule for the depreciable basis (total installed cost, reduced by half of the federal investment tax credit): 1: 20-year straight line; 2: 5-year MACRS. 5-year MACRS is the statutory class for facilities that claim the technology-neutral clean electricity credits (IRC sections 48E and 45Y). It front-loads deductions, and the resulting tax losses are counted as tax benefits in the years they occur, which assumes the owner can use them (for example, against other taxable income or through a tax equity partner). SAM Single Owner PPA economic model only.",
@@ -2682,7 +4871,13 @@
           "value": "5-year MACRS",
           "int_value": 2
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": true,
+        "order": 10
+      }
     },
     "Salvage Value Rate": {
       "description": "Net pre-tax salvage value at the end of the plant lifetime, as a fraction of total installed cost, credited as revenue in the final year. Decommissioning costs (such as well plugging and abandonment and site restoration) are not modeled separately, so this value should be net of them. SAM Single Owner PPA economic model only.",
@@ -2691,7 +4886,13 @@
       "category": "Economics",
       "default": 0.1,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 940
+      }
     },
     "Inflated Equity Interest Rate": {
       "description": "Inflated equity interest rate (see docs)",
@@ -2700,7 +4901,13 @@
       "category": "Economics",
       "default": 0.1,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 950
+      }
     },
     "Inflation Rate": {
       "description": "Inflation rate",
@@ -2709,7 +4916,13 @@
       "category": "Economics",
       "default": 0.02,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 960
+      }
     },
     "Combined Income Tax Rate": {
       "description": "Combined income tax rate (see docs)",
@@ -2718,7 +4931,13 @@
       "category": "Economics",
       "default": 0.02,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 970
+      }
     },
     "Gross Revenue Tax Rate": {
       "description": "Gross revenue tax rate (see docs)",
@@ -2727,7 +4946,13 @@
       "category": "Economics",
       "default": 0.02,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 980
+      }
     },
     "Investment Tax Credit Rate": {
       "description": "Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate.",
@@ -2736,7 +4961,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 990
+      }
     },
     "State Investment Tax Credit Amount": {
       "description": "State investment tax credit amount (state ITC).",
@@ -2745,7 +4976,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100000.0
+      "maximum": 100000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1000
+      }
     },
     "Property Tax Rate": {
       "description": "Property tax rate (see docs)",
@@ -2754,7 +4991,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1010
+      }
     },
     "Inflation Rate During Construction": {
       "description": "The total inflation rate applied to capital costs over the entire construction period, entered as a fraction (e.g., 0.15 for 15%). This value defines the Accrued financing during construction output. Note: For SAM Economic Models, if this parameter is not provided, inflation costs will be calculated automatically by compounding Inflation Rate over Construction Years.",
@@ -2763,7 +5006,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1020
+      }
     },
     "Construction CAPEX Schedule": {
       "description": "A list of fractions of the total overnight CAPEX spent in each construction year. For example, for 3 construction years with 10% in the first year, 40% in the second, and 50% in the third, provide Construction CAPEX Schedule = 0.1,0.4,0.5. The schedule will be automatically interpolated to match the number of construction years and normalized to sum to 1.0.",
@@ -2774,7 +5023,13 @@
         1.0
       ],
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": true,
+        "order": 1030
+      }
     },
     "Bond Financing Start Year": {
       "description": "By default, bond financing (debt/loans) starts during the first construction year (if Fraction of Investment in Bonds is >0). Provide Bond Financing Start Year to delay the start of bond financing during construction; years prior to Bond Financing Start Year will be financed with equity only. The value is specified as a project year index corresponding to the Year row in the cash flow profile; the first construction year has the year index {(Construction Years - 1) * -1}) and the final construction year index is 0. For example, a project with 4 construction years where bond financing starts on the third construction year would have a Bond Financing Start Year value of -1; construction starts in Year -3, the second year is Year -2, and the final 2 bond-financed construction years are Year -1 and Year 0. Bond financing will start on the first construction year if the specified year index is prior to the first construction year.",
@@ -2783,7 +5038,13 @@
       "category": "Economics",
       "default": -14,
       "minimum": -14,
-      "maximum": 0
+      "maximum": 0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1040
+      }
     },
     "Contingency Percentage": {
       "description": "The contingency percentage applied to the direct capital costs for stimulation, field gathering system, exploration, and surface plant. (Note: well drilling and completion costs do not have contingency applied and are not affected by this parameter.)",
@@ -2792,7 +5053,13 @@
       "category": "Economics",
       "default": 15.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1050
+      }
     },
     "Well Drilling Cost Correlation": {
       "description": "Select the built-in well drilling and completion cost correlation: 1: vertical small diameter, baseline; 2: deviated small diameter, baseline; 3: vertical large diameter, baseline; 4: deviated large diameter, baseline; 5: Simple (per-meter cost); 6: vertical small diameter, intermediate1; 7: vertical small diameter, intermediate2; 8: deviated small diameter, intermediate1; 9: deviated small diameter, intermediate2; 10: vertical large diameter, intermediate1; 11: vertical large diameter, intermediate2; 12: deviated large diameter, intermediate1; 13: deviated large diameter, intermediate2; 14: vertical open-hole, small diameter, ideal; 15: deviated liner, small diameter, ideal; 16: vertical open-hole, large diameter, ideal; 17: deviated liner, large diameter, ideal. Baseline correlations (1-4) are from NREL's 2025 cost curve update. Intermediate and ideal correlations (6-17) are from GeoVision.",
@@ -2888,7 +5155,13 @@
           "value": "deviated liner, large diameter, ideal",
           "int_value": 17
         }
-      ]
+      ],
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": true,
+        "order": 20
+      }
     },
     "Do AddOn Calculations": {
       "description": "By default, add-on calculations are automatically enabled if add-ons parameters are provided. Set this value to false to disable add-on economics calculations. (If, for example, you wish to quickly compare between economics with and without add-ons.)",
@@ -2897,7 +5170,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1060
+      }
     },
     "Do Carbon Price Calculations": {
       "description": "By default, carbon credit calculations are automatically enabled if carbon credit parameters are provided. Set this value to false to disable carbon credit calculations.",
@@ -2906,7 +5185,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1070
+      }
     },
     "Do S-DAC-GT Calculations": {
       "description": "By default, S-DAC-GT economics calculations are automatically enabled if S-DAC-GT parameters are provided. Set this value to false to disable S-DAC-GT economics calculations.",
@@ -2915,7 +5200,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1080
+      }
     },
     "All-in Vertical Drilling Costs": {
       "description": "Set user specified all-in cost per meter of vertical drilling, including drilling, casing, cement, insulated insert",
@@ -2924,7 +5215,13 @@
       "category": "Economics",
       "default": 1000.0,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1090
+      }
     },
     "All-in Nonvertical Drilling Costs": {
       "description": "Set user specified all-in cost per meter of non-vertical drilling, including drilling, casing, cement, insulated insert",
@@ -2933,7 +5230,13 @@
       "category": "Economics",
       "default": 1300.0,
       "minimum": 0.0,
-      "maximum": 15000.0
+      "maximum": 15000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1100
+      }
     },
     "Well Drilling and Completion Indirect Capital Cost Percentage": {
       "description": "The indirect capital cost for well drilling and completion of all wells (the wellfield), calculated as a percentage of the direct cost.",
@@ -2942,7 +5245,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1110
+      }
     },
     "Indirect Capital Cost Percentage": {
       "description": "The indirect cost percentage applied to capital costs (default 12%). This value is used for all cost categories including surface plant, field gathering system, and exploration except when a category-specific indirect cost parameter is defined or provided. Wellfield costs use Well Drilling and Completion Indirect Capital Cost Percentage (default 5%). Stimulation costs use Reservoir Stimulation Indirect Capital Cost Percentage (default 5%).",
@@ -2951,7 +5260,13 @@
       "category": "Economics",
       "default": 12,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1120
+      }
     },
     "Absorption Chiller Capital Cost": {
       "description": "Absorption chiller capital cost",
@@ -2960,7 +5275,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1130
+      }
     },
     "Absorption Chiller O&M Cost": {
       "description": "Absorption chiller O&M cost",
@@ -2969,7 +5290,13 @@
       "category": "Economics",
       "default": 1,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 1140
+      }
     },
     "Heat Pump Capital Cost": {
       "description": "Heat pump capital cost",
@@ -2978,7 +5305,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1150
+      }
     },
     "Peaking Fuel Cost Rate": {
       "description": "Price of peaking fuel for peaking boilers",
@@ -2987,7 +5320,13 @@
       "category": "Economics",
       "default": 0.034,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1160
+      }
     },
     "Peaking Boiler Efficiency": {
       "description": "Peaking boiler efficiency",
@@ -2996,7 +5335,13 @@
       "category": "Economics",
       "default": 0.85,
       "minimum": 0,
-      "maximum": 1
+      "maximum": 1,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1170
+      }
     },
     "Peaking Boiler Cost per kW": {
       "description": "Peaking boiler cost per kW of maximum peaking boiler demand",
@@ -3005,7 +5350,13 @@
       "category": "Economics",
       "default": 65,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1180
+      }
     },
     "District Heating Piping Cost Rate": {
       "description": "District heating piping cost rate ($/m)",
@@ -3014,7 +5365,13 @@
       "category": "Economics",
       "default": 1200,
       "minimum": 0,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1190
+      }
     },
     "Transmission/pipeline Cost": {
       "description": "Transmission/pipeline Cost rate per km, in KUSD/km.",
@@ -3023,7 +5380,13 @@
       "category": "Economics",
       "default": 750,
       "minimum": 0,
-      "maximum": 10000
+      "maximum": 10000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1200
+      }
     },
     "Total District Heating Network Cost": {
       "description": "Total district heating network cost ($M)",
@@ -3032,7 +5395,13 @@
       "category": "Economics",
       "default": 10,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1210
+      }
     },
     "District Heating O&M Cost": {
       "description": "Total annual district heating O&M cost ($M/year)",
@@ -3041,7 +5410,13 @@
       "category": "Economics",
       "default": 1,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 1220
+      }
     },
     "District Heating Network Piping Length": {
       "description": "District heating network piping length (km)",
@@ -3050,7 +5425,13 @@
       "category": "Economics",
       "default": 10.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1230
+      }
     },
     "District Heating Road Length": {
       "description": "District heating road length (km)",
@@ -3059,7 +5440,13 @@
       "category": "Economics",
       "default": 10.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1240
+      }
     },
     "District Heating Land Area": {
       "description": "District heating land area (km2)",
@@ -3068,7 +5455,13 @@
       "category": "Economics",
       "default": 10.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1250
+      }
     },
     "District Heating Population": {
       "description": "Specify the population in the district heating network",
@@ -3077,7 +5470,13 @@
       "category": "Economics",
       "default": 200,
       "minimum": 0,
-      "maximum": 1000000
+      "maximum": 1000000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1260
+      }
     },
     "Starting Heat Sale Price": {
       "description": "",
@@ -3086,7 +5485,13 @@
       "category": "Economics",
       "default": 0.025,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1270
+      }
     },
     "Ending Heat Sale Price": {
       "description": "",
@@ -3095,7 +5500,13 @@
       "category": "Economics",
       "default": 0.025,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1280
+      }
     },
     "Heat Escalation Start Year": {
       "description": "Number of years after start of project before start of escalation",
@@ -3104,7 +5515,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1290
+      }
     },
     "Heat Escalation Rate Per Year": {
       "description": "additional cost per year of price after escalation starts",
@@ -3113,7 +5530,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1300
+      }
     },
     "Starting Electricity Sale Price": {
       "description": "",
@@ -3122,7 +5545,13 @@
       "category": "Economics",
       "default": 0.055,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1310
+      }
     },
     "Ending Electricity Sale Price": {
       "description": "The maximum price to which the electricity sale price can escalate. For example, if Starting Electricity Sale Price = 0.10 USD/kWh and Electricity Escalation Rate = 0.01 USD/kWh/yr: Electricity Price will reach 0.15 USD/kWh after 4 years of escalation. The price will then remain at 0.15 USD/kWh for the remaining years of the project lifetime. If the Ending Electricity Sale Price is not reached by escalation during the project lifetime, then the value will have no effect beyond allowing escalation to occur every year.",
@@ -3131,7 +5560,13 @@
       "category": "Economics",
       "default": 0.055,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1320
+      }
     },
     "Electricity Escalation Start Year": {
       "description": "Number of years after start of project before start of escalation",
@@ -3140,7 +5575,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1330
+      }
     },
     "Electricity Escalation Rate Per Year": {
       "description": "additional cost per year of price after escalation starts",
@@ -3149,7 +5590,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1340
+      }
     },
     "Starting Cooling Sale Price": {
       "description": "",
@@ -3158,7 +5605,13 @@
       "category": "Economics",
       "default": 0.025,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1350
+      }
     },
     "Ending Cooling Sale Price": {
       "description": "",
@@ -3167,7 +5620,13 @@
       "category": "Economics",
       "default": 0.025,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1360
+      }
     },
     "Cooling Escalation Start Year": {
       "description": "Number of years after start of project before start of escalation",
@@ -3176,7 +5635,13 @@
       "category": "Economics",
       "default": 5,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1370
+      }
     },
     "Cooling Escalation Rate Per Year": {
       "description": "additional cost per year of price after escalation starts",
@@ -3185,7 +5650,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1380
+      }
     },
     "Starting Carbon Credit Value": {
       "description": "",
@@ -3194,7 +5665,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1390
+      }
     },
     "Ending Carbon Credit Value": {
       "description": "",
@@ -3203,7 +5680,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Revenue and pricing",
+        "is_controller": false,
+        "order": 1400
+      }
     },
     "Carbon Escalation Start Year": {
       "description": "Number of years after start of project before start of Carbon incentives",
@@ -3212,7 +5695,13 @@
       "category": "Economics",
       "default": 0,
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1410
+      }
     },
     "Carbon Escalation Rate Per Year": {
       "description": "additional value per year of price after escalation starts",
@@ -3221,7 +5710,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1420
+      }
     },
     "Current Grid CO2 production": {
       "description": "CO2 intensity of the grid (how much CO2 is produced per kWh of electricity produced (0.93916924 lbs/kWh for Texas ERCOT))",
@@ -3230,7 +5725,13 @@
       "category": "Economics",
       "default": 0.93916924,
       "minimum": 0,
-      "maximum": 50000
+      "maximum": 50000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1430
+      }
     },
     "CO2 produced by Natural Gas": {
       "description": "CO2 intensity of burning natural gas (how much CO2 is produced per kWh of heat produced (0.070324961 lbs/kWh; https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references))",
@@ -3239,7 +5740,13 @@
       "category": "Economics",
       "default": 0.070324961,
       "minimum": 0,
-      "maximum": 50000
+      "maximum": 50000,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1440
+      }
     },
     "Annual License Fees Etc": {
       "description": "",
@@ -3248,7 +5755,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": -1000.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1450
+      }
     },
     "One-time Flat License Fees Etc": {
       "description": "",
@@ -3257,7 +5770,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": -1000.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1460
+      }
     },
     "Other Incentives": {
       "description": "",
@@ -3266,7 +5785,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": -1000.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1470
+      }
     },
     "Tax Relief Per Year": {
       "description": "Fixed percent reduction in annual tax rate",
@@ -3275,7 +5800,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1480
+      }
     },
     "One-time Grants Etc": {
       "description": "",
@@ -3284,7 +5815,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": -1000.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1490
+      }
     },
     "Fixed Internal Rate": {
       "description": "Fixed Internal Rate (used in NPV calculation). Fixed Internal Rate is synonymous with Discount Rate. If one is provided, the other's value will be automatically set to the same value.",
@@ -3293,7 +5830,13 @@
       "category": "Economics",
       "default": "7.0",
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1500
+      }
     },
     "CHP Electrical Plant Cost Allocation Ratio": {
       "description": "CHP Electrical Plant Cost Allocation Ratio (cost electrical plant/total CAPEX)",
@@ -3302,7 +5845,13 @@
       "category": "Economics",
       "default": -1.0,
       "minimum": 0.0,
-      "maximum": 1.0
+      "maximum": 1.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1510
+      }
     },
     "Production Tax Credit Electricity": {
       "description": "Production tax credit for electricity in $/kWh",
@@ -3311,7 +5860,13 @@
       "category": "Economics",
       "default": 0.04,
       "minimum": 0.0,
-      "maximum": 10.0
+      "maximum": 10.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1520
+      }
     },
     "Production Tax Credit Heat": {
       "description": "Production tax credit for heat in $/MMBTU",
@@ -3320,7 +5875,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1530
+      }
     },
     "Production Tax Credit Cooling": {
       "description": "Production tax credit for cooling in $/MMBTU",
@@ -3329,7 +5890,13 @@
       "category": "Economics",
       "default": 0.0,
       "minimum": 0.0,
-      "maximum": 100.0
+      "maximum": 100.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1540
+      }
     },
     "Production Tax Credit Duration": {
       "description": "Production tax credit for duration in years",
@@ -3338,7 +5905,13 @@
       "category": "Economics",
       "default": 10,
       "minimum": 0,
-      "maximum": 99
+      "maximum": 99,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1550
+      }
     },
     "Production Tax Credit Inflation Adjusted": {
       "description": "Production tax credit inflation adjusted",
@@ -3347,7 +5920,13 @@
       "category": "Economics",
       "default": false,
       "minimum": null,
-      "maximum": null
+      "maximum": null,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Financing and tax",
+        "is_controller": false,
+        "order": 1560
+      }
     },
     "Estimated Jobs Created per MW of Electricity Produced": {
       "description": "Estimated jobs created per MW of electricity produced, per https://geothermal.org/resources/geothermal-basics",
@@ -3356,7 +5935,13 @@
       "category": "Economics",
       "default": 2.13,
       "minimum": -1.8e+30,
-      "maximum": 1.8e+30
+      "maximum": 1.8e+30,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1570
+      }
     },
     "Operation & Maintenance Cost of Surface Plant": {
       "description": "",
@@ -3365,7 +5950,13 @@
       "category": "Economics",
       "default": 0.015,
       "minimum": 0.0,
-      "maximum": 0.2
+      "maximum": 0.2,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Operating costs",
+        "is_controller": false,
+        "order": 1580
+      }
     },
     "Capital Cost for Surface Plant for Direct-use System": {
       "description": "",
@@ -3374,7 +5965,13 @@
       "category": "Economics",
       "default": 100.0,
       "minimum": 0.0,
-      "maximum": 10000.0
+      "maximum": 10000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1590
+      }
     },
     "AddOn Nickname": {
       "description": "If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn Nickname 1', 'AddOn Nickname 2', etc.",
@@ -3383,7 +5980,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1600
+      }
     },
     "AddOn CAPEX": {
       "description": "If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn CAPEX 1', 'AddOn CAPEX 2', etc.",
@@ -3392,7 +5995,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Capital costs",
+        "is_controller": false,
+        "order": 1610
+      }
     },
     "AddOn OPEX": {
       "description": "Annual operating cost. If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn OPEX 1', 'AddOn OPEX 2', etc.",
@@ -3401,7 +6010,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1620
+      }
     },
     "AddOn Electricity Gained": {
       "description": "Annual electricity gained. If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn Electricity Gained 1', 'AddOn Electricity Gained 2', etc.",
@@ -3410,7 +6025,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1630
+      }
     },
     "AddOn Heat Gained": {
       "description": "Annual heat gained. If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn Heat Gained 1', 'AddOn Heat Gained 2', etc.",
@@ -3419,7 +6040,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1640
+      }
     },
     "AddOn Profit Gained": {
       "description": "The annual gross revenue or cash inflow generated by the add-on. Note: While named 'Profit', this value is treated mathematically as top-line revenue in economic calculations. Do not subtract Add-On OPEX from this value, as the model accounts for Add-On OPEX separately. If using multiple add-ons: either (1) specify this value as an array or (2) use multiple parameters suffixed with a number e.g. 'AddOn Profit Gained 1', 'AddOn Profit Gained 2', etc.",
@@ -3428,7 +6055,13 @@
       "category": "Economics",
       "default": [],
       "minimum": 0.0,
-      "maximum": 1000.0
+      "maximum": 1000.0,
+      "x-ui": {
+        "tab": "economics",
+        "group": "Economic parameters",
+        "is_controller": false,
+        "order": 1650
+      }
     }
   }
 }

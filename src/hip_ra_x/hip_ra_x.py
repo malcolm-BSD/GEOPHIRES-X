@@ -84,6 +84,28 @@ class HIP_RA_X:
     _SUMMARY_OF_RESULTS_OUTPUT_CATEGORY: ClassVar[str] = "SUMMARY OF RESULTS"
     _SUMMARY_OF_INPUTS_OUTPUT_CATEGORY: ClassVar[str] = "SUMMARY OF INPUTS"
 
+    # Explicit model relationships for schema/form consumers. These describe values that HIP-RA-X derives when the
+    # corresponding input is omitted or left at its sentinel default. Keeping the relationships with the model avoids
+    # UI clients guessing dependencies from display labels.
+    PARAMETER_DEPENDENCIES: ClassVar[dict[str, dict[str, object]]] = {
+        "Reservoir Depth": {
+            "depends_on": ["Reservoir Temperature"],
+            "behavior": "derived_when_omitted",
+        },
+        "Reservoir Pressure": {
+            "depends_on": ["Reservoir Depth"],
+            "behavior": "derived_when_omitted",
+        },
+        "Density Of Reservoir Fluid": {
+            "depends_on": ["Reservoir Temperature", "Reservoir Pressure"],
+            "behavior": "derived_when_below_minimum",
+        },
+        "Fluid Specific Heat Capacity": {
+            "depends_on": ["Reservoir Temperature", "Reservoir Pressure"],
+            "behavior": "derived_when_below_minimum",
+        },
+    }
+
     def __init__(self, enable_hip_ra_logging_config=True):
         # get logging started
         self.logger = logging.getLogger("root")
