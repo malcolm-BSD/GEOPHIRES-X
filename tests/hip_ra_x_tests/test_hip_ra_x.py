@@ -473,6 +473,16 @@ class HipRaXTestCase(BaseTestCase):
         with self.assertRaises(ValueError):
             HipRaInputParameters(1)
 
+    def test_hip_ra_input_parameters_accept_explicit_output_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir, "requested-output.out")
+            input_params = HipRaInputParameters(
+                self._get_test_file_path("./examples/HIP-RA-X_example1.txt"),
+                output_file_path=output_path,
+            )
+
+            self.assertEqual(output_path, input_params.output_file_path)
+
     def test_area_acre(self):
         result: HipRaResult = HipRaXClient().get_hip_ra_x_result(
             HipRaInputParameters(self._get_test_file_path("hip-ra-x-area-acres.txt"))

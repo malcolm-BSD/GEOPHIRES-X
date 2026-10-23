@@ -1058,7 +1058,7 @@ class HIP_RA_X:
         return "HIP_RA_X"
 
 
-def main(enable_hip_ra_logging_config=True, suppress_input_sys_argv_warnings=False):
+def main(enable_hip_ra_logging_config=True, suppress_input_sys_argv_warnings=False, raise_on_error=False):
     # set the starting directory to be the directory that this file is in
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -1080,12 +1080,16 @@ def main(enable_hip_ra_logging_config=True, suppress_input_sys_argv_warnings=Fal
         model.Calculate()
     except Exception as e:
         logger.error(f"Error occurred during model calculation: {e!s}")
+        if raise_on_error:
+            raise
 
     try:
         # write the outputs
         model.PrintOutputs()
     except Exception as e:
         logger.error(f"Error occurred during output printing: {e!s}")
+        if raise_on_error:
+            raise
 
     logger.info("HIP-RA-X application execution completed")
 

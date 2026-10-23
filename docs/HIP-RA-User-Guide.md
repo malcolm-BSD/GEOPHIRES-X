@@ -47,6 +47,18 @@ Then run:
 python -m hip_ra_x <path to input file>
 ```
 
+For worker or service integration, provide explicit artifact paths and suppress console rendering:
+
+```shell
+python -m hip_ra_x input.txt \
+  --output-file run/model-output.out \
+  --json-output-file run/result.json \
+  --no-console
+```
+
+The JSON result includes a schema version, model id and version, parsed results, and the text case report. The command
+returns a non-zero exit code when calculation or output generation fails.
+
 Example:
 
 ```shell

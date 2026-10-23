@@ -1,8 +1,8 @@
+import logging
 import os
 import sys
 from pathlib import Path
 
-from geophires_x_client.common import _get_logger
 from hip_ra import HipRaInputParameters
 from hip_ra import HipRaResult
 from hip_ra_x import hip_ra_x
@@ -11,7 +11,7 @@ from hip_ra_x.hip_ra_x_result import HipRaXResult
 
 class HipRaXClient:
     def __init__(self, enable_caching=True, logger_name="root"):
-        self._logger = _get_logger(logger_name=logger_name)
+        self._logger = logging.getLogger(logger_name)
 
     def get_hip_ra_result(self, input_params: HipRaInputParameters) -> HipRaResult:
         stash_cwd = Path.cwd()
@@ -19,7 +19,11 @@ class HipRaXClient:
 
         sys.argv = ["", input_params.as_file_path(), input_params.output_file_path]
         try:
-            hip_ra_x.main(enable_hip_ra_logging_config=False, suppress_input_sys_argv_warnings=True)
+            hip_ra_x.main(
+                enable_hip_ra_logging_config=False,
+                suppress_input_sys_argv_warnings=True,
+                raise_on_error=True,
+            )
         except Exception as e:
             raise RuntimeError(f"HIP-RA-X encountered an exception: {e!s}") from e
         except SystemExit:

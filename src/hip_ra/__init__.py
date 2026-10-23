@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -6,16 +7,14 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-# noinspection PyProtectedMember
-from geophires_x_client.common import _get_logger
 from hip_ra import HIP_RA
 
 
 class HipRaInputParameters:
-    def __init__(self, file_path_or_params_dict: Any):
+    def __init__(self, file_path_or_params_dict: Any, output_file_path: Any = None):
         if isinstance(file_path_or_params_dict, dict):
             tmp_file_path = Path(tempfile.gettempdir(), f"hip-ra-params_{uuid.uuid1()}.txt")
-            with open(tmp_file_path, "w") as f:
+            with open(tmp_file_path, "w", encoding="utf-8") as f:
                 f.writelines(
                     [", ".join([str(p) for p in param_item]) + "\n" for param_item in file_path_or_params_dict.items()]
                 )
@@ -24,8 +23,10 @@ class HipRaInputParameters:
             raise ValueError("Provide either file path (as Path or string) or parameters as dict")
 
         self._input_file_path = Path(file_path_or_params_dict)
-        self._output_file_path = Path(
-            tempfile.gettempdir(), f"hip-ra-result_{self._input_file_path.stem}_{uuid.uuid1()!s}.out"
+        self._output_file_path = (
+            Path(output_file_path)
+            if output_file_path is not None
+            else Path(tempfile.gettempdir(), f"hip-ra-result_{self._input_file_path.stem}_{uuid.uuid1()!s}.out")
         )
 
     def as_file_path(self) -> Path:
@@ -58,7 +59,7 @@ class HipRaResult:
 
 class HipRaClient:
     def __init__(self, enable_caching=True, logger_name="root"):
-        self._logger = _get_logger(logger_name=logger_name)
+        self._logger = logging.getLogger(logger_name)
 
     def get_hip_ra_result(self, input_params: HipRaInputParameters) -> HipRaResult:
         stash_cwd = Path.cwd()
