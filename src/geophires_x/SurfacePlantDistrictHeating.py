@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from geophires_x.OptionList import PlantType
-from geophires_x.Parameter import floatParameter, intParameter, strParameter, OutputParameter
+from geophires_x.Parameter import filenameParameter, floatParameter, intParameter, OutputParameter
 from geophires_x.SurfacePlant import SurfacePlant
 from geophires_x.Units import *
 import geophires_x.Model as Model
@@ -48,7 +48,7 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             ErrMessage="assume default district heating demand option (1: known heat demand profile)",
             ToolTipText="Select the method to provide the district heating demand to GEOPHIRES"
         )
-        self.dh_demand_filename = self.ParameterDict[self.dh_demand_filename.Name] = strParameter(
+        self.dh_demand_filename = self.ParameterDict[self.dh_demand_filename.Name] = filenameParameter(
             "District Heating Demand File Name",
             value='HeatDemand.csv',
             UnitType=Units.NONE,
@@ -71,7 +71,7 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             ErrMessage="assume default district heating demand data column number (2)",
             ToolTipText="Select the column number of the hourly or daily data in the district heating demand csv file (if district heating demand option is set to 1)"
         )
-        self.dh_temperature_filename = self.ParameterDict[self.dh_temperature_filename.Name] = strParameter(
+        self.dh_temperature_filename = self.ParameterDict[self.dh_temperature_filename.Name] = filenameParameter(
             "Temperature File Name",
             value='Temperature.csv',
             UnitType=Units.NONE,

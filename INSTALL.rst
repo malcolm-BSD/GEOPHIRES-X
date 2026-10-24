@@ -113,9 +113,6 @@ If you followed the editable installation example above, put this code in ``my-g
 You will then see output including a case report::
 
     (venv) ➜  my-geophires-project python main.py
-    No valid plant outlet pressure provided. GEOPHIRES will assume default plant outlet pressure (100 kPa)
-    No valid plant outlet pressure provided. GEOPHIRES will assume default plant outlet pressure (100 kPa)
-
                                    *****************
                                    ***CASE REPORT***
                                    *****************

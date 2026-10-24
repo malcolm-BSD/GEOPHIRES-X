@@ -1364,14 +1364,8 @@ class SurfacePlant:
                 if self.setinjectionpressurefixed:
                     self.usebuiltinoutletplantcorrelation.value = False
                     self.plant_outlet_pressure.value = 100
-                    msg = (f'No valid plant outlet pressure provided. '
-                           f'GEOPHIRES will assume default plant outlet pressure ({self.plant_outlet_pressure.value} kPa)')
-                    warn_once(('default_plant_outlet_pressure', self.plant_outlet_pressure.value), msg)
                 else:
                     self.usebuiltinoutletplantcorrelation.value = True
-                    msg = (f'No valid plant outlet pressure provided. GEOPHIRES will calculate plant outlet pressure '
-                           f'based on production wellhead pressure and surface equipment pressure drop of 10 psi')
-                    warn_once(('calculated_plant_outlet_pressure', 10), msg)
 
         else:
             model.logger.info('No parameters read because no content provided')
