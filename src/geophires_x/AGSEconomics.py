@@ -68,6 +68,18 @@ class AGSEconomics(Economics.Economics):
                 "group": "Operating costs",
                 "is_controller": False,
                 "order": 1580,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Is AGS",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the AGS economics calculations.",
+                },
             },
         )
 
@@ -88,6 +100,18 @@ class AGSEconomics(Economics.Economics):
                 "group": "Capital costs",
                 "is_controller": False,
                 "order": 1590,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Is AGS",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the AGS economics calculations.",
+                },
             },
         )
         self.Power_plant_cost_per_kWe.Required = True

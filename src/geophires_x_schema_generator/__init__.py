@@ -26,6 +26,7 @@ from geophires_x.EconomicsAddOns import EconomicsAddOns
 from geophires_x.GeoPHIRESUtils import json_dumpse
 from geophires_x.Parameter import Parameter
 from geophires_x.SurfacePlantAGS import SurfacePlantAGS
+from geophires_x.SurfacePlantAbsorptionChiller import SurfacePlantAbsorptionChiller
 from geophires_x.SurfacePlantSUTRA import SurfacePlantSUTRA
 from geophires_x.SUTRAEconomics import SUTRAEconomics
 from geophires_x.SUTRAReservoir import SUTRAReservoir
@@ -208,6 +209,7 @@ class GeophiresXSchemaGenerator:
             (SUTRAWellBores(dummy_model), "Well Bores"),
             (dummy_model.surfaceplant, "Surface Plant"),
             (SurfacePlantAGS(dummy_model), "Surface Plant"),
+            (SurfacePlantAbsorptionChiller(dummy_model), "Surface Plant"),
             (SurfacePlantSUTRA(dummy_model), "Surface Plant"),
             (dummy_model.economics, "Economics"),
             (AGSEconomics(dummy_model), "Economics"),
@@ -220,117 +222,28 @@ class GeophiresXSchemaGenerator:
     def get_schema_title(self) -> str:
         return "GEOPHIRES"
 
-    def get_parameter_dependencies(self) -> dict[str, dict[str, object]]:
+    def get_parameter_dependencies(
+        self,
+        input_params: dict[str, dict[str, object]],
+    ) -> dict[str, dict[str, object]]:
+        """Read dependency rules directly from each Parameter object's UI metadata."""
         dependencies: dict[str, dict[str, object]] = {}
-
-        def enabled_for(
-            parameter_names: list[str],
-            enabled_when: dict[str, list[object]],
-            reason: str,
-        ) -> None:
-            metadata = {
-                "depends_on": list(enabled_when),
-                "effect": "enable",
-                "match": "all",
-                "conditions": [
-                    {
-                        "parameter": controller,
-                        "operator": "in",
-                        "values": allowed_values,
-                    }
-                    for controller, allowed_values in enabled_when.items()
-                ],
-                "reason": reason,
-            }
-            for parameter_name in parameter_names:
-                dependencies[parameter_name] = metadata
-
-        enabled_for(
-            [
-                "Cylindrical Reservoir Input Depth",
-                "Cylindrical Reservoir Output Depth",
-                "Cylindrical Reservoir Length",
-                "Cylindrical Reservoir Radius of Effect",
-                "Cylindrical Reservoir Radius of Effect Factor",
-                "Drilled length",
-            ],
-            {"Reservoir Model": [0]},
-            "Used only by the simple cylindrical reservoir model.",
-        )
-        enabled_for(
-            ["Gringarten-Stehfest Precision"],
-            {"Reservoir Model": [1]},
-            "Used only by the multiple-parallel-fractures reservoir model.",
-        )
-        enabled_for(
-            ["Drawdown Parameter"],
-            {"Reservoir Model": [3, 4]},
-            "Used by the single-fracture and annual-percentage thermal drawdown models.",
-        )
-        enabled_for(
-            ["Drawdown Parameter Schedule"],
-            {"Reservoir Model": [4]},
-            "Used only by the annual-percentage thermal drawdown model.",
-        )
-        enabled_for(
-            [
-                "Reservoir Output File Name",
-                "Reservoir Output Profile",
-                "Reservoir Output Profile Time Step",
-            ],
-            {"Reservoir Model": [5]},
-            "Used only by the user-provided temperature-profile reservoir model.",
-        )
-        enabled_for(
-            [
-                "TOUGH2 Executable Path",
-                "TOUGH2 Model/File Name",
-                "Reservoir Thickness",
-                "Reservoir Width",
-            ],
-            {"Reservoir Model": [6]},
-            "Used only by the TOUGH2 reservoir model.",
-        )
-        enabled_for(
-            [
-                "SUTRA Annual Heat File Name",
-                "SUTRA Heat Budget File Name",
-                "SUTRA Balance and Storage Well Output File Name",
-            ],
-            {"Reservoir Model": [7]},
-            "Used only by the SUTRA reservoir model.",
-        )
-        enabled_for(
-            [
-                "Flowrate Model",
-                "Injection Temperature Model",
-                "SBT Accuracy Desired",
-                "SBT Percent Implicit Euler Scheme",
-                "SBT Initial Timestep Count",
-                "SBT Final Timestep Count",
-                "SBT Initial to Final Timestep Transition",
-                "SBT Generate Wireframe Graphics",
-                "Vertical Section Length",
-                "Vertical Wellbore Spacing",
-                "Lateral Spacing",
-                "Lateral Inclination Angle",
-                "Discretization Length",
-                "Junction Depth",
-                "Lateral Endpoint Depth",
-            ],
-            {"Reservoir Model": [8]},
-            "Used only by the SBT reservoir model.",
-        )
-        enabled_for(
-            ["Flowrate File"],
-            {"Reservoir Model": [8], "Flowrate Model": [2]},
-            "Used only when SBT flow rates come from a file.",
-        )
-        enabled_for(
-            ["Injection Temperature File"],
-            {"Reservoir Model": [8], "Injection Temperature Model": [2]},
-            "Used only when SBT injection temperatures come from a file.",
-        )
+        for name, parameter in input_params.items():
+            ui_metadata = parameter.get("UI")
+            if not isinstance(ui_metadata, dict):
+                continue
+            dependency = ui_metadata.get("dependency")
+            if dependency is None:
+                continue
+            if not isinstance(dependency, dict):
+                raise ValueError(f"UI metadata dependency for {name} must be a dictionary or None")
+            normalized_dependency = dict(dependency)
+            conditions = normalized_dependency.get("conditions")
+            if isinstance(conditions, list):
+                normalized_dependency["depends_on"] = list(
+                    dict.fromkeys(condition.get("parameter") for condition in conditions if isinstance(condition, dict))
+                )
+            dependencies[name] = normalized_dependency
         return dependencies
 
     def get_parameter_ui_metadata(
@@ -347,12 +260,21 @@ class GeophiresXSchemaGenerator:
             "Economics": "economics",
         }
         metadata_by_parameter: dict[str, dict[str, object]] = {}
+        used_orders_by_tab: dict[str, set[int]] = {}
         for name, parameter in input_params.items():
             metadata = parameter.get("UI")
             if not isinstance(metadata, dict):
                 raise ValueError(f"Parameter {name} must define UI metadata")
             metadata = dict(metadata)
             metadata["tab"] = tab_names.get(metadata.get("tab"), metadata.get("tab"))
+            tab = str(metadata["tab"])
+            order = metadata.get("order")
+            if isinstance(order, int) and not isinstance(order, bool):
+                used_orders = used_orders_by_tab.setdefault(tab, set())
+                while order in used_orders:
+                    order += 1
+                metadata["order"] = order
+                used_orders.add(order)
             metadata_by_parameter[name] = metadata
         return metadata_by_parameter
 
@@ -406,7 +328,7 @@ class GeophiresXSchemaGenerator:
             if param["ValuesEnum"]:
                 properties[param_name]["enum_values"] = param["ValuesEnum"]
 
-        dependencies = self.get_parameter_dependencies()
+        dependencies = self.get_parameter_dependencies(input_params)
         for param_name, dependency in dependencies.items():
             if param_name not in properties:
                 raise ValueError(f"Dependency metadata references unknown parameter: {param_name}")
@@ -420,16 +342,12 @@ class GeophiresXSchemaGenerator:
             if dependency.get("effect") == "enable":
                 conditions = dependency.get("conditions")
                 if dependency.get("match") not in {"all", "any"}:
-                    raise ValueError(
-                        f"Dependency metadata for {param_name} must use an all or any match strategy"
-                    )
+                    raise ValueError(f"Dependency metadata for {param_name} must use an all or any match strategy")
                 if not isinstance(conditions, list) or not conditions:
                     raise ValueError(f"Dependency metadata for {param_name} must define conditions")
                 condition_parameters = [condition.get("parameter") for condition in conditions]
                 if set(condition_parameters) != set(dependency["depends_on"]):
-                    raise ValueError(
-                        f"Dependency metadata for {param_name} must define every depends_on parameter"
-                    )
+                    raise ValueError(f"Dependency metadata for {param_name} must define every depends_on parameter")
                 for condition in conditions:
                     controller = condition.get("parameter")
                     allowed_values = condition.get("values")
@@ -456,7 +374,7 @@ class GeophiresXSchemaGenerator:
         for param_name, ui_metadata in ui_metadata_by_parameter.items():
             if param_name not in properties:
                 raise ValueError(f"UI metadata references unknown parameter: {param_name}")
-            required_ui_fields = {"tab", "group", "is_controller", "order"}
+            required_ui_fields = {"tab", "group", "is_controller", "order", "dependency"}
             if set(ui_metadata) != required_ui_fields:
                 raise ValueError(
                     f"UI metadata for {param_name} must contain exactly these fields: {sorted(required_ui_fields)}"
@@ -474,8 +392,11 @@ class GeophiresXSchemaGenerator:
             if not isinstance(ui_metadata.get("is_controller"), bool):
                 raise ValueError(f"UI metadata is_controller for {param_name} must be a boolean")
             order = ui_metadata.get("order")
-            if not isinstance(order, int) or isinstance(order, bool) or order < 1:
-                raise ValueError(f"UI metadata order for {param_name} must be a positive integer")
+            if not isinstance(order, int) or isinstance(order, bool) or order < 0:
+                raise ValueError(f"UI metadata order for {param_name} must be a non-negative integer")
+            dependency = ui_metadata.get("dependency")
+            if dependency is not None and not isinstance(dependency, dict):
+                raise ValueError(f"UI metadata dependency for {param_name} must be a dictionary or None")
             properties[param_name]["x-ui"] = ui_metadata
 
         request_schema = {
@@ -763,7 +684,10 @@ class HipRaXSchemaGenerator(GeophiresXSchemaGenerator):
     def get_schema_title(self) -> str:
         return "HIP-RA-X"
 
-    def get_parameter_dependencies(self) -> dict[str, dict[str, object]]:
+    def get_parameter_dependencies(
+        self,
+        _input_params: dict[str, dict[str, object]],
+    ) -> dict[str, dict[str, object]]:
         return HIP_RA_X.PARAMETER_DEPENDENCIES
 
     def get_parameter_ui_metadata(

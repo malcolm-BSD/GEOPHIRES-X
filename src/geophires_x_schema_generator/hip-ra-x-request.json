@@ -159,7 +159,7 @@
         "depends_on": [
           "Reservoir Temperature"
         ],
-        "behavior": "derived_when_omitted"
+        "behavior": "derived_when_omitted_or_below_minimum"
       }
     },
     "Reservoir Pressure": {
@@ -174,7 +174,7 @@
         "depends_on": [
           "Reservoir Depth"
         ],
-        "behavior": "derived_when_omitted"
+        "behavior": "derived_when_omitted_or_below_minimum"
       }
     },
     "Recoverable Heat from Rock": {

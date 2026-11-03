@@ -59,6 +59,12 @@ class MPFReservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 370,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [1]}],
+                    "reason": "Used only by the multiple-parallel-fractures reservoir model.",
+                },
             },
         )
 

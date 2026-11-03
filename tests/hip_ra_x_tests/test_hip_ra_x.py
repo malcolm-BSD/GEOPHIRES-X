@@ -162,6 +162,25 @@ class HipRaXTestCase(BaseTestCase):
         hip_ra.Calculate()
         assert hip_ra.reservoir_volume.value == hip_ra.reservoir_area.value * hip_ra.reservoir_thickness.value
 
+    def test_calculate_derives_explicit_depth_and_pressure_sentinels(self):
+        def set_and_read_input_params(hip_ra):
+            hip_ra.InputParameters = {
+                param.Name: param
+                for param in [
+                    ParameterEntry(Name="Reservoir Depth", sValue="-1"),
+                    ParameterEntry(Name="Reservoir Pressure", sValue="-1"),
+                ]
+            }
+            hip_ra.read_parameters()
+
+        hip_ra = self._new_hip_ra_test_instance(pre_re_stash_runner=set_and_read_input_params)
+        hip_ra.Calculate()
+
+        self.assertAlmostEqual(4.5, hip_ra.reservoir_depth.value)
+        self.assertGreater(hip_ra.reservoir_pressure.value, 0.0)
+        self.assertFalse(hip_ra.reservoir_depth.Provided)
+        self.assertFalse(hip_ra.reservoir_pressure.Provided)
+
     @unittest.skip(reason="FIXME: Race condition if tests are run in parallel")
     def test_standard_outputs(self):
         """Prints the standard outputs to the output file"""
@@ -266,6 +285,99 @@ class HipRaXTestCase(BaseTestCase):
         # Assert that the changed parameters have been updated
         assert hip_ra.reservoir_temperature.value == 200.0
         assert hip_ra.reservoir_porosity.value == 25.0
+
+    def test_minus_one_sentinels_report_automatic_and_legacy_behavior(self):
+        def set_and_read_input_params(hip_ra):
+            hip_ra.InputParameters = {
+                name: ParameterEntry(Name=name, sValue="-1")
+                for name in [
+                    "Fluid Specific Heat Capacity",
+                    "Density Of Reservoir Fluid",
+                    "Rock Recoverable Heat",
+                    "Fluid Recoverable Heat",
+                    "Reservoir Depth",
+                    "Reservoir Pressure",
+                ]
+            }
+            hip_ra.read_parameters()
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            hip_ra = self._new_hip_ra_test_instance(pre_re_stash_runner=set_and_read_input_params)
+
+        messages = stdout.getvalue()
+        self.assertNotIn("outside of valid range", messages)
+        self.assertEqual(4, messages.count("HIP-RA-X's -1 sentinel"))
+        self.assertIn("Fluid Specific Heat Capacity", messages)
+        self.assertIn("calculate it from reservoir temperature and pressure", messages)
+        self.assertIn("calculate hydrostatic pressure from reservoir depth", messages)
+        self.assertIn("Legacy parameter Rock Recoverable Heat was set to -1", messages)
+        self.assertIn("Legacy parameter Fluid Recoverable Heat was set to -1", messages)
+        self.assertIn("use its synonym Recoverable Heat from Rock", messages)
+        self.assertIn("use its synonym Recoverable Fluid Factor", messages)
+
+        hip_ra.Calculate()
+        self.assertGreaterEqual(hip_ra.fluid_heat_capacity.value, hip_ra.fluid_heat_capacity.Min)
+        self.assertGreaterEqual(hip_ra.fluid_density.value, hip_ra.fluid_density.Min)
+        self.assertGreaterEqual(hip_ra.reservoir_depth.value, hip_ra.reservoir_depth.Min)
+        self.assertGreaterEqual(hip_ra.reservoir_pressure.value, hip_ra.reservoir_pressure.Min)
+        self.assertEqual(hip_ra.recoverable_rock_heat.value, hip_ra.rock_recoverable_heat.value)
+        self.assertEqual(hip_ra.recoverable_fluid_factor.value, hip_ra.fluid_recoverable_heat.value)
+
+    def test_legacy_recovery_parameters_are_synonyms_for_active_parameters(self):
+        def set_and_read_input_params(hip_ra):
+            hip_ra.InputParameters = {
+                "Rock Recoverable Heat": ParameterEntry(Name="Rock Recoverable Heat", sValue="0.61"),
+                "Fluid Recoverable Heat": ParameterEntry(Name="Fluid Recoverable Heat", sValue="0.42"),
+                "Recoverable Heat from Rock": ParameterEntry(Name="Recoverable Heat from Rock", sValue="0.75"),
+                "Recoverable Fluid Factor": ParameterEntry(Name="Recoverable Fluid Factor", sValue="0.5"),
+            }
+            hip_ra.read_parameters()
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            hip_ra = self._new_hip_ra_test_instance(pre_re_stash_runner=set_and_read_input_params)
+
+        self.assertEqual(0.61, hip_ra.recoverable_rock_heat.value)
+        self.assertEqual(0.61, hip_ra.rock_recoverable_heat.value)
+        self.assertEqual(0.42, hip_ra.recoverable_fluid_factor.value)
+        self.assertEqual(0.42, hip_ra.fluid_recoverable_heat.value)
+        self.assertIn(
+            "Legacy parameter Rock Recoverable Heat is a synonym for Recoverable Heat from Rock",
+            stdout.getvalue(),
+        )
+        self.assertIn(
+            "Legacy parameter Fluid Recoverable Heat is a synonym for Recoverable Fluid Factor",
+            stdout.getvalue(),
+        )
+
+        hip_ra.Calculate()
+        expected_recoverable_fluid_volume = (
+            hip_ra.reservoir_volume.value * (hip_ra.reservoir_porosity.value / 100.0) * 0.42
+        )
+        expected_stored_rock_heat = 0.61 * hip_ra.enthalpy_rock.value * hip_ra.mass_rock.value
+        self.assertAlmostEqual(expected_recoverable_fluid_volume, hip_ra.volume_recoverable_fluid.value)
+        self.assertAlmostEqual(expected_stored_rock_heat, hip_ra.stored_heat_rock.value)
+
+    def test_active_recovery_parameters_take_precedence_over_legacy_synonyms(self):
+        def set_and_read_input_params(hip_ra):
+            hip_ra.InputParameters = {
+                "Rock Recoverable Heat": ParameterEntry(Name="Rock Recoverable Heat", sValue="0.61"),
+                "Recoverable Heat from Rock": ParameterEntry(Name="Recoverable Heat from Rock", sValue="0.72"),
+                "Fluid Recoverable Heat": ParameterEntry(Name="Fluid Recoverable Heat", sValue="0.42"),
+                "Recoverable Fluid Factor": ParameterEntry(Name="Recoverable Fluid Factor", sValue="0.53"),
+            }
+            hip_ra.read_parameters()
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            hip_ra = self._new_hip_ra_test_instance(pre_re_stash_runner=set_and_read_input_params)
+
+        self.assertEqual(0.72, hip_ra.recoverable_rock_heat.value)
+        self.assertEqual(0.72, hip_ra.rock_recoverable_heat.value)
+        self.assertEqual(0.53, hip_ra.recoverable_fluid_factor.value)
+        self.assertEqual(0.53, hip_ra.fluid_recoverable_heat.value)
+        self.assertEqual(2, stdout.getvalue().count("HIP-RA-X will use"))
 
     def test_handle_special_cases(self):
         def set_and_read_input_params(hip_ra):

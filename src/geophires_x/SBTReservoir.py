@@ -537,6 +537,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Wellbore hydraulics",
                 "is_controller": True,
                 "order": 20,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.flow_rate_file = self.ParameterDict[self.flow_rate_file.Name] = strParameter(
@@ -550,6 +556,15 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Reservoir properties",
                 "is_controller": False,
                 "order": 470,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                        {"parameter": "Flowrate Model", "operator": "in", "values": [2]},
+                    ],
+                    "reason": "Used only when SBT flow rates come from a file.",
+                },
             },
         )
         self.injection_temperature_model = self.ParameterDict[self.injection_temperature_model.Name] = intParameter(
@@ -565,6 +580,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Injection conditions",
                 "is_controller": True,
                 "order": 10,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.injection_temperature_file = self.ParameterDict[self.injection_temperature_file.Name] = strParameter(
@@ -578,6 +599,15 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Reservoir thermal properties",
                 "is_controller": False,
                 "order": 480,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                        {"parameter": "Injection Temperature Model", "operator": "in", "values": [2]},
+                    ],
+                    "reason": "Used only when SBT injection temperatures come from a file.",
+                },
             },
         )
         self.SBTAccuracyDesired = self.ParameterDict[self.SBTAccuracyDesired.Name] = intParameter(
@@ -594,6 +624,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 490,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.percent_implicit = self.ParameterDict[self.percent_implicit.Name] = floatParameter(
@@ -615,6 +651,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 500,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.initial_timestep_count = self.ParameterDict[self.initial_timestep_count.Name] = intParameter(
@@ -629,6 +671,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 510,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.final_timestep_count = self.ParameterDict[self.final_timestep_count.Name] = floatParameter(
@@ -644,6 +692,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 520,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.initial_final_timestep_transition = self.ParameterDict[self.initial_final_timestep_transition.Name] = floatParameter(
@@ -661,6 +715,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 530,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.generate_wireframe_graphics = self.ParameterDict[self.generate_wireframe_graphics.Name] = boolParameter(
@@ -674,6 +734,12 @@ class SBTReservoir(CylindricalReservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 540,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
 

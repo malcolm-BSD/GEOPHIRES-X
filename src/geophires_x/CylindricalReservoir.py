@@ -59,6 +59,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 410,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
 
@@ -79,6 +85,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 420,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
         self.Length = self.ParameterDict[self.Length.Name] = floatParameter(
@@ -98,6 +110,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 430,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
         self.RadiusOfEffect = self.ParameterDict[self.RadiusOfEffect.Name] = floatParameter(
@@ -117,6 +135,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 440,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
         self.RadiusOfEffectFactor = self.ParameterDict[self.RadiusOfEffectFactor.Name] = floatParameter(
@@ -136,6 +160,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 450,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
 
@@ -160,6 +190,12 @@ class CylindricalReservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 460,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [0]}],
+                    "reason": "Used only by the simple cylindrical reservoir model.",
+                },
             },
         )
         self.waterloss = self.ParameterDict[self.waterloss.Name] = floatParameter(

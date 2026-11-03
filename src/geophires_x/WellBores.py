@@ -1398,6 +1398,12 @@ class WellBores:
                 "group": "Wellbore parameters",
                 "is_controller": False,
                 "order": 290,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
 

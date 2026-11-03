@@ -41,6 +41,12 @@ class TOUGH2Reservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 580,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
+                    "reason": "Used only by the TOUGH2 reservoir model.",
+                },
             },
         )
         self.tough2modelfilename = self.ParameterDict[self.tough2modelfilename.Name] = strParameter(
@@ -54,6 +60,12 @@ class TOUGH2Reservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 590,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
+                    "reason": "Used only by the TOUGH2 reservoir model.",
+                },
             },
         )
         self.resthickness = self.ParameterDict[self.resthickness.Name] = floatParameter(
@@ -71,6 +83,12 @@ class TOUGH2Reservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 600,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
+                    "reason": "Used only by the TOUGH2 reservoir model.",
+                },
             },
         )
         self.reswidth = self.ParameterDict[self.reswidth.Name] = floatParameter(
@@ -87,6 +105,12 @@ class TOUGH2Reservoir(Reservoir):
                 "group": "Reservoir geometry",
                 "is_controller": False,
                 "order": 610,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
+                    "reason": "Used only by the TOUGH2 reservoir model.",
+                },
             },
         )
 

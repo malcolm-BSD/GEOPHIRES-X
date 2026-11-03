@@ -13,6 +13,7 @@ import pint
 from rich.console import Console
 from rich.table import Table
 
+from geophires_x.formula_evaluator import resolve_parameter_formulas
 from geophires_x.GeoPHIRESUtils import RecoverableHeat
 from geophires_x.GeoPHIRESUtils import UtilEff_func
 from geophires_x.GeoPHIRESUtils import celsius_to_kelvin
@@ -90,11 +91,11 @@ class HIP_RA_X:
     PARAMETER_DEPENDENCIES: ClassVar[dict[str, dict[str, object]]] = {
         "Reservoir Depth": {
             "depends_on": ["Reservoir Temperature"],
-            "behavior": "derived_when_omitted",
+            "behavior": "derived_when_omitted_or_below_minimum",
         },
         "Reservoir Pressure": {
             "depends_on": ["Reservoir Depth"],
-            "behavior": "derived_when_omitted",
+            "behavior": "derived_when_omitted_or_below_minimum",
         },
         "Density Of Reservoir Fluid": {
             "depends_on": ["Reservoir Temperature", "Reservoir Pressure"],
@@ -104,6 +105,28 @@ class HIP_RA_X:
             "depends_on": ["Reservoir Temperature", "Reservoir Pressure"],
             "behavior": "derived_when_below_minimum",
         },
+    }
+
+    _SENTINEL_INPUT_EXPLANATIONS: ClassVar[dict[str, str]] = {
+        "Fluid Specific Heat Capacity": (
+            "HIP-RA-X will calculate it from reservoir temperature and pressure using water properties."
+        ),
+        "Density Of Reservoir Fluid": (
+            "HIP-RA-X will calculate it from reservoir temperature and pressure using water properties."
+        ),
+        "Reservoir Depth": (
+            "HIP-RA-X will calculate it from reservoir temperature using a 15 degC ambient temperature and a "
+            "30 degC/km gradient."
+        ),
+        "Reservoir Pressure": (
+            "HIP-RA-X will calculate hydrostatic pressure from reservoir depth using an assumed water density of "
+            "1000 kg/m3."
+        ),
+    }
+
+    _PARAMETER_ALIASES: ClassVar[dict[str, str]] = {
+        "Rock Recoverable Heat": "Recoverable Heat from Rock",
+        "Fluid Recoverable Heat": "Recoverable Fluid Factor",
     }
 
     def __init__(self, enable_hip_ra_logging_config=True):
@@ -131,8 +154,15 @@ class HIP_RA_X:
         self.ParameterDict: dict[str, Parameter] = {}
         self.OutputParameterDict: dict[str, OutputParameter] = {}
         self.InputParameters: dict[str, ParameterEntry] = {}  # input parameters the user wants to change
+        input_file = sys.argv[1] if len(sys.argv) > 1 else None
+        input_file_text = str(input_file) if input_file else ""
+        self.input_file_path = (
+            Path(input_file_text).resolve() if input_file_text and not input_file_text.startswith("http") else None
+        )
 
         def parameter_dict_entry(param: Parameter) -> Parameter:
+            if isinstance(param, (floatParameter, intParameter)):
+                param.AllowFormulaInput = True
             self.ParameterDict[param.Name] = param
             return param
 
@@ -645,12 +675,60 @@ class HIP_RA_X:
             read_input_file(logger=self.logger, suppress_input_sys_argv_warnings=suppress_input_sys_argv_warnings)
         )
 
+        canonical_defaults_overridden_by_aliases: set[str] = set()
         if len(self.InputParameters) > 0:
             for item in self.ParameterDict.items():
                 ParameterToModify = item[1]
                 key = ParameterToModify.Name.strip()
                 if key in self.InputParameters:
+                    if key in canonical_defaults_overridden_by_aliases:
+                        continue
                     ParameterReadIn = self.InputParameters[key]
+
+                    canonical_name = self._PARAMETER_ALIASES.get(key)
+                    if canonical_name is not None:
+                        canonical_parameter = self.ParameterDict[canonical_name]
+                        canonical_input = self.InputParameters.get(canonical_name)
+                        if self._is_minus_one_sentinel(ParameterReadIn, ParameterToModify):
+                            message = (
+                                f"Notice: Legacy parameter {key} was set to -1. HIP-RA-X will use its synonym "
+                                f"{canonical_name}, including that parameter's supplied value or default."
+                            )
+                            print(message)
+                            self.logger.info(message)
+                        elif canonical_input is not None and not self._input_matches_parameter_default(
+                            canonical_input, canonical_parameter
+                        ):
+                            message = (
+                                f"Notice: Both legacy parameter {key} and its synonym {canonical_name} were provided. "
+                                f"HIP-RA-X will use {canonical_name}."
+                            )
+                            print(message)
+                            self.logger.info(message)
+                        else:
+                            ReadParameter(ParameterReadIn, canonical_parameter, self)
+                            if canonical_input is not None:
+                                canonical_defaults_overridden_by_aliases.add(canonical_name)
+                            message = (
+                                f"Notice: Legacy parameter {key} is a synonym for {canonical_name}; "
+                                f"its supplied value will be used as {canonical_name}."
+                            )
+                            print(message)
+                            self.logger.info(message)
+                        continue
+
+                    sentinel_explanation = self._sentinel_input_explanation(ParameterReadIn, ParameterToModify)
+                    if sentinel_explanation is not None:
+                        ParameterToModify.value = ParameterToModify.DefaultValue
+                        ParameterToModify.Provided = True
+                        ParameterToModify.Valid = True
+                        message = (
+                            f"Notice: Parameter given ({ParameterReadIn.sValue}) for {ParameterToModify.Name} is "
+                            f"HIP-RA-X's -1 sentinel, not an out-of-range physical value. {sentinel_explanation}"
+                        )
+                        print(message)
+                        self.logger.info(message)
+                        continue
 
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, self)
@@ -666,7 +744,41 @@ class HIP_RA_X:
                     self.InputParameters[key].sValue
                 )[0]
 
+        resolve_parameter_formulas(self.ParameterDict.values(), self.logger)
+        self._synchronize_provided_aliases()
+
         self.logger.info(f"complete {__class__.__name__!s}: {__name__}")
+
+    @staticmethod
+    def _input_matches_parameter_default(parameter_read_in: ParameterEntry, parameter: Parameter) -> bool:
+        try:
+            supplied_value = float(parameter_read_in.sValue.strip())
+            default_value = float(parameter.DefaultValue)
+        except (TypeError, ValueError):
+            return parameter_read_in.sValue.strip() == str(parameter.DefaultValue)
+        return supplied_value == default_value
+
+    @classmethod
+    def _is_minus_one_sentinel(cls, parameter_read_in: ParameterEntry, parameter: Parameter) -> bool:
+        return parameter.DefaultValue == -1.0 and cls._input_matches_parameter_default(parameter_read_in, parameter)
+
+    def _synchronize_provided_aliases(self) -> None:
+        for alias_name, canonical_name in self._PARAMETER_ALIASES.items():
+            if alias_name not in self.InputParameters:
+                continue
+            alias_parameter = self.ParameterDict[alias_name]
+            canonical_parameter = self.ParameterDict[canonical_name]
+            alias_parameter.value = canonical_parameter.value
+            alias_parameter.CurrentUnits = canonical_parameter.CurrentUnits
+            alias_parameter.Provided = True
+            alias_parameter.Valid = canonical_parameter.Valid
+
+    @classmethod
+    def _sentinel_input_explanation(cls, parameter_read_in: ParameterEntry, parameter: Parameter) -> str | None:
+        explanation = cls._SENTINEL_INPUT_EXPLANATIONS.get(parameter.Name)
+        if explanation is None:
+            return None
+        return explanation if cls._is_minus_one_sentinel(parameter_read_in, parameter) else None
 
     def Calculate(self):
         self.logger.info(f"Init {__class__!s}: {__class__.__name__!s}: {__name__}")
@@ -683,21 +795,23 @@ class HIP_RA_X:
                 * self.recoverable_fluid_factor.value
             )
 
-            if not self.reservoir_depth.Provided:
+            if not self.reservoir_depth.Provided or self.reservoir_depth.value < self.reservoir_depth.Min:
                 self.logger.info(
-                    f"Deriving value of {self.reservoir_depth.Name} because provided value "
-                    f"({self.reservoir_depth.value}) was not provided)"
+                    f"Deriving value of {self.reservoir_depth.Name} because its value "
+                    f"({self.reservoir_depth.value}) was omitted or below the minimum ({self.reservoir_depth.Min})"
                 )
                 # assume ambient Temperature of 15 C and 30C/km
                 self.reservoir_depth.value = (self.reservoir_temperature.value - 15.0) / 30.0
+                self.reservoir_depth.Provided = False
 
-            if not self.reservoir_pressure.Provided:
+            if not self.reservoir_pressure.Provided or self.reservoir_pressure.value < self.reservoir_pressure.Min:
                 self.logger.info(
-                    f"Deriving value of {self.reservoir_pressure.Name} because provided value "
-                    f"({self.reservoir_pressure.value}) was not provided)"
+                    f"Deriving value of {self.reservoir_pressure.Name} because its value "
+                    f"({self.reservoir_pressure.value}) was omitted or below the minimum ({self.reservoir_pressure.Min})"
                 )
                 # Assumes a water density of 1.0 g/cm3, which is high, since the water density decreases with depth
                 self.reservoir_pressure.value = static_pressure_MPa(1000.0, self.reservoir_depth.value * 1000.0)
+                self.reservoir_pressure.Provided = False
 
             if self.fluid_density.value < self.fluid_density.Min:
                 self.logger.info(

@@ -25,6 +25,35 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "enable",
             request_schema["properties"]["Drawdown Parameter"]["x-dependencies"]["effect"],
         )
+        self.assertEqual(
+            [{"parameter": "Economic Model", "operator": "in", "values": [1]}],
+            request_schema["properties"]["Fixed Charge Rate"]["x-dependencies"]["conditions"],
+        )
+        self.assertEqual(
+            [{"parameter": "Economic Model", "operator": "in", "values": [2, 5]}],
+            request_schema["properties"]["Discount Rate"]["x-dependencies"]["conditions"],
+        )
+
+        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
+        input_parameters = json.loads(input_parameters_json)
+        source_dependencies = {
+            name: parameter["UI"]["dependency"]
+            for name, parameter in input_parameters.items()
+            if parameter["UI"]["dependency"] is not None
+        }
+        schema_dependencies = {
+            name: definition["x-dependencies"]
+            for name, definition in request_schema["properties"].items()
+            if "x-dependencies" in definition
+        }
+        self.assertEqual(114, len(source_dependencies))
+        self.assertEqual(set(source_dependencies), set(schema_dependencies))
+        for name, source_dependency in source_dependencies.items():
+            with self.subTest(parameter=name):
+                emitted_dependency = {
+                    key: value for key, value in schema_dependencies[name].items() if key != "depends_on"
+                }
+                self.assertEqual(source_dependency, emitted_dependency)
 
     def test_geophires_x_ui_metadata_promotes_controllers_to_project(self):
         generator = GeophiresXSchemaGenerator()
@@ -33,13 +62,18 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         request_schema, _ = generator.generate_json_schema()
         properties = request_schema["properties"]
 
-        self.assertEqual(334, len(properties))
+        self.assertEqual(353, len(properties))
         self.assertTrue(all("x-ui" in definition for definition in properties.values()))
         self.assertTrue(all("UI" in definition for definition in input_parameters.values()))
         self.assertEqual("Project", input_parameters["Is AGS"]["UI"]["tab"])
         self.assertEqual(
-            {"tab", "group", "is_controller", "order"},
+            {"tab", "group", "is_controller", "order", "dependency"},
             set(input_parameters["Reservoir Depth"]["UI"]),
+        )
+        self.assertIsNone(input_parameters["Reservoir Depth"]["UI"]["dependency"])
+        self.assertEqual(
+            [2, 5],
+            input_parameters["Discount Rate"]["UI"]["dependency"]["conditions"][0]["values"],
         )
         self.assertEqual("project", properties["Economic Model"]["x-ui"]["tab"])
         self.assertTrue(properties["Economic Model"]["x-ui"]["is_controller"])
@@ -50,6 +84,8 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertEqual(10, properties["Reservoir Depth"]["x-ui"]["order"])
         self.assertEqual("wellbores", properties["Number of Production Wells"]["x-ui"]["tab"])
         self.assertEqual("economics", properties["Fixed Internal Rate"]["x-ui"]["tab"])
+        self.assertEqual("surface-plant", properties["Use Advanced Absorption Chiller"]["x-ui"]["tab"])
+        self.assertIn("Absorption Chiller Effect Type", properties)
 
         expected_tabs = {
             "Is AGS": "project",
@@ -77,7 +113,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         orders_by_tab: dict[str, list[int]] = {}
         for definition in properties.values():
             ui_metadata = definition["x-ui"]
-            self.assertGreater(ui_metadata["order"], 0)
+            self.assertGreaterEqual(ui_metadata["order"], 0)
             self.assertIsInstance(ui_metadata["group"], str)
             orders_by_tab.setdefault(ui_metadata["tab"], []).append(ui_metadata["order"])
         self.assertTrue(all(len(orders) == len(set(orders)) for orders in orders_by_tab.values()))
@@ -88,7 +124,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertEqual(
             {
                 "depends_on": ["Reservoir Temperature"],
-                "behavior": "derived_when_omitted",
+                "behavior": "derived_when_omitted_or_below_minimum",
             },
             request_schema["properties"]["Reservoir Depth"]["x-dependencies"],
         )

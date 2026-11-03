@@ -73,6 +73,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 350,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.vertical_wellbore_spacing = self.ParameterDict[self.vertical_wellbore_spacing.Name] = floatParameter(
@@ -91,6 +97,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 360,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.lateral_spacing = self.ParameterDict[self.lateral_spacing.Name] = floatParameter(
@@ -109,6 +121,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 370,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.lateral_inclination_angle = self.ParameterDict[self.lateral_inclination_angle.Name] = floatParameter(
@@ -126,6 +144,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 380,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.element_length = self.ParameterDict[self.element_length.Name] = floatParameter(
@@ -144,6 +168,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 390,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.junction_depth = self.ParameterDict[self.junction_depth.Name] = floatParameter(
@@ -162,6 +192,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 400,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
         self.lateral_endpoint_depth = self.ParameterDict[self.lateral_endpoint_depth.Name] = floatParameter(
@@ -180,6 +216,12 @@ class SBTWellbores(WellBores):
                 "group": "Wellfield layout",
                 "is_controller": False,
                 "order": 410,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
+                    "reason": "Used only by the SBT reservoir model.",
+                },
             },
         )
 

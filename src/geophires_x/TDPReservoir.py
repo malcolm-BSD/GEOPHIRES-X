@@ -60,6 +60,12 @@ class TDPReservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 350,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [3, 4]}],
+                    "reason": "Used by the single-fracture and annual-percentage thermal drawdown models.",
+                },
             },
         )
 
@@ -78,6 +84,12 @@ class TDPReservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": True,
                 "order": 360,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [4]}],
+                    "reason": "Used only by the annual-percentage thermal drawdown model.",
+                },
             },
         )
 

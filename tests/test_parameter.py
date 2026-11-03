@@ -51,11 +51,18 @@ class ParameterTestCase(BaseTestCase):
                 "tab": "Project",
                 "group": "",
                 "is_controller": False,
-                "order": 1,
+                "order": 0,
+                "dependency": None,
             },
             parameter.UI,
         )
         self.assertIsNot(parameter.UI, Parameter().UI)
+
+        parameter_with_ui = Parameter(UI={"tab": "Economics", "order": 20})
+        self.assertEqual("Economics", parameter_with_ui.UI["tab"])
+        self.assertEqual(20, parameter_with_ui.UI["order"])
+        self.assertFalse(parameter_with_ui.UI["is_controller"])
+        self.assertIsNone(parameter_with_ui.UI["dependency"])
 
     def test_evaluate_formula_expression_supports_numeric_literals(self):
         result = evaluate_formula_expression("42.5", lambda _: None)

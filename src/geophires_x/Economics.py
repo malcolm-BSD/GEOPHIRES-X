@@ -1006,6 +1006,12 @@ class Economics:
                 "group": "Economic parameters",
                 "is_controller": False,
                 "order": 300,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Economic Model", "operator": "in", "values": [1]}],
+                    "reason": "Used only by the Fixed Charge Rate economic model.",
+                },
             },
         )
 
@@ -1027,6 +1033,12 @@ class Economics:
                 "group": "Financing and tax",
                 "is_controller": False,
                 "order": 310,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Economic Model", "operator": "in", "values": [2, 5]}],
+                    "reason": "Used by the Standard Levelized Cost and SAM Single Owner PPA economic models.",
+                },
             },
         )
         self.social_discountrate = self.ParameterDict[self.social_discountrate.Name] = floatParameter(
@@ -1056,8 +1068,8 @@ class Economics:
             ToolTipText="Enable Extended Levelized Cost of Electricity|Hear|Cooling (XLCO(E|H|C)) calculations. ",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
-                "is_controller": False,
+                "group": "XLCO parameters",
+                "is_controller": True,
                 "order": 330,
             },
         )
@@ -1073,9 +1085,21 @@ class Economics:
             ToolTipText="Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
-                "order": 340,
+                            "order": 340,
+                            "dependency": {
+                                "effect": "enable",
+                                "match": "all",
+                                "conditions": [
+                                    {
+                                        "parameter": "Do XLCO(E|H|C) Calculations",
+                                        "operator": "in",
+                                        "values": [True],
+                                    },
+                                ],
+                                "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                            },
             },
         )
         self.XLCOCarbonPrice = self.ParameterDict[self.XLCOCarbonPrice.Name] = floatParameter(
@@ -1090,9 +1114,21 @@ class Economics:
             ToolTipText="Carbon price used for XLCO(E|H|C) market carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 350,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOERECPrice = self.ParameterDict[self.XLCOERECPrice.Name] = floatParameter(
@@ -1107,9 +1143,21 @@ class Economics:
             ToolTipText="Renewable Energy Credit price used for XLCOE market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 360,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOEDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOEDisplacedWaterUseIntensity.Name] = floatParameter(
@@ -1122,9 +1170,21 @@ class Economics:
             ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 370,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOWaterShadowPrice = self.ParameterDict[self.XLCOWaterShadowPrice.Name] = floatParameter(
@@ -1139,9 +1199,21 @@ class Economics:
             ToolTipText="Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 380,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.IdleRigDiscountRate = self.ParameterDict[self.IdleRigDiscountRate.Name] = floatParameter(
@@ -1157,9 +1229,21 @@ class Economics:
             ToolTipText="XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 390,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOConstructionJobsPerRig = self.ParameterDict[self.XLCOConstructionJobsPerRig.Name] = floatParameter(
@@ -1172,9 +1256,21 @@ class Economics:
             ToolTipText="Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 400,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOOperationsJobsPerMW = self.ParameterDict[self.XLCOOperationsJobsPerMW.Name] = floatParameter(
@@ -1187,9 +1283,21 @@ class Economics:
             ToolTipText="Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 410,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOIndirectJobsMultiplier = self.ParameterDict[self.XLCOIndirectJobsMultiplier.Name] = floatParameter(
@@ -1202,9 +1310,21 @@ class Economics:
             ToolTipText="Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 420,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOAverageMonthlyWage = self.ParameterDict[self.XLCOAverageMonthlyWage.Name] = floatParameter(
@@ -1219,9 +1339,21 @@ class Economics:
             ToolTipText="Average monthly wage used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 430,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOHAvoidedEmissionsIntensity = self.ParameterDict[self.XLCOHAvoidedEmissionsIntensity.Name] = floatParameter(
@@ -1236,9 +1368,21 @@ class Economics:
             ToolTipText="Avoided emissions intensity used for future XLCOH carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 440,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOHDisplacedWaterUseIntensity = self.ParameterDict[self.XLCOHDisplacedWaterUseIntensity.Name] = floatParameter(
@@ -1251,9 +1395,21 @@ class Economics:
             ToolTipText="Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 450,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOHREC = self.ParameterDict[self.XLCOHREC.Name] = floatParameter(
@@ -1268,9 +1424,21 @@ class Economics:
             ToolTipText="Thermal Energy Credit used for future XLCOH market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 460,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOCAvoidedEmissionsIntensity = self.ParameterDict["XLCOC Avoided Emissions Intensity"] = floatParameter(
@@ -1285,9 +1453,21 @@ class Economics:
             ToolTipText="Avoided emissions intensity used for future XLCOC carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 470,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOCREC = self.ParameterDict[self.XLCOCREC.Name] = floatParameter(
@@ -1302,9 +1482,21 @@ class Economics:
             ToolTipText="Cooling Renewable Energy Credit used for future XLCOC market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 480,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.XLCOCDisplacedWaterUseIntensity = self.ParameterDict["XLCOC Displaced Water Use Intensity"] = floatParameter(
@@ -1317,9 +1509,21 @@ class Economics:
             ToolTipText="Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "XLCO parameters",
                 "is_controller": False,
                 "order": 490,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Do XLCO(E|H|C) Calculations",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the XLCO(E|H|C) Calculations.",
+                },
             },
         )
         self.DoVALCOCalculations = self.ParameterDict[self.DoVALCOCalculations.Name] = boolParameter(
@@ -1331,8 +1535,8 @@ class Economics:
             ToolTipText="Enable Value-Adjusted Levelized Cost of Electricity|Heat|Cooling (VALCO(E|H|C)) calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
-                "is_controller": False,
+                "group": "VALCO parameters",
+                "is_controller": True,
                 "order": 500,
             },
         )
@@ -1345,9 +1549,21 @@ class Economics:
             ToolTipText="VALCO calculation mode. Direct is the v1 supported mode.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 510,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOESystemAverageEnergyValue = self.ParameterDict[self.VALCOESystemAverageEnergyValue.Name] = floatParameter(
@@ -1362,9 +1578,21 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 520,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOETechnologyEnergyValue = self.ParameterDict[self.VALCOETechnologyEnergyValue.Name] = floatParameter(
@@ -1379,9 +1607,21 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 530,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOESystemAverageCapacityValue = self.ParameterDict[self.VALCOESystemAverageCapacityValue.Name] = floatParameter(
@@ -1396,9 +1636,21 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 540,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOETechnologyCapacityValue = self.ParameterDict[self.VALCOETechnologyCapacityValue.Name] = floatParameter(
@@ -1413,9 +1665,21 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 550,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOESystemAverageFlexibilityValue = self.ParameterDict[self.VALCOESystemAverageFlexibilityValue.Name] = floatParameter(
@@ -1430,9 +1694,21 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 560,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOETechnologyFlexibilityValue = self.ParameterDict[self.VALCOETechnologyFlexibilityValue.Name] = floatParameter(
@@ -1447,9 +1723,21 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 570,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOEBasisCapacityValue = self.ParameterDict[self.VALCOEBasisCapacityValue.Name] = floatParameter(
@@ -1462,9 +1750,21 @@ class Economics:
             ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 580,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOECapacityCredit = self.ParameterDict[self.VALCOECapacityCredit.Name] = floatParameter(
@@ -1478,9 +1778,21 @@ class Economics:
             ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 590,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOEBaseFlexibilityValue = self.ParameterDict[self.VALCOEBaseFlexibilityValue.Name] = floatParameter(
@@ -1493,9 +1805,21 @@ class Economics:
             ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 600,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOEFlexibilityMultiplier = self.ParameterDict[self.VALCOEFlexibilityMultiplier.Name] = floatParameter(
@@ -1508,9 +1832,21 @@ class Economics:
             ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 610,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHSystemAverageEnergyValue = self.ParameterDict[self.VALCOHSystemAverageEnergyValue.Name] = floatParameter(
@@ -1525,9 +1861,21 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 620,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHTechnologyEnergyValue = self.ParameterDict[self.VALCOHTechnologyEnergyValue.Name] = floatParameter(
@@ -1542,9 +1890,21 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 630,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHSystemAverageCapacityValue = self.ParameterDict[self.VALCOHSystemAverageCapacityValue.Name] = floatParameter(
@@ -1559,9 +1919,21 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 640,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHTechnologyCapacityValue = self.ParameterDict[self.VALCOHTechnologyCapacityValue.Name] = floatParameter(
@@ -1576,9 +1948,21 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 650,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOHSystemAverageFlexibilityValue.Name] = floatParameter(
@@ -1593,9 +1977,21 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 660,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHTechnologyFlexibilityValue = self.ParameterDict[self.VALCOHTechnologyFlexibilityValue.Name] = floatParameter(
@@ -1610,9 +2006,21 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 670,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHBasisCapacityValue = self.ParameterDict[self.VALCOHBasisCapacityValue.Name] = floatParameter(
@@ -1625,9 +2033,21 @@ class Economics:
             ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 680,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHCapacityCredit = self.ParameterDict[self.VALCOHCapacityCredit.Name] = floatParameter(
@@ -1641,9 +2061,21 @@ class Economics:
             ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 690,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHBaseFlexibilityValue = self.ParameterDict[self.VALCOHBaseFlexibilityValue.Name] = floatParameter(
@@ -1656,9 +2088,21 @@ class Economics:
             ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 700,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOHFlexibilityMultiplier = self.ParameterDict[self.VALCOHFlexibilityMultiplier.Name] = floatParameter(
@@ -1671,9 +2115,21 @@ class Economics:
             ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 710,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCSystemAverageEnergyValue = self.ParameterDict[self.VALCOCSystemAverageEnergyValue.Name] = floatParameter(
@@ -1688,9 +2144,21 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 720,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCTechnologyEnergyValue = self.ParameterDict[self.VALCOCTechnologyEnergyValue.Name] = floatParameter(
@@ -1705,9 +2173,21 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 730,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCSystemAverageCapacityValue = self.ParameterDict[self.VALCOCSystemAverageCapacityValue.Name] = floatParameter(
@@ -1722,9 +2202,21 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 740,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCTechnologyCapacityValue = self.ParameterDict[self.VALCOCTechnologyCapacityValue.Name] = floatParameter(
@@ -1739,9 +2231,21 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 750,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCSystemAverageFlexibilityValue = self.ParameterDict[self.VALCOCSystemAverageFlexibilityValue.Name] = floatParameter(
@@ -1756,9 +2260,21 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 760,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCTechnologyFlexibilityValue = self.ParameterDict[self.VALCOCTechnologyFlexibilityValue.Name] = floatParameter(
@@ -1773,9 +2289,21 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 770,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCBasisCapacityValue = self.ParameterDict[self.VALCOCBasisCapacityValue.Name] = floatParameter(
@@ -1788,9 +2316,21 @@ class Economics:
             ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 780,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCCapacityCredit = self.ParameterDict[self.VALCOCCapacityCredit.Name] = floatParameter(
@@ -1804,9 +2344,21 @@ class Economics:
             ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 790,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCBaseFlexibilityValue = self.ParameterDict[self.VALCOCBaseFlexibilityValue.Name] = floatParameter(
@@ -1819,9 +2371,21 @@ class Economics:
             ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 800,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
         self.VALCOCFlexibilityMultiplier = self.ParameterDict[self.VALCOCFlexibilityMultiplier.Name] = floatParameter(
@@ -1834,9 +2398,21 @@ class Economics:
             ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "VALCO parameters",
                 "is_controller": False,
                 "order": 810,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "VALCO Calculation Mode",
+                            "operator": "in",
+                            "values": [True],
+                        },
+                    ],
+                    "reason": "Used only by the VALCO(E|H|C) Calculations.",
+                },
             },
         )
 
@@ -1857,9 +2433,21 @@ class Economics:
                         f"{royalty_rate_and_schedule_mutual_exclusivity_note}",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "SAM Economic parameters",
                 "is_controller": False,
                 "order": 820,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1879,9 +2467,21 @@ class Economics:
                         f"{rate_based_only_param_note}",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "SAM Economic parameters",
                 "is_controller": False,
                 "order": 830,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1897,9 +2497,21 @@ class Economics:
                         f'{rate_based_only_param_note}',
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "SAM Economic parameters",
                 "is_controller": False,
                 "order": 840,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1917,9 +2529,21 @@ class Economics:
                         f"{rate_based_only_param_note}",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "SAM Economic parameters",
                 "is_controller": False,
                 "order": 850,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1938,9 +2562,21 @@ class Economics:
                         f'{royalty_rate_and_schedule_mutual_exclusivity_note}',
             UI={
                 "tab": "Economics",
-                "group": "Economic model settings",
-                "is_controller": True,
+                "group": "SAM Economic parameters",
+                "is_controller": False,
                 "order": 860,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1961,9 +2597,21 @@ class Economics:
                         f'thereafter.',
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "SAM Economic parameters",
                 "is_controller": False,
                 "order": 870,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -1983,6 +2631,18 @@ class Economics:
                 "group": "Financing and tax",
                 "is_controller": False,
                 "order": 880,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "Economic Model",
+                            "operator": "in",
+                            "values": [5],
+                        },
+                    ],
+                    "reason": "Used only by the SAM Economics Calculations.",
+                },
             },
         )
 
@@ -2626,9 +3286,21 @@ class Economics:
             ToolTipText="District heating piping cost rate ($/m)",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation parameters",
                 "is_controller": False,
                 "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.CPipelineCost = self.ParameterDict[self.CPipelineCost.Name] = floatParameter(
@@ -2662,9 +3334,21 @@ class Economics:
             ToolTipText="Total district heating network cost ($M)",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1210,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.dhoandmcost = self.ParameterDict[self.dhoandmcost.Name] = floatParameter(
@@ -2679,9 +3363,21 @@ class Economics:
             ToolTipText="Total annual district heating O&M cost ($M/year)",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1220,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.dhpipinglength = self.ParameterDict[self.dhpipinglength.Name] = floatParameter(
@@ -2696,9 +3392,21 @@ class Economics:
             ToolTipText="District heating network piping length (km)",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1230,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.dhroadlength = self.ParameterDict[self.dhroadlength.Name] = floatParameter(
@@ -2713,9 +3421,21 @@ class Economics:
             ToolTipText="District heating road length (km)",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1240,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.dhlandarea = self.ParameterDict[self.dhlandarea.Name] = floatParameter(
@@ -2730,9 +3450,21 @@ class Economics:
             ToolTipText="District heating land area (km2)",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1250,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.dhpopulation = self.ParameterDict[self.dhpopulation.Name] = floatParameter(
@@ -2745,9 +3477,21 @@ class Economics:
             ToolTipText="Specify the population in the district heating network",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1260,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
 
@@ -2761,9 +3505,21 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1270,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.HeatEndPrice = self.ParameterDict[self.HeatEndPrice.Name] = floatParameter(
@@ -2776,9 +3532,21 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1280,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.HeatEscalationStart = self.ParameterDict[self.HeatEscalationStart.Name] = intParameter(
@@ -2792,9 +3560,21 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1290,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.HeatEscalationRate = self.ParameterDict[self.HeatEscalationRate.Name] = floatParameter(
@@ -2809,9 +3589,21 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Direct-use heat and co-generation price parameters",
                 "is_controller": False,
-                "order": 1300,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by direct-use heat or co-generation calculations.",
+                },
             },
         )
         self.ElecStartPrice = self.ParameterDict[self.ElecStartPrice.Name] = floatParameter(
@@ -2824,9 +3616,21 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Electricity and co-generation price parameters",
                 "is_controller": False,
-                "order": 1310,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [1, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by electricity or co-generation calculations.",
+                },
             },
         )
         self.ElecEndPrice = self.ParameterDict[self.ElecEndPrice.Name] = floatParameter(
@@ -2845,9 +3649,21 @@ class Economics:
                         "lifetime, then the value will have no effect beyond allowing escalation to occur every year.",
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Electricity and co-generation price parameters",
                 "is_controller": False,
-                "order": 1320,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [1, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by electricity or co-generation calculations.",
+                },
             },
         )
         self.ElecEscalationStart = self.ParameterDict[self.ElecEscalationStart.Name] = intParameter(
@@ -2861,9 +3677,21 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Electricity and co-generation price parameters",
                 "is_controller": False,
-                "order": 1330,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [1, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by electricity or co-generation calculations.",
+                },
             },
         )
         self.ElecEscalationRate = self.ParameterDict[self.ElecEscalationRate.Name] = floatParameter(
@@ -2878,9 +3706,21 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Electricity and co-generation price parameters",
                 "is_controller": False,
-                "order": 1340,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [1, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by electricity or co-generation calculations.",
+                },
             },
         )
         self.CoolingStartPrice = self.ParameterDict[self.CoolingStartPrice.Name] = floatParameter(
@@ -2893,9 +3733,21 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "cooling price parameters",
                 "is_controller": False,
-                "order": 1350,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by cooling or co-generation calculations.",
+                },
             },
         )
         self.CoolingEndPrice = self.ParameterDict[self.CoolingEndPrice.Name] = floatParameter(
@@ -2908,9 +3760,21 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "cooling price parameters",
                 "is_controller": False,
-                "order": 1360,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by cooling or co-generation calculations.",
+                },
             },
         )
         self.CoolingEscalationStart = self.ParameterDict[self.CoolingEscalationStart.Name] = intParameter(
@@ -2924,9 +3788,21 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "cooling price parameters",
                 "is_controller": False,
-                "order": 1370,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by cooling or co-generation calculations.",
+                },
             },
         )
         self.CoolingEscalationRate = self.ParameterDict[self.CoolingEscalationRate.Name] = floatParameter(
@@ -2941,9 +3817,21 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "cooling price parameters",
                 "is_controller": False,
-                "order": 1380,
+                "order": 1190,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [
+                        {
+                            "parameter": "End-Use Option",
+                            "operator": "in",
+                            "values": [2, 31, 32, 41,42, 51, 52],
+                        },
+                    ],
+                    "reason": "Used only by cooling or co-generation calculations.",
+                },
             },
         )
         self.CarbonStartPrice = self.ParameterDict[self.CarbonStartPrice.Name] = floatParameter(

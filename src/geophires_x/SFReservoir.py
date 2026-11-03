@@ -52,6 +52,12 @@ class SFReservoir(Reservoir):
                 "group": "Model-specific reservoir settings",
                 "is_controller": False,
                 "order": 350,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [3, 4]}],
+                    "reason": "Used by the single-fracture and annual-percentage thermal drawdown models.",
+                },
             },
         )
 

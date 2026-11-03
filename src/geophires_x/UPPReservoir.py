@@ -41,6 +41,12 @@ class UPPReservoir(Reservoir):
                 "group": "Reservoir properties",
                 "is_controller": False,
                 "order": 380,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
+                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
+                },
             },
         )
 
@@ -66,6 +72,12 @@ class UPPReservoir(Reservoir):
                 "group": "Reservoir properties",
                 "is_controller": False,
                 "order": 390,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
+                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
+                },
             },
         )
 
@@ -85,6 +97,12 @@ class UPPReservoir(Reservoir):
                 "group": "Reservoir properties",
                 "is_controller": False,
                 "order": 400,
+                "dependency": {
+                    "effect": "enable",
+                    "match": "all",
+                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
+                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
+                },
             },
         )
 
