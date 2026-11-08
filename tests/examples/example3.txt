@@ -70,7 +70,6 @@ Exploration Capital Cost Adjustment Factor,1,			---[-] use built in correlations
 Wellfield O&M Cost Adjustment Factor,1,				---[-] use built in correlations
 Surface Plant O&M Cost Adjustment Factor,1,			---[-] use built in correlations
 Water Cost Adjustment Factor,1,					---[-] use built in correlations
-Heat Rate,.02,							---[$/kWh]
 
 # ***Simulation Parameters***
 # ***************************

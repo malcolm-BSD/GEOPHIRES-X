@@ -625,8 +625,11 @@ class SurfacePlant:
             UnitType=Units.ENERGYCOST,
             PreferredUnits=EnergyCostUnit.DOLLARSPERKWH,
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
-            ErrMessage="assume default heat rate ($0.02/kWh)",
-            ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
+            ErrMessage="deprecated parameter is ignored",
+            ToolTipText=(
+                "Deprecated compatibility input; ignored. Use Starting Heat Sale Price, Ending Heat Sale Price, "
+                "Heat Escalation Rate Per Year, and Heat Escalation Start Year instead."
+            ),
             UI={
                 "tab": "SurfacePlant",
                 "group": "Energy prices",
@@ -1859,6 +1862,15 @@ class SurfacePlant:
                 key = ParameterToModify.Name.strip()
                 if key in model.InputParameters:
                     ParameterReadIn = copy.copy(model.InputParameters[key])
+
+                    if ParameterToModify.Name == 'Heat Rate':
+                        warn_once(
+                            ('deprecated_parameter', ParameterToModify.Name),
+                            '"Heat Rate" is deprecated and ignored; use "Starting Heat Sale Price", '
+                            '"Ending Heat Sale Price", "Heat Escalation Rate Per Year", and '
+                            '"Heat Escalation Start Year" instead.',
+                        )
+                        continue
 
                     # this should handle all the non-special cases
                     ReadParameter(ParameterReadIn, ParameterToModify, model)

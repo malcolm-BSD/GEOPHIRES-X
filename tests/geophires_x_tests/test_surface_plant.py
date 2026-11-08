@@ -112,6 +112,40 @@ class SurfacePlantTestCase(BaseTestCase):
             else:
                 raise ae
 
+    def test_heat_rate_is_deprecated_and_ignored(self):
+        input_file = Path(__file__).parent.parent / "examples" / "example3.txt"
+        client = GeophiresXClient(enable_caching=False)
+
+        baseline = client.get_geophires_result(
+            GeophiresInputParameters(
+                from_file_path=input_file,
+                params={"Print Output to Console": 0},
+            )
+        )
+
+        with self.assertLogs(level="WARNING") as logs:
+            deprecated = client.get_geophires_result(
+                GeophiresInputParameters(
+                    from_file_path=input_file,
+                    params={"Heat Rate": 0.9, "Print Output to Console": 0},
+                )
+            )
+
+        self.assertHasLogRecordWithMessage(
+            logs,
+            '"Heat Rate" is deprecated and ignored; use "Starting Heat Sale Price", '
+            '"Ending Heat Sale Price", "Heat Escalation Rate Per Year", and '
+            '"Heat Escalation Start Year" instead.',
+        )
+        self.assertEqual(
+            baseline.result["SUMMARY OF RESULTS"],
+            deprecated.result["SUMMARY OF RESULTS"],
+        )
+        self.assertEqual(
+            baseline.result["REVENUE & CASHFLOW PROFILE"],
+            deprecated.result["REVENUE & CASHFLOW PROFILE"],
+        )
+
     def test_one_time_step_per_year_and_one_year_lifetime(self):
         input_file = Path(__file__).parent.parent / "examples" / "Fervo_Project_Cape-2.txt"
         params = GeophiresInputParameters(

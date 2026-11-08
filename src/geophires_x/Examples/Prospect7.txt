@@ -75,7 +75,6 @@ Field Gathering System Capital Cost Adjustment Factor,1
 Surface Plant Capital Cost Adjustment Factor,1
 Well Drilling and Completion Capital Cost Adjustment Factor,1
 Discount Rate,0.07
-Heat Rate,0.02
 Electricity Rate,0.07
 Fixed Internal Rate,6.25
 Well Drilling Cost Correlation,2

@@ -52,7 +52,13 @@ for a `Filename` parameter, after which the normal file/URL validation is applie
 1. `Gradients` (`SurfacePlant.gradient`) - this was already an array, but now we will allow it to be read from a file or URL and parsed with unit normalization.
 2. `Thicknesses` (`SurfacePlant.thickness`) - this was already an array, but now we will allow it to be read from a file or URL and parsed with unit normalization.
 3. `Electricity Rate` (`SurfacePlant.electricity_cost_to_buy`) - this was previously a scalar, but now we will allow it to be read from a file or URL and parsed with unit normalization.
-4. `Heat Rate` (`SurfacePlant.heat_price`) - this was previously a scalar, but now we will allow it to be read from a file or URL and parsed with unit normalization.
+
+`Heat Rate` is a deprecated, ignored compatibility input. Heat-sale revenue is configured with these parameters:
+
+- `Starting Heat Sale Price`
+- `Ending Heat Sale Price`
+- `Heat Escalation Rate Per Year`
+- `Heat Escalation Start Year`
 
 These examples of how upgrading a scalar to an array improves the real-world applicability of the model, but also requires careful handling of parsing, unit normalization, and error handling. The addition of array support for these parameters allows for more detailed and accurate modeling based on real-world data.
 
@@ -84,7 +90,7 @@ When both `Gradients` and `Thicknesses` arrays are provided:
 
 This prevents silent inconsistencies in segmented reservoir inputs.
 
-### 3) Electricity Rate and Heat Rate
+### 3) Electricity Rate
 
 - X axis semantic: time
 - X default unit: hours
@@ -99,10 +105,7 @@ This prevents silent inconsistencies in segmented reservoir inputs.
 
 ## Resampling strategy for time series (8760-hour target)
 
-Apply to:
-
-- Electricity Rate
-- Heat Rate
+Apply to Electricity Rate.
 
 ### Recommended algorithm
 

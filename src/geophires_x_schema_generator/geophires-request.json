@@ -4698,7 +4698,7 @@
       }
     },
     "Heat Rate": {
-      "description": "Price of heat to calculate revenue from heat sales in CHP mode.",
+      "description": "Deprecated compatibility input; ignored. Use Starting Heat Sale Price, Ending Heat Sale Price, Heat Escalation Rate Per Year, and Heat Escalation Start Year instead.",
       "type": "number",
       "units": "USD/kWh",
       "category": "Surface Plant",
