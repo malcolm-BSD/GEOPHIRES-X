@@ -134,6 +134,14 @@ project-structure.txt
 geophires-aliases.sh
 *message.txt
 
+# Local Python environment and generated dispatch reports
+/.venv/
+/-q
+/*_dispatch_profile.csv
+/*_dispatch_text.out
+/tests/examples/*_dispatch_profile.csv
+/tests/examples/*_dispatch_text.out
+
 # Mypy Cache
 .mypy_cache/
 
