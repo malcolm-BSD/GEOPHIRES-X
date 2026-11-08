@@ -118,6 +118,83 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                     dependency["conditions"],
                 )
 
+    def test_xlco_groups_and_dependencies_match_active_commodities(self):
+        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
+        input_parameters = json.loads(input_parameters_json)
+
+        expected_placement = {
+            "Social Discount Rate": ("XLCO Shared Assumptions", 320),
+            "XLCO(E|H|C) Carbon Price": ("XLCO Shared Assumptions", 330),
+            "XLCO(E|H|C) Water Shadow Price": ("XLCO Shared Assumptions", 340),
+            "Idle Rig Discount Rate": ("XLCO Shared Assumptions", 350),
+            "XLCO(E|H|C) Construction Jobs Per Rig": ("XLCO Employment Assumptions", 360),
+            "XLCO(E|H|C) Operations Jobs Per MW": ("XLCO Employment Assumptions", 370),
+            "XLCO(E|H|C) Indirect Jobs Multiplier": ("XLCO Employment Assumptions", 380),
+            "XLCO(E|H|C) Average Monthly Wage": ("XLCO Employment Assumptions", 390),
+            "XLCOE Avoided Emissions Intensity": ("XLCO Electricity Benefits", 400),
+            "XLCOE REC Price": ("XLCO Electricity Benefits", 410),
+            "XLCOE Displaced Water Use Intensity": ("XLCO Electricity Benefits", 420),
+            "XLCOH Avoided Emissions Intensity": ("XLCO Heat Benefits", 430),
+            "XLCOH Thermal REC": ("XLCO Heat Benefits", 440),
+            "XLCOH Displaced Water Use Intensity": ("XLCO Heat Benefits", 450),
+            "XLCOC Avoided Emissions Intensity": ("XLCO Cooling Benefits", 460),
+            "XLCOC Thermal REC": ("XLCO Cooling Benefits", 470),
+            "XLCOC Displaced Water Use Intensity": ("XLCO Cooling Benefits", 480),
+        }
+        for parameter_name, (group, order) in expected_placement.items():
+            with self.subTest(placement=parameter_name):
+                ui = input_parameters[parameter_name]["UI"]
+                self.assertEqual("Economics", ui["tab"])
+                self.assertEqual(group, ui["group"])
+                self.assertEqual(order, ui["order"])
+                self.assertNotEqual("XLCO parameters", ui["group"])
+
+        xlco_enabled = {
+            "parameter": "Do XLCO(E|H|C) Calculations",
+            "operator": "in",
+            "values": [True],
+        }
+        for parameter_name in list(expected_placement)[:8]:
+            with self.subTest(shared_dependency=parameter_name):
+                dependency = input_parameters[parameter_name]["UI"]["dependency"]
+                self.assertEqual("all", dependency["match"])
+                self.assertEqual([xlco_enabled], dependency["conditions"])
+
+        electricity_conditions = [
+            xlco_enabled,
+            {"parameter": "End-Use Option", "operator": "in", "values": [1, 31, 32, 41, 42, 51, 52]},
+        ]
+        for parameter_name in list(expected_placement)[8:11]:
+            with self.subTest(electricity_dependency=parameter_name):
+                self.assertEqual(
+                    electricity_conditions,
+                    input_parameters[parameter_name]["UI"]["dependency"]["conditions"],
+                )
+
+        heat_conditions = [
+            xlco_enabled,
+            {"parameter": "End-Use Option", "operator": "in", "values": [2, 31, 32, 41, 42, 51, 52]},
+            {"parameter": "Power Plant Type", "operator": "in", "values": [1, 2, 3, 4, 6, 7, 8, 9]},
+        ]
+        for parameter_name in list(expected_placement)[11:14]:
+            with self.subTest(heat_dependency=parameter_name):
+                self.assertEqual(
+                    heat_conditions,
+                    input_parameters[parameter_name]["UI"]["dependency"]["conditions"],
+                )
+
+        cooling_conditions = [
+            xlco_enabled,
+            {"parameter": "End-Use Option", "operator": "in", "values": [2]},
+            {"parameter": "Power Plant Type", "operator": "in", "values": [5]},
+        ]
+        for parameter_name in list(expected_placement)[14:]:
+            with self.subTest(cooling_dependency=parameter_name):
+                self.assertEqual(
+                    cooling_conditions,
+                    input_parameters[parameter_name]["UI"]["dependency"]["conditions"],
+                )
+
     def test_geophires_x_ui_metadata_applies_declared_placement_and_priority(self):
         generator = GeophiresXSchemaGenerator()
         input_parameters_json, _ = generator.get_parameters_json()

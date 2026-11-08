@@ -51,6 +51,7 @@ tests/regenerate-example-result.env
 
 .installed.cfg
 .ve
+.venv*/
 bin
 build
 develop-eggs

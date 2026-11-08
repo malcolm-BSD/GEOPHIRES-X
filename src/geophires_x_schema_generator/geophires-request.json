@@ -10977,7 +10977,7 @@
       }
     },
     "Social Discount Rate": {
-      "description": "Social discount rate for XLCOE Market + Social calculations. This parameter is ignored unless XLCOE calculations are enabled.",
+      "description": "Social discount rate for XLCO(E|H|C) Market + Social calculations. This parameter is ignored unless XLCO(E|H|C) calculations are enabled.",
       "type": "number",
       "units": "",
       "category": "Economics",
@@ -11003,7 +11003,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "XLCO Shared Assumptions",
         "order": 320,
         "dependency": {
           "effect": "enable",
@@ -11077,8 +11077,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 340,
+        "group": "XLCO Electricity Benefits",
+        "order": 400,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11135,8 +11135,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 350,
+        "group": "XLCO Shared Assumptions",
+        "order": 330,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11194,8 +11194,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 360,
+        "group": "XLCO Electricity Benefits",
+        "order": 410,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11266,8 +11266,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 370,
+        "group": "XLCO Electricity Benefits",
+        "order": 420,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11324,8 +11324,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 380,
+        "group": "XLCO Shared Assumptions",
+        "order": 340,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11369,8 +11369,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 390,
+        "group": "XLCO Shared Assumptions",
+        "order": 350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11414,8 +11414,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 400,
+        "group": "XLCO Employment Assumptions",
+        "order": 360,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11459,8 +11459,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 410,
+        "group": "XLCO Employment Assumptions",
+        "order": 370,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11504,8 +11504,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 420,
+        "group": "XLCO Employment Assumptions",
+        "order": 380,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11549,8 +11549,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 430,
+        "group": "XLCO Employment Assumptions",
+        "order": 390,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11568,7 +11568,7 @@
       }
     },
     "XLCOH Avoided Emissions Intensity": {
-      "description": "Avoided emissions intensity used for future XLCOH carbon-offset benefits.",
+      "description": "Avoided emissions intensity used for XLCOH carbon-offset benefits.",
       "type": "number",
       "units": "t/MWh",
       "category": "Economics",
@@ -11598,18 +11598,33 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by XLCOH when heat is produced.",
         "depends_on": [
           "Do XLCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 440,
+        "group": "XLCO Heat Benefits",
+        "order": 430,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11633,6 +11648,20 @@
                 51,
                 52
               ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
+              ]
             }
           ],
           "reason": "Used by XLCOH when heat is produced."
@@ -11640,7 +11669,7 @@
       }
     },
     "XLCOH Displaced Water Use Intensity": {
-      "description": "Displaced water use intensity used for future XLCOH social water-offset benefits in m3/MWh.",
+      "description": "Displaced water use intensity used for XLCOH social water-offset benefits in m3/MWh.",
       "type": "number",
       "units": null,
       "category": "Economics",
@@ -11670,17 +11699,32 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by XLCOH when heat is produced.",
         "depends_on": [
           "Do XLCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
+        "group": "XLCO Heat Benefits",
         "order": 450,
         "dependency": {
           "effect": "enable",
@@ -11705,6 +11749,20 @@
                 51,
                 52
               ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
+              ]
             }
           ],
           "reason": "Used by XLCOH when heat is produced."
@@ -11712,7 +11770,7 @@
       }
     },
     "XLCOH Thermal REC": {
-      "description": "Thermal Energy Credit used for future XLCOH market benefits.",
+      "description": "Thermal Energy Credit used for XLCOH market benefits.",
       "type": "number",
       "units": "USD/MWh",
       "category": "Economics",
@@ -11742,18 +11800,33 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by XLCOH when heat is produced.",
         "depends_on": [
           "Do XLCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 460,
+        "group": "XLCO Heat Benefits",
+        "order": 440,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11777,6 +11850,20 @@
                 51,
                 52
               ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
+              ]
             }
           ],
           "reason": "Used by XLCOH when heat is produced."
@@ -11784,7 +11871,7 @@
       }
     },
     "XLCOC Avoided Emissions Intensity": {
-      "description": "Avoided emissions intensity used for future XLCOC carbon-offset benefits.",
+      "description": "Avoided emissions intensity used for XLCOC carbon-offset benefits.",
       "type": "number",
       "units": "t/MWh",
       "category": "Economics",
@@ -11826,8 +11913,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 470,
+        "group": "XLCO Cooling Benefits",
+        "order": 460,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11901,8 +11988,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 480,
+        "group": "XLCO Cooling Benefits",
+        "order": 470,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11934,7 +12021,7 @@
       }
     },
     "XLCOC Displaced Water Use Intensity": {
-      "description": "Displaced water use intensity used for future XLCOC social water-offset benefits in m3/MWh.",
+      "description": "Displaced water use intensity used for XLCOC social water-offset benefits in m3/MWh.",
       "type": "number",
       "units": null,
       "category": "Economics",
@@ -11976,8 +12063,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO parameters",
-        "order": 490,
+        "group": "XLCO Cooling Benefits",
+        "order": 480,
         "dependency": {
           "effect": "enable",
           "match": "all",

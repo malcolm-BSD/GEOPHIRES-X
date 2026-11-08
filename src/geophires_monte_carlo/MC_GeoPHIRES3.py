@@ -30,6 +30,12 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import matplotlib
+
+# Monte Carlo plots are written to files and never displayed interactively.  Force
+# a non-GUI backend so CLI, CI, and headless runs do not depend on Tk being
+# installed or on a display server being available.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

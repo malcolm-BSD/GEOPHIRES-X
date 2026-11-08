@@ -531,6 +531,18 @@ class TestEnthalpyWater(unittest.TestCase):
 
 
 class GeophiresUtilsTestCase(BaseTestCase):
+    def test_parse_param_line_excludes_comment_marker_before_dash_comment(self):
+        line = "Peaking Boiler Efficiency,0.85,\t\t\t`\t\t--- Should be between 0 and 1"
+
+        self.assertEqual(
+            (
+                "Peaking Boiler Efficiency",
+                "0.85",
+                "`\t\t--- Should be between 0 and 1",
+            ),
+            GeoPHIRESUtils.parse_param_line(line),
+        )
+
     def test_input_comments(self):
         d = {}
         d = GeoPHIRESUtils.read_input_file(

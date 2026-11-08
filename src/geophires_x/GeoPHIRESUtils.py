@@ -1897,6 +1897,11 @@ def parse_param_line(
     if dashdash >= 0:
         value_region = raw[first_comma + 1 : dashdash]
         comment = raw[dashdash:].strip()
+        if second_comma >= 0:
+            tail_before_dashdash = raw[second_comma + 1 : dashdash].strip()
+            if any(tail_before_dashdash.startswith(pfx) for pfx in inline_comment_prefixes):
+                value_region = raw[first_comma + 1 : second_comma]
+                comment = raw[second_comma + 1 :].strip()
     else:
         # No '--'. If we have a second comma, decide if tail is comment by heuristic.
         if second_comma >= 0:
