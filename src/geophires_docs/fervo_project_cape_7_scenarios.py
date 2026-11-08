@@ -30,10 +30,10 @@ from geophires_x_client import ImmutableGeophiresInputParameters
 _log = _get_logger(__name__)
 
 FPC7_FLOW_RATE_PARAMETRIC_CSV_PATH: Path = (
-    Path(__file__).parent / 'data' / 'Fervo_Project_Cape-7_flow_rate_parametric.csv'
+    Path(__file__).parent / "data" / "Fervo_Project_Cape-7_flow_rate_parametric.csv"
 )
 
-_FLOW_RATE_PARAM_NAME = 'Production Flow Rate per Well'
+_FLOW_RATE_PARAM_NAME = "Production Flow Rate per Well"
 
 
 @dataclass(frozen=True)
@@ -49,16 +49,16 @@ class FlowRateParametricRow:
     @staticmethod
     def from_result(flow_kg_per_s: float, result: GeophiresXResult) -> FlowRateParametricRow:
         r = result.result
-        surf_equip_sim = r['SURFACE EQUIPMENT SIMULATION RESULTS']
-        econ = r['ECONOMIC PARAMETERS']
+        surf_equip_sim = r["SURFACE EQUIPMENT SIMULATION RESULTS"]
+        econ = r["ECONOMIC PARAMETERS"]
         return FlowRateParametricRow(
             flow_kg_per_s=flow_kg_per_s,
-            avg_net_mw=surf_equip_sim['Average Net Electricity Generation']['value'],
-            min_net_mw=surf_equip_sim['Minimum Net Electricity Generation']['value'],
-            redrills=int(r['ENGINEERING PARAMETERS']['Number of times redrilling']['value']),
-            lcoe_cents_per_kwh=r['SUMMARY OF RESULTS']['Electricity breakeven price']['value'],
-            irr_pct=econ['After-tax IRR']['value'],
-            npv_musd=econ['Project NPV']['value'],
+            avg_net_mw=surf_equip_sim["Average Net Electricity Generation"]["value"],
+            min_net_mw=surf_equip_sim["Minimum Net Electricity Generation"]["value"],
+            redrills=int(r["ENGINEERING PARAMETERS"]["Number of times redrilling"]["value"]),
+            lcoe_cents_per_kwh=r["SUMMARY OF RESULTS"]["Electricity breakeven price"]["value"],
+            irr_pct=econ["After-tax IRR"]["value"],
+            npv_musd=econ["Project NPV"]["value"],
         )
 
 
@@ -82,7 +82,7 @@ def _simulate_flow_rate_parametric_row(base_input_file_path: Path, flow_rate: fl
     """
     Top-level (picklable) worker function for running a single flow rate parametric simulation in a worker process.
     """
-    _log.info(f'Simulating {_FLOW_RATE_PARAM_NAME} = {flow_rate:g} kg/s...')
+    _log.info(f"Simulating {_FLOW_RATE_PARAM_NAME} = {flow_rate:g} kg/s...")
     result = GeophiresXClient().get_geophires_result(
         ImmutableGeophiresInputParameters(
             from_file_path=base_input_file_path, params={_FLOW_RATE_PARAM_NAME: flow_rate}
@@ -112,8 +112,7 @@ def generate_fpc7_flow_rate_parametric_csv(
         max_workers = max(1, min(len(flow_rates_kg_per_s), os.cpu_count() or 1))
 
     _log.info(
-        f'Simulating {len(flow_rates_kg_per_s)} {_FLOW_RATE_PARAM_NAME} values '
-        f'with {max_workers} worker process(es)...'
+        f"Simulating {len(flow_rates_kg_per_s)} {_FLOW_RATE_PARAM_NAME} values with {max_workers} worker process(es)..."
     )
 
     # GEOPHIRES manipulates process-global state (sys.argv, cwd, module-level state), so simulations must be run in
@@ -128,29 +127,29 @@ def generate_fpc7_flow_rate_parametric_csv(
         )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w', encoding='utf-8', newline='') as f:
+    with open(output_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
-            f, fieldnames=[it.name for it in dataclasses.fields(FlowRateParametricRow)], lineterminator='\n'
+            f, fieldnames=[it.name for it in dataclasses.fields(FlowRateParametricRow)], lineterminator="\n"
         )
         writer.writeheader()
         for row in rows:
-            writer.writerow({k: f'{v:g}' if isinstance(v, float) else v for k, v in dataclasses.asdict(row).items()})
+            writer.writerow({k: f"{v:g}" if isinstance(v, float) else v for k, v in dataclasses.asdict(row).items()})
 
-    _log.info(f'✓ Wrote {output_path}')
+    _log.info(f"✓ Wrote {output_path}")
     return rows
 
 
 def load_fpc7_flow_rate_parametric(path: Path = FPC7_FLOW_RATE_PARAMETRIC_CSV_PATH) -> list[FlowRateParametricRow]:
-    with open(path, encoding='utf-8', newline='') as f:
+    with open(path, encoding="utf-8", newline="") as f:
         rows = [
             FlowRateParametricRow(
-                flow_kg_per_s=float(it['flow_kg_per_s']),
-                avg_net_mw=float(it['avg_net_mw']),
-                min_net_mw=float(it['min_net_mw']),
-                redrills=int(it['redrills']),
-                lcoe_cents_per_kwh=float(it['lcoe_cents_per_kwh']),
-                irr_pct=float(it['irr_pct']),
-                npv_musd=float(it['npv_musd']),
+                flow_kg_per_s=float(it["flow_kg_per_s"]),
+                avg_net_mw=float(it["avg_net_mw"]),
+                min_net_mw=float(it["min_net_mw"]),
+                redrills=int(it["redrills"]),
+                lcoe_cents_per_kwh=float(it["lcoe_cents_per_kwh"]),
+                irr_pct=float(it["irr_pct"]),
+                npv_musd=float(it["npv_musd"]),
             )
             for it in csv.DictReader(f)
         ]
@@ -161,7 +160,7 @@ def load_fpc7_flow_rate_parametric(path: Path = FPC7_FLOW_RATE_PARAMETRIC_CSV_PA
 def get_fpc7_flow_rate_parametric_row(rows: list[FlowRateParametricRow], flow_kg_per_s: float) -> FlowRateParametricRow:
     matching_rows = [it for it in rows if it.flow_kg_per_s == flow_kg_per_s]
     if len(matching_rows) != 1:
-        raise ValueError(f'Expected exactly one flow rate parametric row for {flow_kg_per_s:g} kg/s.')
+        raise ValueError(f"Expected exactly one flow rate parametric row for {flow_kg_per_s:g} kg/s.")
 
     return matching_rows[0]
 
@@ -191,19 +190,19 @@ def get_fpc7_flow_rate_parametric_summary(
 
     feasible = [it.min_net_mw >= ppa_minimum_net_generation_mw for it in rows]
     if not any(feasible):
-        raise ValueError(f'No flow rate meets the PPA minimum net generation ({ppa_minimum_net_generation_mw:g} MW).')
+        raise ValueError(f"No flow rate meets the PPA minimum net generation ({ppa_minimum_net_generation_mw:g} MW).")
 
     first_feasible_idx = feasible.index(True)
     if not all(feasible[first_feasible_idx:]):
         raise ValueError(
-            'Minimum net generation does not meet the PPA minimum at every flow rate above the lowest one that does; '
-            'update the flow rate discussion in the case study documentation.'
+            "Minimum net generation does not meet the PPA minimum at every flow rate above the lowest one that does; "
+            "update the flow rate discussion in the case study documentation."
         )
 
     if any(it.redrills < base_row.redrills and it.min_net_mw >= ppa_minimum_net_generation_mw for it in rows):
         raise ValueError(
-            'A flow rate with fewer redrilling events than the base case meets the PPA minimum net generation; '
-            'update the flow rate discussion in the case study documentation.'
+            "A flow rate with fewer redrilling events than the base case meets the PPA minimum net generation; "
+            "update the flow rate discussion in the case study documentation."
         )
 
     band_rows_above_base = [
@@ -231,7 +230,7 @@ def get_scenario_results(
     client = GeophiresXClient()
     results = {}
     for scenario_name, scenario_params in scenario_params_by_name.items():
-        _log.info(f'Simulating scenario: {scenario_name}...')
+        _log.info(f"Simulating scenario: {scenario_name}...")
         results[scenario_name] = client.get_geophires_result(
             ImmutableGeophiresInputParameters(from_file_path=input_params.as_file_path(), params=scenario_params)
         )
@@ -239,5 +238,5 @@ def get_scenario_results(
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_fpc7_flow_rate_parametric_csv()
