@@ -74,8 +74,9 @@ class SBTWellbores(WellBores):
                 "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.vertical_wellbore_spacing = self.ParameterDict[self.vertical_wellbore_spacing.Name] = floatParameter(
@@ -95,8 +96,9 @@ class SBTWellbores(WellBores):
                 "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.lateral_spacing = self.ParameterDict[self.lateral_spacing.Name] = floatParameter(
@@ -116,8 +118,9 @@ class SBTWellbores(WellBores):
                 "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.lateral_inclination_angle = self.ParameterDict[self.lateral_inclination_angle.Name] = floatParameter(
@@ -136,8 +139,9 @@ class SBTWellbores(WellBores):
                 "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.element_length = self.ParameterDict[self.element_length.Name] = floatParameter(
@@ -157,8 +161,9 @@ class SBTWellbores(WellBores):
                 "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.junction_depth = self.ParameterDict[self.junction_depth.Name] = floatParameter(
@@ -178,8 +183,9 @@ class SBTWellbores(WellBores):
                 "order": 660,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.lateral_endpoint_depth = self.ParameterDict[self.lateral_endpoint_depth.Name] = floatParameter(
@@ -199,8 +205,9 @@ class SBTWellbores(WellBores):
                 "order": 670,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
 

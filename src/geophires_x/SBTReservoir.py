@@ -538,8 +538,9 @@ class SBTReservoir(CylindricalReservoir):
                 "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.flow_rate_file = self.ParameterDict[self.flow_rate_file.Name] = strParameter(
@@ -555,8 +556,9 @@ class SBTReservoir(CylindricalReservoir):
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {'parameter': 'Flowrate Model', 'operator': 'in', 'values': [2]}],
-                    'reason': 'Used only when SBT flow rates are read from a file.'},
+                    'reason': 'Used only when U-loop or EavorLoop SBT flow rates are read from a file.'},
             },
         )
         self.injection_temperature_model = self.ParameterDict[self.injection_temperature_model.Name] = intParameter(
@@ -573,8 +575,9 @@ class SBTReservoir(CylindricalReservoir):
                 "order": 10,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.injection_temperature_file = self.ParameterDict[self.injection_temperature_file.Name] = strParameter(
@@ -590,10 +593,11 @@ class SBTReservoir(CylindricalReservoir):
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {   'parameter': 'Injection Temperature Model',
                                           'operator': 'in',
                                           'values': [2]}],
-                    'reason': 'Used only when SBT injection temperatures are read from a file.'},
+                    'reason': 'Used only when U-loop or EavorLoop SBT injection temperatures are read from a file.'},
             },
         )
         self.SBTAccuracyDesired = self.ParameterDict[self.SBTAccuracyDesired.Name] = intParameter(
@@ -611,8 +615,9 @@ class SBTReservoir(CylindricalReservoir):
                 "order": 720,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 2, 5]}],
+                    'reason': 'Used by implemented SBT U-loop, coaxial, and EavorLoop configurations.'},
             },
         )
         self.percent_implicit = self.ParameterDict[self.percent_implicit.Name] = floatParameter(
@@ -635,8 +640,9 @@ class SBTReservoir(CylindricalReservoir):
                 "order": 730,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
         self.initial_timestep_count = self.ParameterDict[self.initial_timestep_count.Name] = intParameter(
@@ -644,16 +650,13 @@ class SBTReservoir(CylindricalReservoir):
             DefaultValue=5,
             AllowableRange = [1,150],
             UnitType=Units.NONE,
-            ErrMessage='assume default for Initial Timestep Count (5)',
-            ToolTipText='The number of timesteps in the first ~3 hours of model',
+            ErrMessage='deprecated parameter is ignored',
+            ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
             UI={
                 "tab": "Reservoir",
                 "group": "SBT solver controls",
                 "order": 740,
-                "dependency": {   'effect': 'enable',
-                    'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                "dependency": None,
             },
         )
         self.final_timestep_count = self.ParameterDict[self.final_timestep_count.Name] = floatParameter(
@@ -662,16 +665,13 @@ class SBTReservoir(CylindricalReservoir):
             Min=5,
             Max=1000,
             UnitType=Units.NONE,
-            ErrMessage='assume default for Final Timestep Count 70)',
-            ToolTipText='The number of timesteps after the first ~3 hours of model',
+            ErrMessage='deprecated parameter is ignored',
+            ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
             UI={
                 "tab": "Reservoir",
                 "group": "SBT solver controls",
                 "order": 750,
-                "dependency": {   'effect': 'enable',
-                    'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                "dependency": None,
             },
         )
         self.initial_final_timestep_transition = self.ParameterDict[self.initial_final_timestep_transition.Name] = floatParameter(
@@ -682,16 +682,13 @@ class SBTReservoir(CylindricalReservoir):
             UnitType=Units.TIME,
             PreferredUnits=TimeUnit.SECOND,
             CurrentUnits=TimeUnit.SECOND,
-            ErrMessage='assume default for Initial to Final Timestep Transition (9900 seconds)',
-            ToolTipText='The time in secs at which the time arrays switches from closely spaced linear to logarithmic',
+            ErrMessage='deprecated parameter is ignored',
+            ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
             UI={
                 "tab": "Reservoir",
                 "group": "SBT solver controls",
                 "order": 760,
-                "dependency": {   'effect': 'enable',
-                    'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                "dependency": None,
             },
         )
         self.generate_wireframe_graphics = self.ParameterDict[self.generate_wireframe_graphics.Name] = boolParameter(
@@ -706,8 +703,9 @@ class SBTReservoir(CylindricalReservoir):
                 "order": 770,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
-                    'reason': 'Used only by the SBT reservoir model.'},
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]}],
+                    'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
 
@@ -745,7 +743,28 @@ class SBTReservoir(CylindricalReservoir):
         :return: None
         """
         model.logger.info(f'Init {str(__class__)}: {sys._getframe().f_code.co_name}')
-        super().read_parameters(model)
+
+        deprecated_timestep_parameter_names = (
+            self.initial_timestep_count.Name,
+            self.final_timestep_count.Name,
+            self.initial_final_timestep_transition.Name,
+        )
+        deprecated_inputs = {
+            name: model.InputParameters.pop(name)
+            for name in deprecated_timestep_parameter_names
+            if name in model.InputParameters
+        }
+        try:
+            # Reservoir.read_parameters iterates over the subclass's complete ParameterDict, so temporarily remove
+            # deprecated inputs to prevent the inherited reader from applying values that the solver never uses.
+            super().read_parameters(model)
+        finally:
+            model.InputParameters.update(deprecated_inputs)
+
+        for parameter_name in deprecated_inputs:
+            model.logger.warning(
+                f'"{parameter_name}" is deprecated and ignored because the SBT solver uses an internal time grid.'
+            )
 
         # Deal with all the parameter values that the user has provided.  They should really only provide values
         # that they want to change from the default values, but they can provide a value that is already set
@@ -763,6 +782,8 @@ class SBTReservoir(CylindricalReservoir):
                 ParameterToModify = item[1]
                 key = ParameterToModify.Name.strip()
                 if key in model.InputParameters:
+                    if key in deprecated_timestep_parameter_names:
+                        continue
                     ParameterReadIn = model.InputParameters[key]
 
                     # TODO: refactor GEOPHIRES such that parameters are read in immutably and only accessed with

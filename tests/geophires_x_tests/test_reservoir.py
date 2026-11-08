@@ -6,15 +6,20 @@ import sys
 import uuid
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from pint.facets.plain import PlainQuantity
 
 from geophires_x.GeoPHIRESUtils import static_pressure_MPa
 from geophires_x.Model import Model
+from geophires_x.OptionList import Configuration
+from geophires_x.Parameter import ParameterEntry
 
 # noinspection PyProtectedMember
 from geophires_x.Reservoir import _MAX_ALLOWED_FRACTURES
 from geophires_x.Reservoir import Reservoir
+from geophires_x.SBTReservoir import SBTReservoir
+from geophires_x.SBTWellbores import SBTWellbores
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
@@ -23,6 +28,56 @@ from tests.base_test_case import BaseTestCase
 
 
 class ReservoirTestCase(BaseTestCase):
+    def test_sbt_runtime_routes_only_implemented_well_geometries(self):
+        model = self._new_model()
+        reservoir = SBTReservoir(model)
+        model.reserv = reservoir
+        model.wellbores = SBTWellbores(model)
+
+        expected_routes = [
+            (Configuration.ULOOP, "uloop"),
+            (Configuration.COAXIAL, "coaxial"),
+            (Configuration.VERTICAL, None),
+            (Configuration.L, None),
+            (Configuration.EAVORLOOP, "uloop"),
+        ]
+        for configuration, expected_route in expected_routes:
+            with self.subTest(configuration=configuration):
+                model.wellbores.Configuration.value = configuration
+                with patch.object(reservoir, "Calculate_Uloop") as calculate_uloop, patch.object(
+                    reservoir, "Calculate_Coaxial"
+                ) as calculate_coaxial:
+                    reservoir.Calculate(model)
+
+                self.assertEqual(expected_route == "uloop", calculate_uloop.called)
+                self.assertEqual(expected_route == "coaxial", calculate_coaxial.called)
+
+    def test_deprecated_sbt_timestep_parameters_are_ignored(self):
+        model = self._new_model()
+        reservoir = SBTReservoir(model)
+        model.reserv = reservoir
+        deprecated_values = {
+            "SBT Initial Timestep Count": "25",
+            "SBT Final Timestep Count": "200",
+            "SBT Initial to Final Timestep Transition": "20000",
+        }
+        defaults = {name: reservoir.ParameterDict[name].value for name in deprecated_values}
+        model.InputParameters.update(
+            {name: ParameterEntry(Name=name, sValue=value) for name, value in deprecated_values.items()}
+        )
+
+        with self.assertLogs(model.logger, level="WARNING") as captured_logs:
+            reservoir.read_parameters(model)
+
+        for name, default_value in defaults.items():
+            with self.subTest(parameter=name):
+                parameter = reservoir.ParameterDict[name]
+                self.assertEqual(default_value, parameter.value)
+                self.assertFalse(parameter.Provided)
+                self.assertTrue(
+                    any(f'"{name}" is deprecated and ignored' in message for message in captured_logs.output)
+                )
+
     def test_lithostatic_pressure(self):
         p = static_pressure_MPa(2700, 3000)
         self.assertEqual(79.433865, p)

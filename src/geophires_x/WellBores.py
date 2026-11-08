@@ -771,7 +771,24 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellfield sizing",
                 "order": 30,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6, 8]},
+                        {'parameter': 'Number of Production Wells', 'operator': 'provided', 'values': [False]},
+                        {'parameter': 'Number of Injection Wells', 'operator': 'provided', 'values': [False]},
+                        {
+                            'parameter': 'Number of Injection Wells per Production Well',
+                            'operator': 'provided',
+                            'values': [False],
+                        },
+                    ],
+                    'reason': (
+                        'Alternative well-count input; unavailable for SUTRA and when an explicit or ratio-based '
+                        'well count is provided.'
+                    ),
+                },
             },
         )
         # noinspection SpellCheckingInspection
@@ -790,7 +807,19 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellfield sizing",
                 "order": 40,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6, 8]},
+                        {'parameter': 'Number of Doublets', 'operator': 'provided', 'values': [False]},
+                        {'parameter': 'Number of Injection Wells', 'operator': 'provided', 'values': [False]},
+                    ],
+                    'reason': (
+                        'Alternative injection-well count input; unavailable for SUTRA, explicit injection counts, '
+                        'or doublet-based sizing.'
+                    ),
+                },
             },
         )
 
@@ -848,7 +877,14 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellbore thermal model",
                 "order": 70,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6]}
+                    ],
+                    'reason': 'SBT and SUTRA supply produced temperatures directly instead of using the Ramey model.',
+                },
             },
         )
         self.tempdropprod = self.ParameterDict[self.tempdropprod.Name] = floatParameter(
@@ -867,7 +903,10 @@ class WellBores:
                 "order": 80,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [   {   'parameter': 'Ramey Production Wellbore Model',
+                    'conditions': [   {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6]},
+                                      {   'parameter': 'Ramey Production Wellbore Model',
                                           'operator': 'in',
                                           'values': [False]}],
                     'reason': 'Used only when the Ramey production-well heat-loss model is disabled.'},
@@ -887,7 +926,17 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellbore thermal model",
                 "order": 90,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [1, 2, 3, 4, 5, 6, 7]}
+                    ],
+                    'reason': (
+                        'Applied by reservoir models that use the shared reservoir calculation; cylindrical and SBT '
+                        'paths do not apply it.'
+                    ),
+                },
             },
         )
         self.prodwellflowrate = self.ParameterDict[self.prodwellflowrate.Name] = floatParameter(
@@ -905,7 +954,15 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellbore flow and pressure",
                 "order": 100,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'any',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                        {'parameter': 'Flowrate Model', 'operator': 'in', 'values': [1]},
+                    ],
+                    'reason': 'Not used when the SBT flow-rate history is supplied by file.',
+                },
             },
         )
         self.impedance = self.ParameterDict[self.impedance.Name] = floatParameter(
@@ -1042,7 +1099,15 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellbore flow and pressure",
                 "order": 120,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6]},
+                        {'parameter': 'Is AGS', 'operator': 'in', 'values': [False]},
+                    ],
+                    'reason': 'User override used only by the conventional wellbore pressure calculation.',
+                },
             },
         )
         self.ppwellhead = self.ParameterDict[self.ppwellhead.Name] = floatParameter(
@@ -1059,7 +1124,15 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Wellbore flow and pressure",
                 "order": 110,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6, 8]},
+                        {'parameter': 'Reservoir Impedance', 'operator': 'provided', 'values': [False]},
+                    ],
+                    'reason': 'Used by the productivity/injectivity pressure pathway, but not by SUTRA.',
+                },
             },
         )
         self.II = self.ParameterDict[self.II.Name] = floatParameter(
@@ -1127,7 +1200,15 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Well operating limits",
                 "order": 130,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6]},
+                        {'parameter': 'Is AGS', 'operator': 'in', 'values': [False]},
+                    ],
+                    'reason': 'Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them.',
+                },
             },
         )
         self.well_integrity_max_lifetime = self.ParameterDict[self.well_integrity_max_lifetime.Name] = floatParameter(
@@ -1152,7 +1233,15 @@ class WellBores:
                 "tab": "WellBores",
                 "group": "Well operating limits",
                 "order": 140,
-                "dependency": None,
+                "dependency": {
+                    'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0, 1, 2, 3, 4, 5, 6]},
+                        {'parameter': 'Is AGS', 'operator': 'in', 'values': [False]},
+                    ],
+                    'reason': 'Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them.',
+                },
             },
         )
 
@@ -1449,8 +1538,12 @@ class WellBores:
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
                                           'operator': 'in',
-                                          'values': [1, 2, 4, 5]}],
-                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
+                                          'values': [1, 2, 4, 5]},
+                                      {   'parameter': 'Number of Multilateral Sections per Vertical Section',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Direct total-section input for nonvertical configurations; mutually exclusive with '
+                              'the per-vertical-section input.'},
             },
         )
 
@@ -1480,8 +1573,13 @@ class WellBores:
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
                                           'operator': 'in',
-                                          'values': [1, 2, 4, 5]}],
-                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
+                                          'values': [1, 2, 4, 5]},
+                                      {'parameter': 'Is AGS', 'operator': 'in', 'values': [False]},
+                                      {   'parameter': 'Number of Multilateral Sections',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Per-well section-count input for non-AGS nonvertical configurations; mutually '
+                              'exclusive with the direct total-section input.'},
             },
         )
 
@@ -1525,6 +1623,7 @@ class WellBores:
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
                     'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
@@ -1550,6 +1649,7 @@ class WellBores:
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
                     'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
@@ -1575,6 +1675,7 @@ class WellBores:
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
                     'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
@@ -1600,6 +1701,7 @@ class WellBores:
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Well Geometry Configuration', 'operator': 'in', 'values': [1, 5]},
                                       {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
                     'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
@@ -1997,36 +2099,46 @@ class WellBores:
             # and a shallower, lower pressure Injection Reservoir.
             # If so, calculate the injection reservoir pressure as a function of time if overpressure is provided.
             # If the injection reservoir temperature or pressure are not provided, calculate a default for them.
-            if self.injection_reservoir_depth.Provided or self.injection_reservoir_inflation_rate.Provided:
+            split_injection_reservoir_parameters = (
+                self.injection_reservoir_temperature,
+                self.injection_reservoir_depth,
+                self.injection_reservoir_initial_pressure,
+                self.injection_reservoir_inflation_rate,
+            )
+            if any(parameter.Provided for parameter in split_injection_reservoir_parameters):
                 # this means they must be doing a split reservoir -
-                # now deal give default values to whatever values they didn't set
-                if not self.injection_reservoir_temperature.Provided:
-                    self.injection_reservoir_temperature.value = model.reserv.Trock.value
+                # now give default values to whatever values they didn't set
                 if not self.injection_reservoir_depth.Provided:
                     self.injection_reservoir_depth.value = model.reserv.depth.value
                 if not self.injection_reservoir_temperature.Provided:
                     self.injection_reservoir_temperature.value = (model.reserv.averagegradient.value * self.injection_reservoir_depth.value) + model.reserv.Tsurf.value
 
-                injection_reservoir_static_pressure = quantity(static_pressure_MPa(
-                    model.reserv.rhorock.value, self.injection_reservoir_depth.quantity().to('m').magnitude), 'MPa')
+                if not self.injection_reservoir_initial_pressure.Provided:
+                    injection_reservoir_static_pressure = quantity(
+                        static_pressure_MPa(
+                            model.reserv.rhorock.value,
+                            self.injection_reservoir_depth.quantity().to('m').magnitude,
+                        ),
+                        'MPa',
+                    )
+                    self.injection_reservoir_initial_pressure.value = get_hydrostatic_pressure_kPa(
+                        self.injection_reservoir_temperature.value,
+                        model.reserv.Tsurf.value,
+                        self.injection_reservoir_depth.value,
+                        model.reserv.averagegradient.value,
+                        injection_reservoir_static_pressure,
+                    )
 
-                if self.injection_reservoir_pressure.value < 0: # they didn't provide a pressure so assume hydrostatic.
-                    self.injection_reservoir_pressure.value = get_hydrostatic_pressure_kPa(self.injection_reservoir_temperature.value,
-                                                                                        model.reserv.Tsurf.value,
-                                                                                        self.injection_reservoir_depth.value,
-                                                                                        model.reserv.averagegradient.value * 1000.0,
-                                                                                        injection_reservoir_static_pressure)
-            self.injection_reservoir_initial_pressure.value = self.injection_reservoir_pressure.value = get_hydrostatic_pressure_kPa(self.injection_reservoir_temperature.value,
-                                                                                   model.reserv.Tsurf.value,
-                                                                                   self.injection_reservoir_depth.value,
-                                                                                   model.reserv.averagegradient.value,
-                                                                                   injection_reservoir_static_pressure)
-
-#            if not self.injection_reservoir_initial_pressure.Provided:
-            self.injection_reservoir_pressure.value = InjectionReservoirPressurePredictor(model.surfaceplant.plant_lifetime.value,
-                                                                                 model.economics.timestepsperyear.value,
-                                                                                 self.injection_reservoir_initial_pressure.value,
-                                                                                    self.injection_reservoir_inflation_rate.value)
+                self.injection_reservoir_pressure.value = InjectionReservoirPressurePredictor(
+                    model.surfaceplant.plant_lifetime.value,
+                    model.economics.timestepsperyear.value,
+                    self.injection_reservoir_initial_pressure.value,
+                    self.injection_reservoir_inflation_rate.value,
+                )
+            else:
+                self.injection_reservoir_pressure.value = self.production_reservoir_pressure.value
+                self.injection_reservoir_temperature.value = model.reserv.Trock.value
+                self.injection_reservoir_depth.value = model.reserv.depth.value
         else:
             # assume it is the same as the production reservoir pressure if not
             self.injection_reservoir_pressure.value = self.production_reservoir_pressure.value

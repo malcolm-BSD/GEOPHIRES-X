@@ -17,6 +17,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertEqual(
             [
                 {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                {"parameter": "Well Geometry Configuration", "operator": "in", "values": [1, 5]},
                 {"parameter": "Flowrate Model", "operator": "in", "values": [2]},
             ],
             request_schema["properties"]["Flowrate File"]["x-dependencies"]["conditions"],
@@ -43,7 +44,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, definition in request_schema["properties"].items()
             if "x-dependencies" in definition
         }
-        self.assertEqual(312, len(source_dependencies))
+        self.assertEqual(318, len(source_dependencies))
         self.assertEqual(set(source_dependencies), set(schema_dependencies))
         for name, source_dependency in source_dependencies.items():
             with self.subTest(parameter=name):
@@ -582,9 +583,132 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertIsNone(wellbore_parameters["Closed-loop Configuration"]["dependency"])
 
         self.assertEqual(
-            [{"parameter": "Ramey Production Wellbore Model", "operator": "in", "values": [False]}],
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [0, 1, 2, 3, 4, 5, 6, 8]},
+                {"parameter": "Number of Production Wells", "operator": "provided", "values": [False]},
+                {"parameter": "Number of Injection Wells", "operator": "provided", "values": [False]},
+                {
+                    "parameter": "Number of Injection Wells per Production Well",
+                    "operator": "provided",
+                    "values": [False],
+                },
+            ],
+            wellbore_parameters["Number of Doublets"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [0, 1, 2, 3, 4, 5, 6, 8]},
+                {"parameter": "Number of Doublets", "operator": "provided", "values": [False]},
+                {"parameter": "Number of Injection Wells", "operator": "provided", "values": [False]},
+            ],
+            wellbore_parameters["Number of Injection Wells per Production Well"]["dependency"]["conditions"],
+        )
+
+        conventional_reservoir_condition = {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [0, 1, 2, 3, 4, 5, 6],
+        }
+        self.assertEqual(
+            [conventional_reservoir_condition],
+            wellbore_parameters["Ramey Production Wellbore Model"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                conventional_reservoir_condition,
+                {"parameter": "Ramey Production Wellbore Model", "operator": "in", "values": [False]},
+            ],
             wellbore_parameters["Production Wellbore Temperature Drop"]["dependency"]["conditions"],
         )
+        self.assertEqual(
+            [{"parameter": "Reservoir Model", "operator": "in", "values": [1, 2, 3, 4, 5, 6, 7]}],
+            wellbore_parameters["Injection Wellbore Temperature Gain"]["dependency"]["conditions"],
+        )
+        flow_dependency = wellbore_parameters["Production Flow Rate per Well"]["dependency"]
+        self.assertEqual("any", flow_dependency["match"])
+        self.assertEqual(
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [0, 1, 2, 3, 4, 5, 6, 7]},
+                {"parameter": "Flowrate Model", "operator": "in", "values": [1]},
+            ],
+            flow_dependency["conditions"],
+        )
+        self.assertEqual(
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [0, 1, 2, 3, 4, 5, 6, 8]},
+                {"parameter": "Reservoir Impedance", "operator": "provided", "values": [False]},
+            ],
+            wellbore_parameters["Production Wellhead Pressure"]["dependency"]["conditions"],
+        )
+        conventional_non_ags_conditions = [
+            conventional_reservoir_condition,
+            {"parameter": "Is AGS", "operator": "in", "values": [False]},
+        ]
+        for parameter_name in [
+            "Reservoir Hydrostatic Pressure",
+            "Maximum Drawdown",
+            "Well Integrity Maximum Lifetime",
+        ]:
+            with self.subTest(conventional_wellbore_dependency=parameter_name):
+                self.assertEqual(
+                    conventional_non_ags_conditions,
+                    wellbore_parameters[parameter_name]["dependency"]["conditions"],
+                )
+
+        nonvertical_configuration_condition = {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [1, 2, 4, 5],
+        }
+        self.assertEqual(
+            [nonvertical_configuration_condition],
+            wellbore_parameters["Nonvertical Length per Multilateral Section"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                nonvertical_configuration_condition,
+                {
+                    "parameter": "Number of Multilateral Sections per Vertical Section",
+                    "operator": "provided",
+                    "values": [False],
+                },
+            ],
+            wellbore_parameters["Number of Multilateral Sections"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                nonvertical_configuration_condition,
+                {"parameter": "Is AGS", "operator": "in", "values": [False]},
+                {"parameter": "Number of Multilateral Sections", "operator": "provided", "values": [False]},
+            ],
+            wellbore_parameters["Number of Multilateral Sections per Vertical Section"]["dependency"]["conditions"],
+        )
+
+        sbt_conditions = [
+            {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+            {"parameter": "Well Geometry Configuration", "operator": "in", "values": [1, 5]},
+        ]
+        self.assertEqual(
+            sbt_conditions,
+            wellbore_parameters["Flowrate Model"]["dependency"]["conditions"],
+        )
+        for parameter_name in expected_group_members["SBT well geometry"]:
+            with self.subTest(sbt_geometry_dependency=parameter_name):
+                self.assertEqual(
+                    sbt_conditions,
+                    wellbore_parameters[parameter_name]["dependency"]["conditions"],
+                )
+        cased_sbt_conditions = [
+            *sbt_conditions,
+            {"parameter": "Multilaterals Cased", "operator": "in", "values": [True]},
+        ]
+        for parameter_name in expected_group_members["SBT lateral construction"]:
+            with self.subTest(sbt_lateral_construction_dependency=parameter_name):
+                self.assertEqual(
+                    cased_sbt_conditions,
+                    wellbore_parameters[parameter_name]["dependency"]["conditions"],
+                )
+
         self.assertEqual(
             [{"parameter": "Overpressure Percentage", "operator": "provided", "values": [True]}],
             wellbore_parameters["Injection Reservoir Initial Pressure"]["dependency"]["conditions"],
@@ -705,13 +829,51 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             [{"parameter": "Reservoir Model", "operator": "in", "values": [3, 4]}],
             reservoir_parameters["Drawdown Parameter"]["dependency"]["conditions"],
         )
+        sbt_uloop_conditions = [
+            {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+            {"parameter": "Well Geometry Configuration", "operator": "in", "values": [1, 5]},
+        ]
         self.assertEqual(
             [
-                {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                *sbt_uloop_conditions,
                 {"parameter": "Flowrate Model", "operator": "in", "values": [2]},
             ],
             reservoir_parameters["Flowrate File"]["dependency"]["conditions"],
         )
+        self.assertEqual(
+            sbt_uloop_conditions,
+            input_parameters["Injection Temperature Model"]["UI"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                *sbt_uloop_conditions,
+                {"parameter": "Injection Temperature Model", "operator": "in", "values": [2]},
+            ],
+            reservoir_parameters["Injection Temperature File"]["dependency"]["conditions"],
+        )
+        self.assertEqual(
+            [
+                {"parameter": "Reservoir Model", "operator": "in", "values": [8]},
+                {"parameter": "Well Geometry Configuration", "operator": "in", "values": [1, 2, 5]},
+            ],
+            reservoir_parameters["SBT Accuracy Desired"]["dependency"]["conditions"],
+        )
+        for parameter_name in ["SBT Percent Implicit Euler Scheme", "SBT Generate Wireframe Graphics"]:
+            with self.subTest(sbt_uloop_dependency=parameter_name):
+                self.assertEqual(
+                    sbt_uloop_conditions,
+                    reservoir_parameters[parameter_name]["dependency"]["conditions"],
+                )
+        for parameter_name in [
+            "SBT Initial Timestep Count",
+            "SBT Final Timestep Count",
+            "SBT Initial to Final Timestep Transition",
+        ]:
+            with self.subTest(deprecated_sbt_timestep_parameter=parameter_name):
+                self.assertIsNone(reservoir_parameters[parameter_name]["dependency"])
+                self.assertIn(
+                    "Deprecated compatibility input; ignored", input_parameters[parameter_name]["ToolTipText"]
+                )
         for parameter_name in expected_group_members["TOUGH2 model"]:
             with self.subTest(tough2_dependency=parameter_name):
                 self.assertEqual(

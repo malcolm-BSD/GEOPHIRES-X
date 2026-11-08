@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from unittest.mock import patch
 
 from base_test_case import BaseTestCase
 
@@ -10,9 +11,56 @@ from base_test_case import BaseTestCase
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
 from geophires_x_client import GeophiresXResult
+from geophires_x.Model import Model
+from geophires_x.Parameter import ParameterEntry
 
 
 class WellBoresTestCase(BaseTestCase):
+    def test_injection_reservoir_initial_pressure_is_preserved(self):
+        def _calculate_model(initial_pressure_kpa: float | None) -> Model:
+            with patch("sys.argv", [""]):
+                model = Model(enable_geophires_logging_config=False)
+            parameter_values = {
+                "Overpressure Percentage": "120",
+                "Overpressure Depletion Rate": "1",
+            }
+            if initial_pressure_kpa is not None:
+                parameter_values["Injection Reservoir Initial Pressure"] = str(initial_pressure_kpa)
+            else:
+                parameter_values.update(
+                    {
+                        "Injection Reservoir Depth": "1500",
+                        "Injection Reservoir Inflation Rate": "50",
+                    }
+                )
+
+            model.InputParameters.update(
+                {name: ParameterEntry(Name=name, sValue=value) for name, value in parameter_values.items()}
+            )
+            model.read_parameters()
+            model.Calculate()
+            return model
+
+        supplied_initial_pressure_kpa = 12345.0
+        supplied_model = _calculate_model(supplied_initial_pressure_kpa)
+        self.assertTrue(supplied_model.wellbores.injection_reservoir_initial_pressure.Provided)
+        self.assertEqual(
+            supplied_initial_pressure_kpa,
+            supplied_model.wellbores.injection_reservoir_initial_pressure.value,
+        )
+        self.assertEqual(
+            supplied_initial_pressure_kpa,
+            supplied_model.wellbores.injection_reservoir_pressure.value[0],
+        )
+
+        fallback_model = _calculate_model(None)
+        self.assertFalse(fallback_model.wellbores.injection_reservoir_initial_pressure.Provided)
+        self.assertGreater(fallback_model.wellbores.injection_reservoir_initial_pressure.value, 0.0)
+        self.assertEqual(
+            fallback_model.wellbores.injection_reservoir_initial_pressure.value,
+            fallback_model.wellbores.injection_reservoir_pressure.value[0],
+        )
+
     def test_number_of_doublets(self):
         r_prod_inj: GeophiresXResult = self._get_result(
             {

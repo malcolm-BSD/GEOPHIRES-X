@@ -1473,11 +1473,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -1494,9 +1503,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -1520,6 +1537,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Flowrate Model",
             "operator": "in",
             "values": [
@@ -1527,9 +1552,10 @@
             ]
           }
         ],
-        "reason": "Used only when SBT flow rates are read from a file.",
+        "reason": "Used only when U-loop or EavorLoop SBT flow rates are read from a file.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Flowrate Model"
         ]
       },
@@ -1549,6 +1575,14 @@
               ]
             },
             {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
+            },
+            {
               "parameter": "Flowrate Model",
               "operator": "in",
               "values": [
@@ -1556,7 +1590,7 @@
               ]
             }
           ],
-          "reason": "Used only when SBT flow rates are read from a file."
+          "reason": "Used only when U-loop or EavorLoop SBT flow rates are read from a file."
         }
       }
     },
@@ -1578,11 +1612,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -1599,9 +1642,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -1625,6 +1676,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Injection Temperature Model",
             "operator": "in",
             "values": [
@@ -1632,9 +1691,10 @@
             ]
           }
         ],
-        "reason": "Used only when SBT injection temperatures are read from a file.",
+        "reason": "Used only when U-loop or EavorLoop SBT injection temperatures are read from a file.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Injection Temperature Model"
         ]
       },
@@ -1654,6 +1714,14 @@
               ]
             },
             {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
+            },
+            {
               "parameter": "Injection Temperature Model",
               "operator": "in",
               "values": [
@@ -1661,7 +1729,7 @@
               ]
             }
           ],
-          "reason": "Used only when SBT injection temperatures are read from a file."
+          "reason": "Used only when U-loop or EavorLoop SBT injection temperatures are read from a file."
         }
       }
     },
@@ -1683,11 +1751,21 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop, coaxial, and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -1704,9 +1782,18 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop, coaxial, and EavorLoop configurations."
         }
       }
     },
@@ -1728,11 +1815,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -1749,145 +1845,63 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
     "SBT Initial Timestep Count": {
-      "description": "The number of timesteps in the first ~3 hours of model",
+      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
       "type": "integer",
       "units": null,
       "category": "Reservoir",
       "default": 5,
       "minimum": 1,
       "maximum": 150,
-      "x-dependencies": {
-        "effect": "enable",
-        "match": "all",
-        "conditions": [
-          {
-            "parameter": "Reservoir Model",
-            "operator": "in",
-            "values": [
-              8
-            ]
-          }
-        ],
-        "reason": "Used only by the SBT reservoir model.",
-        "depends_on": [
-          "Reservoir Model"
-        ]
-      },
       "x-ui": {
         "tab": "reservoir",
         "group": "SBT solver controls",
         "order": 740,
-        "dependency": {
-          "effect": "enable",
-          "match": "all",
-          "conditions": [
-            {
-              "parameter": "Reservoir Model",
-              "operator": "in",
-              "values": [
-                8
-              ]
-            }
-          ],
-          "reason": "Used only by the SBT reservoir model."
-        }
+        "dependency": null
       }
     },
     "SBT Final Timestep Count": {
-      "description": "The number of timesteps after the first ~3 hours of model",
+      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
       "type": "number",
       "units": null,
       "category": "Reservoir",
       "default": 70,
       "minimum": 5,
       "maximum": 1000,
-      "x-dependencies": {
-        "effect": "enable",
-        "match": "all",
-        "conditions": [
-          {
-            "parameter": "Reservoir Model",
-            "operator": "in",
-            "values": [
-              8
-            ]
-          }
-        ],
-        "reason": "Used only by the SBT reservoir model.",
-        "depends_on": [
-          "Reservoir Model"
-        ]
-      },
       "x-ui": {
         "tab": "reservoir",
         "group": "SBT solver controls",
         "order": 750,
-        "dependency": {
-          "effect": "enable",
-          "match": "all",
-          "conditions": [
-            {
-              "parameter": "Reservoir Model",
-              "operator": "in",
-              "values": [
-                8
-              ]
-            }
-          ],
-          "reason": "Used only by the SBT reservoir model."
-        }
+        "dependency": null
       }
     },
     "SBT Initial to Final Timestep Transition": {
-      "description": "The time in secs at which the time arrays switches from closely spaced linear to logarithmic",
+      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
       "type": "number",
       "units": "sec",
       "category": "Reservoir",
       "default": 9900,
       "minimum": 1,
       "maximum": 40000000,
-      "x-dependencies": {
-        "effect": "enable",
-        "match": "all",
-        "conditions": [
-          {
-            "parameter": "Reservoir Model",
-            "operator": "in",
-            "values": [
-              8
-            ]
-          }
-        ],
-        "reason": "Used only by the SBT reservoir model.",
-        "depends_on": [
-          "Reservoir Model"
-        ]
-      },
       "x-ui": {
         "tab": "reservoir",
         "group": "SBT solver controls",
         "order": 760,
-        "dependency": {
-          "effect": "enable",
-          "match": "all",
-          "conditions": [
-            {
-              "parameter": "Reservoir Model",
-              "operator": "in",
-              "values": [
-                8
-              ]
-            }
-          ],
-          "reason": "Used only by the SBT reservoir model."
-        }
+        "dependency": null
       }
     },
     "SBT Generate Wireframe Graphics": {
@@ -1908,11 +1922,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -1929,9 +1952,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -2363,11 +2394,100 @@
       "default": 2,
       "minimum": 0,
       "maximum": 200,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8
+            ]
+          },
+          {
+            "parameter": "Number of Production Wells",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          },
+          {
+            "parameter": "Number of Injection Wells",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          },
+          {
+            "parameter": "Number of Injection Wells per Production Well",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "Alternative well-count input; unavailable for SUTRA and when an explicit or ratio-based well count is provided.",
+        "depends_on": [
+          "Reservoir Model",
+          "Number of Production Wells",
+          "Number of Injection Wells",
+          "Number of Injection Wells per Production Well"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellfield sizing",
         "order": 30,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                8
+              ]
+            },
+            {
+              "parameter": "Number of Production Wells",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            },
+            {
+              "parameter": "Number of Injection Wells",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            },
+            {
+              "parameter": "Number of Injection Wells per Production Well",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "Alternative well-count input; unavailable for SUTRA and when an explicit or ratio-based well count is provided."
+        }
       }
     },
     "Number of Injection Wells per Production Well": {
@@ -2378,11 +2498,85 @@
       "default": 1,
       "minimum": 0,
       "maximum": 199,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8
+            ]
+          },
+          {
+            "parameter": "Number of Doublets",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          },
+          {
+            "parameter": "Number of Injection Wells",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "Alternative injection-well count input; unavailable for SUTRA, explicit injection counts, or doublet-based sizing.",
+        "depends_on": [
+          "Reservoir Model",
+          "Number of Doublets",
+          "Number of Injection Wells"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellfield sizing",
         "order": 40,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                8
+              ]
+            },
+            {
+              "parameter": "Number of Doublets",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            },
+            {
+              "parameter": "Number of Injection Wells",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "Alternative injection-well count input; unavailable for SUTRA, explicit injection counts, or doublet-based sizing."
+        }
       }
     },
     "Production Well Diameter": {
@@ -2423,11 +2617,53 @@
       "default": true,
       "minimum": null,
       "maximum": null,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        ],
+        "reason": "SBT and SUTRA supply produced temperatures directly instead of using the Ramey model.",
+        "depends_on": [
+          "Reservoir Model"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellbore thermal model",
         "order": 70,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            }
+          ],
+          "reason": "SBT and SUTRA supply produced temperatures directly instead of using the Ramey model."
+        }
       }
     },
     "Production Wellbore Temperature Drop": {
@@ -2443,6 +2679,19 @@
         "match": "all",
         "conditions": [
           {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
             "parameter": "Ramey Production Wellbore Model",
             "operator": "in",
             "values": [
@@ -2452,6 +2701,7 @@
         ],
         "reason": "Used only when the Ramey production-well heat-loss model is disabled.",
         "depends_on": [
+          "Reservoir Model",
           "Ramey Production Wellbore Model"
         ]
       },
@@ -2463,6 +2713,19 @@
           "effect": "enable",
           "match": "all",
           "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            },
             {
               "parameter": "Ramey Production Wellbore Model",
               "operator": "in",
@@ -2483,11 +2746,53 @@
       "default": 0.0,
       "minimum": -5.0,
       "maximum": 50.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "reason": "Applied by reservoir models that use the shared reservoir calculation; cylindrical and SBT paths do not apply it.",
+        "depends_on": [
+          "Reservoir Model"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellbore thermal model",
         "order": 90,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "reason": "Applied by reservoir models that use the shared reservoir calculation; cylindrical and SBT paths do not apply it."
+        }
       }
     },
     "Production Flow Rate per Well": {
@@ -2498,11 +2803,70 @@
       "default": 50.0,
       "minimum": 1.0,
       "maximum": 500.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "any",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "parameter": "Flowrate Model",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          }
+        ],
+        "reason": "Not used when the SBT flow-rate history is supplied by file.",
+        "depends_on": [
+          "Reservoir Model",
+          "Flowrate Model"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellbore flow and pressure",
         "order": 100,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "any",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "parameter": "Flowrate Model",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            }
+          ],
+          "reason": "Not used when the SBT flow-rate history is supplied by file."
+        }
       }
     },
     "Reservoir Impedance": {
@@ -2647,11 +3011,68 @@
       "default": 29430,
       "minimum": 100.0,
       "maximum": 100000.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "parameter": "Is AGS",
+            "operator": "in",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "User override used only by the conventional wellbore pressure calculation.",
+        "depends_on": [
+          "Reservoir Model",
+          "Is AGS"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellbore flow and pressure",
         "order": 120,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "parameter": "Is AGS",
+              "operator": "in",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "User override used only by the conventional wellbore pressure calculation."
+        }
       }
     },
     "Production Wellhead Pressure": {
@@ -2662,11 +3083,70 @@
       "default": 446.02,
       "minimum": 0.0,
       "maximum": 10000.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8
+            ]
+          },
+          {
+            "parameter": "Reservoir Impedance",
+            "operator": "provided",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "Used by the productivity/injectivity pressure pathway, but not by SUTRA.",
+        "depends_on": [
+          "Reservoir Model",
+          "Reservoir Impedance"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Wellbore flow and pressure",
         "order": 110,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                8
+              ]
+            },
+            {
+              "parameter": "Reservoir Impedance",
+              "operator": "provided",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "Used by the productivity/injectivity pressure pathway, but not by SUTRA."
+        }
       }
     },
     "Injectivity Index": {
@@ -2767,11 +3247,68 @@
       "default": 1.0,
       "minimum": 0.0,
       "maximum": "1.0",
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "parameter": "Is AGS",
+            "operator": "in",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them.",
+        "depends_on": [
+          "Reservoir Model",
+          "Is AGS"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Well operating limits",
         "order": 130,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "parameter": "Is AGS",
+              "operator": "in",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them."
+        }
       }
     },
     "Well Integrity Maximum Lifetime": {
@@ -2782,11 +3319,68 @@
       "default": -1.0,
       "minimum": 0.1,
       "maximum": 100.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "parameter": "Is AGS",
+            "operator": "in",
+            "values": [
+              false
+            ]
+          }
+        ],
+        "reason": "Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them.",
+        "depends_on": [
+          "Reservoir Model",
+          "Is AGS"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
         "group": "Well operating limits",
         "order": 140,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "parameter": "Is AGS",
+              "operator": "in",
+              "values": [
+                false
+              ]
+            }
+          ],
+          "reason": "Used by conventional-well redrilling calculations; AGS, SBT, and SUTRA bypass them."
+        }
       }
     },
     "Is AGS": {
@@ -3411,11 +4005,19 @@
               4,
               5
             ]
+          },
+          {
+            "parameter": "Number of Multilateral Sections per Vertical Section",
+            "operator": "provided",
+            "values": [
+              false
+            ]
           }
         ],
-        "reason": "Used only by configurations containing nonvertical wellbore sections.",
+        "reason": "Direct total-section input for nonvertical configurations; mutually exclusive with the per-vertical-section input.",
         "depends_on": [
-          "Well Geometry Configuration"
+          "Well Geometry Configuration",
+          "Number of Multilateral Sections per Vertical Section"
         ]
       },
       "x-ui": {
@@ -3435,9 +4037,16 @@
                 4,
                 5
               ]
+            },
+            {
+              "parameter": "Number of Multilateral Sections per Vertical Section",
+              "operator": "provided",
+              "values": [
+                false
+              ]
             }
           ],
-          "reason": "Used only by configurations containing nonvertical wellbore sections."
+          "reason": "Direct total-section input for nonvertical configurations; mutually exclusive with the per-vertical-section input."
         }
       }
     },
@@ -3462,11 +4071,27 @@
               4,
               5
             ]
+          },
+          {
+            "parameter": "Is AGS",
+            "operator": "in",
+            "values": [
+              false
+            ]
+          },
+          {
+            "parameter": "Number of Multilateral Sections",
+            "operator": "provided",
+            "values": [
+              false
+            ]
           }
         ],
-        "reason": "Used only by configurations containing nonvertical wellbore sections.",
+        "reason": "Per-well section-count input for non-AGS nonvertical configurations; mutually exclusive with the direct total-section input.",
         "depends_on": [
-          "Well Geometry Configuration"
+          "Well Geometry Configuration",
+          "Is AGS",
+          "Number of Multilateral Sections"
         ]
       },
       "x-ui": {
@@ -3486,9 +4111,23 @@
                 4,
                 5
               ]
+            },
+            {
+              "parameter": "Is AGS",
+              "operator": "in",
+              "values": [
+                false
+              ]
+            },
+            {
+              "parameter": "Number of Multilateral Sections",
+              "operator": "provided",
+              "values": [
+                false
+              ]
             }
           ],
-          "reason": "Used only by configurations containing nonvertical wellbore sections."
+          "reason": "Per-well section-count input for non-AGS nonvertical configurations; mutually exclusive with the direct total-section input."
         }
       }
     },
@@ -3563,6 +4202,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Multilaterals Cased",
             "operator": "in",
             "values": [
@@ -3573,6 +4220,7 @@
         "reason": "Used by the SBT heat-transfer calculation only for cased laterals.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Multilaterals Cased"
         ]
       },
@@ -3589,6 +4237,14 @@
               "operator": "in",
               "values": [
                 8
+              ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
               ]
             },
             {
@@ -3623,6 +4279,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Multilaterals Cased",
             "operator": "in",
             "values": [
@@ -3633,6 +4297,7 @@
         "reason": "Used by the SBT heat-transfer calculation only for cased laterals.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Multilaterals Cased"
         ]
       },
@@ -3649,6 +4314,14 @@
               "operator": "in",
               "values": [
                 8
+              ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
               ]
             },
             {
@@ -3683,6 +4356,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Multilaterals Cased",
             "operator": "in",
             "values": [
@@ -3693,6 +4374,7 @@
         "reason": "Used by the SBT heat-transfer calculation only for cased laterals.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Multilaterals Cased"
         ]
       },
@@ -3709,6 +4391,14 @@
               "operator": "in",
               "values": [
                 8
+              ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
               ]
             },
             {
@@ -3743,6 +4433,14 @@
             ]
           },
           {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
+          },
+          {
             "parameter": "Multilaterals Cased",
             "operator": "in",
             "values": [
@@ -3753,6 +4451,7 @@
         "reason": "Used by the SBT heat-transfer calculation only for cased laterals.",
         "depends_on": [
           "Reservoir Model",
+          "Well Geometry Configuration",
           "Multilaterals Cased"
         ]
       },
@@ -3769,6 +4468,14 @@
               "operator": "in",
               "values": [
                 8
+              ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
               ]
             },
             {
@@ -3875,11 +4582,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -3896,9 +4612,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -3920,11 +4644,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -3941,9 +4674,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -3965,11 +4706,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -3986,9 +4736,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -4010,11 +4768,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -4031,9 +4798,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -4055,11 +4830,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -4076,9 +4860,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -4100,11 +4892,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -4121,9 +4922,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
@@ -4145,11 +4954,20 @@
             "values": [
               8
             ]
+          },
+          {
+            "parameter": "Well Geometry Configuration",
+            "operator": "in",
+            "values": [
+              1,
+              5
+            ]
           }
         ],
-        "reason": "Used only by the SBT reservoir model.",
+        "reason": "Used by implemented SBT U-loop and EavorLoop configurations.",
         "depends_on": [
-          "Reservoir Model"
+          "Reservoir Model",
+          "Well Geometry Configuration"
         ]
       },
       "x-ui": {
@@ -4166,9 +4984,17 @@
               "values": [
                 8
               ]
+            },
+            {
+              "parameter": "Well Geometry Configuration",
+              "operator": "in",
+              "values": [
+                1,
+                5
+              ]
             }
           ],
-          "reason": "Used only by the SBT reservoir model."
+          "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
       }
     },
