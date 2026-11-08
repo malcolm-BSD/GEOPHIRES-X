@@ -57,8 +57,8 @@ class TDPReservoir(Reservoir):
             ToolTipText="specify the thermal drawdown for reservoir model 3 and 4",
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 350,
+                "group": "Thermal drawdown models",
+                "order": 400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [3, 4]}],
@@ -78,8 +78,8 @@ class TDPReservoir(Reservoir):
             ToolTipText='Thermal drawdown schedule for reservoir model 3 and 4 using DSL syntax',
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 360,
+                "group": "Thermal drawdown models",
+                "order": 410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [4]}],

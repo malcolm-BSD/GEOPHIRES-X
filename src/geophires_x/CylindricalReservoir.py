@@ -56,8 +56,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Depth of the inflow end of a cylindrical reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 410,
+                "group": "Cylindrical reservoir model",
+                "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -79,8 +79,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Depth of the outflow end of a cylindrical reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 420,
+                "group": "Cylindrical reservoir model",
+                "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -101,8 +101,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Length of cylindrical reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 430,
+                "group": "Cylindrical reservoir model",
+                "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -123,8 +123,8 @@ class CylindricalReservoir(Reservoir):
                         + " be perturbed by at least 1 C",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 440,
+                "group": "Cylindrical reservoir model",
+                "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -145,8 +145,8 @@ class CylindricalReservoir(Reservoir):
                         + " of the heat in the cylinder.",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 450,
+                "group": "Cylindrical reservoir model",
+                "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -172,8 +172,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Depth of the inflow end of a cyclindrical reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 460,
+                "group": "Cylindrical reservoir model",
+                "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -193,8 +193,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Fraction of water lost in the reservoir defined as (total geofluid lost)/(total geofluid produced).",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 280,
+                "group": "Reservoir flow properties",
+                "order": 330,
                 "dependency": None,
             },
         )

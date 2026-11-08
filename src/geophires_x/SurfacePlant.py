@@ -369,8 +369,8 @@ class SurfacePlant:
             ToolTipText="Specify the overall efficiency of the injection and production well pumps",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 40,
+                "group": "Common plant operation",
+                "order": 30,
                 "dependency": None,
             },
         )
@@ -389,8 +389,8 @@ class SurfacePlant:
                         "Synonymous with capacity factor.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 50,
+                "group": "Common plant operation",
+                "order": 40,
                 "dependency": None,
             },
         )
@@ -407,8 +407,8 @@ class SurfacePlant:
             ToolTipText="Constant thermal efficiency of the direct-use application",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 60,
+                "group": "Common plant operation",
+                "order": 50,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -431,8 +431,8 @@ class SurfacePlant:
             " CHP parallel cycle",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 70,
+                "group": "Cogeneration configuration",
+                "order": 120,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'End-Use Option', 'operator': 'in', 'values': [51, 52]}],
@@ -451,8 +451,8 @@ class SurfacePlant:
             ToolTipText="Power plant entering geofluid temperature used in CHP bottoming cycle",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 80,
+                "group": "Cogeneration configuration",
+                "order": 130,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'End-Use Option', 'operator': 'in', 'values': [41, 42]}],
@@ -471,8 +471,8 @@ class SurfacePlant:
             ToolTipText="Ambient (or dead-state) temperature used for calculating power plant utilization efficiency",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 90,
+                "group": "Common plant operation",
+                "order": 60,
                 "dependency": None,
             },
         )
@@ -541,7 +541,7 @@ class SurfacePlant:
             ToolTipText="Historical weather year to request when project latitude and longitude are provided.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
+                "group": "Weather data",
                 "order": 110,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -577,8 +577,8 @@ class SurfacePlant:
             ErrMessage="assume default piping length (0km)",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 120,
+                "group": "Common plant operation",
+                "order": 70,
                 "dependency": None,
             },
         )
@@ -594,8 +594,8 @@ class SurfacePlant:
             ToolTipText="Constant plant outlet pressure equal to injection well pump(s) suction pressure",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 130,
+                "group": "Common plant operation",
+                "order": 80,
                 "dependency": None,
             },
         )
@@ -612,8 +612,8 @@ class SurfacePlant:
                         "from electricity sales in CHP mode.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 140,
+                "group": "Energy prices",
+                "order": 90,
                 "dependency": None,
             },
         )
@@ -629,8 +629,8 @@ class SurfacePlant:
             ToolTipText="Price of heat to calculate revenue from heat sales in CHP mode.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 150,
+                "group": "Energy prices",
+                "order": 100,
                 "dependency": None,
             },
         )
@@ -643,7 +643,7 @@ class SurfacePlant:
             ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
             UI={
                 "tab": "Project",
-                "group": "Surface plant parameters",
+                "group": "Dispatch configuration",
                 "order": 2,
                 "dependency": None,
             },
@@ -656,8 +656,8 @@ class SurfacePlant:
             ToolTipText="Select the demand profile source used by dispatchable mode.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 170,
+                "group": "Dispatch configuration",
+                "order": 200,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -674,8 +674,8 @@ class SurfacePlant:
             ToolTipText="Select the dispatch control strategy used by dispatchable mode.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 180,
+                "group": "Dispatch configuration",
+                "order": 210,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -695,8 +695,8 @@ class SurfacePlant:
             ToolTipText="Maximum production flow multiplier available to dispatchable operation.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 190,
+                "group": "Dispatch configuration",
+                "order": 220,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -716,8 +716,8 @@ class SurfacePlant:
             ToolTipText="Minimum production flow fraction when dispatchable operation is on.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 200,
+                "group": "Dispatch configuration",
+                "order": 230,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -737,8 +737,8 @@ class SurfacePlant:
             ToolTipText="Minimum on-hour runtime fraction when dispatchable operation is on.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 210,
+                "group": "Dispatch configuration",
+                "order": 240,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -757,8 +757,8 @@ class SurfacePlant:
             ToolTipText="First operating year included in dispatch analysis output.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 220,
+                "group": "Dispatch configuration",
+                "order": 250,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -780,8 +780,8 @@ class SurfacePlant:
             ),
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 230,
+                "group": "Dispatch configuration",
+                "order": 260,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -798,7 +798,7 @@ class SurfacePlant:
             ToolTipText="Enable the thermal energy storage system dispatch layer.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
+                "group": "Thermal energy storage",
                 "order": 2,
                 "dependency": None,
             },
@@ -816,8 +816,8 @@ class SurfacePlant:
             ToolTipText="Usable thermal energy storage tank fluid volume.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 250,
+                "group": "TESS design and cost",
+                "order": 300,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -844,8 +844,8 @@ class SurfacePlant:
             ),
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 260,
+                "group": "TESS design and cost",
+                "order": 310,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -866,8 +866,8 @@ class SurfacePlant:
             ToolTipText="Annual TESS fixed O&M cost as a fraction of TESS capital cost.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 270,
+                "group": "TESS design and cost",
+                "order": 320,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -885,8 +885,8 @@ class SurfacePlant:
             ToolTipText="Working fluid used in the TESS tank. The initial implementation supports water only.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 280,
+                "group": "TESS design and cost",
+                "order": 330,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -904,8 +904,8 @@ class SurfacePlant:
             ToolTipText="Select whether TESS pressure is computed automatically or supplied by the user.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 290,
+                "group": "TESS design and cost",
+                "order": 340,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -928,8 +928,8 @@ class SurfacePlant:
             ToolTipText="TESS tank pressure. Used directly when TESS Pressure Mode is User Specified.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 300,
+                "group": "TESS design and cost",
+                "order": 350,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -950,8 +950,8 @@ class SurfacePlant:
             ToolTipText="Multiplier applied to water saturation pressure for TESS pressure validation.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 310,
+                "group": "TESS design and cost",
+                "order": 360,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -974,8 +974,8 @@ class SurfacePlant:
             ToolTipText="Lower tank temperature bound for usable stored thermal energy.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 320,
+                "group": "TESS thermal limits",
+                "order": 370,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -998,8 +998,8 @@ class SurfacePlant:
             ToolTipText="Upper tank operating temperature.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 330,
+                "group": "TESS thermal limits",
+                "order": 380,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1022,8 +1022,8 @@ class SurfacePlant:
             ToolTipText="Preferred tank control temperature.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 340,
+                "group": "TESS thermal limits",
+                "order": 390,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1046,8 +1046,8 @@ class SurfacePlant:
             ToolTipText="Initial tank temperature at the start of dispatch analysis.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 350,
+                "group": "TESS thermal limits",
+                "order": 400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1070,8 +1070,8 @@ class SurfacePlant:
             ToolTipText="Total thermostat hysteresis range around the TESS target temperature.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 360,
+                "group": "TESS thermal limits",
+                "order": 410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1092,8 +1092,8 @@ class SurfacePlant:
             ToolTipText="Fraction of geothermal heat accepted into useful TESS stored energy.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 370,
+                "group": "TESS performance",
+                "order": 420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1114,8 +1114,8 @@ class SurfacePlant:
             ToolTipText="Fractional efficiency from useful TESS stored energy to delivered thermal demand.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 380,
+                "group": "TESS performance",
+                "order": 430,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1136,8 +1136,8 @@ class SurfacePlant:
             ToolTipText="Fraction of useful stored TESS energy lost per day.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 390,
+                "group": "TESS performance",
+                "order": 440,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1160,8 +1160,8 @@ class SurfacePlant:
             ToolTipText="Maximum tank-side charging power. -1 means no TESS-side limit beyond geothermal production and available storage capacity.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 400,
+                "group": "TESS performance",
+                "order": 450,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1187,8 +1187,8 @@ class SurfacePlant:
             ),
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 410,
+                "group": "TESS performance",
+                "order": 460,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1211,8 +1211,8 @@ class SurfacePlant:
             ToolTipText="Multiplier used by TESS automatic discharge-power sizing and subhourly peak checks.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 420,
+                "group": "TESS performance",
+                "order": 470,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1233,8 +1233,8 @@ class SurfacePlant:
             ToolTipText="Control strategy used to charge TESS from geothermal output.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 430,
+                "group": "TESS controls",
+                "order": 480,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1255,8 +1255,8 @@ class SurfacePlant:
             ToolTipText="Geothermal production flow fraction used while temperature-band TESS charging is active.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 440,
+                "group": "TESS controls",
+                "order": 490,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1281,8 +1281,8 @@ class SurfacePlant:
             ToolTipText="Moving-average window for TESS moving-average charge control.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 450,
+                "group": "TESS controls",
+                "order": 500,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1306,8 +1306,8 @@ class SurfacePlant:
             ToolTipText="State-of-charge correction gain for TESS moving-average charge control.",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 460,
+                "group": "TESS controls",
+                "order": 510,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1335,8 +1335,8 @@ class SurfacePlant:
             ToolTipText="Historical annual heating demand profile",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 470,
+                "group": "Dispatch demand profiles",
+                "order": 270,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1364,8 +1364,8 @@ class SurfacePlant:
             ToolTipText="Historical annual cooling demand profile",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Direct-use systems",
-                "order": 480,
+                "group": "Dispatch demand profiles",
+                "order": 290,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1392,8 +1392,8 @@ class SurfacePlant:
             ToolTipText="Historical annual electricity demand profile",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 490,
+                "group": "Dispatch demand profiles",
+                "order": 280,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Operating Mode',
@@ -1424,8 +1424,8 @@ class SurfacePlant:
                         f'custom spread instead.',
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 500,
+                "group": "Project delivery",
+                "order": 140,
                 "dependency": None,
             },
         )
@@ -1443,8 +1443,8 @@ class SurfacePlant:
             ToolTipText="Heat capacity of the working fluid",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Plant operating assumptions",
-                "order": 510,
+                "group": "SBT working-fluid properties",
+                "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
@@ -1464,8 +1464,8 @@ class SurfacePlant:
             ToolTipText="Density of the working fluid",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 520,
+                "group": "SBT working-fluid properties",
+                "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
@@ -1485,8 +1485,8 @@ class SurfacePlant:
             ToolTipText="Thermal conductivity of the working fluid",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 530,
+                "group": "SBT working-fluid properties",
+                "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
@@ -1506,8 +1506,8 @@ class SurfacePlant:
             ToolTipText="Dynamic viscosity of the working fluid",
             UI={
                 "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "order": 540,
+                "group": "SBT working-fluid properties",
+                "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],

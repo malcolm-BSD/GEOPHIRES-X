@@ -532,8 +532,8 @@ class AGSWellBores(WellBores):
             ToolTipText="Closed Loop Calculation Start Year",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore parameters",
-                "order": 340,
+                "group": "AGS calculation controls",
+                "order": 810,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},

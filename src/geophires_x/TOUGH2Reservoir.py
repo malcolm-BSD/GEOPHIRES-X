@@ -38,8 +38,8 @@ class TOUGH2Reservoir(Reservoir):
             UnitType=Units.NONE,
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 580,
+                "group": "TOUGH2 model",
+                "order": 900,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -54,8 +54,8 @@ class TOUGH2Reservoir(Reservoir):
             ToolTipText="File name of reservoir output in case reservoir model 5 is selected",
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 590,
+                "group": "TOUGH2 model",
+                "order": 910,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -74,8 +74,8 @@ class TOUGH2Reservoir(Reservoir):
             ToolTipText="Reservoir thickness for built-in TOUGH2 doublet reservoir model",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 600,
+                "group": "TOUGH2 model",
+                "order": 920,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -93,8 +93,8 @@ class TOUGH2Reservoir(Reservoir):
             ToolTipText="Reservoir width for built-in TOUGH2 doublet reservoir model",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 610,
+                "group": "TOUGH2 model",
+                "order": 930,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],

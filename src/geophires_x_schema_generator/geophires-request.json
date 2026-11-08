@@ -112,8 +112,8 @@
       "maximum": 15,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 10,
+        "group": "Reservoir location and limits",
+        "order": 100,
         "dependency": null
       }
     },
@@ -127,8 +127,8 @@
       "maximum": 600,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 90,
+        "group": "Reservoir location and limits",
+        "order": 120,
         "dependency": null
       }
     },
@@ -142,8 +142,8 @@
       "maximum": 1,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 100,
+        "group": "Geothermal gradient profile",
+        "order": 150,
         "dependency": null
       }
     },
@@ -159,8 +159,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 110,
+        "group": "Geothermal gradient profile",
+        "order": 130,
         "dependency": null
       }
     },
@@ -174,8 +174,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 120,
+        "group": "Legacy gradient inputs",
+        "order": 160,
         "dependency": null
       }
     },
@@ -189,8 +189,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 130,
+        "group": "Legacy gradient inputs",
+        "order": 170,
         "dependency": null
       }
     },
@@ -204,8 +204,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 140,
+        "group": "Legacy gradient inputs",
+        "order": 180,
         "dependency": null
       }
     },
@@ -219,8 +219,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 150,
+        "group": "Legacy gradient inputs",
+        "order": 190,
         "dependency": null
       }
     },
@@ -240,8 +240,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 160,
+        "group": "Geothermal gradient profile",
+        "order": 140,
         "dependency": null
       }
     },
@@ -255,8 +255,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 170,
+        "group": "Legacy gradient inputs",
+        "order": 200,
         "dependency": null
       }
     },
@@ -270,8 +270,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 180,
+        "group": "Legacy gradient inputs",
+        "order": 210,
         "dependency": null
       }
     },
@@ -285,8 +285,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 190,
+        "group": "Legacy gradient inputs",
+        "order": 220,
         "dependency": null
       }
     },
@@ -300,8 +300,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 200,
+        "group": "Legacy gradient inputs",
+        "order": 230,
         "dependency": null
       }
     },
@@ -337,8 +337,8 @@
       ],
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 1,
+        "group": "Fracture and reservoir volume",
+        "order": 10,
         "dependency": null
       }
     },
@@ -374,7 +374,7 @@
       ],
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
+        "group": "Fracture and reservoir volume",
         "order": 20,
         "dependency": null
       }
@@ -406,8 +406,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 210,
+        "group": "Fracture and reservoir volume",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -453,8 +453,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 220,
+        "group": "Fracture and reservoir volume",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -500,8 +500,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 230,
+        "group": "Fracture and reservoir volume",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -555,8 +555,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 240,
+        "group": "Fracture and reservoir volume",
+        "order": 60,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -619,8 +619,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 250,
+        "group": "Fracture and reservoir volume",
+        "order": 70,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -675,8 +675,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 260,
+        "group": "Fracture and reservoir volume",
+        "order": 80,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -724,8 +724,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 270,
+        "group": "Fracture and reservoir volume",
+        "order": 90,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -754,8 +754,8 @@
       "maximum": 0.99,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 280,
+        "group": "Reservoir flow properties",
+        "order": 330,
         "dependency": null
       }
     },
@@ -769,8 +769,8 @@
       "maximum": 10000,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 290,
+        "group": "Reservoir rock properties",
+        "order": 240,
         "dependency": null
       }
     },
@@ -784,8 +784,8 @@
       "maximum": 10000,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 300,
+        "group": "Reservoir rock properties",
+        "order": 250,
         "dependency": null
       }
     },
@@ -799,8 +799,8 @@
       "maximum": 100,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 310,
+        "group": "Reservoir rock properties",
+        "order": 260,
         "dependency": null
       }
     },
@@ -831,8 +831,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 320,
+        "group": "Reservoir rock properties",
+        "order": 270,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -877,8 +877,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 330,
+        "group": "Reservoir rock properties",
+        "order": 280,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -906,8 +906,8 @@
       "maximum": 50,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 340,
+        "group": "Reservoir location and limits",
+        "order": 110,
         "dependency": null
       }
     },
@@ -939,8 +939,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 350,
+        "group": "Thermal drawdown models",
+        "order": 400,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -987,8 +987,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 360,
+        "group": "Thermal drawdown models",
+        "order": 410,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1032,8 +1032,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 370,
+        "group": "Thermal drawdown models",
+        "order": 420,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1077,8 +1077,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 380,
+        "group": "User-provided temperature profile",
+        "order": 500,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1122,8 +1122,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 390,
+        "group": "User-provided temperature profile",
+        "order": 510,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1167,8 +1167,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 400,
+        "group": "User-provided temperature profile",
+        "order": 520,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1212,8 +1212,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 410,
+        "group": "Cylindrical reservoir model",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1257,8 +1257,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 420,
+        "group": "Cylindrical reservoir model",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1302,8 +1302,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 430,
+        "group": "Cylindrical reservoir model",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1347,8 +1347,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 440,
+        "group": "Cylindrical reservoir model",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1392,8 +1392,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 450,
+        "group": "Cylindrical reservoir model",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1437,8 +1437,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 460,
+        "group": "Cylindrical reservoir model",
+        "order": 650,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1482,8 +1482,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore hydraulics",
-        "order": 20,
+        "group": "SBT flow control",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1535,8 +1535,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir properties",
-        "order": 470,
+        "group": "SBT profile inputs",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1640,8 +1640,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 480,
+        "group": "SBT profile inputs",
+        "order": 710,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1692,8 +1692,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 490,
+        "group": "SBT solver controls",
+        "order": 720,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1737,8 +1737,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 500,
+        "group": "SBT solver controls",
+        "order": 730,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1782,8 +1782,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 510,
+        "group": "SBT solver controls",
+        "order": 740,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1827,8 +1827,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 520,
+        "group": "SBT solver controls",
+        "order": 750,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1872,8 +1872,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 530,
+        "group": "SBT solver controls",
+        "order": 760,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1917,8 +1917,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 540,
+        "group": "SBT solver controls",
+        "order": 770,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1962,8 +1962,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 550,
+        "group": "SUTRA output files",
+        "order": 800,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2007,8 +2007,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir thermal properties",
-        "order": 560,
+        "group": "SUTRA output files",
+        "order": 810,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2052,8 +2052,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 570,
+        "group": "SUTRA output files",
+        "order": 820,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2097,8 +2097,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 580,
+        "group": "TOUGH2 model",
+        "order": 900,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2142,8 +2142,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Model-specific reservoir settings",
-        "order": 590,
+        "group": "TOUGH2 model",
+        "order": 910,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2187,8 +2187,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 600,
+        "group": "TOUGH2 model",
+        "order": 920,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2232,8 +2232,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir geometry",
-        "order": 610,
+        "group": "TOUGH2 model",
+        "order": 930,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2277,8 +2277,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 50,
+        "group": "Wellfield sizing",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2330,8 +2330,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 60,
+        "group": "Wellfield sizing",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2365,8 +2365,8 @@
       "maximum": 200,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 70,
+        "group": "Wellfield sizing",
+        "order": 30,
         "dependency": null
       }
     },
@@ -2380,8 +2380,8 @@
       "maximum": 199,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 80,
+        "group": "Wellfield sizing",
+        "order": 40,
         "dependency": null
       }
     },
@@ -2395,8 +2395,8 @@
       "maximum": 30.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 90,
+        "group": "Vertical well geometry",
+        "order": 50,
         "dependency": null
       }
     },
@@ -2410,8 +2410,8 @@
       "maximum": 30.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 100,
+        "group": "Vertical well geometry",
+        "order": 60,
         "dependency": null
       }
     },
@@ -2425,8 +2425,8 @@
       "maximum": null,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore configuration",
-        "order": 110,
+        "group": "Wellbore thermal model",
+        "order": 70,
         "dependency": null
       }
     },
@@ -2457,8 +2457,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 120,
+        "group": "Wellbore thermal model",
+        "order": 80,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2485,8 +2485,8 @@
       "maximum": 50.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 130,
+        "group": "Wellbore thermal model",
+        "order": 90,
         "dependency": null
       }
     },
@@ -2500,8 +2500,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore hydraulics",
-        "order": 140,
+        "group": "Wellbore flow and pressure",
+        "order": 100,
         "dependency": null
       }
     },
@@ -2515,8 +2515,8 @@
       "maximum": 10000.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir hydraulics",
-        "order": 2,
+        "group": "Reservoir flow properties",
+        "order": 300,
         "dependency": null
       }
     },
@@ -2547,8 +2547,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 150,
+        "group": "TOUGH2 doublet geometry",
+        "order": 500,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2573,11 +2573,70 @@
       "default": 70.0,
       "minimum": 0.0,
       "maximum": 200.0,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "any",
+        "conditions": [
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "parameter": "Injection Temperature Model",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          }
+        ],
+        "reason": "Used by every reservoir path except SBT when injection temperature is supplied by file.",
+        "depends_on": [
+          "Reservoir Model",
+          "Injection Temperature Model"
+        ]
+      },
       "x-ui": {
         "tab": "surface-plant",
         "group": "Injection conditions",
-        "order": 30,
-        "dependency": null
+        "order": 20,
+        "dependency": {
+          "effect": "enable",
+          "match": "any",
+          "conditions": [
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "parameter": "Injection Temperature Model",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            }
+          ],
+          "reason": "Used by every reservoir path except SBT when injection temperature is supplied by file."
+        }
       }
     },
     "Reservoir Hydrostatic Pressure": {
@@ -2590,8 +2649,8 @@
       "maximum": 100000.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore hydraulics",
-        "order": 160,
+        "group": "Wellbore flow and pressure",
+        "order": 120,
         "dependency": null
       }
     },
@@ -2605,8 +2664,8 @@
       "maximum": 10000.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore hydraulics",
-        "order": 40,
+        "group": "Wellbore flow and pressure",
+        "order": 110,
         "dependency": null
       }
     },
@@ -2637,8 +2696,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir hydraulics",
-        "order": 50,
+        "group": "Reservoir flow properties",
+        "order": 310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2682,8 +2741,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir hydraulics",
-        "order": 60,
+        "group": "Reservoir flow properties",
+        "order": 320,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2710,8 +2769,8 @@
       "maximum": "1.0",
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 170,
+        "group": "Well operating limits",
+        "order": 130,
         "dependency": null
       }
     },
@@ -2725,8 +2784,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 180,
+        "group": "Well operating limits",
+        "order": 140,
         "dependency": null
       }
     },
@@ -2740,7 +2799,7 @@
       "maximum": null,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Model controls",
+        "group": "Wellbore model controls",
         "order": 1,
         "dependency": null
       }
@@ -2755,8 +2814,8 @@
       "maximum": 1.8e+30,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir hydraulics",
-        "order": 70,
+        "group": "Reservoir overpressure",
+        "order": 340,
         "dependency": null
       }
     },
@@ -2787,8 +2846,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir hydraulics",
-        "order": 80,
+        "group": "Reservoir overpressure",
+        "order": 350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2832,8 +2891,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 190,
+        "group": "Injection reservoir overpressure",
+        "order": 150,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2877,8 +2936,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 200,
+        "group": "Injection reservoir overpressure",
+        "order": 160,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2922,8 +2981,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore hydraulics",
-        "order": 210,
+        "group": "Injection reservoir overpressure",
+        "order": 170,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2967,8 +3026,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 220,
+        "group": "Injection reservoir overpressure",
+        "order": 180,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3022,8 +3081,8 @@
       ],
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore configuration",
-        "order": 10,
+        "group": "Compatibility aliases",
+        "order": 900,
         "dependency": null
       }
     },
@@ -3064,7 +3123,7 @@
       ],
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore configuration",
+        "group": "Wellbore model controls",
         "order": 2,
         "dependency": null
       }
@@ -3111,8 +3170,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 240,
+        "group": "AGS fluid properties",
+        "order": 800,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3163,11 +3222,70 @@
           "int_value": 2
         }
       ],
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Is AGS",
+            "operator": "in",
+            "values": [
+              true
+            ]
+          },
+          {
+            "parameter": "Reservoir Model",
+            "operator": "in",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "reason": "Used by the advanced closed-loop database calculation, but not by SBT.",
+        "depends_on": [
+          "Is AGS",
+          "Reservoir Model"
+        ]
+      },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
+        "group": "Wellbore model controls",
         "order": 3,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Is AGS",
+              "operator": "in",
+              "values": [
+                true
+              ]
+            },
+            {
+              "parameter": "Reservoir Model",
+              "operator": "in",
+              "values": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "reason": "Used by the advanced closed-loop database calculation, but not by SBT."
+        }
       }
     },
     "Nonvertical Length per Multilateral Section": {
@@ -3200,8 +3318,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 250,
+        "group": "Multilateral geometry",
+        "order": 200,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3251,8 +3369,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 260,
+        "group": "Multilateral geometry",
+        "order": 210,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3302,8 +3420,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 270,
+        "group": "Multilateral geometry",
+        "order": 220,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3353,8 +3471,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 280,
+        "group": "Multilateral geometry",
+        "order": 230,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3404,8 +3522,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 290,
+        "group": "Multilateral geometry",
+        "order": 240,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3460,8 +3578,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 300,
+        "group": "SBT lateral construction",
+        "order": 680,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3520,8 +3638,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal behavior",
-        "order": 310,
+        "group": "SBT lateral construction",
+        "order": 690,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3580,8 +3698,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 320,
+        "group": "SBT lateral construction",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3640,8 +3758,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 330,
+        "group": "SBT lateral construction",
+        "order": 710,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3707,8 +3825,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore parameters",
-        "order": 340,
+        "group": "AGS calculation controls",
+        "order": 810,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3766,8 +3884,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 350,
+        "group": "SBT well geometry",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3811,8 +3929,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 360,
+        "group": "SBT well geometry",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3856,8 +3974,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 370,
+        "group": "SBT well geometry",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3901,8 +4019,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 380,
+        "group": "SBT well geometry",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3946,8 +4064,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 390,
+        "group": "SBT well geometry",
+        "order": 650,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3991,8 +4109,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 400,
+        "group": "SBT well geometry",
+        "order": 660,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4036,8 +4154,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield layout",
-        "order": 410,
+        "group": "SBT well geometry",
+        "order": 670,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4183,8 +4301,8 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 40,
+        "group": "Common plant operation",
+        "order": 30,
         "dependency": null
       }
     },
@@ -4198,8 +4316,8 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 50,
+        "group": "Common plant operation",
+        "order": 40,
         "dependency": null
       }
     },
@@ -4236,8 +4354,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 60,
+        "group": "Common plant operation",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4288,8 +4406,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 70,
+        "group": "Cogeneration configuration",
+        "order": 120,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4335,8 +4453,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 80,
+        "group": "Cogeneration configuration",
+        "order": 130,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4364,8 +4482,8 @@
       "maximum": 50,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 90,
+        "group": "Common plant operation",
+        "order": 60,
         "dependency": null
       }
     },
@@ -4501,7 +4619,7 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
+        "group": "Weather data",
         "order": 110,
         "dependency": {
           "effect": "enable",
@@ -4544,8 +4662,8 @@
       "maximum": 100,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 120,
+        "group": "Common plant operation",
+        "order": 70,
         "dependency": null
       }
     },
@@ -4559,8 +4677,8 @@
       "maximum": 15000.0,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 130,
+        "group": "Common plant operation",
+        "order": 80,
         "dependency": null
       }
     },
@@ -4574,8 +4692,8 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 140,
+        "group": "Energy prices",
+        "order": 90,
         "dependency": null
       }
     },
@@ -4589,8 +4707,8 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 150,
+        "group": "Energy prices",
+        "order": 100,
         "dependency": null
       }
     },
@@ -4616,7 +4734,7 @@
       ],
       "x-ui": {
         "tab": "project",
-        "group": "Surface plant parameters",
+        "group": "Dispatch configuration",
         "order": 2,
         "dependency": null
       }
@@ -4649,8 +4767,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 170,
+        "group": "Dispatch configuration",
+        "order": 200,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4696,8 +4814,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 180,
+        "group": "Dispatch configuration",
+        "order": 210,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4743,8 +4861,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 190,
+        "group": "Dispatch configuration",
+        "order": 220,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4790,8 +4908,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 200,
+        "group": "Dispatch configuration",
+        "order": 230,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4837,8 +4955,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 210,
+        "group": "Dispatch configuration",
+        "order": 240,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4884,8 +5002,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 220,
+        "group": "Dispatch configuration",
+        "order": 250,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4931,8 +5049,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 230,
+        "group": "Dispatch configuration",
+        "order": 260,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4960,7 +5078,7 @@
       "maximum": null,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
+        "group": "Thermal energy storage",
         "order": 2,
         "dependency": null
       }
@@ -5001,8 +5119,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 250,
+        "group": "TESS design and cost",
+        "order": 300,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5063,8 +5181,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 260,
+        "group": "TESS design and cost",
+        "order": 310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5125,8 +5243,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 270,
+        "group": "TESS design and cost",
+        "order": 320,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5187,8 +5305,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 280,
+        "group": "TESS design and cost",
+        "order": 330,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5249,8 +5367,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 290,
+        "group": "TESS design and cost",
+        "order": 340,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5311,8 +5429,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 300,
+        "group": "TESS design and cost",
+        "order": 350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5373,8 +5491,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 310,
+        "group": "TESS design and cost",
+        "order": 360,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5435,8 +5553,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 320,
+        "group": "TESS thermal limits",
+        "order": 370,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5497,8 +5615,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 330,
+        "group": "TESS thermal limits",
+        "order": 380,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5559,8 +5677,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 340,
+        "group": "TESS thermal limits",
+        "order": 390,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5621,8 +5739,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 350,
+        "group": "TESS thermal limits",
+        "order": 400,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5683,8 +5801,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 360,
+        "group": "TESS thermal limits",
+        "order": 410,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5745,8 +5863,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 370,
+        "group": "TESS performance",
+        "order": 420,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5807,8 +5925,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 380,
+        "group": "TESS performance",
+        "order": 430,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5869,8 +5987,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 390,
+        "group": "TESS performance",
+        "order": 440,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5931,8 +6049,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 400,
+        "group": "TESS performance",
+        "order": 450,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5993,8 +6111,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 410,
+        "group": "TESS performance",
+        "order": 460,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6064,8 +6182,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 420,
+        "group": "TESS performance",
+        "order": 470,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6134,8 +6252,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 430,
+        "group": "TESS controls",
+        "order": 480,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6205,8 +6323,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 440,
+        "group": "TESS controls",
+        "order": 490,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6284,8 +6402,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 450,
+        "group": "TESS controls",
+        "order": 500,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6363,8 +6481,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 460,
+        "group": "TESS controls",
+        "order": 510,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6434,8 +6552,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 470,
+        "group": "Dispatch demand profiles",
+        "order": 270,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6498,8 +6616,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Direct-use systems",
-        "order": 480,
+        "group": "Dispatch demand profiles",
+        "order": 290,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6562,8 +6680,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 490,
+        "group": "Dispatch demand profiles",
+        "order": 280,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6599,8 +6717,8 @@
       "maximum": 15,
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 500,
+        "group": "Project delivery",
+        "order": 140,
         "dependency": null
       }
     },
@@ -6631,8 +6749,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 510,
+        "group": "SBT working-fluid properties",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6676,8 +6794,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 520,
+        "group": "SBT working-fluid properties",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6721,8 +6839,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 530,
+        "group": "SBT working-fluid properties",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6766,8 +6884,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 540,
+        "group": "SBT working-fluid properties",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6816,18 +6934,26 @@
               6,
               7
             ]
+          },
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
           }
         ],
-        "reason": "Used by the advanced closed-loop database calculation, but not by SBT.",
+        "reason": "Used for advanced closed-loop electricity exergy calculations, but not by SBT.",
         "depends_on": [
           "Is AGS",
-          "Reservoir Model"
+          "Reservoir Model",
+          "End-Use Option"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 550,
+        "group": "AGS thermodynamic reference",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6852,9 +6978,16 @@
                 6,
                 7
               ]
+            },
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
             }
           ],
-          "reason": "Used by the advanced closed-loop database calculation, but not by SBT."
+          "reason": "Used for advanced closed-loop electricity exergy calculations, but not by SBT."
         }
       }
     },
@@ -6892,6 +7025,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          },
+          {
             "parameter": "Heat Transfer Fluid",
             "operator": "in",
             "values": [
@@ -6899,17 +7039,18 @@
             ]
           }
         ],
-        "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation.",
+        "reason": "Used only by the sCO2 advanced closed-loop electricity calculation.",
         "depends_on": [
           "Is AGS",
           "Reservoir Model",
+          "End-Use Option",
           "Heat Transfer Fluid"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 560,
+        "group": "AGS CO2 power cycle",
+        "order": 710,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -6936,6 +7077,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            },
+            {
               "parameter": "Heat Transfer Fluid",
               "operator": "in",
               "values": [
@@ -6943,7 +7091,7 @@
               ]
             }
           ],
-          "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation."
+          "reason": "Used only by the sCO2 advanced closed-loop electricity calculation."
         }
       }
     },
@@ -6981,6 +7129,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          },
+          {
             "parameter": "Heat Transfer Fluid",
             "operator": "in",
             "values": [
@@ -6988,17 +7143,18 @@
             ]
           }
         ],
-        "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation.",
+        "reason": "Used only by the sCO2 advanced closed-loop electricity calculation.",
         "depends_on": [
           "Is AGS",
           "Reservoir Model",
+          "End-Use Option",
           "Heat Transfer Fluid"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 570,
+        "group": "AGS CO2 power cycle",
+        "order": 720,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7025,6 +7181,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            },
+            {
               "parameter": "Heat Transfer Fluid",
               "operator": "in",
               "values": [
@@ -7032,7 +7195,7 @@
               ]
             }
           ],
-          "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation."
+          "reason": "Used only by the sCO2 advanced closed-loop electricity calculation."
         }
       }
     },
@@ -7070,6 +7233,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          },
+          {
             "parameter": "Heat Transfer Fluid",
             "operator": "in",
             "values": [
@@ -7077,17 +7247,18 @@
             ]
           }
         ],
-        "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation.",
+        "reason": "Used only by the sCO2 advanced closed-loop electricity calculation.",
         "depends_on": [
           "Is AGS",
           "Reservoir Model",
+          "End-Use Option",
           "Heat Transfer Fluid"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Plant operating assumptions",
-        "order": 580,
+        "group": "AGS CO2 power cycle",
+        "order": 730,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7114,6 +7285,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            },
+            {
               "parameter": "Heat Transfer Fluid",
               "operator": "in",
               "values": [
@@ -7121,7 +7299,7 @@
               ]
             }
           ],
-          "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation."
+          "reason": "Used only by the sCO2 advanced closed-loop electricity calculation."
         }
       }
     },
@@ -7159,6 +7337,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          },
+          {
             "parameter": "Heat Transfer Fluid",
             "operator": "in",
             "values": [
@@ -7166,17 +7351,18 @@
             ]
           }
         ],
-        "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation.",
+        "reason": "Used only by the sCO2 advanced closed-loop electricity calculation.",
         "depends_on": [
           "Is AGS",
           "Reservoir Model",
+          "End-Use Option",
           "Heat Transfer Fluid"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Direct-use systems",
-        "order": 590,
+        "group": "AGS CO2 power cycle",
+        "order": 740,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7203,6 +7389,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            },
+            {
               "parameter": "Heat Transfer Fluid",
               "operator": "in",
               "values": [
@@ -7210,7 +7403,7 @@
               ]
             }
           ],
-          "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation."
+          "reason": "Used only by the sCO2 advanced closed-loop electricity calculation."
         }
       }
     },
@@ -7248,6 +7441,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1
+            ]
+          },
+          {
             "parameter": "Heat Transfer Fluid",
             "operator": "in",
             "values": [
@@ -7255,17 +7455,18 @@
             ]
           }
         ],
-        "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation.",
+        "reason": "Used only by the sCO2 advanced closed-loop electricity calculation.",
         "depends_on": [
           "Is AGS",
           "Reservoir Model",
+          "End-Use Option",
           "Heat Transfer Fluid"
         ]
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "Surface plant parameters",
-        "order": 600,
+        "group": "AGS CO2 power cycle",
+        "order": 750,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7292,6 +7493,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1
+              ]
+            },
+            {
               "parameter": "Heat Transfer Fluid",
               "operator": "in",
               "values": [
@@ -7299,7 +7507,7 @@
               ]
             }
           ],
-          "reason": "Used only by the sCO2 advanced closed-loop surface-plant calculation."
+          "reason": "Used only by the sCO2 advanced closed-loop electricity calculation."
         }
       }
     },
@@ -7338,8 +7546,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Absorption chiller",
+        "order": 800,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7371,11 +7579,56 @@
       "default": false,
       "minimum": null,
       "maximum": null,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              2
+            ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              5
+            ]
+          }
+        ],
+        "reason": "Used only by the absorption-chiller surface plant.",
+        "depends_on": [
+          "End-Use Option",
+          "Power Plant Type"
+        ]
+      },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
+        "group": "Absorption chiller",
         "order": 3,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                2
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                5
+              ]
+            }
+          ],
+          "reason": "Used only by the absorption-chiller surface plant."
+        }
       }
     },
     "Absorption Chiller Use Pint": {
@@ -7421,8 +7674,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 820,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7496,8 +7749,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 830,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7571,8 +7824,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 840,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7646,8 +7899,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 850,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7721,8 +7974,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 860,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7796,8 +8049,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller part-load and dispatch",
+        "order": 910,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7871,8 +8124,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller part-load and dispatch",
+        "order": 920,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -7946,8 +8199,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller hydraulics",
+        "order": 880,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8021,8 +8274,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller hydraulics",
+        "order": 890,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8096,8 +8349,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller hydraulics",
+        "order": 900,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8171,8 +8424,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Advanced chiller model",
+        "order": 870,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8246,8 +8499,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller part-load and dispatch",
+        "order": 930,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8321,8 +8574,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller part-load and dispatch",
+        "order": 940,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8396,8 +8649,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller temperature profiles",
+        "order": 950,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8479,8 +8732,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller temperature profiles",
+        "order": 960,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8569,8 +8822,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller temperature profiles",
+        "order": 970,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8659,8 +8912,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Chiller temperature profiles",
+        "order": 980,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8733,8 +8986,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "Heat pump",
+        "order": 1100,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8766,11 +9019,73 @@
       "default": null,
       "minimum": 1,
       "maximum": 2,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              2
+            ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              7
+            ]
+          },
+          {
+            "parameter": "Operating Mode",
+            "operator": "in",
+            "values": [
+              1,
+              "Baseload"
+            ]
+          }
+        ],
+        "reason": "Used by baseload district-heating demand calculations.",
+        "depends_on": [
+          "End-Use Option",
+          "Power Plant Type",
+          "Operating Mode"
+        ]
+      },
       "x-ui": {
-        "tab": "economics",
-        "group": "",
-        "order": 6,
-        "dependency": null
+        "tab": "surface-plant",
+        "group": "District heating demand",
+        "order": 150,
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                2
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                7
+              ]
+            },
+            {
+              "parameter": "Operating Mode",
+              "operator": "in",
+              "values": [
+                1,
+                "Baseload"
+              ]
+            }
+          ],
+          "reason": "Used by baseload district-heating demand calculations."
+        }
       }
     },
     "District Heating Demand File Name": {
@@ -8825,8 +9140,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating demand file",
+        "order": 1000,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -8917,8 +9232,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating demand file",
+        "order": 1010,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9009,8 +9324,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating demand file",
+        "order": 1020,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9101,8 +9416,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating weather demand",
+        "order": 1030,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9193,8 +9508,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating weather demand",
+        "order": 1040,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9285,8 +9600,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating weather demand",
+        "order": 1050,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9377,8 +9692,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating weather demand",
+        "order": 1060,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -9469,8 +9784,8 @@
       },
       "x-ui": {
         "tab": "surface-plant",
-        "group": "",
-        "order": 1,
+        "group": "District heating weather demand",
+        "order": 1070,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -10524,16 +10839,22 @@
         "match": "all",
         "conditions": [
           {
-            "parameter": "Total Capital Cost",
-            "operator": "provided",
+            "parameter": "End-Use Option",
+            "operator": "in",
             "values": [
-              false
+              1,
+              31,
+              32,
+              41,
+              42,
+              51,
+              52
             ]
           }
         ],
-        "reason": "Ignored when a valid Total Capital Cost override is provided.",
+        "reason": "Used when the project produces electricity, including the CLGS electricity path.",
         "depends_on": [
-          "Total Capital Cost"
+          "End-Use Option"
         ]
       },
       "x-ui": {
@@ -10545,14 +10866,20 @@
           "match": "all",
           "conditions": [
             {
-              "parameter": "Total Capital Cost",
-              "operator": "provided",
+              "parameter": "End-Use Option",
+              "operator": "in",
               "values": [
-                false
+                1,
+                31,
+                32,
+                41,
+                42,
+                51,
+                52
               ]
             }
           ],
-          "reason": "Ignored when a valid Total Capital Cost override is provided."
+          "reason": "Used when the project produces electricity, including the CLGS electricity path."
         }
       }
     },
@@ -12966,12 +13293,27 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by VALCOH in both Direct and Derived modes.",
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
@@ -13000,6 +13342,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             }
           ],
@@ -13038,12 +13394,27 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by VALCOH in both Direct and Derived modes.",
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
@@ -13072,6 +13443,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             }
           ],
@@ -13110,12 +13495,27 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by VALCOH in both Direct and Derived modes.",
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
@@ -13144,6 +13544,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             }
           ],
@@ -13184,6 +13598,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13195,6 +13623,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13224,6 +13653,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -13269,12 +13712,27 @@
               51,
               52
             ]
+          },
+          {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
           }
         ],
         "reason": "Used by VALCOH in both Direct and Derived modes.",
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
-          "End-Use Option"
+          "End-Use Option",
+          "Power Plant Type"
         ]
       },
       "x-ui": {
@@ -13303,6 +13761,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             }
           ],
@@ -13343,6 +13815,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13354,6 +13840,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13383,6 +13870,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -13430,6 +13931,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13441,6 +13956,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13470,6 +13986,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -13517,6 +14047,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13528,6 +14072,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13557,6 +14102,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -13604,6 +14163,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13615,6 +14188,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13644,6 +14218,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -13691,6 +14279,20 @@
             ]
           },
           {
+            "parameter": "Power Plant Type",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
             "parameter": "VALCO Calculation Mode",
             "operator": "in",
             "values": [
@@ -13702,6 +14304,7 @@
         "depends_on": [
           "Do VALCO(E|H|C) Calculations",
           "End-Use Option",
+          "Power Plant Type",
           "VALCO Calculation Mode"
         ]
       },
@@ -13731,6 +14334,20 @@
                 42,
                 51,
                 52
+              ]
+            },
+            {
+              "parameter": "Power Plant Type",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                7,
+                8,
+                9
               ]
             },
             {
@@ -15927,13 +16544,13 @@
       "maximum": 10000.0,
       "x-dependencies": {
         "effect": "enable",
-        "match": "all",
+        "match": "any",
         "conditions": [
           {
-            "parameter": "Total Capital Cost",
-            "operator": "provided",
+            "parameter": "Economic Model",
+            "operator": "in",
             "values": [
-              false
+              4
             ]
           },
           {
@@ -15944,9 +16561,9 @@
             ]
           }
         ],
-        "reason": "Used only by the simple per-meter drilling-cost method.",
+        "reason": "Used by CLGS or by the simple per-meter drilling-cost method.",
         "depends_on": [
-          "Total Capital Cost",
+          "Economic Model",
           "Well Drilling Cost Correlation"
         ]
       },
@@ -15956,13 +16573,13 @@
         "order": 1090,
         "dependency": {
           "effect": "enable",
-          "match": "all",
+          "match": "any",
           "conditions": [
             {
-              "parameter": "Total Capital Cost",
-              "operator": "provided",
+              "parameter": "Economic Model",
+              "operator": "in",
               "values": [
-                false
+                4
               ]
             },
             {
@@ -15973,7 +16590,7 @@
               ]
             }
           ],
-          "reason": "Used only by the simple per-meter drilling-cost method."
+          "reason": "Used by CLGS or by the simple per-meter drilling-cost method."
         }
       }
     },
@@ -15990,20 +16607,6 @@
         "match": "all",
         "conditions": [
           {
-            "parameter": "Total Capital Cost",
-            "operator": "provided",
-            "values": [
-              false
-            ]
-          },
-          {
-            "parameter": "Well Drilling Cost Correlation",
-            "operator": "in",
-            "values": [
-              5
-            ]
-          },
-          {
             "parameter": "Well Geometry Configuration",
             "operator": "in",
             "values": [
@@ -16014,10 +16617,8 @@
             ]
           }
         ],
-        "reason": "Used by the simple per-meter method when nonvertical drilling exists.",
+        "reason": "Used when nonvertical drilling exists; CLGS consumes this value regardless of the standard drilling-cost correlation or Total Capital Cost override.",
         "depends_on": [
-          "Total Capital Cost",
-          "Well Drilling Cost Correlation",
           "Well Geometry Configuration"
         ]
       },
@@ -16030,20 +16631,6 @@
           "match": "all",
           "conditions": [
             {
-              "parameter": "Total Capital Cost",
-              "operator": "provided",
-              "values": [
-                false
-              ]
-            },
-            {
-              "parameter": "Well Drilling Cost Correlation",
-              "operator": "in",
-              "values": [
-                5
-              ]
-            },
-            {
               "parameter": "Well Geometry Configuration",
               "operator": "in",
               "values": [
@@ -16054,7 +16641,7 @@
               ]
             }
           ],
-          "reason": "Used by the simple per-meter method when nonvertical drilling exists."
+          "reason": "Used when nonvertical drilling exists; CLGS consumes this value regardless of the standard drilling-cost correlation or Total Capital Cost override."
         }
       }
     },
@@ -16668,7 +17255,7 @@
       "maximum": 10000,
       "x-dependencies": {
         "effect": "enable",
-        "match": "all",
+        "match": "any",
         "conditions": [
           {
             "parameter": "Total Capital Cost",
@@ -16676,11 +17263,19 @@
             "values": [
               false
             ]
+          },
+          {
+            "parameter": "Economic Model",
+            "operator": "in",
+            "values": [
+              4
+            ]
           }
         ],
-        "reason": "Ignored when a valid Total Capital Cost override is provided.",
+        "reason": "Used without a Total Capital Cost override, and always used by the CLGS calculation.",
         "depends_on": [
-          "Total Capital Cost"
+          "Total Capital Cost",
+          "Economic Model"
         ]
       },
       "x-ui": {
@@ -16689,7 +17284,7 @@
         "order": 1200,
         "dependency": {
           "effect": "enable",
-          "match": "all",
+          "match": "any",
           "conditions": [
             {
               "parameter": "Total Capital Cost",
@@ -16697,9 +17292,16 @@
               "values": [
                 false
               ]
+            },
+            {
+              "parameter": "Economic Model",
+              "operator": "in",
+              "values": [
+                4
+              ]
             }
           ],
-          "reason": "Ignored when a valid Total Capital Cost override is provided."
+          "reason": "Used without a Total Capital Cost override, and always used by the CLGS calculation."
         }
       }
     },
@@ -18298,11 +18900,25 @@
             "values": [
               true
             ]
+          },
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1,
+              31,
+              32,
+              41,
+              42,
+              51,
+              52
+            ]
           }
         ],
-        "reason": "Used only when carbon-price calculations are enabled.",
+        "reason": "Used by carbon-price calculations when electricity is produced.",
         "depends_on": [
-          "Do Carbon Price Calculations"
+          "Do Carbon Price Calculations",
+          "End-Use Option"
         ]
       },
       "x-ui": {
@@ -18319,9 +18935,22 @@
               "values": [
                 true
               ]
+            },
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1,
+                31,
+                32,
+                41,
+                42,
+                51,
+                52
+              ]
             }
           ],
-          "reason": "Used only when carbon-price calculations are enabled."
+          "reason": "Used by carbon-price calculations when electricity is produced."
         }
       }
     },
@@ -18343,11 +18972,25 @@
             "values": [
               true
             ]
+          },
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              2,
+              31,
+              32,
+              41,
+              42,
+              51,
+              52
+            ]
           }
         ],
-        "reason": "Used only when carbon-price calculations are enabled.",
+        "reason": "Used by carbon-price calculations when heat is produced.",
         "depends_on": [
-          "Do Carbon Price Calculations"
+          "Do Carbon Price Calculations",
+          "End-Use Option"
         ]
       },
       "x-ui": {
@@ -18364,9 +19007,22 @@
               "values": [
                 true
               ]
+            },
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                2,
+                31,
+                32,
+                41,
+                42,
+                51,
+                52
+              ]
             }
           ],
-          "reason": "Used only when carbon-price calculations are enabled."
+          "reason": "Used by carbon-price calculations when heat is produced."
         }
       }
     },
@@ -18876,11 +19532,53 @@
       "default": 2.13,
       "minimum": -1.8e+30,
       "maximum": 1.8e+30,
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              1,
+              31,
+              32,
+              41,
+              42,
+              51,
+              52
+            ]
+          }
+        ],
+        "reason": "Used only when electricity is produced.",
+        "depends_on": [
+          "End-Use Option"
+        ]
+      },
       "x-ui": {
         "tab": "economics",
         "group": "Economic parameters",
         "order": 1570,
-        "dependency": null
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                1,
+                31,
+                32,
+                41,
+                42,
+                51,
+                52
+              ]
+            }
+          ],
+          "reason": "Used only when electricity is produced."
+        }
       }
     },
     "Operation & Maintenance Cost of Surface Plant": {
@@ -18999,6 +19697,13 @@
             ]
           },
           {
+            "parameter": "End-Use Option",
+            "operator": "in",
+            "values": [
+              2
+            ]
+          },
+          {
             "parameter": "Reservoir Model",
             "operator": "in",
             "values": [
@@ -19013,10 +19718,11 @@
             ]
           }
         ],
-        "reason": "Used only by the CLGS advanced closed-loop database calculation, but not by SBT.",
+        "reason": "Used only by the CLGS direct-use heat calculation, but not by SBT.",
         "depends_on": [
           "Is AGS",
           "Economic Model",
+          "End-Use Option",
           "Reservoir Model"
         ]
       },
@@ -19043,6 +19749,13 @@
               ]
             },
             {
+              "parameter": "End-Use Option",
+              "operator": "in",
+              "values": [
+                2
+              ]
+            },
+            {
               "parameter": "Reservoir Model",
               "operator": "in",
               "values": [
@@ -19057,7 +19770,7 @@
               ]
             }
           ],
-          "reason": "Used only by the CLGS advanced closed-loop database calculation, but not by SBT."
+          "reason": "Used only by the CLGS direct-use heat calculation, but not by SBT."
         }
       }
     },

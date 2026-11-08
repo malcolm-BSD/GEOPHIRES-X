@@ -98,10 +98,11 @@ class AGSEconomics(Economics.Economics):
                     'match': 'all',
                     'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
                                       {'parameter': 'Economic Model', 'operator': 'in', 'values': [4]},
+                                      {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
                                       {   'parameter': 'Reservoir Model',
                                           'operator': 'in',
                                           'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
-                    'reason': 'Used only by the CLGS advanced closed-loop database calculation, but not by SBT.'},
+                    'reason': 'Used only by the CLGS direct-use heat calculation, but not by SBT.'},
             },
         )
         self.Power_plant_cost_per_kWe.Required = True

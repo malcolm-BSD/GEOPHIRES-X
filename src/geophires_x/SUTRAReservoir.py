@@ -51,8 +51,8 @@ class SUTRAReservoir(Reservoir):
             ToolTipText="SUTRA file with heat stored, heat supplied and efficiency for each year",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 550,
+                "group": "SUTRA output files",
+                "order": 800,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
@@ -68,8 +68,8 @@ class SUTRAReservoir(Reservoir):
             ToolTipText="SUTRA file with target heat and simulated heat for each SUTRA time step over lifetime",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 560,
+                "group": "SUTRA output files",
+                "order": 810,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
@@ -85,8 +85,8 @@ class SUTRAReservoir(Reservoir):
             ToolTipText="SUTRA file with well flow rate and temperature for each SUTRA time step over lifetime",
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 570,
+                "group": "SUTRA output files",
+                "order": 820,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],

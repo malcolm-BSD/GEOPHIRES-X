@@ -38,8 +38,8 @@ class UPPReservoir(Reservoir):
             ToolTipText="File name of reservoir output in case reservoir model 5 is selected",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 380,
+                "group": "User-provided temperature profile",
+                "order": 500,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],
@@ -66,8 +66,8 @@ class UPPReservoir(Reservoir):
             f'based on the last ~20% of the data, with the injection temperature used as a minimum. ',
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 390,
+                "group": "User-provided temperature profile",
+                "order": 510,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],
@@ -88,8 +88,8 @@ class UPPReservoir(Reservoir):
             f'0, 0.25, 0.5, 0.75, 1.0 years, etc.',
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 400,
+                "group": "User-provided temperature profile",
+                "order": 520,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],

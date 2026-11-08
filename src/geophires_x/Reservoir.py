@@ -89,8 +89,8 @@ class Reservoir:
             ToolTipText="Depth of the reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 10,
+                "group": "Reservoir location and limits",
+                "order": 100,
                 "dependency": None,
             },
         )
@@ -109,8 +109,8 @@ class Reservoir:
                         "GEOPHIRES will cap the drilling depth to stay below this maximum temperature.",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 90,
+                "group": "Reservoir location and limits",
+                "order": 120,
                 "dependency": None,
             },
         )
@@ -125,8 +125,8 @@ class Reservoir:
             ToolTipText="Number of rock segments from surface to reservoir depth with specific geothermal gradient",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 100,
+                "group": "Geothermal gradient profile",
+                "order": 150,
                 "dependency": None,
             },
         )
@@ -144,8 +144,8 @@ class Reservoir:
             ToolTipText="Geothermal gradient(s)",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 110,
+                "group": "Geothermal gradient profile",
+                "order": 130,
                 "dependency": None,
             },
         )
@@ -163,8 +163,8 @@ class Reservoir:
             ToolTipText="Geothermal gradient 1 in rock segment 1",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 120,
+                "group": "Legacy gradient inputs",
+                "order": 160,
                 "dependency": None,
             },
         )
@@ -182,8 +182,8 @@ class Reservoir:
             ToolTipText="Geothermal gradient 2 in rock segment 2",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 130,
+                "group": "Legacy gradient inputs",
+                "order": 170,
                 "dependency": None,
             },
         )
@@ -201,8 +201,8 @@ class Reservoir:
             ToolTipText="Geothermal gradient 3 in rock segment 3",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 140,
+                "group": "Legacy gradient inputs",
+                "order": 180,
                 "dependency": None,
             },
         )
@@ -220,8 +220,8 @@ class Reservoir:
             ToolTipText="Geothermal gradient 4 in rock segment 4",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 150,
+                "group": "Legacy gradient inputs",
+                "order": 190,
                 "dependency": None,
             },
         )
@@ -240,8 +240,8 @@ class Reservoir:
             ToolTipText="Thicknesses of rock segments",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 160,
+                "group": "Geothermal gradient profile",
+                "order": 140,
                 "dependency": None,
             },
         )
@@ -258,8 +258,8 @@ class Reservoir:
             ToolTipText="Thickness of rock segment 1",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 170,
+                "group": "Legacy gradient inputs",
+                "order": 200,
                 "dependency": None,
             },
         )
@@ -276,8 +276,8 @@ class Reservoir:
             ToolTipText="Thickness of rock segment 2",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 180,
+                "group": "Legacy gradient inputs",
+                "order": 210,
                 "dependency": None,
             },
         )
@@ -294,8 +294,8 @@ class Reservoir:
             ToolTipText="Thickness of rock segment 3",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 190,
+                "group": "Legacy gradient inputs",
+                "order": 220,
                 "dependency": None,
             },
         )
@@ -312,8 +312,8 @@ class Reservoir:
             ToolTipText="Thickness of rock segment 4",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 200,
+                "group": "Legacy gradient inputs",
+                "order": 230,
                 "dependency": None,
             },
         )
@@ -334,8 +334,8 @@ class Reservoir:
                         '; '.join([f'{it.int_value}: {it.name}: {it.value}' for it in ReservoirVolume]),
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 1,
+                "group": "Fracture and reservoir volume",
+                "order": 10,
                 "dependency": None,
             },
         )
@@ -351,7 +351,7 @@ class Reservoir:
                         '; '.join([f'{it.int_value}: {it.value}' for it in FractureShape]),
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
+                "group": "Fracture and reservoir volume",
                 "order": 20,
                 "dependency": None,
             },
@@ -369,8 +369,8 @@ class Reservoir:
             ToolTipText="Effective heat transfer area per fracture",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 210,
+                "group": "Fracture and reservoir volume",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [1]}],
@@ -390,8 +390,8 @@ class Reservoir:
             ToolTipText="Diameter (if fracture shape = 2) or height (if fracture shape = 3 or 4) of each fracture",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 220,
+                "group": "Fracture and reservoir volume",
+                "order": 40,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [2, 3, 4]}],
@@ -413,8 +413,8 @@ class Reservoir:
                         "extent, not its aperture or thickness.",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 230,
+                "group": "Fracture and reservoir volume",
+                "order": 50,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [4]}],
@@ -432,8 +432,8 @@ class Reservoir:
             ToolTipText="Number of identical parallel fractures in EGS fracture-based reservoir model.",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 240,
+                "group": "Fracture and reservoir volume",
+                "order": 60,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Reservoir Volume Option',
@@ -462,8 +462,8 @@ class Reservoir:
                         f'{model_economics_stimulation_cost_per_production_well_name} is provided.)',
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 250,
+                "group": "Fracture and reservoir volume",
+                "order": 70,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Reservoir Volume Option',
@@ -490,8 +490,8 @@ class Reservoir:
             in EGS fracture-based reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 260,
+                "group": "Fracture and reservoir volume",
+                "order": 80,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 4]}],
@@ -511,8 +511,8 @@ class Reservoir:
             ToolTipText="Geothermal reservoir volume",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir geometry",
-                "order": 270,
+                "group": "Fracture and reservoir volume",
+                "order": 90,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [2, 3, 4]}],
@@ -535,8 +535,8 @@ class Reservoir:
                         "(total geofluid lost)/(total geofluid produced).",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 280,
+                "group": "Reservoir flow properties",
+                "order": 330,
                 "dependency": None,
             },
         )
@@ -555,8 +555,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock heat capacity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 290,
+                "group": "Reservoir rock properties",
+                "order": 240,
                 "dependency": None,
             },
         )
@@ -575,8 +575,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock density",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 300,
+                "group": "Reservoir rock properties",
+                "order": 250,
                 "dependency": None,
             },
         )
@@ -594,8 +594,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock thermal conductivity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 310,
+                "group": "Reservoir rock properties",
+                "order": 260,
                 "dependency": None,
             },
         )
@@ -613,8 +613,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir permeability",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 320,
+                "group": "Reservoir rock properties",
+                "order": 270,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -635,8 +635,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir porosity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir properties",
-                "order": 330,
+                "group": "Reservoir rock properties",
+                "order": 280,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [2, 6]}],
@@ -658,8 +658,8 @@ class Reservoir:
                         "(with geothermal gradient and reservoir depth)",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir thermal properties",
-                "order": 340,
+                "group": "Reservoir location and limits",
+                "order": 110,
                 "dependency": None,
             },
         )

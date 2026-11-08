@@ -56,8 +56,8 @@ class MPFReservoir(Reservoir):
                         'lower values calculate faster but may reduce consistency.',
             UI={
                 "tab": "Reservoir",
-                "group": "Model-specific reservoir settings",
-                "order": 370,
+                "group": "Thermal drawdown models",
+                "order": 420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [1]}],

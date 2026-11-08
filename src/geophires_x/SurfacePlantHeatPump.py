@@ -51,8 +51,8 @@ class SurfacePlantHeatPump(SurfacePlant):
             ToolTipText="Specify the coefficient of performance (COP) of the heat pump",
             UI={
                 "tab": "SurfacePlant",
-                "group": "",
-                "order": 1,
+                "group": "Heat pump",
+                "order": 1100,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
