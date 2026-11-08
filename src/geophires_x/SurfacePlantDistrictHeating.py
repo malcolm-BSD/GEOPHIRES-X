@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from geophires_x.OptionList import PlantType
-from geophires_x.Parameter import floatParameter, intParameter, strParameter, OutputParameter
+from geophires_x.Parameter import filenameParameter, floatParameter, intParameter, OutputParameter
 from geophires_x.SurfacePlant import SurfacePlant
 from geophires_x.Units import *
 import geophires_x.Model as Model
@@ -48,13 +48,13 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             ErrMessage="assume default district heating demand option (1: known heat demand profile)",
             ToolTipText="Select the method to provide the district heating demand to GEOPHIRES",
             UI={
-                "tab": "SurfacePlant",
+                "tab": "Economics",
                 "group": "",
-                "is_controller": False,
-                "order": 1,
+                "order": 6,
+                "dependency": None,
             },
         )
-        self.dh_demand_filename = self.ParameterDict[self.dh_demand_filename.Name] = strParameter(
+        self.dh_demand_filename = self.ParameterDict[self.dh_demand_filename.Name] = filenameParameter(
             "District Heating Demand File Name",
             value='HeatDemand.csv',
             UnitType=Units.NONE,
@@ -63,8 +63,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [1]}],
+                    'reason': 'Used when district-heating demand is read from a file.'},
             },
         )
         self.dh_demand_time_resolution = self.ParameterDict[self.dh_demand_time_resolution.Name] = intParameter(
@@ -77,8 +85,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [1]}],
+                    'reason': 'Used when district-heating demand is read from a file.'},
             },
         )
         self.dh_demand_data_column_number = self.ParameterDict[self.dh_demand_data_column_number.Name] = intParameter(
@@ -91,11 +107,19 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [1]}],
+                    'reason': 'Used when district-heating demand is read from a file.'},
             },
         )
-        self.dh_temperature_filename = self.ParameterDict[self.dh_temperature_filename.Name] = strParameter(
+        self.dh_temperature_filename = self.ParameterDict[self.dh_temperature_filename.Name] = filenameParameter(
             "Temperature File Name",
             value='Temperature.csv',
             UnitType=Units.NONE,
@@ -104,8 +128,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [2]}],
+                    'reason': 'Used when district-heating demand is calculated from weather.'},
             },
         )
         self.dh_temperature_data_column_number = self.ParameterDict[
@@ -119,8 +151,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [2]}],
+                    'reason': 'Used when district-heating demand is calculated from weather.'},
             },
         )
         self.dh_number_of_housing_units = self.ParameterDict[self.dh_number_of_housing_units.Name] = intParameter(
@@ -133,8 +173,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [2]}],
+                    'reason': 'Used when district-heating demand is calculated from weather.'},
             },
         )
         self.dh_constant_anchor_demand = self.ParameterDict[self.dh_constant_anchor_demand.Name] = floatParameter(
@@ -150,8 +198,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [2]}],
+                    'reason': 'Used when district-heating demand is calculated from weather.'},
             },
         )
         self.dh_us_census_division = self.ParameterDict[self.dh_us_census_division.Name] = intParameter(
@@ -164,8 +220,16 @@ class SurfacePlantDistrictHeating(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [7]},
+                                      {'parameter': 'Operating Mode', 'operator': 'in', 'values': [1, 'Baseload']},
+                                      {   'parameter': 'District Heating Demand Option',
+                                          'operator': 'in',
+                                          'values': [2]}],
+                    'reason': 'Used when district-heating demand is calculated from weather.'},
             },
             )
 

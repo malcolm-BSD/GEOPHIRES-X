@@ -120,8 +120,8 @@ class Outputs:
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": None,
                 },
         ))
 
@@ -136,8 +136,8 @@ class Outputs:
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": None,
                 },
         ))
 
@@ -158,8 +158,13 @@ class Outputs:
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": {   'effect': 'enable',
+                        'match': 'all',
+                        'conditions': [   {   'parameter': 'Operating Mode',
+                                              'operator': 'in',
+                                              'values': [2, 'Dispatchable']}],
+                        'reason': 'Used only in dispatchable operating mode.'},
                 },
             )
         )
@@ -175,8 +180,8 @@ class Outputs:
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": None,
                 },
             )
 
@@ -190,8 +195,13 @@ class Outputs:
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": {   'effect': 'enable',
+                        'match': 'all',
+                        'conditions': [   {   'parameter': 'Operating Mode',
+                                              'operator': 'in',
+                                              'values': [2, 'Dispatchable']}],
+                        'reason': 'Used only in dispatchable operating mode.'},
                 },
             )
 

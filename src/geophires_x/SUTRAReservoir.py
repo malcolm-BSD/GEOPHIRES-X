@@ -52,14 +52,11 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 550,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [7]}],
-                    "reason": "Used only by the SUTRA reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
+                    'reason': 'Used only by the SUTRA reservoir model.'},
             },
         )
 
@@ -72,14 +69,11 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 560,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [7]}],
-                    "reason": "Used only by the SUTRA reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
+                    'reason': 'Used only by the SUTRA reservoir model.'},
             },
         )
 
@@ -92,14 +86,11 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Model-specific reservoir settings",
-                "is_controller": False,
                 "order": 570,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [7]}],
-                    "reason": "Used only by the SUTRA reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
+                    'reason': 'Used only by the SUTRA reservoir model.'},
             },
         )
 

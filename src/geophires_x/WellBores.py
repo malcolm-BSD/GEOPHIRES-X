@@ -726,8 +726,11 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 50,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Number of Doublets', 'operator': 'provided', 'values': [False]}],
+                    'reason': 'Set from Number of Doublets when that alternative well-count input is provided.'},
             },
         )
         # noinspection SpellCheckingInspection
@@ -743,8 +746,17 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 60,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Number of Doublets',
+                                          'operator': 'provided',
+                                          'values': [False]},
+                                      {   'parameter': 'Number of Injection Wells per Production Well',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Calculated from an alternative well-count input when either alternative is '
+                              'provided.'},
             },
         )
         self.doublets_count = self.ParameterDict[self.doublets_count.Name] = intParameter(
@@ -758,8 +770,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 70,
+                "dependency": None,
             },
         )
         # noinspection SpellCheckingInspection
@@ -777,8 +789,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 80,
+                "dependency": None,
             },
         )
 
@@ -799,8 +811,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 90,
+                "dependency": None,
             },
         )
         # noinspection SpellCheckingInspection
@@ -820,8 +832,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 100,
+                "dependency": None,
             },
         )
         self.rameyoptionprod = self.ParameterDict[self.rameyoptionprod.Name] = boolParameter(
@@ -835,8 +847,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore configuration",
-                "is_controller": True,
                 "order": 110,
+                "dependency": None,
             },
         )
         self.tempdropprod = self.ParameterDict[self.tempdropprod.Name] = floatParameter(
@@ -852,8 +864,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 120,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Ramey Production Wellbore Model',
+                                          'operator': 'in',
+                                          'values': [False]}],
+                    'reason': 'Used only when the Ramey production-well heat-loss model is disabled.'},
             },
         )
         self.tempgaininj = self.ParameterDict[self.tempgaininj.Name] = floatParameter(
@@ -869,8 +886,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 130,
+                "dependency": None,
             },
         )
         self.prodwellflowrate = self.ParameterDict[self.prodwellflowrate.Name] = floatParameter(
@@ -887,8 +904,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore hydraulics",
-                "is_controller": False,
                 "order": 140,
+                "dependency": None,
             },
         )
         self.impedance = self.ParameterDict[self.impedance.Name] = floatParameter(
@@ -911,8 +928,8 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
-                "order": 40,
+                "order": 2,
+                "dependency": None,
             },
         )
 
@@ -939,8 +956,11 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 150,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
+                    'reason': 'Used computationally only by the TOUGH2 reservoir model.'},
             },
         )
 
@@ -985,8 +1005,8 @@ class WellBores:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Injection conditions",
-                "is_controller": False,
                 "order": 30,
+                "dependency": None,
             },
         )
         self.Phydrostatic = self.ParameterDict[self.Phydrostatic.Name] = floatParameter(
@@ -1003,8 +1023,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore hydraulics",
-                "is_controller": False,
                 "order": 160,
+                "dependency": None,
             },
         )
         self.ppwellhead = self.ParameterDict[self.ppwellhead.Name] = floatParameter(
@@ -1020,8 +1040,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore hydraulics",
-                "is_controller": False,
                 "order": 40,
+                "dependency": None,
             },
         )
         self.II = self.ParameterDict[self.II.Name] = floatParameter(
@@ -1038,8 +1058,11 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
                 "order": 50,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Impedance', 'operator': 'provided', 'values': [False]}],
+                    'reason': 'Used by the productivity/injectivity pathway when Reservoir Impedance is omitted.'},
             },
         )
         self.PI = self.ParameterDict[self.PI.Name] = floatParameter(
@@ -1056,8 +1079,11 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
                 "order": 60,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Impedance', 'operator': 'provided', 'values': [False]}],
+                    'reason': 'Used by the productivity/injectivity pathway when Reservoir Impedance is omitted.'},
             },
         )
 
@@ -1082,8 +1108,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 170,
+                "dependency": None,
             },
         )
         self.well_integrity_max_lifetime = self.ParameterDict[self.well_integrity_max_lifetime.Name] = floatParameter(
@@ -1107,8 +1133,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 180,
+                "dependency": None,
             },
         )
 
@@ -1120,10 +1146,10 @@ class WellBores:
             ErrMessage="assume default is not AGS",
             ToolTipText="Set to true if the model is for an Advanced Geothermal System (AGS)",
             UI={
-                "tab": "Project",
+                "tab": "WellBores",
                 "group": "Model controls",
-                "is_controller": True,
-                "order": 20,
+                "order": 1,
+                "dependency": None,
             },
         )
         self.overpressure_percentage = self.ParameterDict[self.overpressure_percentage.Name] = floatParameter(
@@ -1139,8 +1165,8 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
                 "order": 70,
+                "dependency": None,
             },
         )
         self.overpressure_depletion_rate = self.ParameterDict[self.overpressure_depletion_rate.Name] = floatParameter(
@@ -1156,8 +1182,13 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
                 "order": 80,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Overpressure Percentage',
+                                          'operator': 'provided',
+                                          'values': [True]}],
+                    'reason': 'Used only when an overpressure calculation is requested.'},
             },
         )
         self.injection_reservoir_temperature = self.ParameterDict[self.injection_reservoir_temperature.Name] = floatParameter(
@@ -1172,8 +1203,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 190,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Overpressure Percentage',
+                                          'operator': 'provided',
+                                          'values': [True]}],
+                    'reason': 'Used to define a distinct injection reservoir during an overpressure calculation.'},
             },
         )
         self.injection_reservoir_depth = self.ParameterDict[self.injection_reservoir_depth.Name] = floatParameter(
@@ -1188,8 +1224,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 200,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Overpressure Percentage',
+                                          'operator': 'provided',
+                                          'values': [True]}],
+                    'reason': 'Used to define a distinct injection reservoir during an overpressure calculation.'},
             },
         )
         self.injection_reservoir_initial_pressure = self.ParameterDict[self.injection_reservoir_initial_pressure.Name] = floatParameter(
@@ -1205,8 +1246,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore hydraulics",
-                "is_controller": False,
                 "order": 210,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Overpressure Percentage',
+                                          'operator': 'provided',
+                                          'values': [True]}],
+                    'reason': 'Used to define a distinct injection reservoir during an overpressure calculation.'},
             },
         )
         self.injection_reservoir_inflation_rate = self.ParameterDict[self.injection_reservoir_inflation_rate.Name] = floatParameter(
@@ -1221,8 +1267,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 220,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Overpressure Percentage',
+                                          'operator': 'provided',
+                                          'values': [True]}],
+                    'reason': 'Used to define a distinct injection reservoir during an overpressure calculation.'},
             },
         )
         # This is a alias for "Well Geometry Configuration" - putting it here for backwards compatibility
@@ -1238,8 +1289,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore configuration",
-                "is_controller": True,
                 "order": 10,
+                "dependency": None,
             },
         )
         # This is a alias for "Closed-loop Configuration" - putting it here for backwards compatibility
@@ -1255,8 +1306,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore configuration",
-                "is_controller": True,
-                "order": 230,
+                "order": 2,
+                "dependency": None,
             },
         )
 
@@ -1274,8 +1325,14 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 240,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
+                    'reason': 'Used by the advanced closed-loop database calculation, but not by SBT.'},
             },
         )
 
@@ -1291,8 +1348,8 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": True,
-                "order": 30,
+                "order": 3,
+                "dependency": None,
             },
         )
 
@@ -1311,8 +1368,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 250,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Well Geometry Configuration',
+                                          'operator': 'in',
+                                          'values': [1, 2, 4, 5]}],
+                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
             },
         )
 
@@ -1330,8 +1392,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 260,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Well Geometry Configuration',
+                                          'operator': 'in',
+                                          'values': [1, 2, 4, 5]}],
+                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
             },
         )
 
@@ -1353,8 +1420,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 270,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Well Geometry Configuration',
+                                          'operator': 'in',
+                                          'values': [1, 2, 4, 5]}],
+                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
             },
         )
 
@@ -1379,8 +1451,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 280,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Well Geometry Configuration',
+                                          'operator': 'in',
+                                          'values': [1, 2, 4, 5]}],
+                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
             },
         )
 
@@ -1396,14 +1473,13 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 290,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [8]}],
-                    "reason": "Used only by the SBT reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Well Geometry Configuration',
+                                          'operator': 'in',
+                                          'values': [1, 2, 4, 5]}],
+                    'reason': 'Used only by configurations containing nonvertical wellbore sections.'},
             },
         )
 
@@ -1421,8 +1497,12 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 300,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
         )
         self.lateral_casing_thermal_conductivity = lateral_casing_k
@@ -1442,8 +1522,12 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore thermal behavior",
-                "is_controller": False,
                 "order": 310,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
         )
         self.lateral_cement_thermal_conductivity = lateral_cement_k
@@ -1463,8 +1547,12 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 320,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
         )
         self.lateral_casing_thickness = lateral_casing_thickness
@@ -1484,8 +1572,12 @@ class WellBores:
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 330,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
+                                      {'parameter': 'Multilaterals Cased', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used by the SBT heat-transfer calculation only for cased laterals.'},
             },
         )
         self.lateral_cement_thickness = lateral_cement_thickness

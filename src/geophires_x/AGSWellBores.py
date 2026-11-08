@@ -533,8 +533,14 @@ class AGSWellBores(WellBores):
             UI={
                 "tab": "WellBores",
                 "group": "Wellbore parameters",
-                "is_controller": False,
                 "order": 340,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
+                    'reason': 'Used by the advanced closed-loop database calculation, but not by SBT.'},
             },
         )
 
@@ -789,7 +795,7 @@ class AGSWellBores(WellBores):
 
             # assume turbulent flow.
             Rewaterhoriz = 4. * self.q_circulation / (muwater * math.pi * self.nonverticalwellborediameter.value)
-            if self.NonverticalsCased:
+            if self.lateral_cased:
                 relroughness = 1E-4 / self.nonverticalwellborediameter.value
             else:
                 # note the higher relative roughness for uncased nonvertical bores

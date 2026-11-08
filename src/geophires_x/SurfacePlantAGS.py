@@ -117,8 +117,13 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 60,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'End-Use Option',
+                                          'operator': 'in',
+                                          'values': [2, 31, 32, 41, 42, 51, 52]}],
+                    'reason': 'Used only when the selected end use has a direct-use heat component.'},
             },
         )
 
@@ -136,8 +141,14 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 550,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
+                    'reason': 'Used by the advanced closed-loop database calculation, but not by SBT.'},
             },
         )
 
@@ -157,8 +168,15 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 560,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                                      {'parameter': 'Heat Transfer Fluid', 'operator': 'in', 'values': [2]}],
+                    'reason': 'Used only by the sCO2 advanced closed-loop surface-plant calculation.'},
             },
         )
         self.Generator_efficiency = self.ParameterDict[self.Generator_efficiency.Name] = floatParameter(
@@ -175,8 +193,15 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 570,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                                      {'parameter': 'Heat Transfer Fluid', 'operator': 'in', 'values': [2]}],
+                    'reason': 'Used only by the sCO2 advanced closed-loop surface-plant calculation.'},
             },
         )
         self.Compressor_isentropic_efficiency = self.ParameterDict[
@@ -194,8 +219,15 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 580,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                                      {'parameter': 'Heat Transfer Fluid', 'operator': 'in', 'values': [2]}],
+                    'reason': 'Used only by the sCO2 advanced closed-loop surface-plant calculation.'},
             },
         )
         self.Pre_Cooling_Delta_T = self.ParameterDict[self.Pre_Cooling_Delta_T.Name] = floatParameter(
@@ -212,8 +244,15 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Direct-use systems",
-                "is_controller": False,
                 "order": 590,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                                      {'parameter': 'Heat Transfer Fluid', 'operator': 'in', 'values': [2]}],
+                    'reason': 'Used only by the sCO2 advanced closed-loop surface-plant calculation.'},
             },
         )
         self.Turbine_outlet_pressure = self.ParameterDict[self.Turbine_outlet_pressure.Name] = floatParameter(
@@ -230,8 +269,15 @@ class SurfacePlantAGS(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 600,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]},
+                                      {'parameter': 'Heat Transfer Fluid', 'operator': 'in', 'values': [2]}],
+                    'reason': 'Used only by the sCO2 advanced closed-loop surface-plant calculation.'},
             },
         )
 

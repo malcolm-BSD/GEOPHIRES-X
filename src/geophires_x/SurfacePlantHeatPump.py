@@ -52,8 +52,12 @@ class SurfacePlantHeatPump(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [6]}],
+                    'reason': 'Used only by the heat-pump surface plant.'},
             },
         )
 

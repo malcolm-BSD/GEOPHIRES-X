@@ -335,8 +335,8 @@ class SurfacePlant:
             UI={
                 "tab": "Project",
                 "group": "Model controls",
-                "is_controller": True,
-                "order": 30,
+                "order": 1,
+                "dependency": None,
             },
         )
         self.plant_type = self.ParameterDict[self.plant_type.Name] = intParameter(
@@ -351,8 +351,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant configuration",
-                "is_controller": True,
-                "order": 20,
+                "order": 1,
+                "dependency": None,
             },
         )
         self.pump_efficiency = self.ParameterDict[self.pump_efficiency.Name] = floatParameter(
@@ -370,8 +370,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 40,
+                "dependency": None,
             },
         )
         self.utilization_factor = self.ParameterDict[self.utilization_factor.Name] = floatParameter(
@@ -390,8 +390,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 50,
+                "dependency": None,
             },
         )
         self.enduse_efficiency_factor = self.ParameterDict[self.enduse_efficiency_factor.Name] = floatParameter(
@@ -408,8 +408,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 60,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'End-Use Option',
+                                          'operator': 'in',
+                                          'values': [2, 31, 32, 41, 42, 51, 52]}],
+                    'reason': 'Used only when the selected end use has a direct-use heat component.'},
             },
         )
         self.chp_fraction = self.ParameterDict[self.chp_fraction.Name] = floatParameter(
@@ -427,8 +432,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 70,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'End-Use Option', 'operator': 'in', 'values': [51, 52]}],
+                    'reason': 'Used only by parallel-flow cogeneration cycles.'},
             },
         )
         self.T_chp_bottom = self.ParameterDict[self.T_chp_bottom.Name] = floatParameter(
@@ -444,8 +452,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 80,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'End-Use Option', 'operator': 'in', 'values': [41, 42]}],
+                    'reason': 'Used only by bottoming cogeneration cycles.'},
             },
         )
         self.ambient_temperature = self.ParameterDict[self.ambient_temperature.Name] = floatParameter(
@@ -461,8 +472,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 90,
+                "dependency": None,
             },
         )
         self.use_weather_data = self.ParameterDict["Use Weather Data"] = boolParameter(
@@ -476,10 +487,10 @@ class SurfacePlant:
                 "Ambient Temperature and Surface Temperature then use their input or default values."
             ),
             UI={
-                "tab": "SurfacePlant",
-                "group": "Surface plant parameters",
-                "is_controller": False,
-                "order": 100,
+                "tab": "Project",
+                "group": "Optional Calculations",
+                "order": 7,
+                "dependency": None,
             },
         )
         self.project_latitude = self.ParameterDict["Project Latitude"] = floatParameter(
@@ -494,8 +505,11 @@ class SurfacePlant:
             UI={
                 "tab": "Project",
                 "group": "Project location",
-                "is_controller": False,
-                "order": 50,
+                "order": 13,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Use Weather Data', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when weather data are enabled.'},
             },
         )
         self.project_longitude = self.ParameterDict["Project Longitude"] = floatParameter(
@@ -510,8 +524,11 @@ class SurfacePlant:
             UI={
                 "tab": "Project",
                 "group": "Project location",
-                "is_controller": False,
-                "order": 60,
+                "order": 14,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Use Weather Data', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when weather data are enabled.'},
             },
         )
         self.weather_data_year = self.ParameterDict["Weather Data Year"] = intParameter(
@@ -525,8 +542,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 110,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Use Weather Data', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when weather data are enabled.'},
             },
         )
         self.plant_lifetime = self.ParameterDict[self.plant_lifetime.Name] = intParameter(
@@ -542,8 +562,8 @@ class SurfacePlant:
             UI={
                 "tab": "Project",
                 "group": "Project settings",
-                "is_controller": False,
-                "order": 70,
+                "order": 5,
+                "dependency": None,
             },
         )
         self.piping_length = self.ParameterDict[self.piping_length.Name] = floatParameter(
@@ -558,8 +578,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 120,
+                "dependency": None,
             },
         )
         self.plant_outlet_pressure = self.ParameterDict[self.plant_outlet_pressure.Name] = floatParameter(
@@ -575,8 +595,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 130,
+                "dependency": None,
             },
         )
         self.electricity_cost_to_buy = self.ParameterDict[self.electricity_cost_to_buy.Name] = floatParameter(
@@ -593,8 +613,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 140,
+                "dependency": None,
             },
         )
         self.heat_price = self.ParameterDict[self.heat_price.Name] = floatParameter(
@@ -610,21 +630,22 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 150,
+                "dependency": None,
             },
         )
         self.operating_mode = self.ParameterDict["Operating Mode"] = strParameter(
             "Operating Mode",
             DefaultValue=OperatingMode.BASELOAD.value,
+            ValuesEnum=OperatingMode,
             Required=False,
             ErrMessage="assume default operating mode (Baseload)",
             ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
             UI={
-                "tab": "SurfacePlant",
+                "tab": "Project",
                 "group": "Surface plant parameters",
-                "is_controller": False,
-                "order": 160,
+                "order": 2,
+                "dependency": None,
             },
         )
         self.dispatch_demand_source = self.ParameterDict["Dispatch Demand Source"] = strParameter(
@@ -636,8 +657,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 170,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.dispatch_flow_strategy = self.ParameterDict["Dispatch Flow Strategy"] = strParameter(
@@ -649,8 +675,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 180,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.maximum_dispatch_flow_fraction = self.ParameterDict["Maximum Dispatch Flow Fraction"] = floatParameter(
@@ -665,8 +696,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 190,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.minimum_dispatch_flow_fraction = self.ParameterDict["Minimum Dispatch Flow Fraction"] = floatParameter(
@@ -681,8 +717,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 200,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.minimum_dispatch_runtime_fraction = self.ParameterDict["Minimum Dispatch Runtime Fraction"] = floatParameter(
@@ -697,8 +738,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 210,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.dispatch_analysis_start_year = self.ParameterDict["Dispatch Analysis Start Year"] = intParameter(
@@ -712,8 +758,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 220,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.dispatch_analysis_end_year = self.ParameterDict["Dispatch Analysis End Year"] = intParameter(
@@ -730,8 +781,13 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 230,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']}],
+                    'reason': 'Used only in dispatchable operating mode.'},
             },
         )
         self.tess_enabled = self.ParameterDict["TESS Enabled"] = boolParameter(
@@ -743,8 +799,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
-                "order": 240,
+                "order": 2,
+                "dependency": None,
             },
         )
         self.tess_volume = self.ParameterDict["TESS Volume"] = floatParameter(
@@ -761,8 +817,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 250,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_cost_per_cubic_meter = self.ParameterDict["TESS Cost per Cubic Meter"] = floatParameter(
@@ -783,8 +845,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 260,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_fixed_om_fraction = self.ParameterDict["TESS Fixed O&M Fraction"] = floatParameter(
@@ -799,8 +867,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 270,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_working_fluid = self.ParameterDict["TESS Working Fluid"] = strParameter(
@@ -812,8 +886,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 280,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_pressure_mode = self.ParameterDict["TESS Pressure Mode"] = strParameter(
@@ -825,8 +905,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 290,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_pressure = self.ParameterDict["TESS Pressure"] = floatParameter(
@@ -843,8 +929,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 300,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used as the specified pressure or as the lower bound for automatic pressure sizing.'},
             },
         )
         self.tess_pressure_safety_factor = self.ParameterDict["TESS Pressure Safety Factor"] = floatParameter(
@@ -859,8 +951,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 310,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_minimum_useful_temperature = self.ParameterDict["TESS Minimum Useful Temperature"] = floatParameter(
@@ -877,8 +975,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 320,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_maximum_temperature = self.ParameterDict["TESS Maximum Temperature"] = floatParameter(
@@ -895,8 +999,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 330,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_target_temperature = self.ParameterDict["TESS Target Temperature"] = floatParameter(
@@ -913,8 +1023,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 340,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_initial_temperature = self.ParameterDict["TESS Initial Temperature"] = floatParameter(
@@ -931,8 +1047,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 350,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_deadband_range = self.ParameterDict["TESS Deadband Range"] = floatParameter(
@@ -949,8 +1071,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 360,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_charge_efficiency = self.ParameterDict["TESS Charge Efficiency"] = floatParameter(
@@ -965,8 +1093,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 370,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_discharge_efficiency = self.ParameterDict["TESS Discharge Efficiency"] = floatParameter(
@@ -981,8 +1115,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 380,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_daily_heat_loss_fraction = self.ParameterDict["TESS Daily Heat Loss Fraction"] = floatParameter(
@@ -997,8 +1137,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 390,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_maximum_charge_power = self.ParameterDict["TESS Maximum Charge Power"] = floatParameter(
@@ -1015,8 +1161,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 400,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_maximum_discharge_power = self.ParameterDict["TESS Maximum Discharge Power"] = floatParameter(
@@ -1036,8 +1188,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 410,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_subhourly_demand_peak_multiplier = self.ParameterDict[
@@ -1054,8 +1212,17 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 420,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'TESS Maximum Discharge Power',
+                                          'operator': 'in',
+                                          'values': [-1, -1.0]}],
+                    'reason': 'Used when TESS maximum discharge power is automatically sized.'},
             },
         )
         self.tess_charge_control_strategy = self.ParameterDict["TESS Charge Control Strategy"] = strParameter(
@@ -1067,8 +1234,14 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 430,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when TESS is enabled for dispatchable operation.'},
             },
         )
         self.tess_charge_flow_fraction = self.ParameterDict["TESS Charge Flow Fraction"] = floatParameter(
@@ -1083,8 +1256,17 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 440,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'TESS Charge Control Strategy',
+                                          'operator': 'in',
+                                          'values': [1, 'Temperature Band']}],
+                    'reason': 'Used by temperature-band TESS charge control.'},
             },
         )
         self.tess_moving_average_window = self.ParameterDict["TESS Moving Average Window"] = intParameter(
@@ -1100,8 +1282,17 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 450,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'TESS Charge Control Strategy',
+                                          'operator': 'in',
+                                          'values': [2, 'Moving Average']}],
+                    'reason': 'Used by moving-average TESS charge control.'},
             },
         )
         self.tess_soc_control_gain = self.ParameterDict["TESS SOC Control Gain"] = floatParameter(
@@ -1116,8 +1307,17 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 460,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {'parameter': 'TESS Enabled', 'operator': 'in', 'values': [True]},
+                                      {   'parameter': 'TESS Charge Control Strategy',
+                                          'operator': 'in',
+                                          'values': [2, 'Moving Average']}],
+                    'reason': 'Used by moving-average TESS charge control.'},
             },
         )
         self.HeatingDemand = self.ParameterDict["Annual Heat Demand"] = TimeSeriesParameter(
@@ -1136,8 +1336,16 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 470,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {   'parameter': 'Dispatch Demand Source',
+                                          'operator': 'in',
+                                          'values': [1, 'Annual Heat Demand']}],
+                    'reason': 'Selected as the dispatch demand profile for heat demand.'},
             },
         )
         self.HeatDemand = self.HeatingDemand
@@ -1157,8 +1365,16 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Direct-use systems",
-                "is_controller": False,
                 "order": 480,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {   'parameter': 'Dispatch Demand Source',
+                                          'operator': 'in',
+                                          'values': [3, 'Annual Cooling Demand']}],
+                    'reason': 'Selected as the dispatch demand profile for cooling demand.'},
             },
         )
         self.ElectricityDemand = self.ParameterDict["Annual Electricity Demand"] = TimeSeriesParameter(
@@ -1177,8 +1393,16 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 490,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Operating Mode',
+                                          'operator': 'in',
+                                          'values': [2, 'Dispatchable']},
+                                      {   'parameter': 'Dispatch Demand Source',
+                                          'operator': 'in',
+                                          'values': [2, 'Annual Electricity Demand']}],
+                    'reason': 'Selected as the dispatch demand profile for electricity demand.'},
             },
         )
         self.electricitydemand = self.ElectricityDemand
@@ -1201,8 +1425,8 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 500,
+                "dependency": None,
             },
         )
 
@@ -1220,8 +1444,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Plant operating assumptions",
-                "is_controller": False,
                 "order": 510,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
+                    'reason': 'Used only by the SBT reservoir model.'},
             },
         )
         self.rho_fluid = self.ParameterDict[self.rho_fluid.Name] = floatParameter(
@@ -1238,8 +1465,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 520,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
+                    'reason': 'Used only by the SBT reservoir model.'},
             },
         )
         self.k_fluid = self.ParameterDict[self.k_fluid.Name] = floatParameter(
@@ -1256,8 +1486,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 530,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
+                    'reason': 'Used only by the SBT reservoir model.'},
             },
         )
         self.mu_fluid = self.ParameterDict[self.mu_fluid.Name] = floatParameter(
@@ -1274,8 +1507,11 @@ class SurfacePlant:
             UI={
                 "tab": "SurfacePlant",
                 "group": "Surface plant parameters",
-                "is_controller": False,
                 "order": 540,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]}],
+                    'reason': 'Used only by the SBT reservoir model.'},
             },
         )
 

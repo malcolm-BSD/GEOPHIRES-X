@@ -54,8 +54,12 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]}],
+                    'reason': 'Used only by the absorption-chiller surface plant.'},
             },
         )
 
@@ -71,8 +75,8 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
-                "order": 1,
+                "order": 3,
+                "dependency": None,
             },
         )
 
@@ -87,8 +91,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -102,8 +113,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -116,8 +134,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -130,8 +155,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -145,8 +177,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -161,8 +200,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -176,8 +222,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -191,8 +244,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -206,8 +266,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -222,8 +289,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -236,8 +310,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -251,8 +332,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -266,8 +354,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -282,8 +377,15 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only by the advanced absorption-chiller model.'},
             },
         )
 
@@ -300,8 +402,18 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]},
+                                      {   'parameter': 'Absorption Chiller Use Hourly Temperatures',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used when the advanced chiller evaluates hourly temperature profiles.'},
             },
         )
 
@@ -318,8 +430,18 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]},
+                                      {   'parameter': 'Absorption Chiller Use Hourly Temperatures',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used when the advanced chiller evaluates hourly temperature profiles.'},
             },
         )
 
@@ -336,8 +458,18 @@ class SurfacePlantAbsorptionChiller(SurfacePlant):
             UI={
                 "tab": "SurfacePlant",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
+                                      {'parameter': 'Power Plant Type', 'operator': 'in', 'values': [5]},
+                                      {   'parameter': 'Use Advanced Absorption Chiller',
+                                          'operator': 'in',
+                                          'values': [True]},
+                                      {   'parameter': 'Absorption Chiller Use Hourly Temperatures',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used when the advanced chiller evaluates hourly temperature profiles.'},
             },
         )
 

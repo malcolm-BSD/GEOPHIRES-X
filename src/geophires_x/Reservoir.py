@@ -70,8 +70,8 @@ class Reservoir:
             UI={
                 "tab": "Project",
                 "group": "Model controls",
-                "is_controller": True,
-                "order": 10,
+                "order": 4,
+                "dependency": None,
             },
         )
 
@@ -90,8 +90,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 10,
+                "dependency": None,
             },
         )
 
@@ -110,8 +110,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 90,
+                "dependency": None,
             },
         )
 
@@ -126,8 +126,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 100,
+                "dependency": None,
             },
         )
 
@@ -145,8 +145,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 110,
+                "dependency": None,
             },
         )
 
@@ -164,8 +164,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 120,
+                "dependency": None,
             },
         )
 
@@ -183,8 +183,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 130,
+                "dependency": None,
             },
         )
 
@@ -202,8 +202,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 140,
+                "dependency": None,
             },
         )
 
@@ -221,8 +221,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 150,
+                "dependency": None,
             },
         )
 
@@ -241,8 +241,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 160,
+                "dependency": None,
             },
         )
 
@@ -259,8 +259,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 170,
+                "dependency": None,
             },
         )
 
@@ -277,8 +277,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 180,
+                "dependency": None,
             },
         )
 
@@ -295,8 +295,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 190,
+                "dependency": None,
             },
         )
 
@@ -313,8 +313,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 200,
+                "dependency": None,
             },
         )
 
@@ -335,8 +335,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": True,
-                "order": 30,
+                "order": 1,
+                "dependency": None,
             },
         )
 
@@ -352,8 +352,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": True,
                 "order": 20,
+                "dependency": None,
             },
         )
 
@@ -370,8 +370,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 210,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [1]}],
+                    'reason': 'Direct input for a circular fracture with known area.'},
             },
         )
 
@@ -388,8 +391,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 220,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [2, 3, 4]}],
+                    'reason': 'Direct input for diameter-defined circular, square, and rectangular fractures.'},
             },
         )
 
@@ -408,8 +414,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 230,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [4]}],
+                    'reason': 'Direct input only for a rectangular fracture.'},
             },
         )
 
@@ -424,8 +433,16 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 240,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Reservoir Volume Option',
+                                          'operator': 'in',
+                                          'values': [1, 3, 4]},
+                                      {   'parameter': 'Number of Fractures per Stimulated Well',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Fracture count is calculated instead when Reservoir Volume Option is 2.'},
             },
         )
 
@@ -446,8 +463,17 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 250,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Reservoir Volume Option',
+                                          'operator': 'in',
+                                          'values': [1, 3, 4]},
+                                      {   'parameter': 'Number of Fractures',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Alternative per-stimulated-well fracture count; mutually exclusive with Number of '
+                              'Fractures.'},
             },
         )
 
@@ -465,8 +491,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 260,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 4]}],
+                    'reason': 'Fracture separation is calculated instead when Reservoir Volume Option is 3.'},
             },
         )
 
@@ -483,8 +512,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir geometry",
-                "is_controller": False,
                 "order": 270,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [2, 3, 4]}],
+                    'reason': 'Reservoir volume is calculated instead when Reservoir Volume Option is 1.'},
             },
         )
 
@@ -504,8 +536,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 280,
+                "dependency": None,
             },
         )
 
@@ -524,8 +556,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 290,
+                "dependency": None,
             },
         )
 
@@ -544,8 +576,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 300,
+                "dependency": None,
             },
         )
 
@@ -563,8 +595,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 310,
+                "dependency": None,
             },
         )
 
@@ -582,8 +614,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 320,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
+                    'reason': 'Used computationally only by the TOUGH2 reservoir model.'},
             },
         )
 
@@ -601,8 +636,11 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 330,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [2, 6]}],
+                    'reason': 'Used by the linear heat sweep and TOUGH2 reservoir calculations.'},
             },
         )
 
@@ -621,8 +659,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir thermal properties",
-                "is_controller": False,
                 "order": 340,
+                "dependency": None,
             },
         )
 
@@ -689,8 +727,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": None,
             },
         )
 
@@ -702,8 +740,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": None,
             },
         )
 
@@ -715,8 +753,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": None,
             },
         )
 
@@ -727,8 +765,8 @@ class Reservoir:
             UI={
                 "tab": "Reservoir",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": None,
             },
         )
 

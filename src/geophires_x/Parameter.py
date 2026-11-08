@@ -340,8 +340,10 @@ class Parameter(HasQuantity):
              values are accepted only by list/time-series parameters and scalar parameters with a dedicated collection mode.
              Filename parameters retain bare file/URL references and may select a filename from a JSON document.
         UI (dict): Presentation metadata kept with the parameter definition. The dictionary contains ``tab``, ``group``,
-             ``is_controller``, ``order``, and ``dependency``. ``dependency`` defaults to ``None`` and may define the
-             controller conditions that enable this parameter. Parameter declarations should normally override the
+             ``order``, and ``dependency``. ``dependency`` defaults to ``None`` and may define the
+             controller conditions that enable this parameter. Conditions use ``operator='in'`` for value matching or
+             ``operator='provided'`` when calculation routing depends on whether an optional input was supplied.
+             Parameter declarations should normally override the
              default tab with the name of their owning model object (Reservoir, WellBores, SurfacePlant, or Economics).
     """
 
@@ -359,7 +361,6 @@ class Parameter(HasQuantity):
         default_factory=lambda: {
             "tab": "Project",
             "group": "",
-            "is_controller": False,
             "order": 0,
             "dependency": None,
         }
@@ -381,14 +382,10 @@ class Parameter(HasQuantity):
     auto_raise_exception_on_invalid_read: bool = False
 
     def __post_init__(self):
-        self.UI = {
-            "tab": "Project",
-            "group": "",
-            "is_controller": False,
-            "order": 0,
-            "dependency": None,
-            **(self.UI or {}),
-        }
+        # Import locally to keep the metadata policy independent of Parameter's dataclass definitions.
+        from geophires_x.ParameterUI import complete_parameter_ui
+
+        self.UI = complete_parameter_ui(self.Name, self.UI)
         if self.PreferredUnits is None:
             self.PreferredUnits = self.CurrentUnits
 

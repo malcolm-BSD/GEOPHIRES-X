@@ -51,8 +51,11 @@ class SUTRAWellBores(WellBores):
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 50,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Number of Doublets', 'operator': 'provided', 'values': [False]}],
+                    'reason': 'Set from Number of Doublets when that alternative well-count input is provided.'},
             },
         )
         self.ninj = self.ParameterDict[self.ninj.Name] = intParameter(
@@ -67,8 +70,17 @@ class SUTRAWellBores(WellBores):
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 60,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Number of Doublets',
+                                          'operator': 'provided',
+                                          'values': [False]},
+                                      {   'parameter': 'Number of Injection Wells per Production Well',
+                                          'operator': 'provided',
+                                          'values': [False]}],
+                    'reason': 'Calculated from an alternative well-count input when either alternative is '
+                              'provided.'},
             },
         )
         self.prodwelldiam = self.ParameterDict[self.prodwelldiam.Name] = floatParameter(
@@ -87,8 +99,8 @@ class SUTRAWellBores(WellBores):
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 90,
+                "dependency": None,
             },
         )
         self.injwelldiam = self.ParameterDict[self.injwelldiam.Name] = floatParameter(
@@ -107,8 +119,8 @@ class SUTRAWellBores(WellBores):
             UI={
                 "tab": "WellBores",
                 "group": "Wellfield layout",
-                "is_controller": False,
                 "order": 100,
+                "dependency": None,
             },
         )
 
@@ -128,8 +140,8 @@ class SUTRAWellBores(WellBores):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir hydraulics",
-                "is_controller": False,
-                "order": 40,
+                "order": 2,
+                "dependency": None,
             },
         )
 

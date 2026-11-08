@@ -62,8 +62,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Economic parameters",
-                "is_controller": False,
                 "order": 1600,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
         self.AddOnCAPEX = self.ParameterDict[self.AddOnCAPEX.Name] = listParameter(
@@ -77,8 +80,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Capital costs",
-                "is_controller": False,
                 "order": 1610,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
         self.AddOnOPEXPerYear = self.ParameterDict[self.AddOnOPEXPerYear.Name] = listParameter(
@@ -92,8 +98,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Economic parameters",
-                "is_controller": False,
                 "order": 1620,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
         self.AddOnElecGainedPerYear = self.ParameterDict[self.AddOnElecGainedPerYear.Name] = listParameter(
@@ -107,8 +116,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Economic parameters",
-                "is_controller": False,
                 "order": 1630,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
         self.AddOnHeatGainedPerYear = self.ParameterDict[self.AddOnHeatGainedPerYear.Name] = listParameter(
@@ -122,8 +134,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Economic parameters",
-                "is_controller": False,
                 "order": 1640,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
         self.AddOnProfitGainedPerYear = self.ParameterDict[self.AddOnProfitGainedPerYear.Name] = listParameter(
@@ -141,8 +156,11 @@ class EconomicsAddOns(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Economic parameters",
-                "is_controller": False,
                 "order": 1650,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do AddOn Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when add-on calculations are enabled.'},
             },
         )
 

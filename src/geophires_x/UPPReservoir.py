@@ -39,14 +39,11 @@ class UPPReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 380,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
-                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],
+                    'reason': 'Used only by the user-provided reservoir temperature profile model.'},
             },
         )
 
@@ -70,14 +67,11 @@ class UPPReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 390,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
-                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],
+                    'reason': 'Used only by the user-provided reservoir temperature profile model.'},
             },
         )
 
@@ -95,14 +89,11 @@ class UPPReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir properties",
-                "is_controller": False,
                 "order": 400,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [5]}],
-                    "reason": "Used only by the user-provided temperature-profile reservoir model.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [5]}],
+                    'reason': 'Used only by the user-provided reservoir temperature profile model.'},
             },
         )
 

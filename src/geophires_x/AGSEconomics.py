@@ -66,20 +66,15 @@ class AGSEconomics(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Operating costs",
-                "is_controller": False,
                 "order": 1580,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [
-                        {
-                            "parameter": "Is AGS",
-                            "operator": "in",
-                            "values": [True],
-                        },
-                    ],
-                    "reason": "Used only by the AGS economics calculations.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {'parameter': 'Economic Model', 'operator': 'in', 'values': [4]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
+                    'reason': 'Used only by the CLGS advanced closed-loop database calculation, but not by SBT.'},
             },
         )
 
@@ -98,20 +93,15 @@ class AGSEconomics(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "Capital costs",
-                "is_controller": False,
                 "order": 1590,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [
-                        {
-                            "parameter": "Is AGS",
-                            "operator": "in",
-                            "values": [True],
-                        },
-                    ],
-                    "reason": "Used only by the AGS economics calculations.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
+                                      {'parameter': 'Economic Model', 'operator': 'in', 'values': [4]},
+                                      {   'parameter': 'Reservoir Model',
+                                          'operator': 'in',
+                                          'values': [0, 1, 2, 3, 4, 5, 6, 7]}],
+                    'reason': 'Used only by the CLGS advanced closed-loop database calculation, but not by SBT.'},
             },
         )
         self.Power_plant_cost_per_kWe.Required = True

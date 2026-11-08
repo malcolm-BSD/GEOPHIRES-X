@@ -63,8 +63,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.CAPEX = self.ParameterDict[self.CAPEX.Name] = floatParameter(
@@ -80,8 +83,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.OPEX = self.ParameterDict[self.OPEX.Name] = floatParameter(
@@ -97,8 +103,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.elec = self.ParameterDict[self.elec.Name] = floatParameter(
@@ -113,8 +122,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.therm = self.ParameterDict[self.therm.Name] = floatParameter(
@@ -130,8 +142,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.NG_price = self.ParameterDict[self.NG_price.Name] = floatParameter(
@@ -147,8 +162,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.power_co2intensity = self.ParameterDict[self.power_co2intensity.Name] = floatParameter(
@@ -164,8 +182,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.NG_co2intensity = self.ParameterDict[self.NG_co2intensity.Name] = floatParameter(
@@ -181,8 +202,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.NG_EnergyDensity = self.ParameterDict[self.NG_EnergyDensity.Name] = floatParameter(
@@ -199,8 +223,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.CAPEX_mult = self.ParameterDict[self.CAPEX_mult.Name] = floatParameter(
@@ -217,8 +244,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.OPEX_mult = self.ParameterDict[self.OPEX_mult.Name] = floatParameter(
@@ -235,8 +265,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.therm_index = self.ParameterDict[self.therm_index.Name] = floatParameter(
@@ -253,8 +286,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.transport = self.ParameterDict[self.transport.Name] = floatParameter(
@@ -271,8 +307,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.storage = self.ParameterDict[self.storage.Name] = floatParameter(
@@ -289,8 +328,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.EnergySplit = self.ParameterDict[self.EnergySplit.Name] = floatParameter(
@@ -307,8 +349,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
         self.carbon_credit_price = self.ParameterDict[self.carbon_credit_price.Name] = floatParameter(
@@ -325,8 +370,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
 
@@ -344,8 +392,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
 
@@ -362,8 +413,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
 
@@ -381,8 +435,11 @@ class EconomicsS_DAC_GT(Economics.Economics):
             UI={
                 "tab": "Economics",
                 "group": "",
-                "is_controller": False,
                 "order": 1,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Do S-DAC-GT Calculations', 'operator': 'in', 'values': [True]}],
+                    'reason': 'Used only when S-DAC-GT calculations are enabled.'},
             },
         )
 

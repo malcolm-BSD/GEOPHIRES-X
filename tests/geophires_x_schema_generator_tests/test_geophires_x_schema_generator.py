@@ -29,10 +29,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             [{"parameter": "Economic Model", "operator": "in", "values": [1]}],
             request_schema["properties"]["Fixed Charge Rate"]["x-dependencies"]["conditions"],
         )
-        self.assertEqual(
-            [{"parameter": "Economic Model", "operator": "in", "values": [2, 5]}],
-            request_schema["properties"]["Discount Rate"]["x-dependencies"]["conditions"],
-        )
+        self.assertNotIn("x-dependencies", request_schema["properties"]["Discount Rate"])
 
         input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
         input_parameters = json.loads(input_parameters_json)
@@ -46,7 +43,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, definition in request_schema["properties"].items()
             if "x-dependencies" in definition
         }
-        self.assertEqual(114, len(source_dependencies))
+        self.assertEqual(307, len(source_dependencies))
         self.assertEqual(set(source_dependencies), set(schema_dependencies))
         for name, source_dependency in source_dependencies.items():
             with self.subTest(parameter=name):
@@ -55,30 +52,179 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 }
                 self.assertEqual(source_dependency, emitted_dependency)
 
-    def test_geophires_x_ui_metadata_promotes_controllers_to_project(self):
+    def test_economic_model_dependencies_match_runtime_consumers(self):
+        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
+        input_parameters = json.loads(input_parameters_json)
+
+        for parameter_name in ["Discount Rate", "Investment Tax Credit Rate"]:
+            with self.subTest(unrestricted=parameter_name):
+                self.assertIsNone(input_parameters[parameter_name]["UI"]["dependency"])
+
+        for parameter_name in [
+            "Fraction of Investment in Bonds",
+            "Inflated Bond Interest Rate",
+            "Combined Income Tax Rate",
+            "Property Tax Rate",
+        ]:
+            with self.subTest(bicycle_and_sam=parameter_name):
+                dependency = input_parameters[parameter_name]["UI"]["dependency"]
+                self.assertEqual("all", dependency["match"])
+                self.assertEqual(
+                    [{"parameter": "Economic Model", "operator": "in", "values": [3, 5]}],
+                    dependency["conditions"],
+                )
+
+        for parameter_name in ["Inflated Equity Interest Rate", "Gross Revenue Tax Rate"]:
+            with self.subTest(bicycle_only=parameter_name):
+                dependency = input_parameters[parameter_name]["UI"]["dependency"]
+                self.assertEqual(
+                    [{"parameter": "Economic Model", "operator": "in", "values": [3]}],
+                    dependency["conditions"],
+                )
+
+        inflation_dependency = input_parameters["Inflation Rate"]["UI"]["dependency"]
+        self.assertEqual("any", inflation_dependency["match"])
+        self.assertEqual(
+            [
+                {"parameter": "Economic Model", "operator": "in", "values": [3, 5]},
+                {
+                    "parameter": "Production Tax Credit Inflation Adjusted",
+                    "operator": "in",
+                    "values": [True],
+                },
+            ],
+            inflation_dependency["conditions"],
+        )
+
+        construction_inflation_dependency = input_parameters["Inflation Rate During Construction"]["UI"]["dependency"]
+        self.assertEqual("any", construction_inflation_dependency["match"])
+        self.assertEqual(
+            [
+                {"parameter": "Economic Model", "operator": "in", "values": [1, 2, 3, 5]},
+                {"parameter": "Reservoir Model", "operator": "in", "values": [7]},
+            ],
+            construction_inflation_dependency["conditions"],
+        )
+
+        for parameter_name in [
+            "Operation & Maintenance Cost of Surface Plant",
+            "Capital Cost for Surface Plant for Direct-use System",
+        ]:
+            with self.subTest(clgs_only=parameter_name):
+                dependency = input_parameters[parameter_name]["UI"]["dependency"]
+                self.assertEqual("all", dependency["match"])
+                self.assertIn(
+                    {"parameter": "Economic Model", "operator": "in", "values": [4]},
+                    dependency["conditions"],
+                )
+
+    def test_geophires_x_ui_metadata_applies_declared_placement_and_priority(self):
         generator = GeophiresXSchemaGenerator()
         input_parameters_json, _ = generator.get_parameters_json()
         input_parameters = json.loads(input_parameters_json)
         request_schema, _ = generator.generate_json_schema()
         properties = request_schema["properties"]
 
-        self.assertEqual(353, len(properties))
+        self.assertEqual(387, len(properties))
         self.assertTrue(all("x-ui" in definition for definition in properties.values()))
         self.assertTrue(all("UI" in definition for definition in input_parameters.values()))
-        self.assertEqual("Project", input_parameters["Is AGS"]["UI"]["tab"])
+        normalized_tabs = {
+            "Project": "project",
+            "Reservoir": "reservoir",
+            "SurfacePlant": "surface-plant",
+            "WellBores": "wellbores",
+            "Economics": "economics",
+        }
+        for parameter_name, parameter in input_parameters.items():
+            with self.subTest(parameter=parameter_name):
+                declared_ui = dict(parameter["UI"])
+                declared_ui["tab"] = normalized_tabs[declared_ui["tab"]]
+                self.assertEqual(declared_ui, properties[parameter_name]["x-ui"])
+                self.assertNotIn("is_controller", properties[parameter_name]["x-ui"])
+        expected_independent_placement = {
+            "End-Use Option": ("Project", 1),
+            "Operating Mode": ("Project", 2),
+            "Economic Model": ("Project", 3),
+            "Reservoir Model": ("Project", 4),
+            "Plant Lifetime": ("Project", 5),
+            "Time steps per year": ("Project", 6),
+            "Use Weather Data": ("Project", 7),
+            "Do Carbon Price Calculations": ("Project", 8),
+            "Do S-DAC-GT Calculations": ("Project", 9),
+            "Do AddOn Calculations": ("Project", 10),
+            "Do VALCO(E|H|C) Calculations": ("Project", 11),
+            "Do XLCO(E|H|C) Calculations": ("Project", 12),
+            "Is AGS": ("WellBores", 1),
+            "Well Geometry Configuration": ("WellBores", 2),
+            "Heat Transfer Fluid": ("WellBores", 3),
+            "Power Plant Type": ("SurfacePlant", 1),
+            "TESS Enabled": ("SurfacePlant", 2),
+            "Use Advanced Absorption Chiller": ("SurfacePlant", 3),
+            "Reservoir Volume Option": ("Reservoir", 1),
+            "Reservoir Impedance": ("Reservoir", 2),
+            "Total Capital Cost": ("Economics", 2),
+            "Total O&M Cost": ("Economics", 3),
+            "VALCO Calculation Mode": ("Economics", 5),
+            "District Heating Demand Option": ("Economics", 6),
+        }
+        for parameter_name, (tab, order) in expected_independent_placement.items():
+            with self.subTest(tab=tab, parameter=parameter_name):
+                ui = input_parameters[parameter_name]["UI"]
+                self.assertEqual(tab, ui["tab"])
+                self.assertEqual(order, ui["order"])
+                self.assertIsNone(ui["dependency"])
+                self.assertNotIn("x-dependencies", properties[parameter_name])
+
+        self.assertEqual({"tab_labels": {"project": "Project Control"}}, request_schema["x-ui"])
+        for order, parameter_name in enumerate(
+            [
+                "Use Weather Data",
+                "Do Carbon Price Calculations",
+                "Do S-DAC-GT Calculations",
+                "Do AddOn Calculations",
+                "Do VALCO(E|H|C) Calculations",
+                "Do XLCO(E|H|C) Calculations",
+            ],
+            start=7,
+        ):
+            with self.subTest(optional_calculation=parameter_name):
+                ui = input_parameters[parameter_name]["UI"]
+                self.assertEqual("Optional Calculations", ui["group"])
+                self.assertEqual(order, ui["order"])
+
+        weather_dependency = {
+            "effect": "enable",
+            "match": "all",
+            "conditions": [{"parameter": "Use Weather Data", "operator": "in", "values": [True]}],
+            "reason": "Used only when weather data are enabled.",
+        }
+        for order, parameter_name in enumerate(["Project Latitude", "Project Longitude"], start=13):
+            with self.subTest(project_location=parameter_name):
+                ui = input_parameters[parameter_name]["UI"]
+                self.assertEqual("Project", ui["tab"])
+                self.assertEqual("Project location", ui["group"])
+                self.assertEqual(order, ui["order"])
+                self.assertEqual(weather_dependency, ui["dependency"])
+                self.assertEqual(
+                    {**weather_dependency, "depends_on": ["Use Weather Data"]},
+                    properties[parameter_name]["x-dependencies"],
+                )
+
         self.assertEqual(
-            {"tab", "group", "is_controller", "order", "dependency"},
+            [
+                {"name": "BASELOAD", "value": "Baseload", "int_value": 1},
+                {"name": "DISPATCHABLE", "value": "Dispatchable", "int_value": 2},
+            ],
+            properties["Operating Mode"]["enum_values"],
+        )
+        self.assertEqual(
+            {"tab", "group", "order", "dependency"},
             set(input_parameters["Reservoir Depth"]["UI"]),
         )
         self.assertIsNone(input_parameters["Reservoir Depth"]["UI"]["dependency"])
-        self.assertEqual(
-            [2, 5],
-            input_parameters["Discount Rate"]["UI"]["dependency"]["conditions"][0]["values"],
-        )
+        self.assertIsNone(input_parameters["Discount Rate"]["UI"]["dependency"])
         self.assertEqual("project", properties["Economic Model"]["x-ui"]["tab"])
-        self.assertTrue(properties["Economic Model"]["x-ui"]["is_controller"])
         self.assertEqual("project", properties["Reservoir Model"]["x-ui"]["tab"])
-        self.assertTrue(properties["Is AGS"]["x-ui"]["is_controller"])
         self.assertEqual("project", properties["Project Latitude"]["x-ui"]["tab"])
         self.assertEqual("reservoir", properties["Reservoir Depth"]["x-ui"]["tab"])
         self.assertEqual(10, properties["Reservoir Depth"]["x-ui"]["order"])
@@ -86,9 +232,35 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertEqual("economics", properties["Fixed Internal Rate"]["x-ui"]["tab"])
         self.assertEqual("surface-plant", properties["Use Advanced Absorption Chiller"]["x-ui"]["tab"])
         self.assertIn("Absorption Chiller Effect Type", properties)
+        self.assertIn("Heat Pump COP", properties)
+        self.assertIn("District Heating Demand Option", properties)
+        self.assertIn("WACC", properties)
+        self.assertIn("Improved Text Output File", properties)
+
+        self.assertEqual(
+            {"parameter": "Reservoir Impedance", "operator": "provided", "values": [False]},
+            properties["Injectivity Index"]["x-dependencies"]["conditions"][0],
+        )
+        self.assertEqual(
+            "Direct",
+            properties["VALCOE Technology Capacity Value"]["x-dependencies"]["conditions"][-1]["values"][0],
+        )
+        self.assertEqual(
+            "Derived",
+            properties["VALCOE Basis Capacity Value"]["x-dependencies"]["conditions"][-1]["values"][0],
+        )
+
+        for parameter_name, definition in properties.items():
+            dependency = definition.get("x-dependencies")
+            if dependency is None:
+                continue
+            for condition in dependency["conditions"]:
+                controller = condition["parameter"]
+                with self.subTest(parameter=parameter_name, controller=controller):
+                    self.assertIn(controller, properties)
 
         expected_tabs = {
-            "Is AGS": "project",
+            "Is AGS": "wellbores",
             "Fracture Shape": "reservoir",
             "Reservoir Volume Option": "reservoir",
             "Reservoir Impedance": "reservoir",
@@ -110,13 +282,10 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             with self.subTest(parameter=parameter):
                 self.assertEqual(expected_tab, properties[parameter]["x-ui"]["tab"])
 
-        orders_by_tab: dict[str, list[int]] = {}
         for definition in properties.values():
             ui_metadata = definition["x-ui"]
             self.assertGreaterEqual(ui_metadata["order"], 0)
             self.assertIsInstance(ui_metadata["group"], str)
-            orders_by_tab.setdefault(ui_metadata["tab"], []).append(ui_metadata["order"])
-        self.assertTrue(all(len(orders) == len(set(orders)) for orders in orders_by_tab.values()))
 
     def test_hip_ra_x_dependency_metadata_is_explicit(self):
         request_schema, _ = HipRaXSchemaGenerator().generate_json_schema()

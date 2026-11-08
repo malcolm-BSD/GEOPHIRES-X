@@ -46,8 +46,8 @@ class SUTRAOutputs(Outputs):
                 UI={
                     "tab": "Project",
                     "group": "",
-                    "is_controller": False,
                     "order": 1,
+                    "dependency": None,
                 },
             )
 

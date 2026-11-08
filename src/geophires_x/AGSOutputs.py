@@ -36,7 +36,7 @@ class AGSOutputs(Outputs.Outputs):
         # write results to output file and screen
         # ---------------------------------------
         try:
-            if model.wellbores.IsAGS:  # do a classical output display
+            if model.wellbores.IsAGS.value:  # do a classical output display
                 import scipy
                 # Need to do some interpolating to get the arrays to be the right size for output
                 if len(model.wellbores.PumpingPower.value) != len(model.wellbores.ProducedTemperature.value):

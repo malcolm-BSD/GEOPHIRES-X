@@ -50,14 +50,11 @@ class SFReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Model-specific reservoir settings",
-                "is_controller": False,
                 "order": 350,
-                "dependency": {
-                    "effect": "enable",
-                    "match": "all",
-                    "conditions": [{"parameter": "Reservoir Model", "operator": "in", "values": [3, 4]}],
-                    "reason": "Used by the single-fracture and annual-percentage thermal drawdown models.",
-                },
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [3, 4]}],
+                    'reason': 'Used only by the single-fracture and annual-percentage drawdown reservoir models.'},
             },
         )
 

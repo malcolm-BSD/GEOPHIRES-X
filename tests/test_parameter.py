@@ -6,6 +6,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import numpy as np
@@ -15,6 +17,8 @@ from geophires_x.formula_evaluator import evaluate_formula_expression
 from geophires_x.formula_evaluator import resolve_parameter_formulas
 from geophires_x.GeoPHIRESUtils import read_input_file
 from geophires_x.Model import Model
+from geophires_x.OptionList import EconomicModel
+from geophires_x.OptionList import InjectionTemperatureModel
 from geophires_x.Parameter import ConvertUnitsBack
 from geophires_x.Parameter import OutputParameter
 from geophires_x.Parameter import Parameter
@@ -50,7 +54,6 @@ class ParameterTestCase(BaseTestCase):
             {
                 "tab": "Project",
                 "group": "",
-                "is_controller": False,
                 "order": 0,
                 "dependency": None,
             },
@@ -61,8 +64,45 @@ class ParameterTestCase(BaseTestCase):
         parameter_with_ui = Parameter(UI={"tab": "Economics", "order": 20})
         self.assertEqual("Economics", parameter_with_ui.UI["tab"])
         self.assertEqual(20, parameter_with_ui.UI["order"])
-        self.assertFalse(parameter_with_ui.UI["is_controller"])
         self.assertIsNone(parameter_with_ui.UI["dependency"])
+
+    def test_sbt_injection_temperature_profile_selector_uses_parameter_value(self):
+        from geophires_x.SBTReservoir import SBTReservoir
+
+        reservoir = SBTReservoir(self._new_model())
+
+        self.assertFalse(reservoir.uses_injection_temperature_profile)
+        reservoir.injection_temperature_model.value = 2
+        self.assertTrue(reservoir.uses_injection_temperature_profile)
+        reservoir.injection_temperature_model.value = InjectionTemperatureModel.FILE_SUPPLIED
+        self.assertTrue(reservoir.uses_injection_temperature_profile)
+
+    def test_ags_lateral_casing_selector_uses_parameter_value(self):
+        from geophires_x.AGSWellBores import AGSWellBores
+
+        wellbores = AGSWellBores(self._new_model())
+
+        wellbores.NonverticalsCased.value = False
+        self.assertFalse(wellbores.lateral_cased)
+        wellbores.NonverticalsCased.value = True
+        self.assertTrue(wellbores.lateral_cased)
+
+    def test_ags_outputs_uses_is_ags_parameter_value(self):
+        from geophires_x.AGSOutputs import AGSOutputs
+        from geophires_x.Outputs import Outputs
+
+        outputs = object.__new__(AGSOutputs)
+        outputs._convert_units = MagicMock()
+        model = SimpleNamespace(
+            logger=MagicMock(),
+            wellbores=SimpleNamespace(IsAGS=boolParameter("Is AGS", DefaultValue=False)),
+            economics=SimpleNamespace(econmodel=SimpleNamespace(value=EconomicModel.FCR)),
+        )
+
+        with patch.object(Outputs, "PrintOutputs") as base_print_outputs:
+            outputs.PrintOutputs(model)
+
+        base_print_outputs.assert_called_once_with(model)
 
     def test_evaluate_formula_expression_supports_numeric_literals(self):
         result = evaluate_formula_expression("42.5", lambda _: None)

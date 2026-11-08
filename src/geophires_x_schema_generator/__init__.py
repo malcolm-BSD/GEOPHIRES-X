@@ -23,10 +23,13 @@ from geophires_x.AGSEconomics import AGSEconomics
 from geophires_x.AGSWellBores import AGSWellBores
 from geophires_x.CylindricalReservoir import CylindricalReservoir
 from geophires_x.EconomicsAddOns import EconomicsAddOns
+from geophires_x.EconomicsS_DAC_GT import EconomicsS_DAC_GT
 from geophires_x.GeoPHIRESUtils import json_dumpse
 from geophires_x.Parameter import Parameter
 from geophires_x.SurfacePlantAGS import SurfacePlantAGS
 from geophires_x.SurfacePlantAbsorptionChiller import SurfacePlantAbsorptionChiller
+from geophires_x.SurfacePlantDistrictHeating import SurfacePlantDistrictHeating
+from geophires_x.SurfacePlantHeatPump import SurfacePlantHeatPump
 from geophires_x.SurfacePlantSUTRA import SurfacePlantSUTRA
 from geophires_x.SUTRAEconomics import SUTRAEconomics
 from geophires_x.SUTRAReservoir import SUTRAReservoir
@@ -40,6 +43,10 @@ from geophires_x_client import GeophiresXResult, _get_logger
 from hip_ra_x.hip_ra_x import HIP_RA_X
 
 _log = _get_logger()
+
+_UI_TAB_LABELS = {
+    "project": "Project Control",
+}
 
 
 class GeophiresXSchemaGenerator:
@@ -192,6 +199,10 @@ class GeophiresXSchemaGenerator:
         :rtype: list[Tuple[Any, str]]
         """
         dummy_model = self._get_dummy_model()
+        sdac_economics = EconomicsS_DAC_GT(dummy_model)
+        # S-DAC-GT reuses several standard output names with module-specific units. Its inputs belong in the
+        # request schema, but its outputs must not overwrite the canonical GEOPHIRES result definitions.
+        sdac_economics.OutputParameterDict = {}
         return [
             (dummy_model.reserv, "Reservoir"),
             (TDPReservoir(dummy_model), "Reservoir"),
@@ -210,13 +221,16 @@ class GeophiresXSchemaGenerator:
             (dummy_model.surfaceplant, "Surface Plant"),
             (SurfacePlantAGS(dummy_model), "Surface Plant"),
             (SurfacePlantAbsorptionChiller(dummy_model), "Surface Plant"),
+            (SurfacePlantHeatPump(dummy_model), "Surface Plant"),
+            (SurfacePlantDistrictHeating(dummy_model), "Surface Plant"),
             (SurfacePlantSUTRA(dummy_model), "Surface Plant"),
             (dummy_model.economics, "Economics"),
             (AGSEconomics(dummy_model), "Economics"),
             (SBTEconomics(dummy_model), "Economics"),
             (SUTRAEconomics(dummy_model), "Economics"),
             (EconomicsAddOns(dummy_model), "Economics"),
-            # (EconomicsS_DAC_GT(dummy_model), 'Economics'),  # TODO reconcile conflicting output units
+            (sdac_economics, "Economics"),
+            (dummy_model.outputs, "Outputs"),
         ]
 
     def get_schema_title(self) -> str:
@@ -260,21 +274,12 @@ class GeophiresXSchemaGenerator:
             "Economics": "economics",
         }
         metadata_by_parameter: dict[str, dict[str, object]] = {}
-        used_orders_by_tab: dict[str, set[int]] = {}
         for name, parameter in input_params.items():
             metadata = parameter.get("UI")
             if not isinstance(metadata, dict):
                 raise ValueError(f"Parameter {name} must define UI metadata")
             metadata = dict(metadata)
             metadata["tab"] = tab_names.get(metadata.get("tab"), metadata.get("tab"))
-            tab = str(metadata["tab"])
-            order = metadata.get("order")
-            if isinstance(order, int) and not isinstance(order, bool):
-                used_orders = used_orders_by_tab.setdefault(tab, set())
-                while order in used_orders:
-                    order += 1
-                metadata["order"] = order
-                used_orders.add(order)
             metadata_by_parameter[name] = metadata
         return metadata_by_parameter
 
@@ -351,12 +356,24 @@ class GeophiresXSchemaGenerator:
                 for condition in conditions:
                     controller = condition.get("parameter")
                     allowed_values = condition.get("values")
-                    if condition.get("operator") != "in" or not isinstance(allowed_values, list) or not allowed_values:
+                    operator = condition.get("operator")
+                    if operator not in {"in", "provided"} or not isinstance(allowed_values, list) or not allowed_values:
                         raise ValueError(
-                            f"Dependency metadata for {param_name} must provide an in condition for {controller}"
+                            f"Dependency metadata for {param_name} must provide an in or provided condition for "
+                            f"{controller}"
                         )
+                    if operator == "provided" and any(not isinstance(value, bool) for value in allowed_values):
+                        raise ValueError(
+                            f"Dependency metadata for {param_name} must use boolean values with provided conditions"
+                        )
+                    if operator != "in":
+                        continue
                     enum_values = properties[controller].get("enum_values", [])
-                    supported_values = [entry.get("int_value", entry.get("value")) for entry in enum_values]
+                    supported_values = []
+                    for entry in enum_values:
+                        supported_values.extend(
+                            value for value in (entry.get("int_value"), entry.get("value")) if value is not None
+                        )
                     unsupported_values = [value for value in allowed_values if value not in supported_values]
                     if enum_values and unsupported_values:
                         raise ValueError(
@@ -374,7 +391,7 @@ class GeophiresXSchemaGenerator:
         for param_name, ui_metadata in ui_metadata_by_parameter.items():
             if param_name not in properties:
                 raise ValueError(f"UI metadata references unknown parameter: {param_name}")
-            required_ui_fields = {"tab", "group", "is_controller", "order", "dependency"}
+            required_ui_fields = {"tab", "group", "order", "dependency"}
             if set(ui_metadata) != required_ui_fields:
                 raise ValueError(
                     f"UI metadata for {param_name} must contain exactly these fields: {sorted(required_ui_fields)}"
@@ -389,8 +406,6 @@ class GeophiresXSchemaGenerator:
                 raise ValueError(f"UI metadata for {param_name} uses an unsupported tab")
             if not isinstance(ui_metadata.get("group"), str):
                 raise ValueError(f"UI metadata group for {param_name} must be a string")
-            if not isinstance(ui_metadata.get("is_controller"), bool):
-                raise ValueError(f"UI metadata is_controller for {param_name} must be a boolean")
             order = ui_metadata.get("order")
             if not isinstance(order, int) or isinstance(order, bool) or order < 0:
                 raise ValueError(f"UI metadata order for {param_name} must be a non-negative integer")
@@ -407,6 +422,8 @@ class GeophiresXSchemaGenerator:
             "required": required,
             "properties": properties,
         }
+        if ui_metadata_by_parameter:
+            request_schema["x-ui"] = {"tab_labels": dict(_UI_TAB_LABELS)}
 
         result_schema = self.get_result_json_schema(output_params_json)
 
