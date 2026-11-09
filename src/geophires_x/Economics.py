@@ -1025,7 +1025,7 @@ class Economics:
             ToolTipText="Total annual make-up water cost",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Water costs",
                 "order": 250,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1046,7 +1046,7 @@ class Economics:
             ToolTipText="Multiplier for built-in make-up water cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Water costs",
                 "order": 260,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1134,7 +1134,7 @@ class Economics:
             ToolTipText="Fixed charge rate (FCR) used in the Fixed Charge Rate Model",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Financing and tax",
                 "order": 300,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1597,7 +1597,7 @@ class Economics:
             ToolTipText="VALCO calculation mode. Direct is the v1 supported mode.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO controls",
                 "order": 5,
                 "dependency": None,
             },
@@ -1614,7 +1614,7 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 520,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1639,7 +1639,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 530,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1664,7 +1664,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 540,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1689,7 +1689,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 550,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1717,7 +1717,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 560,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1742,7 +1742,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 570,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1768,7 +1768,7 @@ class Economics:
             ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 580,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1795,7 +1795,7 @@ class Economics:
             ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 590,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1821,7 +1821,7 @@ class Economics:
             ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1847,7 +1847,7 @@ class Economics:
             ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO electricity",
                 "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1875,7 +1875,7 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1903,7 +1903,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1931,7 +1931,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1959,7 +1959,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1990,7 +1990,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 660,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2018,7 +2018,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 670,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2047,7 +2047,7 @@ class Economics:
             ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 680,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2077,7 +2077,7 @@ class Economics:
             ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 690,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2106,7 +2106,7 @@ class Economics:
             ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 700,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2135,7 +2135,7 @@ class Economics:
             ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO heat",
                 "order": 710,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2166,7 +2166,7 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 720,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2190,7 +2190,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 730,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2214,7 +2214,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 740,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2238,7 +2238,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 750,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2265,7 +2265,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 760,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2289,7 +2289,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 770,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2314,7 +2314,7 @@ class Economics:
             ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 780,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2340,7 +2340,7 @@ class Economics:
             ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 790,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2365,7 +2365,7 @@ class Economics:
             ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 800,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2390,7 +2390,7 @@ class Economics:
             ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO parameters",
+                "group": "VALCO cooling",
                 "order": 810,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2621,7 +2621,7 @@ class Economics:
             ToolTipText="Fraction of geothermal project financing through bonds (debt/loans).",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Financing and tax",
                 "order": 900,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2732,7 +2732,7 @@ class Economics:
                         "them. SAM Single Owner PPA economic model only.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Financing and tax",
                 "order": 940,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2966,7 +2966,7 @@ class Economics:
                         f'prior to the first construction year.',
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Financing and tax",
                 "order": 1040,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2990,7 +2990,7 @@ class Economics:
                         'affected by this parameter.)',
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Capital costs",
                 "order": 1050,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3266,7 +3266,7 @@ class Economics:
             ToolTipText="Price of peaking fuel for peaking boilers",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Peaking boiler economics",
                 "order": 1160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3289,7 +3289,7 @@ class Economics:
             ToolTipText="Peaking boiler efficiency",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Peaking boiler economics",
                 "order": 1170,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3311,7 +3311,7 @@ class Economics:
             ToolTipText="Peaking boiler cost per kW of maximum peaking boiler demand",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Peaking boiler economics",
                 "order": 1180,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3337,8 +3337,8 @@ class Economics:
             ToolTipText="District heating piping cost rate ($/m)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 10,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3364,7 +3364,7 @@ class Economics:
             ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Capital costs",
                 "order": 1200,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -3389,8 +3389,8 @@ class Economics:
             ToolTipText="Total district heating network cost ($M)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 20,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3413,8 +3413,8 @@ class Economics:
             ToolTipText="Total annual district heating O&M cost ($M/year)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Total O&M Cost', 'operator': 'provided', 'values': [False]},
@@ -3435,8 +3435,8 @@ class Economics:
             ToolTipText="District heating network piping length (km)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 40,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3462,8 +3462,8 @@ class Economics:
             ToolTipText="District heating road length (km)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 50,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3492,8 +3492,8 @@ class Economics:
             ToolTipText="District heating land area (km2)",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 60,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3524,8 +3524,8 @@ class Economics:
             ToolTipText="Specify the population in the district heating network",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "District heating network economics",
+                "order": 70,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -3557,8 +3557,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "Heat sale pricing",
+                "order": 10,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3580,8 +3580,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "Heat sale pricing",
+                "order": 20,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3604,8 +3604,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "Heat sale pricing",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3629,8 +3629,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Direct-use heat and co-generation price parameters",
-                "order": 1190,
+                "group": "Heat sale pricing",
+                "order": 40,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3652,8 +3652,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Electricity and co-generation price parameters",
-                "order": 1190,
+                "group": "Electricity sale pricing",
+                "order": 10,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3678,8 +3678,8 @@ class Economics:
                         "lifetime, then the value will have no effect beyond allowing escalation to occur every year.",
             UI={
                 "tab": "Economics",
-                "group": "Electricity and co-generation price parameters",
-                "order": 1190,
+                "group": "Electricity sale pricing",
+                "order": 20,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3699,8 +3699,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Electricity and co-generation price parameters",
-                "order": 1190,
+                "group": "Electricity sale pricing",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3721,8 +3721,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Electricity and co-generation price parameters",
-                "order": 1190,
+                "group": "Electricity sale pricing",
+                "order": 40,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3741,8 +3741,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "cooling price parameters",
-                "order": 1190,
+                "group": "Cooling sale pricing",
+                "order": 10,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3760,8 +3760,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "cooling price parameters",
-                "order": 1190,
+                "group": "Cooling sale pricing",
+                "order": 20,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3780,8 +3780,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "cooling price parameters",
-                "order": 1190,
+                "group": "Cooling sale pricing",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3801,8 +3801,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "cooling price parameters",
-                "order": 1190,
+                "group": "Cooling sale pricing",
+                "order": 40,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3820,7 +3820,7 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Carbon pricing and emissions",
                 "order": 1390,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3840,7 +3840,7 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
             UI={
                 "tab": "Economics",
-                "group": "Revenue and pricing",
+                "group": "Carbon pricing and emissions",
                 "order": 1400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3861,7 +3861,7 @@ class Economics:
             ToolTipText="Number of years after start of project before start of Carbon incentives",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Carbon pricing and emissions",
                 "order": 1410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3883,7 +3883,7 @@ class Economics:
             ToolTipText="additional value per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Carbon pricing and emissions",
                 "order": 1420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3905,7 +3905,7 @@ class Economics:
             ToolTipText="CO2 intensity of the grid (how much CO2 is produced per kWh of electricity produced (0.93916924 lbs/kWh for Texas ERCOT))",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Carbon pricing and emissions",
                 "order": 1430,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3931,7 +3931,7 @@ class Economics:
                         "(0.070324961 lbs/kWh; https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references))",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Carbon pricing and emissions",
                 "order": 1440,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3955,7 +3955,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Fees, grants, and incentives",
                 "order": 1450,
                 "dependency": None,
             },
@@ -3969,7 +3969,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Fees, grants, and incentives",
                 "order": 1460,
                 "dependency": None,
             },
@@ -3983,7 +3983,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Fees, grants, and incentives",
                 "order": 1470,
                 "dependency": None,
             },
@@ -4014,7 +4014,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Fees, grants, and incentives",
                 "order": 1490,
                 "dependency": None,
             },
@@ -4036,7 +4036,7 @@ class Economics:
                         "will be automatically set to the same value.",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Financing and tax",
                 "order": 1500,
                 "dependency": None,
             },
@@ -4194,7 +4194,7 @@ class Economics:
             ToolTipText="Estimated jobs created per MW of electricity produced, per https://geothermal.org/resources/geothermal-basics",
             UI={
                 "tab": "Economics",
-                "group": "Economic parameters",
+                "group": "Employment assumptions",
                 "order": 1570,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',

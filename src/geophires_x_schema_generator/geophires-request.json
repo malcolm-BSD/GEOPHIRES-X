@@ -11946,7 +11946,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Water costs",
         "order": 250,
         "dependency": {
           "effect": "enable",
@@ -11999,7 +11999,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Water costs",
         "order": 260,
         "dependency": {
           "effect": "enable",
@@ -12096,7 +12096,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Financing and tax",
         "order": 300,
         "dependency": {
           "effect": "enable",
@@ -13273,7 +13273,7 @@
       "maximum": null,
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO controls",
         "order": 5,
         "dependency": null
       }
@@ -13319,7 +13319,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 520,
         "dependency": {
           "effect": "enable",
@@ -13391,7 +13391,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 530,
         "dependency": {
           "effect": "enable",
@@ -13463,7 +13463,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 540,
         "dependency": {
           "effect": "enable",
@@ -13543,7 +13543,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 550,
         "dependency": {
           "effect": "enable",
@@ -13622,7 +13622,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 560,
         "dependency": {
           "effect": "enable",
@@ -13702,7 +13702,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 570,
         "dependency": {
           "effect": "enable",
@@ -13789,7 +13789,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 580,
         "dependency": {
           "effect": "enable",
@@ -13876,7 +13876,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 590,
         "dependency": {
           "effect": "enable",
@@ -13963,7 +13963,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 600,
         "dependency": {
           "effect": "enable",
@@ -14050,7 +14050,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO electricity",
         "order": 610,
         "dependency": {
           "effect": "enable",
@@ -14144,7 +14144,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 620,
         "dependency": {
           "effect": "enable",
@@ -14245,7 +14245,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 630,
         "dependency": {
           "effect": "enable",
@@ -14346,7 +14346,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 640,
         "dependency": {
           "effect": "enable",
@@ -14455,7 +14455,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 650,
         "dependency": {
           "effect": "enable",
@@ -14563,7 +14563,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 660,
         "dependency": {
           "effect": "enable",
@@ -14672,7 +14672,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 670,
         "dependency": {
           "effect": "enable",
@@ -14788,7 +14788,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 680,
         "dependency": {
           "effect": "enable",
@@ -14904,7 +14904,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 690,
         "dependency": {
           "effect": "enable",
@@ -15020,7 +15020,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 700,
         "dependency": {
           "effect": "enable",
@@ -15136,7 +15136,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO heat",
         "order": 710,
         "dependency": {
           "effect": "enable",
@@ -15231,7 +15231,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 720,
         "dependency": {
           "effect": "enable",
@@ -15306,7 +15306,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 730,
         "dependency": {
           "effect": "enable",
@@ -15381,7 +15381,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 740,
         "dependency": {
           "effect": "enable",
@@ -15464,7 +15464,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 750,
         "dependency": {
           "effect": "enable",
@@ -15546,7 +15546,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 760,
         "dependency": {
           "effect": "enable",
@@ -15629,7 +15629,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 770,
         "dependency": {
           "effect": "enable",
@@ -15719,7 +15719,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 780,
         "dependency": {
           "effect": "enable",
@@ -15809,7 +15809,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 790,
         "dependency": {
           "effect": "enable",
@@ -15899,7 +15899,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 800,
         "dependency": {
           "effect": "enable",
@@ -15989,7 +15989,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO parameters",
+        "group": "VALCO cooling",
         "order": 810,
         "dependency": {
           "effect": "enable",
@@ -16446,7 +16446,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Financing and tax",
         "order": 900,
         "dependency": {
           "effect": "enable",
@@ -16686,7 +16686,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Financing and tax",
         "order": 940,
         "dependency": {
           "effect": "enable",
@@ -17150,7 +17150,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Financing and tax",
         "order": 1040,
         "dependency": {
           "effect": "enable",
@@ -17195,7 +17195,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Capital costs",
         "order": 1050,
         "dependency": {
           "effect": "enable",
@@ -17821,7 +17821,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Peaking boiler economics",
         "order": 1160,
         "dependency": {
           "effect": "enable",
@@ -17881,7 +17881,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Peaking boiler economics",
         "order": 1170,
         "dependency": {
           "effect": "enable",
@@ -17949,7 +17949,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Peaking boiler economics",
         "order": 1180,
         "dependency": {
           "effect": "enable",
@@ -18032,8 +18032,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18106,7 +18106,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Capital costs",
         "order": 1200,
         "dependency": {
           "effect": "enable",
@@ -18174,8 +18174,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18249,8 +18249,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18332,8 +18332,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18430,8 +18430,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18543,8 +18543,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 60,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18663,8 +18663,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "District heating network economics",
+        "order": 70,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18764,8 +18764,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "Heat sale pricing",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18850,8 +18850,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "Heat sale pricing",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18936,8 +18936,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "Heat sale pricing",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19022,8 +19022,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Direct-use heat and co-generation price parameters",
-        "order": 1190,
+        "group": "Heat sale pricing",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19093,8 +19093,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity and co-generation price parameters",
-        "order": 1190,
+        "group": "Electricity sale pricing",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19150,8 +19150,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity and co-generation price parameters",
-        "order": 1190,
+        "group": "Electricity sale pricing",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19207,8 +19207,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity and co-generation price parameters",
-        "order": 1190,
+        "group": "Electricity sale pricing",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19264,8 +19264,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity and co-generation price parameters",
-        "order": 1190,
+        "group": "Electricity sale pricing",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19323,8 +19323,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "cooling price parameters",
-        "order": 1190,
+        "group": "Cooling sale pricing",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19383,8 +19383,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "cooling price parameters",
-        "order": 1190,
+        "group": "Cooling sale pricing",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19443,8 +19443,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "cooling price parameters",
-        "order": 1190,
+        "group": "Cooling sale pricing",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19503,8 +19503,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "cooling price parameters",
-        "order": 1190,
+        "group": "Cooling sale pricing",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19555,7 +19555,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Revenue and pricing",
+        "group": "Carbon pricing and emissions",
         "order": 1390,
         "dependency": {
           "effect": "enable",
@@ -19600,7 +19600,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Revenue and pricing",
+        "group": "Carbon pricing and emissions",
         "order": 1400,
         "dependency": {
           "effect": "enable",
@@ -19645,7 +19645,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Carbon pricing and emissions",
         "order": 1410,
         "dependency": {
           "effect": "enable",
@@ -19690,7 +19690,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Carbon pricing and emissions",
         "order": 1420,
         "dependency": {
           "effect": "enable",
@@ -19749,7 +19749,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Carbon pricing and emissions",
         "order": 1430,
         "dependency": {
           "effect": "enable",
@@ -19821,7 +19821,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Carbon pricing and emissions",
         "order": 1440,
         "dependency": {
           "effect": "enable",
@@ -19862,7 +19862,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Fees, grants, and incentives",
         "order": 1450,
         "dependency": null
       }
@@ -19877,7 +19877,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Fees, grants, and incentives",
         "order": 1460,
         "dependency": null
       }
@@ -19892,7 +19892,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Fees, grants, and incentives",
         "order": 1470,
         "dependency": null
       }
@@ -19922,7 +19922,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Fees, grants, and incentives",
         "order": 1490,
         "dependency": null
       }
@@ -19937,7 +19937,7 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Financing and tax",
         "order": 1500,
         "dependency": null
       }
@@ -20383,7 +20383,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
+        "group": "Employment assumptions",
         "order": 1570,
         "dependency": {
           "effect": "enable",
@@ -20627,8 +20627,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
-        "order": 1600,
+        "group": "AddOn economics",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20672,8 +20672,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1610,
+        "group": "AddOn economics",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20717,8 +20717,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
-        "order": 1620,
+        "group": "AddOn economics",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20762,8 +20762,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
-        "order": 1630,
+        "group": "AddOn economics",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20807,8 +20807,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
-        "order": 1640,
+        "group": "AddOn economics",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20852,8 +20852,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Economic parameters",
-        "order": 1650,
+        "group": "AddOn economics",
+        "order": 60,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20897,8 +20897,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20942,8 +20942,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20987,8 +20987,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21032,8 +21032,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT energy inputs",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21077,8 +21077,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT energy inputs",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21122,8 +21122,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT energy inputs",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21167,8 +21167,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT emissions and credits",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21212,8 +21212,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT emissions and credits",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21257,8 +21257,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT energy inputs",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21302,8 +21302,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT scenario multipliers",
+        "order": 10,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21347,8 +21347,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT scenario multipliers",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21392,8 +21392,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT scenario multipliers",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21437,8 +21437,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21482,8 +21482,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21527,8 +21527,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT energy inputs",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21572,8 +21572,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT emissions and credits",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21617,8 +21617,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT emissions and credits",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21662,8 +21662,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 60,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21707,8 +21707,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "",
-        "order": 1,
+        "group": "S-DAC-GT costs and finance",
+        "order": 70,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21735,8 +21735,8 @@
       "maximum": null,
       "x-ui": {
         "tab": "project",
-        "group": "",
-        "order": 1,
+        "group": "Output and reporting",
+        "order": 100,
         "dependency": null
       }
     },
@@ -21750,8 +21750,8 @@
       "maximum": null,
       "x-ui": {
         "tab": "project",
-        "group": "",
-        "order": 1,
+        "group": "Output and reporting",
+        "order": 110,
         "dependency": null
       }
     },
@@ -21783,8 +21783,8 @@
       },
       "x-ui": {
         "tab": "project",
-        "group": "",
-        "order": 1,
+        "group": "Output and reporting",
+        "order": 120,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21812,8 +21812,8 @@
       "maximum": null,
       "x-ui": {
         "tab": "project",
-        "group": "",
-        "order": 1,
+        "group": "Output and reporting",
+        "order": 130,
         "dependency": null
       }
     },
@@ -21845,8 +21845,8 @@
       },
       "x-ui": {
         "tab": "project",
-        "group": "",
-        "order": 1,
+        "group": "Output and reporting",
+        "order": 140,
         "dependency": {
           "effect": "enable",
           "match": "all",

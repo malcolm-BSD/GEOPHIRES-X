@@ -119,6 +119,158 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                     dependency["conditions"],
                 )
 
+    def test_ui_subgroups_are_complete_and_ordered(self):
+        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
+        input_parameters = json.loads(input_parameters_json)
+
+        for parameter_name, parameter in input_parameters.items():
+            with self.subTest(group_is_declared=parameter_name):
+                self.assertTrue(parameter["UI"]["group"].strip())
+
+        placements = {}
+        for parameter_name, parameter in input_parameters.items():
+            ui = parameter["UI"]
+            placement = (ui["tab"], ui["group"], ui["order"])
+            with self.subTest(unique_placement=placement):
+                self.assertNotIn(placement, placements)
+            placements[placement] = parameter_name
+
+        legacy_groups = {
+            "Economic parameters",
+            "VALCO parameters",
+            "Direct-use heat and co-generation parameters",
+            "Direct-use heat and co-generation price parameters",
+            "Electricity and co-generation price parameters",
+            "cooling price parameters",
+            "Revenue and pricing",
+        }
+        self.assertFalse(legacy_groups & {parameter["UI"]["group"] for parameter in input_parameters.values()})
+
+        expected_ordered_groups = {
+            ("Project", "Output and reporting"): [
+                "Improved Text Output File",
+                "HTML Output File",
+                "Dispatch Profile Output File",
+                "Print Output to Console",
+                "Generate Dispatch HTML Graphs",
+            ],
+            ("Economics", "Water costs"): [
+                "Water Cost",
+                "Water Cost Adjustment Factor",
+            ],
+            ("Economics", "Peaking boiler economics"): [
+                "Peaking Fuel Cost Rate",
+                "Peaking Boiler Efficiency",
+                "Peaking Boiler Cost per kW",
+            ],
+            ("Economics", "District heating network economics"): [
+                "District Heating Piping Cost Rate",
+                "Total District Heating Network Cost",
+                "District Heating O&M Cost",
+                "District Heating Network Piping Length",
+                "District Heating Road Length",
+                "District Heating Land Area",
+                "District Heating Population",
+            ],
+            ("Economics", "Heat sale pricing"): [
+                "Starting Heat Sale Price",
+                "Ending Heat Sale Price",
+                "Heat Escalation Start Year",
+                "Heat Escalation Rate Per Year",
+            ],
+            ("Economics", "Electricity sale pricing"): [
+                "Starting Electricity Sale Price",
+                "Ending Electricity Sale Price",
+                "Electricity Escalation Start Year",
+                "Electricity Escalation Rate Per Year",
+            ],
+            ("Economics", "Cooling sale pricing"): [
+                "Starting Cooling Sale Price",
+                "Ending Cooling Sale Price",
+                "Cooling Escalation Start Year",
+                "Cooling Escalation Rate Per Year",
+            ],
+            ("Economics", "Carbon pricing and emissions"): [
+                "Starting Carbon Credit Value",
+                "Ending Carbon Credit Value",
+                "Carbon Escalation Start Year",
+                "Carbon Escalation Rate Per Year",
+                "Current Grid CO2 production",
+                "CO2 produced by Natural Gas",
+            ],
+            ("Economics", "Fees, grants, and incentives"): [
+                "Annual License Fees Etc",
+                "One-time Flat License Fees Etc",
+                "Other Incentives",
+                "One-time Grants Etc",
+            ],
+            ("Economics", "Employment assumptions"): [
+                "Estimated Jobs Created per MW of Electricity Produced",
+            ],
+            ("Economics", "AddOn economics"): [
+                "AddOn Nickname",
+                "AddOn CAPEX",
+                "AddOn OPEX",
+                "AddOn Electricity Gained",
+                "AddOn Heat Gained",
+                "AddOn Profit Gained",
+            ],
+            ("Economics", "S-DAC-GT costs and finance"): [
+                "WACC",
+                "S-DAC-GT CAPEX",
+                "S-DAC-GT OPEX",
+                "S-DAC-GT CO2 Transportation Cost",
+                "S-DAC-GT CO2 Storage Cost",
+                "S-DAC-GT Sorbent Replacement Frequency",
+                "S-DAC-GT Sorbent Replacement Cost",
+            ],
+            ("Economics", "S-DAC-GT energy inputs"): [
+                "S-DAC-GT Electrical Energy",
+                "S-DAC-GT Thermal Energy",
+                "S-DAC-GT Natural Gas Price",
+                "S-DAC-GT Natural Gas Energy Density",
+                "S-DAC-GT CO2 Percent Energy Devoted To Process",
+            ],
+            ("Economics", "S-DAC-GT emissions and credits"): [
+                "S-DAC-GT CO2 Intensity of Electricity",
+                "S-DAC-GT CO2 Intensity of Natural Gas",
+                "S-DAC-GT Carbon Credit Price",
+                "S-DAC-GT Carbon Credit Duration",
+            ],
+            ("Economics", "S-DAC-GT scenario multipliers"): [
+                "S-DAC-GT CAPEX Multiplier",
+                "S-DAC-GT OPEX Multiplier",
+                "S-DAC-GT Thermal Energy Multiplier",
+            ],
+            ("Economics", "VALCO controls"): ["VALCO Calculation Mode"],
+            ("Economics", "VALCO electricity"): [name for name in input_parameters if name.startswith("VALCOE ")],
+            ("Economics", "VALCO heat"): [name for name in input_parameters if name.startswith("VALCOH ")],
+            ("Economics", "VALCO cooling"): [name for name in input_parameters if name.startswith("VALCOC ")],
+        }
+        for (tab, group), expected_names in expected_ordered_groups.items():
+            actual_names = sorted(
+                (
+                    (parameter["UI"]["order"], name)
+                    for name, parameter in input_parameters.items()
+                    if parameter["UI"]["tab"] == tab and parameter["UI"]["group"] == group
+                ),
+            )
+            with self.subTest(tab=tab, ordered_group=group):
+                self.assertEqual(expected_names, [name for _, name in actual_names])
+
+        expected_moved_parameters = {
+            "Fixed Charge Rate": "Financing and tax",
+            "Fraction of Investment in Bonds": "Financing and tax",
+            "Salvage Value Rate": "Financing and tax",
+            "Bond Financing Start Year": "Financing and tax",
+            "Fixed Internal Rate": "Financing and tax",
+            "Contingency Percentage": "Capital costs",
+            "Transmission/pipeline Cost": "Capital costs",
+        }
+        for parameter_name, expected_group in expected_moved_parameters.items():
+            with self.subTest(moved_parameter=parameter_name):
+                self.assertEqual(expected_group, input_parameters[parameter_name]["UI"]["group"])
+
     def test_xlco_groups_and_dependencies_match_active_commodities(self):
         input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
         input_parameters = json.loads(input_parameters_json)

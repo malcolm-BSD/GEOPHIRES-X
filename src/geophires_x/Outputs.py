@@ -119,8 +119,8 @@ class Outputs:
                 ToolTipText='Provide any value to enable rich text output written next to the main .out file as .rtf',
                 UI={
                     "tab": "Project",
-                    "group": "",
-                    "order": 1,
+                    "group": "Output and reporting",
+                    "order": 100,
                     "dependency": None,
                 },
         ))
@@ -135,8 +135,8 @@ class Outputs:
                 ToolTipText='Provide any value to enable HTML output written next to the main .out file as .html',
                 UI={
                     "tab": "Project",
-                    "group": "",
-                    "order": 1,
+                    "group": "Output and reporting",
+                    "order": 110,
                     "dependency": None,
                 },
         ))
@@ -157,8 +157,8 @@ class Outputs:
                 ),
                 UI={
                     "tab": "Project",
-                    "group": "",
-                    "order": 1,
+                    "group": "Output and reporting",
+                    "order": 120,
                     "dependency": {   'effect': 'enable',
                         'match': 'all',
                         'conditions': [   {   'parameter': 'Operating Mode',
@@ -179,8 +179,8 @@ class Outputs:
                 ToolTipText='Provide a 0 if you do not want to print output to the console',
                 UI={
                     "tab": "Project",
-                    "group": "",
-                    "order": 1,
+                    "group": "Output and reporting",
+                    "order": 130,
                     "dependency": None,
                 },
             )
@@ -194,8 +194,8 @@ class Outputs:
                 ToolTipText='Provide a 1 to generate optional dispatch graphs in HTML output',
                 UI={
                     "tab": "Project",
-                    "group": "",
-                    "order": 1,
+                    "group": "Output and reporting",
+                    "order": 140,
                     "dependency": {   'effect': 'enable',
                         'match': 'all',
                         'conditions': [   {   'parameter': 'Operating Mode',
