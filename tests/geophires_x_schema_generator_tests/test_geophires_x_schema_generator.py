@@ -1,14 +1,61 @@
 import json
 import unittest
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 from geophires_x_schema_generator import GeophiresXSchemaGenerator
 from geophires_x_schema_generator import HipRaXSchemaGenerator
 from tests.base_test_case import BaseTestCase
 
 
+class _CachedGeophiresXSchemaGenerator(GeophiresXSchemaGenerator):
+    """Avoid rebuilding the same expensive dummy model for every schema assertion."""
+
+    def __init__(self):
+        super().__init__()
+        self._parameters_json_cache: tuple[str, str] | None = None
+        self._json_schema_cache: tuple[dict, dict] | None = None
+
+    def get_parameters_json(self) -> tuple[str, str]:
+        if self._parameters_json_cache is None:
+            self._parameters_json_cache = super().get_parameters_json()
+        return self._parameters_json_cache
+
+    def generate_json_schema(self) -> tuple[dict, dict]:
+        if self._json_schema_cache is None:
+            self._json_schema_cache = super().generate_json_schema()
+        return self._json_schema_cache
+
+
 class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.generator = _CachedGeophiresXSchemaGenerator()
+        cls.request_schema, cls.result_schema = cls.generator.generate_json_schema()
+        input_parameters_json, cls.output_parameters_json = cls.generator.get_parameters_json()
+        cls.input_parameters = json.loads(input_parameters_json)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._grouped_subtest_failures: list[str] = []
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        if self._grouped_subtest_failures:
+            self.fail("Grouped schema validation failures:\n" + "\n".join(self._grouped_subtest_failures))
+
+    @contextmanager
+    def subTest(self, msg=None, **params) -> Iterator[None]:
+        """Run every table-driven check but report one result per test method instead of thousands of subtests."""
+        try:
+            yield
+        except self.failureException as exc:
+            context = msg if msg is not None else ", ".join(f"{key}={value!r}" for key, value in params.items())
+            self._grouped_subtest_failures.append(f"{context}: {exc}")
+
     def test_geophires_x_enablement_dependencies_are_explicit(self):
-        request_schema, _ = GeophiresXSchemaGenerator().generate_json_schema()
+        request_schema = self.request_schema
 
         self.assertEqual(
             [{"parameter": "Reservoir Model", "operator": "in", "values": [6]}],
@@ -32,8 +79,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         )
         self.assertNotIn("x-dependencies", request_schema["properties"]["Discount Rate"])
 
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
         source_dependencies = {
             name: parameter["UI"]["dependency"]
             for name, parameter in input_parameters.items()
@@ -54,8 +100,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 self.assertEqual(source_dependency, emitted_dependency)
 
     def test_economic_model_dependencies_match_runtime_consumers(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         for parameter_name in ["Discount Rate", "Investment Tax Credit Rate"]:
             with self.subTest(unrestricted=parameter_name):
@@ -120,8 +165,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 )
 
     def test_ui_subgroups_are_complete_and_ordered(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         for parameter_name, parameter in input_parameters.items():
             with self.subTest(group_is_declared=parameter_name):
@@ -272,8 +316,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 self.assertEqual(expected_group, input_parameters[parameter_name]["UI"]["group"])
 
     def test_xlco_groups_and_dependencies_match_active_commodities(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         expected_placement = {
             "Social Discount Rate": ("XLCO Shared Assumptions", 320),
@@ -349,8 +392,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 )
 
     def test_additional_economic_dependencies_preserve_alternate_runtime_paths(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         self.assertEqual(
             {
@@ -440,8 +482,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         )
 
     def test_surface_plant_groups_and_dependencies_match_runtime_routing(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         expected_group_members = {
             "Plant configuration": ["Power Plant Type"],
@@ -643,8 +684,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 )
 
     def test_wellbore_groups_and_dependencies_match_runtime_routing(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         expected_group_members = {
             "Wellbore model controls": ["Is AGS", "Well Geometry Configuration", "Heat Transfer Fluid"],
@@ -867,8 +907,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         )
 
     def test_reservoir_groups_and_dependencies_match_runtime_routing(self):
-        input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
+        input_parameters = self.input_parameters
 
         expected_group_members = {
             "Fracture and reservoir volume": [
@@ -1034,10 +1073,8 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 )
 
     def test_geophires_x_ui_metadata_applies_declared_placement_and_priority(self):
-        generator = GeophiresXSchemaGenerator()
-        input_parameters_json, _ = generator.get_parameters_json()
-        input_parameters = json.loads(input_parameters_json)
-        request_schema, _ = generator.generate_json_schema()
+        input_parameters = self.input_parameters
+        request_schema = self.request_schema
         properties = request_schema["properties"]
 
         self.assertEqual(387, len(properties))
@@ -1215,14 +1252,11 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         )
 
     def test_parameters_rst(self):
-        g = GeophiresXSchemaGenerator()
-        rst = g.generate_parameters_reference_rst()
+        rst = self.generator.generate_parameters_reference_rst()
         self.assertIsNotNone(rst)  # TODO sanity checks on content
 
     def test_outputs_rst(self):
-        g = GeophiresXSchemaGenerator()
-        _, output_params_json = g.get_parameters_json()
-        rst = g.get_output_params_table_rst(output_params_json)
+        rst = self.generator.get_output_params_table_rst(self.output_parameters_json)
 
         self.assertIn(
             """ECONOMIC PARAMETERS
@@ -1249,8 +1283,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         )
 
     def test_get_json_schema(self):
-        g = GeophiresXSchemaGenerator()
-        req_schema, result_schema = g.generate_json_schema()
+        req_schema, result_schema = self.request_schema, self.result_schema
         self.assertIsNotNone(req_schema)  # TODO sanity checks on content
         self.assertIsNotNone(result_schema)  # TODO sanity checks on content
 

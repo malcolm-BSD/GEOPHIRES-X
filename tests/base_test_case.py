@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import inspect
 import math
 import numbers
@@ -7,9 +8,14 @@ import os.path
 import shutil
 import subprocess
 import sys
+import threading
 import unittest
+from functools import partial
+from http.server import SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from pint.facets.plain import PlainQuantity
 
@@ -21,8 +27,16 @@ from geophires_x_client import GeophiresXResult
 from geophires_x_client import _get_logger
 
 
+class _QuietTestAssetHandler(SimpleHTTPRequestHandler):
+    def log_message(self, _format: str, *_args) -> None:
+        pass
+
+
 class BaseTestCase(unittest.TestCase):
     maxDiff = None
+    _test_asset_server: ThreadingHTTPServer | None = None
+    _test_asset_server_thread: threading.Thread | None = None
+    _test_asset_server_lock = threading.Lock()
 
     @classmethod
     def _repo_root(cls) -> Path:
@@ -76,6 +90,46 @@ class BaseTestCase(unittest.TestCase):
         else:
             artifact_path.unlink()
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        # Snapshot once per class instead of launching Git before every test. This preserves pre-existing ignored
+        # files while avoiding hundreds of redundant subprocesses in a full suite run.
+        cls._ignored_test_artifacts_before_class = cls._ignored_test_artifacts()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        try:
+            new_artifacts = cls._ignored_test_artifacts() - getattr(
+                cls,
+                "_ignored_test_artifacts_before_class",
+                set(),
+            )
+            for artifact_path in sorted(new_artifacts, key=lambda path: len(path.parts), reverse=True):
+                cls._remove_test_artifact(artifact_path)
+        finally:
+            super().tearDownClass()
+
+    @classmethod
+    def _test_asset_url(cls, repository_relative_path: str | Path) -> str:
+        repo_root = cls._repo_root().resolve()
+        asset_path = (repo_root / repository_relative_path).resolve()
+        if not cls._path_is_relative_to(asset_path, repo_root) or not asset_path.is_file():
+            raise ValueError(f"Test asset must be an existing file inside the repository: {asset_path}")
+
+        with BaseTestCase._test_asset_server_lock:
+            if BaseTestCase._test_asset_server is None:
+                handler = partial(_QuietTestAssetHandler, directory=str(repo_root))
+                server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+                server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+                server_thread.start()
+                BaseTestCase._test_asset_server = server
+                BaseTestCase._test_asset_server_thread = server_thread
+
+        relative_url_path = quote(asset_path.relative_to(repo_root).as_posix())
+        server_port = BaseTestCase._test_asset_server.server_address[1]
+        return f"http://127.0.0.1:{server_port}/{relative_url_path}"
+
     @staticmethod
     def _path_is_relative_to(path: Path, other: Path) -> bool:
         try:
@@ -83,22 +137,6 @@ class BaseTestCase(unittest.TestCase):
             return True
         except ValueError:
             return False
-
-    def setUp(self) -> None:
-        super().setUp()
-        self._ignored_test_artifacts_before = self._ignored_test_artifacts()
-
-    def tearDown(self) -> None:
-        try:
-            new_artifacts = self._ignored_test_artifacts() - getattr(
-                self,
-                "_ignored_test_artifacts_before",
-                set(),
-            )
-            for artifact_path in sorted(new_artifacts, key=lambda path: len(path.parts), reverse=True):
-                self._remove_test_artifact(artifact_path)
-        finally:
-            super().tearDown()
 
     def _get_test_file_path(self, test_file_name) -> str:
         return os.path.join(os.path.abspath(os.path.dirname(inspect.getfile(self.__class__))), test_file_name)
@@ -277,3 +315,17 @@ class BaseTestCase(unittest.TestCase):
     @staticmethod
     def value_unit_as_quantity(v_u_entry: dict[str, Any]) -> PlainQuantity:
         return PlainQuantity(v_u_entry["value"], v_u_entry["unit"])
+
+
+def _shutdown_test_asset_server() -> None:
+    server = BaseTestCase._test_asset_server
+    server_thread = BaseTestCase._test_asset_server_thread
+    if server is None:
+        return
+    server.shutdown()
+    server.server_close()
+    if server_thread is not None:
+        server_thread.join(timeout=5)
+
+
+atexit.register(_shutdown_test_asset_server)

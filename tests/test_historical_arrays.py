@@ -13,9 +13,10 @@ from geophires_x.Parameter import floatParameter
 from geophires_x.Units import EnergyUnit
 from geophires_x.Units import TemperatureUnit
 from geophires_x.Units import Units
+from tests.base_test_case import BaseTestCase
 
 
-class HistoricalArrayTestCase(unittest.TestCase):
+class HistoricalArrayTestCase(BaseTestCase):
     def _new_model(self):
         stash_cwd = Path.cwd()
         stash_sys_argv = sys.argv
@@ -361,11 +362,12 @@ class HistoricalArrayTestCase(unittest.TestCase):
             AllowExtendedInput=True,
         )
         param.AllowPairVectorInput = True
+        ambient_temperature_url = self._test_asset_url("tests/assets/params/ambient_temperature.csv")
         ReadParameter(
             ParameterEntry(
                 Name="Ambient Temperature",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.1/tests/assets/params/ambient_temperature.csv",
-                raw_entry="Ambient Temperature, https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.1/tests/assets/params/ambient_temperature.csv",
+                sValue=ambient_temperature_url,
+                raw_entry=f"Ambient Temperature, {ambient_temperature_url}",
             ),
             param,
             model,

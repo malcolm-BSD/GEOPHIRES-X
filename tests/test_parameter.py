@@ -1093,7 +1093,7 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="Geophires Enabled",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/bool.txt",
+                sValue=self._test_asset_url("tests/assets/params/bool.txt"),
             ),
             param,
             model,
@@ -1109,7 +1109,7 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="Count",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/int.txt",
+                sValue=self._test_asset_url("tests/assets/params/int.txt"),
             ),
             param,
             model,
@@ -1132,7 +1132,7 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="CAPEX",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/float.txt",
+                sValue=self._test_asset_url("tests/assets/params/float.txt"),
             ),
             param,
             model,
@@ -1148,7 +1148,7 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="Gettysburg",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/string.txt",
+                sValue=self._test_asset_url("tests/assets/params/string.txt"),
             ),
             param,
             model,
@@ -1164,7 +1164,7 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="Random",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.2/tests/assets/params/list.txt",
+                sValue=self._test_asset_url("tests/assets/params/list.txt"),
             ),
             param,
             model,
@@ -1211,8 +1211,8 @@ class ParameterTestCase(BaseTestCase):
         ReadParameter(
             ParameterEntry(
                 Name="Thicknesses",
-                sValue="https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.3/tests/assets/params/thicknesses.csv",
-                raw_entry="Thicknesses, https://raw.githubusercontent.com/malcolm-BSD/GEOPHIRES-X/test-assets-v1.3/tests/assets/params/thicknesses.csv",
+                sValue=self._test_asset_url("tests/assets/params/thicknesses.csv"),
+                raw_entry=f"Thicknesses, {self._test_asset_url('tests/assets/params/thicknesses.csv')}",
             ),
             param,
             model,

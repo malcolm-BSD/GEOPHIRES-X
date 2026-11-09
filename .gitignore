@@ -139,9 +139,9 @@ geophires-aliases.sh
 /.venv/
 /-q
 /*_dispatch_profile.csv
-/*_dispatch_text.out
+/*_text.out
 /tests/examples/*_dispatch_profile.csv
-/tests/examples/*_dispatch_text.out
+/tests/examples/*_text.out
 
 # Mypy Cache
 .mypy_cache/
