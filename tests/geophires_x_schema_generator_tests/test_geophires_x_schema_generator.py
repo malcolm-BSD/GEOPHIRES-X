@@ -90,7 +90,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, definition in request_schema["properties"].items()
             if "x-dependencies" in definition
         }
-        self.assertEqual(318, len(source_dependencies))
+        self.assertEqual(319, len(source_dependencies))
         self.assertEqual(set(source_dependencies), set(schema_dependencies))
         for name, source_dependency in source_dependencies.items():
             with self.subTest(parameter=name):
@@ -150,6 +150,15 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 {"parameter": "Reservoir Model", "operator": "in", "values": [7]},
             ],
             construction_inflation_dependency["conditions"],
+        )
+
+        construction_loan_upfront_fee_ui = input_parameters["Construction Loan Up-Front Fee"]["UI"]
+        self.assertEqual("Economics", construction_loan_upfront_fee_ui["tab"])
+        self.assertEqual("Financing and tax", construction_loan_upfront_fee_ui["group"])
+        self.assertEqual(925, construction_loan_upfront_fee_ui["order"])
+        self.assertEqual(
+            [{"parameter": "Economic Model", "operator": "in", "values": [5]}],
+            construction_loan_upfront_fee_ui["dependency"]["conditions"],
         )
 
         for parameter_name in [
@@ -1077,7 +1086,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         request_schema = self.request_schema
         properties = request_schema["properties"]
 
-        self.assertEqual(387, len(properties))
+        self.assertEqual(388, len(properties))
         self.assertTrue(all("x-ui" in definition for definition in properties.values()))
         self.assertTrue(all("UI" in definition for definition in input_parameters.values()))
         normalized_tabs = {
