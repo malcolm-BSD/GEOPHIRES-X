@@ -6,10 +6,13 @@ import subprocess
 import sys
 from csv import DictReader
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 
+from geophires_x import GEOPHIRESv3
 from geophires_x.Model import Model
 from geophires_x.OutputsRich import removeDisallowedFilenameChars
 from geophires_x.Parameter import ParameterEntry
@@ -58,6 +61,49 @@ class OutputsTestCase(BaseTestCase):
             from_file_path=from_file_path,
             output_file_path=self._output_artifact_path(output_filename),
         )
+
+    def test_main_retains_the_output_path_captured_by_the_model(self):
+        output_path = self._output_artifact_path("captured_model_output_path.out")
+        changed_argv_path = self._output_artifact_path("changed_argv_output_path.out")
+
+        class StubOutputs:
+            output_file = str(output_path)
+            printoutput = SimpleNamespace(value=True)
+
+            @staticmethod
+            def PrintOutputs(_model):
+                output_path.write_text("captured output\n", encoding="UTF-8")
+                sys.argv[2] = str(changed_argv_path)
+
+        stub_model = SimpleNamespace(
+            outputs=StubOutputs(),
+            reserv=SimpleNamespace(OutputParameterDict={}),
+            wellbores=SimpleNamespace(OutputParameterDict={}),
+            surfaceplant=SimpleNamespace(OutputParameterDict={}),
+            economics=SimpleNamespace(
+                OutputParameterDict={},
+                LCOH=SimpleNamespace(value=0.0),
+                DoAddOnCalculations=SimpleNamespace(value=False),
+                DoSDACGTCalculations=SimpleNamespace(value=False),
+            ),
+            read_parameters=lambda **_kwargs: None,
+            Calculate=lambda: None,
+        )
+
+        original_cwd = Path.cwd()
+        original_argv = sys.argv
+        sys.argv = ["", "unused-input.txt", str(output_path)]
+        try:
+            with patch.object(GEOPHIRESv3.Model, "Model", return_value=stub_model):
+                with patch.object(GEOPHIRESv3, "build_dispatch_summary_json", return_value=None):
+                    with patch.object(GEOPHIRESv3, "build_dispatch_profile_json", return_value=None):
+                        GEOPHIRESv3.main(enable_geophires_logging_config=False)
+        finally:
+            sys.argv = original_argv
+            os.chdir(original_cwd)
+
+        self.assertTrue(output_path.with_suffix(".json").is_file())
+        self.assertFalse(changed_argv_path.with_suffix(".json").exists())
 
     def _dispatch_graph_path(self, html_output_path: Path, title: str) -> Path:
         file_stem = (

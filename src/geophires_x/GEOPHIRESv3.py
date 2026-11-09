@@ -52,6 +52,9 @@ def main(enable_geophires_logging_config=True):
 
     # write the outputs, if requested
     model.outputs.PrintOutputs(model)
+    # Keep using the path captured by the Outputs instance. sys.argv is process-global
+    # and may be restored or changed by an embedding client while a run is finishing.
+    outputfile = Path(model.outputs.output_file)
 
     # write the outputs as JSON
     import jsons, json
@@ -104,20 +107,12 @@ def main(enable_geophires_logging_config=True):
     if dispatch_profile is not None:
         json_merged["Dispatch Profile"] = dispatch_profile
 
-    json_outputfile = default_outputfile.with_suffix('.json')
-    if len(sys.argv) > 2:
-        output_arg = str(sys.argv[2])
-        output_arg_path = Path(output_arg)
-        json_outputfile = output_arg.replace(output_arg_path.name, f'{output_arg_path.stem}.json')
+    json_outputfile = outputfile.with_suffix('.json')
     with open(json_outputfile, 'w', encoding='UTF-8') as f:
         f.write(json.dumps(json_merged))
 
     # if the user has asked for it, copy the output file to the screen
     if model.outputs.printoutput.value:
-        outputfile = default_outputfile
-        if len(sys.argv) > 2:
-            outputfile = sys.argv[2]
-
         with open(outputfile, 'r', encoding='UTF-8') as f:
             content = f.readlines()  # store all output in one long list
 

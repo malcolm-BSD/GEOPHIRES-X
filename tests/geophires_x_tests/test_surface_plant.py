@@ -1,16 +1,43 @@
 import os
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
 from geophires_x.Model import Model
+from geophires_x.Parameter import ParameterEntry
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXClient
 from tests.base_test_case import BaseTestCase
 
 
 class SurfacePlantTestCase(BaseTestCase):
+    def test_missing_plant_outlet_pressure_silently_uses_default_behavior(self):
+        test_cases = [
+            ("Subcritical ORC", "1", True),
+            ("Single-Flash", "3", False),
+        ]
+
+        for plant_name, plant_type, expected_builtin_correlation in test_cases:
+            with self.subTest(plant_name=plant_name):
+                model = self._workaround_module_initialization_order_dependency()
+                model.InputParameters = {
+                    "End-Use Option": ParameterEntry("End-Use Option", "1"),
+                    "Power Plant Type": ParameterEntry("Power Plant Type", plant_type),
+                }
+
+                with patch.object(model.logger, "warning") as warning:
+                    model.surfaceplant.read_parameters(model)
+
+                warning.assert_not_called()
+                self.assertEqual(
+                    expected_builtin_correlation,
+                    model.surfaceplant.usebuiltinoutletplantcorrelation.value,
+                )
+                if not expected_builtin_correlation:
+                    self.assertEqual(100, model.surfaceplant.plant_outlet_pressure.value)
+
     def test_integrate_time_series_slice_1_time_step_per_year(self):
         self._workaround_module_initialization_order_dependency()
         from geophires_x.SurfacePlant import SurfacePlant
