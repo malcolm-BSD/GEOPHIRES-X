@@ -29,6 +29,12 @@ _ALLOWED_FUNCTIONS = {
     'sqrt': math.sqrt,
 }
 
+# Preserve formula expressions written against renamed public input parameters.
+# Keys and values use the same normalized symbols accepted by formula expressions.
+_LEGACY_PARAMETER_NAME_ALIASES = {
+    'indirect_capital_cost_percentage': 'common_indirect_capital_cost_percentage',
+}
+
 
 def normalize_parameter_name(name: str) -> str:
     normalized = re.sub(r'[^0-9a-zA-Z]+', '_', name.strip().lower())
@@ -125,6 +131,9 @@ def resolve_parameter_formulas(parameters: Iterable, logger) -> None:
 
     def resolve_symbol(symbol_name: str) -> float:
         normalized_symbol = normalize_parameter_name(symbol_name)
+        alias_target = _LEGACY_PARAMETER_NAME_ALIASES.get(normalized_symbol)
+        if alias_target in normalized_lookup:
+            normalized_symbol = alias_target
 
         if normalized_symbol in resolved_values:
             return resolved_values[normalized_symbol]

@@ -504,7 +504,7 @@ class SurfacePlant:
             ToolTipText="Project latitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
             UI={
                 "tab": "Project",
-                "group": "Project location",
+                "group": "Model controls",
                 "order": 13,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -523,7 +523,7 @@ class SurfacePlant:
             ToolTipText="Project longitude in decimal degrees. Providing both coordinates enables weather data download unless Use Weather Data is False.",
             UI={
                 "tab": "Project",
-                "group": "Project location",
+                "group": "Model controls",
                 "order": 14,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -534,7 +534,7 @@ class SurfacePlant:
         self.weather_data_year = self.ParameterDict["Weather Data Year"] = intParameter(
             "Weather Data Year",
             DefaultValue=2024,
-            AllowableRange=list(range(1900, 10_001)),
+            AllowableRange=list(range(1950, 2036)),
             Required=False,
             UnitType=Units.NONE,
             ErrMessage="assume default weather data year (2024)",
@@ -561,7 +561,7 @@ class SurfacePlant:
             ToolTipText="System lifetime",
             UI={
                 "tab": "Project",
-                "group": "Project settings",
+                "group": "Model controls",
                 "order": 5,
                 "dependency": None,
             },
@@ -646,7 +646,7 @@ class SurfacePlant:
             ToolTipText="Select the simulation operating mode: Baseload or Dispatchable",
             UI={
                 "tab": "Project",
-                "group": "Dispatch configuration",
+                "group": "Model controls",
                 "order": 2,
                 "dependency": None,
             },

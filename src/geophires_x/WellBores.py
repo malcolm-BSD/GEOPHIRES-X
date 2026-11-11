@@ -725,8 +725,8 @@ class WellBores:
             ToolTipText="Number of (identical) production wells",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 10,
+                "group": "Wellfield sizing and geometry",
+                "order": 100,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Number of Doublets', 'operator': 'provided', 'values': [False]}],
@@ -745,8 +745,8 @@ class WellBores:
             ToolTipText="Number of (identical) injection wells",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 20,
+                "group": "Wellfield sizing and geometry",
+                "order": 110,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Number of Doublets',
@@ -769,8 +769,8 @@ class WellBores:
                         "same value.",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 30,
+                "group": "Wellfield sizing and geometry",
+                "order": 120,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -805,8 +805,8 @@ class WellBores:
                         "The number of injection wells will be rounded up to the nearest integer.",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 40,
+                "group": "Wellfield sizing and geometry",
+                "order": 130,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -839,8 +839,8 @@ class WellBores:
                         'frictional pressure drop and wellbore heat transmission with Rameys model',
             UI={
                 "tab": "WellBores",
-                "group": "Vertical well geometry",
-                "order": 50,
+                "group": "Wellfield sizing and geometry",
+                "order": 140,
                 "dependency": None,
             },
         )
@@ -860,8 +860,8 @@ class WellBores:
                         'frictional pressure drop and wellbore heat transmission with Rameys model',
             UI={
                 "tab": "WellBores",
-                "group": "Vertical well geometry",
-                "order": 60,
+                "group": "Wellfield sizing and geometry",
+                "order": 150,
                 "dependency": None,
             },
         )
@@ -875,8 +875,8 @@ class WellBores:
                         "production wells",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore thermal model",
-                "order": 70,
+                "group": "Well bore control",
+                "order": 60,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -899,8 +899,8 @@ class WellBores:
             ToolTipText="Specify constant production well geofluid temperature drop in case Rameys model is disabled.",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore thermal model",
-                "order": 80,
+                "group": "Well bore control",
+                "order": 70,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Reservoir Model',
@@ -924,8 +924,8 @@ class WellBores:
             ToolTipText="Specify constant injection well geofluid temperature gain.",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore thermal model",
-                "order": 90,
+                "group": "Well bore control",
+                "order": 80,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -952,8 +952,8 @@ class WellBores:
             ToolTipText="Geofluid flow rate per production well.",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore flow and pressure",
-                "order": 100,
+                "group": "Flow, pressure, and operating limits",
+                "order": 200,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'any',
@@ -984,8 +984,8 @@ class WellBores:
                         'injection well and production well (see docs)',
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 300,
+                "group": "Rock and flow properties",
+                "order": 250,
                 "dependency": None,
             },
         )
@@ -1012,8 +1012,8 @@ class WellBores:
                         f'{well_separation_unit_mismatch_note}',
             UI={
                 "tab": "WellBores",
-                "group": "TOUGH2 doublet geometry",
-                "order": 500,
+                "group": "Wellfield sizing and geometry",
+                "order": 160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -1097,8 +1097,8 @@ class WellBores:
                         "Xie-Bloomfield-Shook equation (DOE, 2016).",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore flow and pressure",
-                "order": 120,
+                "group": "Flow, pressure, and operating limits",
+                "order": 220,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -1122,8 +1122,8 @@ class WellBores:
             ToolTipText="Constant production wellhead pressure; Required if specifying productivity index",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore flow and pressure",
-                "order": 110,
+                "group": "Flow, pressure, and operating limits",
+                "order": 210,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -1148,8 +1148,8 @@ class WellBores:
                         "pressure drop (flowing bottom hole pressure - hydrostatic reservoir pressure).",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 310,
+                "group": "Rock and flow properties",
+                "order": 260,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Impedance', 'operator': 'provided', 'values': [False]}],
@@ -1169,8 +1169,8 @@ class WellBores:
                         "pressure drop (see docs)",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 320,
+                "group": "Rock and flow properties",
+                "order": 270,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Impedance', 'operator': 'provided', 'values': [False]}],
@@ -1198,8 +1198,8 @@ class WellBores:
                         f"the chronological limit defined by {well_integrity_max_lifetime_param_name}.",
             UI={
                 "tab": "WellBores",
-                "group": "Well operating limits",
-                "order": 130,
+                "group": "Well bore control",
+                "order": 40,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -1231,8 +1231,8 @@ class WellBores:
                         f"If not provided, defaults to project lifetime (no mechanical failure).",
             UI={
                 "tab": "WellBores",
-                "group": "Well operating limits",
-                "order": 140,
+                "group": "Well bore control",
+                "order": 50,
                 "dependency": {
                     'effect': 'enable',
                     'match': 'all',
@@ -1254,8 +1254,8 @@ class WellBores:
             ToolTipText="Set to true if the model is for an Advanced Geothermal System (AGS)",
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore model controls",
-                "order": 1,
+                "group": "Multilateral wells",
+                "order": 300,
                 "dependency": None,
             },
         )
@@ -1272,7 +1272,7 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir overpressure",
-                "order": 340,
+                "order": 300,
                 "dependency": None,
             },
         )
@@ -1289,7 +1289,7 @@ class WellBores:
             UI={
                 "tab": "Reservoir",
                 "group": "Reservoir overpressure",
-                "order": 350,
+                "order": 310,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Overpressure Percentage',
@@ -1308,9 +1308,9 @@ class WellBores:
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir temperature",
             ToolTipText="enter the temperature of the injection reservoir (100 C)",
             UI={
-                "tab": "WellBores",
-                "group": "Injection reservoir overpressure",
-                "order": 150,
+                "tab": "Reservoir",
+                "group": "Reservoir overpressure",
+                "order": 320,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Overpressure Percentage',
@@ -1329,9 +1329,9 @@ class WellBores:
             ErrMessage="assume there is not an injection reservoir, so there is no injection reservoir depth",
             ToolTipText="enter the depth of the injection reservoir (1000 m)",
             UI={
-                "tab": "WellBores",
-                "group": "Injection reservoir overpressure",
-                "order": 160,
+                "tab": "Reservoir",
+                "group": "Reservoir overpressure",
+                "order": 330,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Overpressure Percentage',
@@ -1351,9 +1351,9 @@ class WellBores:
                        "pressure",
             ToolTipText="enter the depth of the injection reservoir initial pressure (use lithostatic pressure)",
             UI={
-                "tab": "WellBores",
-                "group": "Injection reservoir overpressure",
-                "order": 170,
+                "tab": "Reservoir",
+                "group": "Reservoir overpressure",
+                "order": 340,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Overpressure Percentage',
@@ -1372,9 +1372,9 @@ class WellBores:
             ToolTipText="enter the rate at which the pressure increases per year in the injection reservoir "
                         "(1000 kPa/yr)",
             UI={
-                "tab": "WellBores",
-                "group": "Injection reservoir overpressure",
-                "order": 180,
+                "tab": "Reservoir",
+                "group": "Reservoir overpressure",
+                "order": 350,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Overpressure Percentage',
@@ -1383,24 +1383,7 @@ class WellBores:
                     'reason': 'Used to define a distinct injection reservoir during an overpressure calculation.'},
             },
         )
-        # This is a alias for "Well Geometry Configuration" - putting it here for backwards compatibility
-        self.Configuration = self.ParameterDict[self.Configuration.Name] = intParameter(
-            "Closed-loop Configuration",
-            DefaultValue=Configuration.VERTICAL.int_value,
-            AllowableRange=[1, 2, 3, 4, 5],
-            ValuesEnum=Configuration,
-            UnitType=Units.NONE,
-            Required=True,
-            ErrMessage="assume simple vertical well (3)",
-            ToolTipText = '; '.join([f'{it.int_value}: {it.value}' for it in Configuration]),
-            UI={
-                "tab": "WellBores",
-                "group": "Compatibility aliases",
-                "order": 900,
-                "dependency": None,
-            },
-        )
-        # This is a alias for "Closed-loop Configuration" - putting it here for backwards compatibility
+        # "Closed-loop Configuration" is accepted as a legacy input alias in read_parameters.
         self.Configuration = self.ParameterDict[self.Configuration.Name] = intParameter(
             "Well Geometry Configuration",
             DefaultValue=Configuration.VERTICAL.int_value,
@@ -1412,8 +1395,8 @@ class WellBores:
             ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in Configuration]),
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore model controls",
-                "order": 2,
+                "group": "Well bore control",
+                "order": 10,
                 "dependency": None,
             },
         )
@@ -1431,8 +1414,8 @@ class WellBores:
             ToolTipText="Water Thermal Conductivity",
             UI={
                 "tab": "WellBores",
-                "group": "AGS fluid properties",
-                "order": 800,
+                "group": "Well bore control",
+                "order": 30,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
@@ -1454,8 +1437,8 @@ class WellBores:
             ToolTipText='; '.join([f'{it.int_value}: {it.value}' for it in WorkingFluid]),
             UI={
                 "tab": "WellBores",
-                "group": "Wellbore model controls",
-                "order": 3,
+                "group": "Well bore control",
+                "order": 20,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Is AGS', 'operator': 'in', 'values': [True]},
@@ -1480,8 +1463,8 @@ class WellBores:
             ErrMessage="assume default Nonvertical Length per Multilateral Section (1000 m)",
             UI={
                 "tab": "WellBores",
-                "group": "Multilateral geometry",
-                "order": 200,
+                "group": "Multilateral wells",
+                "order": 360,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -1504,8 +1487,8 @@ class WellBores:
             ToolTipText="Non-vertical Wellbore Diameter",
             UI={
                 "tab": "WellBores",
-                "group": "Multilateral geometry",
-                "order": 210,
+                "group": "Multilateral wells",
+                "order": 410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -1532,8 +1515,8 @@ class WellBores:
                         'per well should set Number of Multilateral Sections = 2 * 2 * 3 = 12.',
             UI={
                 "tab": "WellBores",
-                "group": "Multilateral geometry",
-                "order": 220,
+                "group": "Multilateral wells",
+                "order": 330,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -1567,8 +1550,8 @@ class WellBores:
                         f'Not supported by AGS/CLGS models.',
             UI={
                 "tab": "WellBores",
-                "group": "Multilateral geometry",
-                "order": 230,
+                "group": "Multilateral wells",
+                "order": 340,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -1594,8 +1577,8 @@ class WellBores:
                         "(doubling cost compared to uncased).",
             UI={
                 "tab": "WellBores",
-                "group": "Multilateral geometry",
-                "order": 240,
+                "group": "Multilateral wells",
+                "order": 350,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -1618,8 +1601,8 @@ class WellBores:
             ToolTipText="Thermal conductivity of the steel casing in lateral sections",
             UI={
                 "tab": "WellBores",
-                "group": "SBT lateral construction",
-                "order": 680,
+                "group": "Multilateral wells",
+                "order": 430,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -1644,8 +1627,8 @@ class WellBores:
             ToolTipText="Thermal conductivity of the cement sheath surrounding lateral casing",
             UI={
                 "tab": "WellBores",
-                "group": "SBT lateral construction",
-                "order": 690,
+                "group": "Multilateral wells",
+                "order": 440,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -1670,8 +1653,8 @@ class WellBores:
             ToolTipText="Radial thickness of the lateral casing wall",
             UI={
                 "tab": "WellBores",
-                "group": "SBT lateral construction",
-                "order": 700,
+                "group": "Multilateral wells",
+                "order": 450,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -1696,8 +1679,8 @@ class WellBores:
             ToolTipText="Radial thickness of the cement sheath outside the lateral casing",
             UI={
                 "tab": "WellBores",
-                "group": "SBT lateral construction",
-                "order": 710,
+                "group": "Multilateral wells",
+                "order": 460,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -1931,6 +1914,25 @@ class WellBores:
 
         if len(model.InputParameters) > 0:
 
+            legacy_configuration_param_name = "Closed-loop Configuration"
+            if legacy_configuration_param_name in model.InputParameters:
+                model.logger.warning(
+                    f'"{legacy_configuration_param_name}" parameter name is deprecated, '
+                    f'use "{self.Configuration.Name}" instead'
+                )
+
+                if self.Configuration.Name not in model.InputParameters:
+                    model.InputParameters[self.Configuration.Name] = model.InputParameters[
+                        legacy_configuration_param_name
+                    ]
+                else:
+                    model.logger.warning(
+                        f'Ignoring value of "{legacy_configuration_param_name}" '
+                        f'because it is set by "{self.Configuration.Name}" instead'
+                    )
+
+                del model.InputParameters[legacy_configuration_param_name]
+
             # See https://github.com/NREL/GEOPHIRES-X/issues/278?title=Total+Nonvertical+Length+is+actually+per+section
             deprecated_nonvertical_length_param_name = 'Total Nonvertical Length'
             if deprecated_nonvertical_length_param_name in model.InputParameters:
@@ -1987,8 +1989,7 @@ class WellBores:
                             self.usebuiltinppwellheadcorrelation = True
                         else:
                             self.usebuiltinppwellheadcorrelation = False
-                    elif (ParameterToModify.Name == "Closed-loop Configuration" or
-                          ParameterToModify.Name == "Well Geometry Configuration"):  # These two are alias of each other
+                    elif ParameterToModify.Name == "Well Geometry Configuration":
                         self.Configuration.value = Configuration.from_input_string(ParameterReadIn.sValue)
         else:
             model.logger.info("No parameters read because no content provided")

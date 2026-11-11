@@ -73,7 +73,7 @@ Formula input is enabled for these passive wellbore dimensions and construction 
 Formula input is enabled for these independent economic percentages:
 
 - `Contingency Percentage`
-- `Indirect Capital Cost Percentage`
+- `Common Indirect Capital Cost Percentage` (legacy input name and formula symbol: `Indirect Capital Cost Percentage`)
 - `Well Drilling and Completion Indirect Capital Cost Percentage`
 - `Reservoir Stimulation Indirect Capital Cost Percentage`
 

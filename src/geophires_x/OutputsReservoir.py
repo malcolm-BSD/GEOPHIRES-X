@@ -171,11 +171,15 @@ def write_reservoir_parameters(model: Model, f: TextIOWrapper) -> None:
             f.write("      Reservoir volume calculated with fracture separation and number of fractures as input\n")
         elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_FRAC_SEP:
             f.write("      Number of fractures calculated with reservoir volume and fracture separation as input\n")
-        elif model.reserv.resvoloption.value == ReservoirVolume.FRAC_NUM_SEP:
+        elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_FRAC_NUM:
             f.write("      Fracture separation calculated with reservoir volume and number of fractures as input\n")
         elif model.reserv.resvoloption.value == ReservoirVolume.RES_VOL_ONLY:
             f.write("      Reservoir volume provided as input\n")
-        if model.reserv.resvoloption.value in [ReservoirVolume.FRAC_NUM_SEP, ReservoirVolume.RES_VOL_FRAC_SEP, ReservoirVolume.FRAC_NUM_SEP]:
+        if model.reserv.resvoloption.value in [
+            ReservoirVolume.FRAC_NUM_SEP,
+            ReservoirVolume.RES_VOL_FRAC_SEP,
+            ReservoirVolume.RES_VOL_FRAC_NUM,
+        ]:
             frac_num_label = field_label(model.reserv.fracnumbcalc.display_name, 56)
             f.write(f"      {frac_num_label}{math.ceil(model.reserv.fracnumbcalc.value)}\n")
             f.write(f"      {model.reserv.fracsepcalc.display_name}:                              {model.reserv.fracsepcalc.value:10.2f} {model.reserv.fracsep.CurrentUnits.value}\n")

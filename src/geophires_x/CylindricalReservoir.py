@@ -57,7 +57,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 600,
+                "order": 500,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -80,7 +80,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 610,
+                "order": 510,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -102,7 +102,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 620,
+                "order": 520,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -124,7 +124,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 630,
+                "order": 530,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -146,7 +146,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 640,
+                "order": 540,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -173,7 +173,7 @@ class CylindricalReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "Cylindrical reservoir model",
-                "order": 650,
+                "order": 550,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [0]}],
@@ -193,8 +193,8 @@ class CylindricalReservoir(Reservoir):
             ToolTipText="Fraction of water lost in the reservoir defined as (total geofluid lost)/(total geofluid produced).",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 330,
+                "group": "Rock and flow properties",
+                "order": 280,
                 "dependency": None,
             },
         )

@@ -52,7 +52,7 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "SUTRA output files",
-                "order": 800,
+                "order": 700,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
@@ -69,7 +69,7 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "SUTRA output files",
-                "order": 810,
+                "order": 710,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],
@@ -86,7 +86,7 @@ class SUTRAReservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "SUTRA output files",
-                "order": 820,
+                "order": 720,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [7]}],

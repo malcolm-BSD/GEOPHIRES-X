@@ -90,7 +90,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, definition in request_schema["properties"].items()
             if "x-dependencies" in definition
         }
-        self.assertEqual(319, len(source_dependencies))
+        self.assertEqual(321, len(source_dependencies))
         self.assertEqual(set(source_dependencies), set(schema_dependencies))
         for name, source_dependency in source_dependencies.items():
             with self.subTest(parameter=name):
@@ -154,8 +154,8 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
 
         construction_loan_upfront_fee_ui = input_parameters["Construction Loan Up-Front Fee"]["UI"]
         self.assertEqual("Economics", construction_loan_upfront_fee_ui["tab"])
-        self.assertEqual("Financing and tax", construction_loan_upfront_fee_ui["group"])
-        self.assertEqual(925, construction_loan_upfront_fee_ui["order"])
+        self.assertEqual("SAM financing, construction, and royalties", construction_loan_upfront_fee_ui["group"])
+        self.assertEqual(1375, construction_loan_upfront_fee_ui["order"])
         self.assertEqual(
             [{"parameter": "Economic Model", "operator": "in", "values": [5]}],
             construction_loan_upfront_fee_ui["dependency"]["conditions"],
@@ -196,6 +196,12 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "Electricity and co-generation price parameters",
             "cooling price parameters",
             "Revenue and pricing",
+            "AddOn economics",
+            "Carbon pricing and emissions",
+            "S-DAC-GT costs and finance",
+            "S-DAC-GT energy inputs",
+            "S-DAC-GT emissions and credits",
+            "S-DAC-GT scenario multipliers",
         }
         self.assertFalse(legacy_groups & {parameter["UI"]["group"] for parameter in input_parameters.values()})
 
@@ -207,14 +213,52 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "Print Output to Console",
                 "Generate Dispatch HTML Graphs",
             ],
-            ("Economics", "Water costs"): [
+            ("Economics", "Common operating costs"): [
+                "Wellfield O&M Cost",
+                "Wellfield O&M Cost Adjustment Factor",
+                "Surface Plant O&M Cost",
+                "Surface Plant O&M Cost Adjustment Factor",
                 "Water Cost",
                 "Water Cost Adjustment Factor",
+                "Absorption Chiller O&M Cost",
             ],
-            ("Economics", "Peaking boiler economics"): [
+            ("Economics", "Common cost overrides"): [
+                "Total Capital Cost",
+                "Total O&M Cost",
+                "Exploration Capital Cost",
+                "Exploration Capital Cost Adjustment Factor",
+                "Contingency Percentage",
+                "Common Indirect Capital Cost Percentage",
+            ],
+            ("Economics", "Common Development costs (CAPEX)"): [
+                "Well Drilling Cost Correlation",
+                "Well Drilling and Completion Capital Cost",
+                "Well Drilling and Completion Capital Cost Adjustment Factor",
+                "Injection Well Drilling and Completion Capital Cost",
+                "Injection Well Drilling and Completion Capital Cost Adjustment Factor",
+                "Well Drilling and Completion Indirect Capital Cost Percentage",
+                "All-in Nonvertical Drilling Costs",
+                "Redrilling Learning Rate",
+                "Reservoir Stimulation Capital Cost",
+                "Reservoir Stimulation Capital Cost Adjustment Factor",
+                "Reservoir Stimulation Capital Cost per Injection Well",
+                "Reservoir Stimulation Capital Cost per Production Well",
+                "Reservoir Stimulation Capital Cost per Fracture Surface Area",
+                "Reservoir Stimulation Indirect Capital Cost Percentage",
+                "Field Gathering System Capital Cost",
+                "Field Gathering System Capital Cost Adjustment Factor",
+            ],
+            ("Economics", "Common surface plant and end-use costs"): [
+                "Surface Plant Capital Cost",
+                "Surface Plant Capital Cost Adjustment Factor",
+                "Capital Cost for Power Plant for Electricity Generation",
+                "Absorption Chiller Capital Cost",
+                "Heat Pump Capital Cost",
                 "Peaking Fuel Cost Rate",
                 "Peaking Boiler Efficiency",
                 "Peaking Boiler Cost per kW",
+                "Transmission/pipeline Cost",
+                "CHP Electrical Plant Cost Allocation Ratio",
             ],
             ("Economics", "District heating network economics"): [
                 "District Heating Piping Cost Rate",
@@ -225,25 +269,31 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "District Heating Land Area",
                 "District Heating Population",
             ],
-            ("Economics", "Heat sale pricing"): [
-                "Starting Heat Sale Price",
-                "Ending Heat Sale Price",
-                "Heat Escalation Start Year",
-                "Heat Escalation Rate Per Year",
-            ],
-            ("Economics", "Electricity sale pricing"): [
+            ("Economics", "Common revenues, incentives, and employment"): [
                 "Starting Electricity Sale Price",
                 "Ending Electricity Sale Price",
                 "Electricity Escalation Start Year",
                 "Electricity Escalation Rate Per Year",
-            ],
-            ("Economics", "Cooling sale pricing"): [
+                "Starting Heat Sale Price",
+                "Ending Heat Sale Price",
+                "Heat Escalation Start Year",
+                "Heat Escalation Rate Per Year",
                 "Starting Cooling Sale Price",
                 "Ending Cooling Sale Price",
                 "Cooling Escalation Start Year",
                 "Cooling Escalation Rate Per Year",
+                "Annual License Fees Etc",
+                "One-time Flat License Fees Etc",
+                "Other Incentives",
+                "One-time Grants Etc",
+                "Production Tax Credit Electricity",
+                "Production Tax Credit Heat",
+                "Production Tax Credit Cooling",
+                "Production Tax Credit Duration",
+                "Production Tax Credit Inflation Adjusted",
+                "Estimated Jobs Created per MW of Electricity Produced",
             ],
-            ("Economics", "Carbon pricing and emissions"): [
+            ("Economics", "Carbon Pricing"): [
                 "Starting Carbon Credit Value",
                 "Ending Carbon Credit Value",
                 "Carbon Escalation Start Year",
@@ -251,16 +301,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "Current Grid CO2 production",
                 "CO2 produced by Natural Gas",
             ],
-            ("Economics", "Fees, grants, and incentives"): [
-                "Annual License Fees Etc",
-                "One-time Flat License Fees Etc",
-                "Other Incentives",
-                "One-time Grants Etc",
-            ],
-            ("Economics", "Employment assumptions"): [
-                "Estimated Jobs Created per MW of Electricity Produced",
-            ],
-            ("Economics", "AddOn economics"): [
+            ("Economics", "Add-ons"): [
                 "AddOn Nickname",
                 "AddOn CAPEX",
                 "AddOn OPEX",
@@ -268,7 +309,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "AddOn Heat Gained",
                 "AddOn Profit Gained",
             ],
-            ("Economics", "S-DAC-GT costs and finance"): [
+            ("Economics", "S-DAC-GT"): [
                 "WACC",
                 "S-DAC-GT CAPEX",
                 "S-DAC-GT OPEX",
@@ -276,29 +317,25 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "S-DAC-GT CO2 Storage Cost",
                 "S-DAC-GT Sorbent Replacement Frequency",
                 "S-DAC-GT Sorbent Replacement Cost",
-            ],
-            ("Economics", "S-DAC-GT energy inputs"): [
                 "S-DAC-GT Electrical Energy",
                 "S-DAC-GT Thermal Energy",
                 "S-DAC-GT Natural Gas Price",
                 "S-DAC-GT Natural Gas Energy Density",
                 "S-DAC-GT CO2 Percent Energy Devoted To Process",
-            ],
-            ("Economics", "S-DAC-GT emissions and credits"): [
                 "S-DAC-GT CO2 Intensity of Electricity",
                 "S-DAC-GT CO2 Intensity of Natural Gas",
                 "S-DAC-GT Carbon Credit Price",
                 "S-DAC-GT Carbon Credit Duration",
-            ],
-            ("Economics", "S-DAC-GT scenario multipliers"): [
                 "S-DAC-GT CAPEX Multiplier",
                 "S-DAC-GT OPEX Multiplier",
                 "S-DAC-GT Thermal Energy Multiplier",
             ],
-            ("Economics", "VALCO controls"): ["VALCO Calculation Mode"],
-            ("Economics", "VALCO electricity"): [name for name in input_parameters if name.startswith("VALCOE ")],
-            ("Economics", "VALCO heat"): [name for name in input_parameters if name.startswith("VALCOH ")],
-            ("Economics", "VALCO cooling"): [name for name in input_parameters if name.startswith("VALCOC ")],
+            ("Economics", "VALCO"): [
+                "VALCO Calculation Mode",
+                *[name for name in input_parameters if name.startswith("VALCOE ")],
+                *[name for name in input_parameters if name.startswith("VALCOH ")],
+                *[name for name in input_parameters if name.startswith("VALCOC ")],
+            ],
         }
         for (tab, group), expected_names in expected_ordered_groups.items():
             actual_names = sorted(
@@ -311,14 +348,65 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             with self.subTest(tab=tab, ordered_group=group):
                 self.assertEqual(expected_names, [name for _, name in actual_names])
 
+        for group in {parameter["UI"]["group"] for parameter in input_parameters.values()}:
+            ordered_group_names = [
+                name
+                for _, name in sorted(
+                    (parameter["UI"]["order"], name)
+                    for name, parameter in input_parameters.items()
+                    if parameter["UI"]["group"] == group
+                )
+            ]
+            for index, parameter_name in enumerate(ordered_group_names):
+                if not parameter_name.endswith("Cost Adjustment Factor"):
+                    continue
+                with self.subTest(group=group, paired_adjustment_factor=parameter_name):
+                    self.assertGreater(index, 0)
+                    self.assertEqual(
+                        parameter_name.removesuffix(" Adjustment Factor"),
+                        ordered_group_names[index - 1],
+                    )
+
+        economics_group_minimum_orders = {
+            group: min(
+                parameter["UI"]["order"]
+                for parameter in input_parameters.values()
+                if parameter["UI"]["tab"] == "Economics" and parameter["UI"]["group"] == group
+            )
+            for group in {
+                parameter["UI"]["group"]
+                for parameter in input_parameters.values()
+                if parameter["UI"]["tab"] == "Economics"
+            }
+        }
+        expected_economics_group_sequence = [
+            "Common financial assumptions",
+            "Common revenues, incentives, and employment",
+            "Add-ons",
+            "Carbon Pricing",
+            "S-DAC-GT",
+            "VALCO",
+            "XLCO",
+        ]
+        self.assertEqual(
+            sorted(
+                expected_economics_group_sequence,
+                key=economics_group_minimum_orders.__getitem__,
+            ),
+            expected_economics_group_sequence,
+        )
+
         expected_moved_parameters = {
-            "Fixed Charge Rate": "Financing and tax",
-            "Fraction of Investment in Bonds": "Financing and tax",
-            "Salvage Value Rate": "Financing and tax",
-            "Bond Financing Start Year": "Financing and tax",
-            "Fixed Internal Rate": "Financing and tax",
-            "Contingency Percentage": "Capital costs",
-            "Transmission/pipeline Cost": "Capital costs",
+            "Fixed Charge Rate": "Common financial assumptions",
+            "Fraction of Investment in Bonds": "Tax-aware financing — BICYCLE and SAM",
+            "Salvage Value Rate": "SAM financing, construction, and royalties",
+            "Bond Financing Start Year": "SAM financing, construction, and royalties",
+            "Fixed Internal Rate": "Common financial assumptions",
+            "Exploration Capital Cost": "Common cost overrides",
+            "Exploration Capital Cost Adjustment Factor": "Common cost overrides",
+            "Contingency Percentage": "Common cost overrides",
+            "Common Indirect Capital Cost Percentage": "Common cost overrides",
+            "Transmission/pipeline Cost": "Common surface plant and end-use costs",
         }
         for parameter_name, expected_group in expected_moved_parameters.items():
             with self.subTest(moved_parameter=parameter_name):
@@ -328,23 +416,23 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         input_parameters = self.input_parameters
 
         expected_placement = {
-            "Social Discount Rate": ("XLCO Shared Assumptions", 320),
-            "XLCO(E|H|C) Carbon Price": ("XLCO Shared Assumptions", 330),
-            "XLCO(E|H|C) Water Shadow Price": ("XLCO Shared Assumptions", 340),
-            "Idle Rig Discount Rate": ("XLCO Shared Assumptions", 350),
-            "XLCO(E|H|C) Construction Jobs Per Rig": ("XLCO Employment Assumptions", 360),
-            "XLCO(E|H|C) Operations Jobs Per MW": ("XLCO Employment Assumptions", 370),
-            "XLCO(E|H|C) Indirect Jobs Multiplier": ("XLCO Employment Assumptions", 380),
-            "XLCO(E|H|C) Average Monthly Wage": ("XLCO Employment Assumptions", 390),
-            "XLCOE Avoided Emissions Intensity": ("XLCO Electricity Benefits", 400),
-            "XLCOE REC Price": ("XLCO Electricity Benefits", 410),
-            "XLCOE Displaced Water Use Intensity": ("XLCO Electricity Benefits", 420),
-            "XLCOH Avoided Emissions Intensity": ("XLCO Heat Benefits", 430),
-            "XLCOH Thermal REC": ("XLCO Heat Benefits", 440),
-            "XLCOH Displaced Water Use Intensity": ("XLCO Heat Benefits", 450),
-            "XLCOC Avoided Emissions Intensity": ("XLCO Cooling Benefits", 460),
-            "XLCOC Thermal REC": ("XLCO Cooling Benefits", 470),
-            "XLCOC Displaced Water Use Intensity": ("XLCO Cooling Benefits", 480),
+            "Social Discount Rate": ("XLCO", 540),
+            "XLCO(E|H|C) Carbon Price": ("XLCO", 550),
+            "XLCO(E|H|C) Water Shadow Price": ("XLCO", 560),
+            "Idle Rig Discount Rate": ("XLCO", 570),
+            "XLCO(E|H|C) Construction Jobs Per Rig": ("XLCO", 580),
+            "XLCO(E|H|C) Operations Jobs Per MW": ("XLCO", 590),
+            "XLCO(E|H|C) Indirect Jobs Multiplier": ("XLCO", 600),
+            "XLCO(E|H|C) Average Monthly Wage": ("XLCO", 610),
+            "XLCOE Avoided Emissions Intensity": ("XLCO", 620),
+            "XLCOE REC Price": ("XLCO", 630),
+            "XLCOE Displaced Water Use Intensity": ("XLCO", 640),
+            "XLCOH Avoided Emissions Intensity": ("XLCO", 650),
+            "XLCOH Thermal REC": ("XLCO", 660),
+            "XLCOH Displaced Water Use Intensity": ("XLCO", 670),
+            "XLCOC Avoided Emissions Intensity": ("XLCO", 680),
+            "XLCOC Thermal REC": ("XLCO", 690),
+            "XLCOC Displaced Water Use Intensity": ("XLCO", 700),
         }
         for parameter_name, (group, order) in expected_placement.items():
             with self.subTest(placement=parameter_name):
@@ -696,58 +784,51 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         input_parameters = self.input_parameters
 
         expected_group_members = {
-            "Wellbore model controls": ["Is AGS", "Well Geometry Configuration", "Heat Transfer Fluid"],
-            "Wellfield sizing": [
-                "Number of Production Wells",
-                "Number of Injection Wells",
-                "Number of Doublets",
-                "Number of Injection Wells per Production Well",
-            ],
-            "Vertical well geometry": ["Production Well Diameter", "Injection Well Diameter"],
-            "Wellbore thermal model": [
+            "Well bore control": [
+                "Well Geometry Configuration",
+                "Heat Transfer Fluid",
+                "Water Thermal Conductivity",
+                "Maximum Drawdown",
+                "Well Integrity Maximum Lifetime",
                 "Ramey Production Wellbore Model",
                 "Production Wellbore Temperature Drop",
                 "Injection Wellbore Temperature Gain",
             ],
-            "Wellbore flow and pressure": [
+            "Wellfield sizing and geometry": [
+                "Number of Production Wells",
+                "Number of Injection Wells",
+                "Number of Doublets",
+                "Number of Injection Wells per Production Well",
+                "Production Well Diameter",
+                "Injection Well Diameter",
+                "Well Separation",
+            ],
+            "Flow, pressure, and operating limits": [
                 "Production Flow Rate per Well",
                 "Production Wellhead Pressure",
                 "Reservoir Hydrostatic Pressure",
             ],
-            "Well operating limits": ["Maximum Drawdown", "Well Integrity Maximum Lifetime"],
-            "Injection reservoir overpressure": [
-                "Injection Reservoir Temperature",
-                "Injection Reservoir Depth",
-                "Injection Reservoir Initial Pressure",
-                "Injection Reservoir Inflation Rate",
-            ],
-            "Multilateral geometry": [
-                "Nonvertical Length per Multilateral Section",
-                "Nonvertical Wellbore Diameter",
+            "Multilateral wells": [
+                "Is AGS",
+                "Vertical Section Length",
+                "Vertical Wellbore Spacing",
                 "Number of Multilateral Sections",
                 "Number of Multilateral Sections per Vertical Section",
                 "Multilaterals Cased",
-            ],
-            "TOUGH2 doublet geometry": ["Well Separation"],
-            "SBT flow control": ["Flowrate Model"],
-            "SBT well geometry": [
-                "Vertical Section Length",
-                "Vertical Wellbore Spacing",
+                "Nonvertical Length per Multilateral Section",
                 "Lateral Spacing",
                 "Lateral Inclination Angle",
-                "Discretization Length",
                 "Junction Depth",
                 "Lateral Endpoint Depth",
-            ],
-            "SBT lateral construction": [
+                "Nonvertical Wellbore Diameter",
+                "Flowrate Model",
                 "Lateral Casing Thermal Conductivity",
                 "Lateral Cement Thermal Conductivity",
                 "Lateral Casing Thickness",
                 "Lateral Cement Thickness",
+                "Discretization Length",
+                "Closed Loop Calculation Start Year",
             ],
-            "AGS fluid properties": ["Water Thermal Conductivity"],
-            "AGS calculation controls": ["Closed Loop Calculation Start Year"],
-            "Compatibility aliases": ["Closed-loop Configuration"],
         }
 
         wellbore_parameters = {
@@ -755,7 +836,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, parameter in input_parameters.items()
             if parameter["UI"]["tab"] == "WellBores"
         }
-        self.assertEqual(42, len(wellbore_parameters))
+        self.assertEqual(37, len(wellbore_parameters))
         self.assertEqual(
             set(wellbore_parameters),
             {name for names in expected_group_members.values() for name in names},
@@ -781,8 +862,6 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             ags_conditions,
             wellbore_parameters["Water Thermal Conductivity"]["dependency"]["conditions"],
         )
-        self.assertIsNone(wellbore_parameters["Closed-loop Configuration"]["dependency"])
-
         self.assertEqual(
             [
                 {"parameter": "Reservoir Model", "operator": "in", "values": [0, 1, 2, 3, 4, 5, 6, 8]},
@@ -893,7 +972,15 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             sbt_conditions,
             wellbore_parameters["Flowrate Model"]["dependency"]["conditions"],
         )
-        for parameter_name in expected_group_members["SBT well geometry"]:
+        for parameter_name in [
+            "Vertical Section Length",
+            "Vertical Wellbore Spacing",
+            "Lateral Spacing",
+            "Lateral Inclination Angle",
+            "Discretization Length",
+            "Junction Depth",
+            "Lateral Endpoint Depth",
+        ]:
             with self.subTest(sbt_geometry_dependency=parameter_name):
                 self.assertEqual(
                     sbt_conditions,
@@ -903,69 +990,58 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             *sbt_conditions,
             {"parameter": "Multilaterals Cased", "operator": "in", "values": [True]},
         ]
-        for parameter_name in expected_group_members["SBT lateral construction"]:
+        for parameter_name in [
+            "Lateral Casing Thermal Conductivity",
+            "Lateral Cement Thermal Conductivity",
+            "Lateral Casing Thickness",
+            "Lateral Cement Thickness",
+        ]:
             with self.subTest(sbt_lateral_construction_dependency=parameter_name):
                 self.assertEqual(
                     cased_sbt_conditions,
                     wellbore_parameters[parameter_name]["dependency"]["conditions"],
                 )
 
-        self.assertEqual(
-            [{"parameter": "Overpressure Percentage", "operator": "provided", "values": [True]}],
-            wellbore_parameters["Injection Reservoir Initial Pressure"]["dependency"]["conditions"],
-        )
-
     def test_reservoir_groups_and_dependencies_match_runtime_routing(self):
         input_parameters = self.input_parameters
 
         expected_group_members = {
-            "Fracture and reservoir volume": [
+            "Limits": ["Reservoir Depth", "Maximum Temperature"],
+            "Gradient": ["Gradients", "Thicknesses"],
+            "Reservoir volume and Fracture properties": [
                 "Reservoir Volume Option",
+                "Reservoir Volume",
+                "Number of Fractures",
+                "Number of Fractures per Stimulated Well",
+                "Fracture Separation",
                 "Fracture Shape",
                 "Fracture Area",
                 "Fracture Height",
                 "Fracture Width",
-                "Number of Fractures",
-                "Number of Fractures per Stimulated Well",
-                "Fracture Separation",
-                "Reservoir Volume",
             ],
-            "Reservoir location and limits": [
-                "Reservoir Depth",
-                "Surface Temperature",
-                "Maximum Temperature",
-            ],
-            "Geothermal gradient profile": ["Gradients", "Thicknesses", "Number of Segments"],
-            "Legacy gradient inputs": [
-                "Gradient 1",
-                "Gradient 2",
-                "Gradient 3",
-                "Gradient 4",
-                "Thickness 1",
-                "Thickness 2",
-                "Thickness 3",
-                "Thickness 4",
-            ],
-            "Reservoir rock properties": [
+            "Rock and flow properties": [
                 "Reservoir Heat Capacity",
                 "Reservoir Density",
                 "Reservoir Thermal Conductivity",
                 "Reservoir Permeability",
                 "Reservoir Porosity",
-            ],
-            "Reservoir flow properties": [
                 "Reservoir Impedance",
                 "Injectivity Index",
                 "Productivity Index",
                 "Water Loss Fraction",
             ],
-            "Reservoir overpressure": ["Overpressure Percentage", "Overpressure Depletion Rate"],
-            "Thermal drawdown models": [
+            "Reservoir overpressure": [
+                "Overpressure Percentage",
+                "Overpressure Depletion Rate",
+                "Injection Reservoir Temperature",
+                "Injection Reservoir Depth",
+                "Injection Reservoir Initial Pressure",
+                "Injection Reservoir Inflation Rate",
+            ],
+            "Thermal drawdown and output profile options": [
                 "Drawdown Parameter",
                 "Drawdown Parameter Schedule",
                 "Gringarten-Stehfest Precision",
-            ],
-            "User-provided temperature profile": [
                 "Reservoir Output File Name",
                 "Reservoir Output Profile",
                 "Reservoir Output Profile Time Step",
@@ -978,13 +1054,11 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 "Cylindrical Reservoir Radius of Effect Factor",
                 "Drilled length",
             ],
-            "SBT profile inputs": ["Flowrate File", "Injection Temperature File"],
-            "SBT solver controls": [
+            "SBT model": [
+                "Flowrate File",
+                "Injection Temperature File",
                 "SBT Accuracy Desired",
                 "SBT Percent Implicit Euler Scheme",
-                "SBT Initial Timestep Count",
-                "SBT Final Timestep Count",
-                "SBT Initial to Final Timestep Transition",
                 "SBT Generate Wireframe Graphics",
             ],
             "SUTRA output files": [
@@ -1005,7 +1079,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             for name, parameter in input_parameters.items()
             if parameter["UI"]["tab"] == "Reservoir"
         }
-        self.assertEqual(61, len(reservoir_parameters))
+        self.assertEqual(52, len(reservoir_parameters))
         self.assertEqual(
             set(reservoir_parameters),
             {name for names in expected_group_members.values() for name in names},
@@ -1020,7 +1094,6 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                     self.assertEqual(group, reservoir_parameters[parameter_name]["group"])
 
         self.assertIsNone(reservoir_parameters["Gradients"]["dependency"])
-        self.assertIsNone(reservoir_parameters["Gradient 1"]["dependency"])
         self.assertEqual(
             [{"parameter": "Reservoir Model", "operator": "in", "values": [2, 6]}],
             reservoir_parameters["Reservoir Porosity"]["dependency"]["conditions"],
@@ -1064,16 +1137,10 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                     sbt_uloop_conditions,
                     reservoir_parameters[parameter_name]["dependency"]["conditions"],
                 )
-        for parameter_name in [
-            "SBT Initial Timestep Count",
-            "SBT Final Timestep Count",
-            "SBT Initial to Final Timestep Transition",
-        ]:
-            with self.subTest(deprecated_sbt_timestep_parameter=parameter_name):
-                self.assertIsNone(reservoir_parameters[parameter_name]["dependency"])
-                self.assertIn(
-                    "Deprecated compatibility input; ignored", input_parameters[parameter_name]["ToolTipText"]
-                )
+        self.assertEqual(
+            [{"parameter": "Overpressure Percentage", "operator": "provided", "values": [True]}],
+            reservoir_parameters["Injection Reservoir Initial Pressure"]["dependency"]["conditions"],
+        )
         for parameter_name in expected_group_members["TOUGH2 model"]:
             with self.subTest(tough2_dependency=parameter_name):
                 self.assertEqual(
@@ -1086,7 +1153,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         request_schema = self.request_schema
         properties = request_schema["properties"]
 
-        self.assertEqual(388, len(properties))
+        self.assertEqual(375, len(properties))
         self.assertTrue(all("x-ui" in definition for definition in properties.values()))
         self.assertTrue(all("UI" in definition for definition in input_parameters.values()))
         normalized_tabs = {
@@ -1115,15 +1182,14 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "Do AddOn Calculations": ("Project", 10),
             "Do VALCO(E|H|C) Calculations": ("Project", 11),
             "Do XLCO(E|H|C) Calculations": ("Project", 12),
-            "Is AGS": ("WellBores", 1),
-            "Well Geometry Configuration": ("WellBores", 2),
+            "Is AGS": ("WellBores", 300),
+            "Well Geometry Configuration": ("WellBores", 10),
             "Power Plant Type": ("SurfacePlant", 1),
             "TESS Enabled": ("SurfacePlant", 2),
-            "Reservoir Volume Option": ("Reservoir", 10),
-            "Reservoir Impedance": ("Reservoir", 300),
+            "Reservoir Volume Option": ("Reservoir", 100),
+            "Reservoir Impedance": ("Reservoir", 250),
             "Total Capital Cost": ("Economics", 2),
             "Total O&M Cost": ("Economics", 3),
-            "VALCO Calculation Mode": ("Economics", 5),
         }
         for parameter_name, (tab, order) in expected_independent_placement.items():
             with self.subTest(tab=tab, parameter=parameter_name):
@@ -1132,6 +1198,18 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 self.assertEqual(order, ui["order"])
                 self.assertIsNone(ui["dependency"])
                 self.assertNotIn("x-dependencies", properties[parameter_name])
+
+        valco_mode = input_parameters["VALCO Calculation Mode"]
+        self.assertEqual("Economics", valco_mode["UI"]["tab"])
+        self.assertEqual("VALCO", valco_mode["UI"]["group"])
+        self.assertEqual(
+            ["Direct", "Derived"],
+            [entry["value"] for entry in properties["VALCO Calculation Mode"]["enum_values"]],
+        )
+        self.assertEqual(
+            ["Do VALCO(E|H|C) Calculations"],
+            properties["VALCO Calculation Mode"]["x-dependencies"]["depends_on"],
+        )
 
         self.assertEqual({"tab_labels": {"project": "Project Control"}}, request_schema["x-ui"])
         for order, parameter_name in enumerate(
@@ -1160,7 +1238,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             with self.subTest(project_location=parameter_name):
                 ui = input_parameters[parameter_name]["UI"]
                 self.assertEqual("Project", ui["tab"])
-                self.assertEqual("Project location", ui["group"])
+                self.assertEqual("Model controls", ui["group"])
                 self.assertEqual(order, ui["order"])
                 self.assertEqual(weather_dependency, ui["dependency"])
                 self.assertEqual(
@@ -1185,7 +1263,7 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
         self.assertEqual("project", properties["Reservoir Model"]["x-ui"]["tab"])
         self.assertEqual("project", properties["Project Latitude"]["x-ui"]["tab"])
         self.assertEqual("reservoir", properties["Reservoir Depth"]["x-ui"]["tab"])
-        self.assertEqual(100, properties["Reservoir Depth"]["x-ui"]["order"])
+        self.assertEqual(10, properties["Reservoir Depth"]["x-ui"]["order"])
         self.assertEqual("wellbores", properties["Number of Production Wells"]["x-ui"]["tab"])
         self.assertEqual("economics", properties["Fixed Internal Rate"]["x-ui"]["tab"])
         self.assertEqual("surface-plant", properties["Use Advanced Absorption Chiller"]["x-ui"]["tab"])
@@ -1229,7 +1307,6 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
             "Injection Temperature Model": "surface-plant",
             "Power Plant Type": "surface-plant",
             "Injection Temperature": "surface-plant",
-            "Closed-loop Configuration": "wellbores",
             "Flowrate Model": "wellbores",
             "Heat Transfer Fluid": "wellbores",
             "Production Wellhead Pressure": "wellbores",

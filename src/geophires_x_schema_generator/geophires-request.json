@@ -7,12 +7,7 @@
     "Reservoir Model",
     "Reservoir Depth",
     "Maximum Temperature",
-    "Number of Segments",
     "Gradients",
-    "Gradient 1",
-    "Gradient 2",
-    "Gradient 3",
-    "Gradient 4",
     "Reservoir Volume Option",
     "Reservoir Heat Capacity",
     "Reservoir Density",
@@ -27,7 +22,6 @@
     "Injection Well Diameter",
     "Ramey Production Wellbore Model",
     "Injection Temperature",
-    "Closed-loop Configuration",
     "Well Geometry Configuration",
     "Heat Transfer Fluid",
     "Nonvertical Length per Multilateral Section",
@@ -112,8 +106,8 @@
       "maximum": 15,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir location and limits",
-        "order": 100,
+        "group": "Limits",
+        "order": 10,
         "dependency": null
       }
     },
@@ -127,23 +121,8 @@
       "maximum": 600,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir location and limits",
-        "order": 120,
-        "dependency": null
-      }
-    },
-    "Number of Segments": {
-      "description": "Number of rock segments from surface to reservoir depth with specific geothermal gradient",
-      "type": "integer",
-      "units": null,
-      "category": "Reservoir",
-      "default": 1,
-      "minimum": 1,
-      "maximum": 1,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Geothermal gradient profile",
-        "order": 150,
+        "group": "Limits",
+        "order": 20,
         "dependency": null
       }
     },
@@ -159,68 +138,8 @@
       "maximum": 500.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Geothermal gradient profile",
-        "order": 130,
-        "dependency": null
-      }
-    },
-    "Gradient 1": {
-      "description": "Geothermal gradient 1 in rock segment 1",
-      "type": "number",
-      "units": "degC/km",
-      "category": "Reservoir",
-      "default": 50,
-      "minimum": 0.0,
-      "maximum": 500.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 160,
-        "dependency": null
-      }
-    },
-    "Gradient 2": {
-      "description": "Geothermal gradient 2 in rock segment 2",
-      "type": "number",
-      "units": "degC/km",
-      "category": "Reservoir",
-      "default": 0.0,
-      "minimum": 0.0,
-      "maximum": 500.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 170,
-        "dependency": null
-      }
-    },
-    "Gradient 3": {
-      "description": "Geothermal gradient 3 in rock segment 3",
-      "type": "number",
-      "units": "degC/km",
-      "category": "Reservoir",
-      "default": 0.0,
-      "minimum": 0.0,
-      "maximum": 500.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 180,
-        "dependency": null
-      }
-    },
-    "Gradient 4": {
-      "description": "Geothermal gradient 4 in rock segment 4",
-      "type": "number",
-      "units": "degC/km",
-      "category": "Reservoir",
-      "default": 0.0,
-      "minimum": 0.0,
-      "maximum": 500.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 190,
+        "group": "Gradient",
+        "order": 30,
         "dependency": null
       }
     },
@@ -240,68 +159,8 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Geothermal gradient profile",
-        "order": 140,
-        "dependency": null
-      }
-    },
-    "Thickness 1": {
-      "description": "Thickness of rock segment 1",
-      "type": "number",
-      "units": "kilometer",
-      "category": "Reservoir",
-      "default": 2.0,
-      "minimum": 0.01,
-      "maximum": 100.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 200,
-        "dependency": null
-      }
-    },
-    "Thickness 2": {
-      "description": "Thickness of rock segment 2",
-      "type": "number",
-      "units": "kilometer",
-      "category": "Reservoir",
-      "default": 0.01,
-      "minimum": 0.01,
-      "maximum": 100.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 210,
-        "dependency": null
-      }
-    },
-    "Thickness 3": {
-      "description": "Thickness of rock segment 3",
-      "type": "number",
-      "units": "kilometer",
-      "category": "Reservoir",
-      "default": 0.01,
-      "minimum": 0.01,
-      "maximum": 100.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 220,
-        "dependency": null
-      }
-    },
-    "Thickness 4": {
-      "description": "Thickness of rock segment 4",
-      "type": "number",
-      "units": "kilometer",
-      "category": "Reservoir",
-      "default": 0.01,
-      "minimum": 0.01,
-      "maximum": 100.0,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "Legacy gradient inputs",
-        "order": 230,
+        "group": "Gradient",
+        "order": 40,
         "dependency": null
       }
     },
@@ -337,8 +196,8 @@
       ],
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 10,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 100,
         "dependency": null
       }
     },
@@ -372,11 +231,45 @@
           "int_value": 4
         }
       ],
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Reservoir Volume Option",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "reason": "Fracture geometry is not used when only reservoir volume is specified.",
+        "depends_on": [
+          "Reservoir Volume Option"
+        ]
+      },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 20,
-        "dependency": null
+        "group": "Reservoir volume and Fracture properties",
+        "order": 150,
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Reservoir Volume Option",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "reason": "Fracture geometry is not used when only reservoir volume is specified."
+        }
       }
     },
     "Fracture Area": {
@@ -392,6 +285,15 @@
         "match": "all",
         "conditions": [
           {
+            "parameter": "Reservoir Volume Option",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
             "parameter": "Fracture Shape",
             "operator": "in",
             "values": [
@@ -401,17 +303,27 @@
         ],
         "reason": "Direct input for a circular fracture with known area.",
         "depends_on": [
+          "Reservoir Volume Option",
           "Fracture Shape"
         ]
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 30,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 160,
         "dependency": {
           "effect": "enable",
           "match": "all",
           "conditions": [
+            {
+              "parameter": "Reservoir Volume Option",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3
+              ]
+            },
             {
               "parameter": "Fracture Shape",
               "operator": "in",
@@ -437,6 +349,15 @@
         "match": "all",
         "conditions": [
           {
+            "parameter": "Reservoir Volume Option",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
             "parameter": "Fracture Shape",
             "operator": "in",
             "values": [
@@ -448,17 +369,27 @@
         ],
         "reason": "Direct input for diameter-defined circular, square, and rectangular fractures.",
         "depends_on": [
+          "Reservoir Volume Option",
           "Fracture Shape"
         ]
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 40,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 170,
         "dependency": {
           "effect": "enable",
           "match": "all",
           "conditions": [
+            {
+              "parameter": "Reservoir Volume Option",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3
+              ]
+            },
             {
               "parameter": "Fracture Shape",
               "operator": "in",
@@ -486,6 +417,15 @@
         "match": "all",
         "conditions": [
           {
+            "parameter": "Reservoir Volume Option",
+            "operator": "in",
+            "values": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
             "parameter": "Fracture Shape",
             "operator": "in",
             "values": [
@@ -495,17 +435,27 @@
         ],
         "reason": "Direct input only for a rectangular fracture.",
         "depends_on": [
+          "Reservoir Volume Option",
           "Fracture Shape"
         ]
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 50,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 180,
         "dependency": {
           "effect": "enable",
           "match": "all",
           "conditions": [
+            {
+              "parameter": "Reservoir Volume Option",
+              "operator": "in",
+              "values": [
+                1,
+                2,
+                3
+              ]
+            },
             {
               "parameter": "Fracture Shape",
               "operator": "in",
@@ -535,8 +485,7 @@
             "operator": "in",
             "values": [
               1,
-              3,
-              4
+              3
             ]
           },
           {
@@ -547,7 +496,7 @@
             ]
           }
         ],
-        "reason": "Fracture count is calculated instead when Reservoir Volume Option is 2.",
+        "reason": "Fracture count is an input only for Reservoir Volume Options 1 and 3.",
         "depends_on": [
           "Reservoir Volume Option",
           "Number of Fractures per Stimulated Well"
@@ -555,8 +504,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 60,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 120,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -566,8 +515,7 @@
               "operator": "in",
               "values": [
                 1,
-                3,
-                4
+                3
               ]
             },
             {
@@ -578,7 +526,7 @@
               ]
             }
           ],
-          "reason": "Fracture count is calculated instead when Reservoir Volume Option is 2."
+          "reason": "Fracture count is an input only for Reservoir Volume Options 1 and 3."
         }
       }
     },
@@ -599,8 +547,7 @@
             "operator": "in",
             "values": [
               1,
-              3,
-              4
+              3
             ]
           },
           {
@@ -611,7 +558,7 @@
             ]
           }
         ],
-        "reason": "Alternative per-stimulated-well fracture count; mutually exclusive with Number of Fractures.",
+        "reason": "Alternative fracture-count input for Reservoir Volume Options 1 and 3; mutually exclusive with Number of Fractures.",
         "depends_on": [
           "Reservoir Volume Option",
           "Number of Fractures"
@@ -619,8 +566,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 70,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 130,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -630,8 +577,7 @@
               "operator": "in",
               "values": [
                 1,
-                3,
-                4
+                3
               ]
             },
             {
@@ -642,7 +588,7 @@
               ]
             }
           ],
-          "reason": "Alternative per-stimulated-well fracture count; mutually exclusive with Number of Fractures."
+          "reason": "Alternative fracture-count input for Reservoir Volume Options 1 and 3; mutually exclusive with Number of Fractures."
         }
       }
     },
@@ -663,20 +609,19 @@
             "operator": "in",
             "values": [
               1,
-              2,
-              4
+              2
             ]
           }
         ],
-        "reason": "Fracture separation is calculated instead when Reservoir Volume Option is 3.",
+        "reason": "Fracture separation is an input only for Reservoir Volume Options 1 and 2.",
         "depends_on": [
           "Reservoir Volume Option"
         ]
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 80,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 140,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -686,12 +631,11 @@
               "operator": "in",
               "values": [
                 1,
-                2,
-                4
+                2
               ]
             }
           ],
-          "reason": "Fracture separation is calculated instead when Reservoir Volume Option is 3."
+          "reason": "Fracture separation is an input only for Reservoir Volume Options 1 and 2."
         }
       }
     },
@@ -724,8 +668,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Fracture and reservoir volume",
-        "order": 90,
+        "group": "Reservoir volume and Fracture properties",
+        "order": 110,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -754,8 +698,8 @@
       "maximum": 0.99,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir flow properties",
-        "order": 330,
+        "group": "Rock and flow properties",
+        "order": 280,
         "dependency": null
       }
     },
@@ -769,8 +713,8 @@
       "maximum": 10000,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir rock properties",
-        "order": 240,
+        "group": "Rock and flow properties",
+        "order": 200,
         "dependency": null
       }
     },
@@ -784,8 +728,8 @@
       "maximum": 10000,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir rock properties",
-        "order": 250,
+        "group": "Rock and flow properties",
+        "order": 210,
         "dependency": null
       }
     },
@@ -799,8 +743,8 @@
       "maximum": 100,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir rock properties",
-        "order": 260,
+        "group": "Rock and flow properties",
+        "order": 220,
         "dependency": null
       }
     },
@@ -831,8 +775,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir rock properties",
-        "order": 270,
+        "group": "Rock and flow properties",
+        "order": 230,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -877,8 +821,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir rock properties",
-        "order": 280,
+        "group": "Rock and flow properties",
+        "order": 240,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -905,9 +849,9 @@
       "minimum": -50,
       "maximum": 50,
       "x-ui": {
-        "tab": "reservoir",
-        "group": "Reservoir location and limits",
-        "order": 110,
+        "tab": "project",
+        "group": "Model controls",
+        "order": 7,
         "dependency": null
       }
     },
@@ -939,7 +883,7 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Thermal drawdown models",
+        "group": "Thermal drawdown and output profile options",
         "order": 400,
         "dependency": {
           "effect": "enable",
@@ -987,7 +931,7 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Thermal drawdown models",
+        "group": "Thermal drawdown and output profile options",
         "order": 410,
         "dependency": {
           "effect": "enable",
@@ -1032,7 +976,7 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Thermal drawdown models",
+        "group": "Thermal drawdown and output profile options",
         "order": 420,
         "dependency": {
           "effect": "enable",
@@ -1077,8 +1021,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "User-provided temperature profile",
-        "order": 500,
+        "group": "Thermal drawdown and output profile options",
+        "order": 430,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1122,8 +1066,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "User-provided temperature profile",
-        "order": 510,
+        "group": "Thermal drawdown and output profile options",
+        "order": 440,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1167,8 +1111,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "User-provided temperature profile",
-        "order": 520,
+        "group": "Thermal drawdown and output profile options",
+        "order": 450,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1213,7 +1157,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 600,
+        "order": 500,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1258,7 +1202,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 610,
+        "order": 510,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1303,7 +1247,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 620,
+        "order": 520,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1348,7 +1292,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 630,
+        "order": 530,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1393,7 +1337,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 640,
+        "order": 540,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1438,7 +1382,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Cylindrical reservoir model",
-        "order": 650,
+        "order": 550,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1491,8 +1435,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT flow control",
-        "order": 600,
+        "group": "Multilateral wells",
+        "order": 420,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1561,8 +1505,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "SBT profile inputs",
-        "order": 700,
+        "group": "SBT model",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1700,8 +1644,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "SBT profile inputs",
-        "order": 710,
+        "group": "SBT model",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1770,8 +1714,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 720,
+        "group": "SBT model",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1833,8 +1777,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 730,
+        "group": "SBT model",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1857,51 +1801,6 @@
           ],
           "reason": "Used by implemented SBT U-loop and EavorLoop configurations."
         }
-      }
-    },
-    "SBT Initial Timestep Count": {
-      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
-      "type": "integer",
-      "units": null,
-      "category": "Reservoir",
-      "default": 5,
-      "minimum": 1,
-      "maximum": 150,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 740,
-        "dependency": null
-      }
-    },
-    "SBT Final Timestep Count": {
-      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
-      "type": "number",
-      "units": null,
-      "category": "Reservoir",
-      "default": 70,
-      "minimum": 5,
-      "maximum": 1000,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 750,
-        "dependency": null
-      }
-    },
-    "SBT Initial to Final Timestep Transition": {
-      "description": "Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.",
-      "type": "number",
-      "units": "sec",
-      "category": "Reservoir",
-      "default": 9900,
-      "minimum": 1,
-      "maximum": 40000000,
-      "x-ui": {
-        "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 760,
-        "dependency": null
       }
     },
     "SBT Generate Wireframe Graphics": {
@@ -1940,8 +1839,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "SBT solver controls",
-        "order": 770,
+        "group": "SBT model",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -1994,7 +1893,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "SUTRA output files",
-        "order": 800,
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2039,7 +1938,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "SUTRA output files",
-        "order": 810,
+        "order": 710,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2084,7 +1983,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "SUTRA output files",
-        "order": 820,
+        "order": 720,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2129,7 +2028,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "TOUGH2 model",
-        "order": 900,
+        "order": 800,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2174,7 +2073,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "TOUGH2 model",
-        "order": 910,
+        "order": 810,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2219,7 +2118,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "TOUGH2 model",
-        "order": 920,
+        "order": 820,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2264,7 +2163,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "TOUGH2 model",
-        "order": 930,
+        "order": 830,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2308,8 +2207,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield sizing",
-        "order": 10,
+        "group": "Wellfield sizing and geometry",
+        "order": 100,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2361,8 +2260,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield sizing",
-        "order": 20,
+        "group": "Wellfield sizing and geometry",
+        "order": 110,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2444,8 +2343,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield sizing",
-        "order": 30,
+        "group": "Wellfield sizing and geometry",
+        "order": 120,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2540,8 +2439,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellfield sizing",
-        "order": 40,
+        "group": "Wellfield sizing and geometry",
+        "order": 130,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2589,8 +2488,8 @@
       "maximum": 30.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Vertical well geometry",
-        "order": 50,
+        "group": "Wellfield sizing and geometry",
+        "order": 140,
         "dependency": null
       }
     },
@@ -2604,8 +2503,8 @@
       "maximum": 30.0,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Vertical well geometry",
-        "order": 60,
+        "group": "Wellfield sizing and geometry",
+        "order": 150,
         "dependency": null
       }
     },
@@ -2642,8 +2541,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal model",
-        "order": 70,
+        "group": "Well bore control",
+        "order": 60,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2707,8 +2606,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal model",
-        "order": 80,
+        "group": "Well bore control",
+        "order": 70,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2771,8 +2670,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore thermal model",
-        "order": 90,
+        "group": "Well bore control",
+        "order": 80,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -2837,8 +2736,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore flow and pressure",
-        "order": 100,
+        "group": "Flow, pressure, and operating limits",
+        "order": 200,
         "dependency": {
           "effect": "enable",
           "match": "any",
@@ -2879,8 +2778,8 @@
       "maximum": 10000.0,
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir flow properties",
-        "order": 300,
+        "group": "Rock and flow properties",
+        "order": 250,
         "dependency": null
       }
     },
@@ -2911,8 +2810,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "TOUGH2 doublet geometry",
-        "order": 500,
+        "group": "Wellfield sizing and geometry",
+        "order": 160,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3044,8 +2943,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore flow and pressure",
-        "order": 120,
+        "group": "Flow, pressure, and operating limits",
+        "order": 220,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3117,8 +3016,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore flow and pressure",
-        "order": 110,
+        "group": "Flow, pressure, and operating limits",
+        "order": 210,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3176,8 +3075,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir flow properties",
-        "order": 310,
+        "group": "Rock and flow properties",
+        "order": 260,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3221,8 +3120,8 @@
       },
       "x-ui": {
         "tab": "reservoir",
-        "group": "Reservoir flow properties",
-        "order": 320,
+        "group": "Rock and flow properties",
+        "order": 270,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3280,8 +3179,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Well operating limits",
-        "order": 130,
+        "group": "Well bore control",
+        "order": 40,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3352,8 +3251,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Well operating limits",
-        "order": 140,
+        "group": "Well bore control",
+        "order": 50,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3393,8 +3292,8 @@
       "maximum": null,
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore model controls",
-        "order": 1,
+        "group": "Multilateral wells",
+        "order": 300,
         "dependency": null
       }
     },
@@ -3409,7 +3308,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Reservoir overpressure",
-        "order": 340,
+        "order": 300,
         "dependency": null
       }
     },
@@ -3441,7 +3340,7 @@
       "x-ui": {
         "tab": "reservoir",
         "group": "Reservoir overpressure",
-        "order": 350,
+        "order": 310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3484,9 +3383,9 @@
         ]
       },
       "x-ui": {
-        "tab": "wellbores",
-        "group": "Injection reservoir overpressure",
-        "order": 150,
+        "tab": "reservoir",
+        "group": "Reservoir overpressure",
+        "order": 320,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3529,9 +3428,9 @@
         ]
       },
       "x-ui": {
-        "tab": "wellbores",
-        "group": "Injection reservoir overpressure",
-        "order": 160,
+        "tab": "reservoir",
+        "group": "Reservoir overpressure",
+        "order": 330,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3574,9 +3473,9 @@
         ]
       },
       "x-ui": {
-        "tab": "wellbores",
-        "group": "Injection reservoir overpressure",
-        "order": 170,
+        "tab": "reservoir",
+        "group": "Reservoir overpressure",
+        "order": 340,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3619,9 +3518,9 @@
         ]
       },
       "x-ui": {
-        "tab": "wellbores",
-        "group": "Injection reservoir overpressure",
-        "order": 180,
+        "tab": "reservoir",
+        "group": "Reservoir overpressure",
+        "order": 350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3636,48 +3535,6 @@
           ],
           "reason": "Used to define a distinct injection reservoir during an overpressure calculation."
         }
-      }
-    },
-    "Closed-loop Configuration": {
-      "description": "1: utube; 2: coaxial; 3: vertical; 4: L; 5: EavorLoop",
-      "type": "integer",
-      "units": null,
-      "category": "Well Bores",
-      "default": 3,
-      "minimum": 1,
-      "maximum": 5,
-      "enum_values": [
-        {
-          "name": "ULOOP",
-          "value": "utube",
-          "int_value": 1
-        },
-        {
-          "name": "COAXIAL",
-          "value": "coaxial",
-          "int_value": 2
-        },
-        {
-          "name": "VERTICAL",
-          "value": "vertical",
-          "int_value": 3
-        },
-        {
-          "name": "L",
-          "value": "L",
-          "int_value": 4
-        },
-        {
-          "name": "EAVORLOOP",
-          "value": "EavorLoop",
-          "int_value": 5
-        }
-      ],
-      "x-ui": {
-        "tab": "wellbores",
-        "group": "Compatibility aliases",
-        "order": 900,
-        "dependency": null
       }
     },
     "Well Geometry Configuration": {
@@ -3717,8 +3574,8 @@
       ],
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore model controls",
-        "order": 2,
+        "group": "Well bore control",
+        "order": 10,
         "dependency": null
       }
     },
@@ -3764,8 +3621,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "AGS fluid properties",
-        "order": 800,
+        "group": "Well bore control",
+        "order": 30,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3850,8 +3707,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Wellbore model controls",
-        "order": 3,
+        "group": "Well bore control",
+        "order": 20,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3912,8 +3769,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Multilateral geometry",
-        "order": 200,
+        "group": "Multilateral wells",
+        "order": 360,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -3963,8 +3820,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Multilateral geometry",
-        "order": 210,
+        "group": "Multilateral wells",
+        "order": 410,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4022,8 +3879,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Multilateral geometry",
-        "order": 220,
+        "group": "Multilateral wells",
+        "order": 330,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4096,8 +3953,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Multilateral geometry",
-        "order": 230,
+        "group": "Multilateral wells",
+        "order": 340,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4161,8 +4018,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "Multilateral geometry",
-        "order": 240,
+        "group": "Multilateral wells",
+        "order": 350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4226,8 +4083,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT lateral construction",
-        "order": 680,
+        "group": "Multilateral wells",
+        "order": 430,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4303,8 +4160,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT lateral construction",
-        "order": 690,
+        "group": "Multilateral wells",
+        "order": 440,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4380,8 +4237,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT lateral construction",
-        "order": 700,
+        "group": "Multilateral wells",
+        "order": 450,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4457,8 +4314,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT lateral construction",
-        "order": 710,
+        "group": "Multilateral wells",
+        "order": 460,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4532,8 +4389,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "AGS calculation controls",
-        "order": 810,
+        "group": "Multilateral wells",
+        "order": 480,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4600,8 +4457,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 610,
+        "group": "Multilateral wells",
+        "order": 310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4662,8 +4519,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 620,
+        "group": "Multilateral wells",
+        "order": 320,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4724,8 +4581,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 630,
+        "group": "Multilateral wells",
+        "order": 370,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4786,8 +4643,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 640,
+        "group": "Multilateral wells",
+        "order": 380,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4848,8 +4705,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 650,
+        "group": "Multilateral wells",
+        "order": 470,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4910,8 +4767,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 660,
+        "group": "Multilateral wells",
+        "order": 390,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -4972,8 +4829,8 @@
       },
       "x-ui": {
         "tab": "wellbores",
-        "group": "SBT well geometry",
-        "order": 670,
+        "group": "Multilateral wells",
+        "order": 400,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -5355,7 +5212,7 @@
       },
       "x-ui": {
         "tab": "project",
-        "group": "Project location",
+        "group": "Model controls",
         "order": 13,
         "dependency": {
           "effect": "enable",
@@ -5400,7 +5257,7 @@
       },
       "x-ui": {
         "tab": "project",
-        "group": "Project location",
+        "group": "Model controls",
         "order": 14,
         "dependency": {
           "effect": "enable",
@@ -5424,8 +5281,8 @@
       "units": null,
       "category": "Surface Plant",
       "default": 2024,
-      "minimum": 1900,
-      "maximum": 10000,
+      "minimum": 1950,
+      "maximum": 2035,
       "x-dependencies": {
         "effect": "enable",
         "match": "all",
@@ -5473,7 +5330,7 @@
       "maximum": 100,
       "x-ui": {
         "tab": "project",
-        "group": "Project settings",
+        "group": "Model controls",
         "order": 5,
         "dependency": null
       }
@@ -5560,7 +5417,7 @@
       ],
       "x-ui": {
         "tab": "project",
-        "group": "Dispatch configuration",
+        "group": "Model controls",
         "order": 2,
         "dependency": null
       }
@@ -10719,8 +10576,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 30,
+        "group": "Common Development costs (CAPEX)",
+        "order": 200,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -10764,8 +10621,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 40,
+        "group": "Common Development costs (CAPEX)",
+        "order": 220,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -10809,8 +10666,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 50,
+        "group": "Common Development costs (CAPEX)",
+        "order": 230,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -10854,8 +10711,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 60,
+        "group": "Common Development costs (CAPEX)",
+        "order": 240,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -10931,8 +10788,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 70,
+        "group": "Common Development costs (CAPEX)",
+        "order": 210,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11004,8 +10861,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 80,
+        "group": "Common Development costs (CAPEX)",
+        "order": 250,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11049,8 +10906,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 90,
+        "group": "Common cost overrides",
+        "order": 4,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11102,8 +10959,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 100,
+        "group": "Common cost overrides",
+        "order": 5,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11154,7 +11011,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common Development costs (CAPEX)",
         "order": 110,
         "dependency": {
           "effect": "enable",
@@ -11199,8 +11056,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 120,
+        "group": "Common Development costs (CAPEX)",
+        "order": 130,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11275,8 +11132,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 130,
+        "group": "Common Development costs (CAPEX)",
+        "order": 120,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11380,7 +11237,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common Development costs (CAPEX)",
         "order": 140,
         "dependency": {
           "effect": "enable",
@@ -11454,7 +11311,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common operating costs",
         "order": 150,
         "dependency": {
           "effect": "enable",
@@ -11507,7 +11364,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common operating costs",
         "order": 160,
         "dependency": {
           "effect": "enable",
@@ -11542,7 +11399,7 @@
       "maximum": 0.99,
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common Development costs (CAPEX)",
         "order": 170,
         "dependency": null
       }
@@ -11574,7 +11431,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 180,
         "dependency": {
           "effect": "enable",
@@ -11627,7 +11484,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 190,
         "dependency": {
           "effect": "enable",
@@ -11685,7 +11542,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 200,
         "dependency": {
           "effect": "enable",
@@ -11736,8 +11593,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 210,
+        "group": "Common Development costs (CAPEX)",
+        "order": 300,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11789,8 +11646,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 220,
+        "group": "Common Development costs (CAPEX)",
+        "order": 310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -11841,7 +11698,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common operating costs",
         "order": 230,
         "dependency": {
           "effect": "enable",
@@ -11894,7 +11751,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common operating costs",
         "order": 240,
         "dependency": {
           "effect": "enable",
@@ -11946,7 +11803,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Water costs",
+        "group": "Common operating costs",
         "order": 250,
         "dependency": {
           "effect": "enable",
@@ -11999,7 +11856,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Water costs",
+        "group": "Common operating costs",
         "order": 260,
         "dependency": {
           "effect": "enable",
@@ -12034,7 +11891,7 @@
       "maximum": 100000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common cost overrides",
         "order": 2,
         "dependency": null
       }
@@ -12049,7 +11906,7 @@
       "maximum": 100,
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common cost overrides",
         "order": 3,
         "dependency": null
       }
@@ -12064,7 +11921,7 @@
       "maximum": 8760,
       "x-ui": {
         "tab": "project",
-        "group": "Project settings",
+        "group": "Model controls",
         "order": 6,
         "dependency": null
       }
@@ -12096,7 +11953,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 300,
         "dependency": {
           "effect": "enable",
@@ -12124,7 +11981,7 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 310,
         "dependency": null
       }
@@ -12156,8 +12013,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Shared Assumptions",
-        "order": 320,
+        "group": "XLCO",
+        "order": 540,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12230,8 +12087,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Electricity Benefits",
-        "order": 400,
+        "group": "XLCO",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12288,8 +12145,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Shared Assumptions",
-        "order": 330,
+        "group": "XLCO",
+        "order": 550,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12347,8 +12204,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Electricity Benefits",
-        "order": 410,
+        "group": "XLCO",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12419,8 +12276,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Electricity Benefits",
-        "order": 420,
+        "group": "XLCO",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12477,8 +12334,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Shared Assumptions",
-        "order": 340,
+        "group": "XLCO",
+        "order": 560,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12522,8 +12379,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Shared Assumptions",
-        "order": 350,
+        "group": "XLCO",
+        "order": 570,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12567,8 +12424,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Employment Assumptions",
-        "order": 360,
+        "group": "XLCO",
+        "order": 580,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12612,8 +12469,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Employment Assumptions",
-        "order": 370,
+        "group": "XLCO",
+        "order": 590,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12657,8 +12514,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Employment Assumptions",
-        "order": 380,
+        "group": "XLCO",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12702,8 +12559,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Employment Assumptions",
-        "order": 390,
+        "group": "XLCO",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12776,8 +12633,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Heat Benefits",
-        "order": 430,
+        "group": "XLCO",
+        "order": 650,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12877,8 +12734,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Heat Benefits",
-        "order": 450,
+        "group": "XLCO",
+        "order": 670,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -12978,8 +12835,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Heat Benefits",
-        "order": 440,
+        "group": "XLCO",
+        "order": 660,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -13066,8 +12923,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Cooling Benefits",
-        "order": 460,
+        "group": "XLCO",
+        "order": 680,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -13141,8 +12998,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Cooling Benefits",
-        "order": 470,
+        "group": "XLCO",
+        "order": 690,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -13216,8 +13073,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "XLCO Cooling Benefits",
-        "order": 480,
+        "group": "XLCO",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -13264,18 +13121,60 @@
       }
     },
     "VALCO Calculation Mode": {
-      "description": "VALCO calculation mode. Direct is the v1 supported mode.",
+      "description": "Select Direct to provide value components explicitly, or Derived to calculate value components from capacity, flexibility, emissions, and water-benefit inputs.",
       "type": "string",
       "units": null,
       "category": "Economics",
       "default": "Direct",
       "minimum": null,
       "maximum": null,
+      "enum_values": [
+        {
+          "name": "DIRECT",
+          "value": "Direct",
+          "int_value": 1
+        },
+        {
+          "name": "DERIVED",
+          "value": "Derived",
+          "int_value": 2
+        }
+      ],
+      "x-dependencies": {
+        "effect": "enable",
+        "match": "all",
+        "conditions": [
+          {
+            "parameter": "Do VALCO(E|H|C) Calculations",
+            "operator": "in",
+            "values": [
+              true
+            ]
+          }
+        ],
+        "reason": "Used only when value-adjusted levelized-cost calculations are enabled.",
+        "depends_on": [
+          "Do VALCO(E|H|C) Calculations"
+        ]
+      },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO controls",
-        "order": 5,
-        "dependency": null
+        "group": "VALCO",
+        "order": 521,
+        "dependency": {
+          "effect": "enable",
+          "match": "all",
+          "conditions": [
+            {
+              "parameter": "Do VALCO(E|H|C) Calculations",
+              "operator": "in",
+              "values": [
+                true
+              ]
+            }
+          ],
+          "reason": "Used only when value-adjusted levelized-cost calculations are enabled."
+        }
       }
     },
     "VALCOE System Average Energy Value": {
@@ -13319,8 +13218,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
-        "order": 520,
+        "group": "VALCO",
+        "order": 522,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -13391,7 +13290,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 530,
         "dependency": {
           "effect": "enable",
@@ -13463,7 +13362,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 540,
         "dependency": {
           "effect": "enable",
@@ -13543,7 +13442,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 550,
         "dependency": {
           "effect": "enable",
@@ -13622,7 +13521,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 560,
         "dependency": {
           "effect": "enable",
@@ -13702,7 +13601,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 570,
         "dependency": {
           "effect": "enable",
@@ -13789,7 +13688,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 580,
         "dependency": {
           "effect": "enable",
@@ -13876,7 +13775,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 590,
         "dependency": {
           "effect": "enable",
@@ -13963,7 +13862,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 600,
         "dependency": {
           "effect": "enable",
@@ -14050,7 +13949,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO electricity",
+        "group": "VALCO",
         "order": 610,
         "dependency": {
           "effect": "enable",
@@ -14144,7 +14043,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 620,
         "dependency": {
           "effect": "enable",
@@ -14245,7 +14144,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 630,
         "dependency": {
           "effect": "enable",
@@ -14346,7 +14245,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 640,
         "dependency": {
           "effect": "enable",
@@ -14455,7 +14354,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 650,
         "dependency": {
           "effect": "enable",
@@ -14563,7 +14462,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 660,
         "dependency": {
           "effect": "enable",
@@ -14672,7 +14571,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 670,
         "dependency": {
           "effect": "enable",
@@ -14788,7 +14687,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 680,
         "dependency": {
           "effect": "enable",
@@ -14904,7 +14803,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 690,
         "dependency": {
           "effect": "enable",
@@ -15020,7 +14919,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 700,
         "dependency": {
           "effect": "enable",
@@ -15136,7 +15035,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO heat",
+        "group": "VALCO",
         "order": 710,
         "dependency": {
           "effect": "enable",
@@ -15231,7 +15130,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 720,
         "dependency": {
           "effect": "enable",
@@ -15306,7 +15205,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 730,
         "dependency": {
           "effect": "enable",
@@ -15381,7 +15280,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 740,
         "dependency": {
           "effect": "enable",
@@ -15464,7 +15363,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 750,
         "dependency": {
           "effect": "enable",
@@ -15546,7 +15445,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 760,
         "dependency": {
           "effect": "enable",
@@ -15629,7 +15528,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 770,
         "dependency": {
           "effect": "enable",
@@ -15719,7 +15618,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 780,
         "dependency": {
           "effect": "enable",
@@ -15809,7 +15708,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 790,
         "dependency": {
           "effect": "enable",
@@ -15899,7 +15798,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 800,
         "dependency": {
           "effect": "enable",
@@ -15989,7 +15888,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "VALCO cooling",
+        "group": "VALCO",
         "order": 810,
         "dependency": {
           "effect": "enable",
@@ -16063,8 +15962,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 820,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1300,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16123,8 +16022,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 830,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1310,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16183,8 +16082,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 840,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1320,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16243,8 +16142,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 850,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1330,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16295,8 +16194,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 860,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1340,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16340,8 +16239,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "SAM Economic parameters",
-        "order": 870,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1350,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16385,8 +16284,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 880,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1360,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16413,7 +16312,7 @@
       "maximum": null,
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 890,
         "dependency": null
       }
@@ -16446,7 +16345,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Tax-aware financing \u2014 BICYCLE and SAM",
         "order": 900,
         "dependency": {
           "effect": "enable",
@@ -16493,7 +16392,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Tax-aware financing \u2014 BICYCLE and SAM",
         "order": 910,
         "dependency": {
           "effect": "enable",
@@ -16539,8 +16438,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 920,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1370,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16584,8 +16483,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 925,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1375,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16629,8 +16528,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 930,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1380,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16686,8 +16585,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 10,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1390,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16731,8 +16630,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 940,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1400,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -16776,7 +16675,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "BICYCLE financing and taxes",
         "order": 950,
         "dependency": {
           "effect": "enable",
@@ -16830,7 +16729,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 960,
         "dependency": {
           "effect": "enable",
@@ -16884,7 +16783,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Tax-aware financing \u2014 BICYCLE and SAM",
         "order": 970,
         "dependency": {
           "effect": "enable",
@@ -16930,7 +16829,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "BICYCLE financing and taxes",
         "order": 980,
         "dependency": {
           "effect": "enable",
@@ -16958,7 +16857,7 @@
       "maximum": 1.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 990,
         "dependency": null
       }
@@ -16990,8 +16889,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 1000,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1410,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17036,7 +16935,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Tax-aware financing \u2014 BICYCLE and SAM",
         "order": 1010,
         "dependency": {
           "effect": "enable",
@@ -17093,7 +16992,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 1020,
         "dependency": {
           "effect": "enable",
@@ -17150,8 +17049,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1030,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1420,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17195,8 +17094,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
-        "order": 1040,
+        "group": "SAM financing, construction, and royalties",
+        "order": 1430,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17240,8 +17139,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1050,
+        "group": "Common cost overrides",
+        "order": 6,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17355,8 +17254,8 @@
       ],
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 20,
+        "group": "Common Development costs (CAPEX)",
+        "order": 100,
         "dependency": null
       }
     },
@@ -17440,7 +17339,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Simple CLGS cost inputs",
         "order": 1090,
         "dependency": {
           "effect": "enable",
@@ -17495,8 +17394,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1100,
+        "group": "Common Development costs (CAPEX)",
+        "order": 160,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17543,8 +17442,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1110,
+        "group": "Common Development costs (CAPEX)",
+        "order": 150,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17561,7 +17460,7 @@
         }
       }
     },
-    "Indirect Capital Cost Percentage": {
+    "Common Indirect Capital Cost Percentage": {
       "description": "The indirect cost percentage applied to capital costs (default 12%). This value is used for all cost categories including surface plant, field gathering system, and exploration except when a category-specific indirect cost parameter is defined or provided. Wellfield costs use Well Drilling and Completion Indirect Capital Cost Percentage (default 5%). Stimulation costs use Reservoir Stimulation Indirect Capital Cost Percentage (default 5%).",
       "type": "number",
       "units": "%",
@@ -17588,8 +17487,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
-        "order": 1120,
+        "group": "Common cost overrides",
+        "order": 7,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -17649,7 +17548,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 1130,
         "dependency": {
           "effect": "enable",
@@ -17724,7 +17623,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Common operating costs",
         "order": 1140,
         "dependency": {
           "effect": "enable",
@@ -17799,7 +17698,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 1150,
         "dependency": {
           "effect": "enable",
@@ -17866,7 +17765,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Peaking boiler economics",
+        "group": "Common surface plant and end-use costs",
         "order": 1160,
         "dependency": {
           "effect": "enable",
@@ -17926,7 +17825,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Peaking boiler economics",
+        "group": "Common surface plant and end-use costs",
         "order": 1170,
         "dependency": {
           "effect": "enable",
@@ -17994,7 +17893,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Peaking boiler economics",
+        "group": "Common surface plant and end-use costs",
         "order": 1180,
         "dependency": {
           "effect": "enable",
@@ -18151,7 +18050,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 1200,
         "dependency": {
           "effect": "enable",
@@ -18809,8 +18708,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Heat sale pricing",
-        "order": 10,
+        "group": "Common revenues, incentives, and employment",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18895,8 +18794,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Heat sale pricing",
-        "order": 20,
+        "group": "Common revenues, incentives, and employment",
+        "order": 650,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -18981,8 +18880,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Heat sale pricing",
-        "order": 30,
+        "group": "Common revenues, incentives, and employment",
+        "order": 660,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19067,8 +18966,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Heat sale pricing",
-        "order": 40,
+        "group": "Common revenues, incentives, and employment",
+        "order": 670,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19138,8 +19037,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity sale pricing",
-        "order": 10,
+        "group": "Common revenues, incentives, and employment",
+        "order": 490,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19195,8 +19094,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity sale pricing",
-        "order": 20,
+        "group": "Common revenues, incentives, and employment",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19252,8 +19151,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity sale pricing",
-        "order": 30,
+        "group": "Common revenues, incentives, and employment",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19309,8 +19208,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Electricity sale pricing",
-        "order": 40,
+        "group": "Common revenues, incentives, and employment",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19368,8 +19267,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Cooling sale pricing",
-        "order": 10,
+        "group": "Common revenues, incentives, and employment",
+        "order": 680,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19428,8 +19327,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Cooling sale pricing",
-        "order": 20,
+        "group": "Common revenues, incentives, and employment",
+        "order": 690,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19488,8 +19387,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Cooling sale pricing",
-        "order": 30,
+        "group": "Common revenues, incentives, and employment",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19548,8 +19447,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Cooling sale pricing",
-        "order": 40,
+        "group": "Common revenues, incentives, and employment",
+        "order": 710,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19600,8 +19499,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
-        "order": 1390,
+        "group": "Carbon Pricing",
+        "order": 510,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -19645,7 +19544,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
+        "group": "Carbon Pricing",
         "order": 1400,
         "dependency": {
           "effect": "enable",
@@ -19690,7 +19589,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
+        "group": "Carbon Pricing",
         "order": 1410,
         "dependency": {
           "effect": "enable",
@@ -19735,7 +19634,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
+        "group": "Carbon Pricing",
         "order": 1420,
         "dependency": {
           "effect": "enable",
@@ -19794,7 +19693,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
+        "group": "Carbon Pricing",
         "order": 1430,
         "dependency": {
           "effect": "enable",
@@ -19866,7 +19765,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Carbon pricing and emissions",
+        "group": "Carbon Pricing",
         "order": 1440,
         "dependency": {
           "effect": "enable",
@@ -19907,7 +19806,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Fees, grants, and incentives",
+        "group": "Common revenues, incentives, and employment",
         "order": 1450,
         "dependency": null
       }
@@ -19922,7 +19821,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Fees, grants, and incentives",
+        "group": "Common revenues, incentives, and employment",
         "order": 1460,
         "dependency": null
       }
@@ -19937,7 +19836,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Fees, grants, and incentives",
+        "group": "Common revenues, incentives, and employment",
         "order": 1470,
         "dependency": null
       }
@@ -19952,7 +19851,7 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 1480,
         "dependency": null
       }
@@ -19967,7 +19866,7 @@
       "maximum": 1000.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Fees, grants, and incentives",
+        "group": "Common revenues, incentives, and employment",
         "order": 1490,
         "dependency": null
       }
@@ -19982,7 +19881,7 @@
       "maximum": 100.0,
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common financial assumptions",
         "order": 1500,
         "dependency": null
       }
@@ -20019,7 +19918,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Common surface plant and end-use costs",
         "order": 1510,
         "dependency": {
           "effect": "enable",
@@ -20075,7 +19974,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common revenues, incentives, and employment",
         "order": 1520,
         "dependency": {
           "effect": "enable",
@@ -20147,7 +20046,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common revenues, incentives, and employment",
         "order": 1530,
         "dependency": {
           "effect": "enable",
@@ -20220,7 +20119,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common revenues, incentives, and employment",
         "order": 1540,
         "dependency": {
           "effect": "enable",
@@ -20288,7 +20187,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common revenues, incentives, and employment",
         "order": 1550,
         "dependency": {
           "effect": "enable",
@@ -20363,7 +20262,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Financing and tax",
+        "group": "Common revenues, incentives, and employment",
         "order": 1560,
         "dependency": {
           "effect": "enable",
@@ -20428,7 +20327,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Employment assumptions",
+        "group": "Common revenues, incentives, and employment",
         "order": 1570,
         "dependency": {
           "effect": "enable",
@@ -20502,7 +20401,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Operating costs",
+        "group": "Simple CLGS cost inputs",
         "order": 1580,
         "dependency": {
           "effect": "enable",
@@ -20599,7 +20498,7 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "Capital costs",
+        "group": "Simple CLGS cost inputs",
         "order": 1590,
         "dependency": {
           "effect": "enable",
@@ -20672,8 +20571,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 10,
+        "group": "Add-ons",
+        "order": 500,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20717,8 +20616,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 20,
+        "group": "Add-ons",
+        "order": 501,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20762,8 +20661,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 30,
+        "group": "Add-ons",
+        "order": 502,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20807,8 +20706,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 40,
+        "group": "Add-ons",
+        "order": 503,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20852,8 +20751,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 50,
+        "group": "Add-ons",
+        "order": 504,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20897,8 +20796,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "AddOn economics",
-        "order": 60,
+        "group": "Add-ons",
+        "order": 505,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20942,8 +20841,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 10,
+        "group": "S-DAC-GT",
+        "order": 520,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -20987,8 +20886,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 20,
+        "group": "S-DAC-GT",
+        "order": 530,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21032,8 +20931,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 30,
+        "group": "S-DAC-GT",
+        "order": 540,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21077,8 +20976,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT energy inputs",
-        "order": 10,
+        "group": "S-DAC-GT",
+        "order": 590,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21122,8 +21021,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT energy inputs",
-        "order": 20,
+        "group": "S-DAC-GT",
+        "order": 600,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21167,8 +21066,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT energy inputs",
-        "order": 30,
+        "group": "S-DAC-GT",
+        "order": 610,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21212,8 +21111,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT emissions and credits",
-        "order": 10,
+        "group": "S-DAC-GT",
+        "order": 640,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21257,8 +21156,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT emissions and credits",
-        "order": 20,
+        "group": "S-DAC-GT",
+        "order": 650,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21302,8 +21201,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT energy inputs",
-        "order": 40,
+        "group": "S-DAC-GT",
+        "order": 620,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21347,8 +21246,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT scenario multipliers",
-        "order": 10,
+        "group": "S-DAC-GT",
+        "order": 680,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21392,8 +21291,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT scenario multipliers",
-        "order": 20,
+        "group": "S-DAC-GT",
+        "order": 690,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21437,8 +21336,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT scenario multipliers",
-        "order": 30,
+        "group": "S-DAC-GT",
+        "order": 700,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21482,8 +21381,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 40,
+        "group": "S-DAC-GT",
+        "order": 550,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21527,8 +21426,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 50,
+        "group": "S-DAC-GT",
+        "order": 560,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21572,8 +21471,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT energy inputs",
-        "order": 50,
+        "group": "S-DAC-GT",
+        "order": 630,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21617,8 +21516,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT emissions and credits",
-        "order": 30,
+        "group": "S-DAC-GT",
+        "order": 660,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21662,8 +21561,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT emissions and credits",
-        "order": 40,
+        "group": "S-DAC-GT",
+        "order": 670,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21707,8 +21606,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 60,
+        "group": "S-DAC-GT",
+        "order": 570,
         "dependency": {
           "effect": "enable",
           "match": "all",
@@ -21752,8 +21651,8 @@
       },
       "x-ui": {
         "tab": "economics",
-        "group": "S-DAC-GT costs and finance",
-        "order": 70,
+        "group": "S-DAC-GT",
+        "order": 580,
         "dependency": {
           "effect": "enable",
           "match": "all",

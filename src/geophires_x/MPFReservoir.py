@@ -56,7 +56,7 @@ class MPFReservoir(Reservoir):
                         'lower values calculate faster but may reduce consistency.',
             UI={
                 "tab": "Reservoir",
-                "group": "Thermal drawdown models",
+                "group": "Thermal drawdown and output profile options",
                 "order": 420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',

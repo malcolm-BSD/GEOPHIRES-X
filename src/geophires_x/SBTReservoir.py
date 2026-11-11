@@ -534,8 +534,8 @@ class SBTReservoir(CylindricalReservoir):
                         "'1' means the user provides an excel file with a mass flow rate profile.",
             UI={
                 "tab": "WellBores",
-                "group": "SBT flow control",
-                "order": 600,
+                "group": "Multilateral wells",
+                "order": 420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -551,8 +551,8 @@ class SBTReservoir(CylindricalReservoir):
             ToolTipText="Excel file with a mass flow rate profile",
             UI={
                 "tab": "Reservoir",
-                "group": "SBT profile inputs",
-                "order": 700,
+                "group": "SBT model",
+                "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -588,8 +588,8 @@ class SBTReservoir(CylindricalReservoir):
             ToolTipText="Excel file with an injection temperature profile",
             UI={
                 "tab": "Reservoir",
-                "group": "SBT profile inputs",
-                "order": 710,
+                "group": "SBT model",
+                "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -611,8 +611,8 @@ class SBTReservoir(CylindricalReservoir):
                         "numerical integration and decision tree thresholds in SBT algorithm.",
             UI={
                 "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 720,
+                "group": "SBT model",
+                "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -636,8 +636,8 @@ class SBTReservoir(CylindricalReservoir):
                         "which may be slightly more accurate than fully implicit.",
             UI={
                 "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 730,
+                "group": "SBT model",
+                "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},
@@ -645,21 +645,15 @@ class SBTReservoir(CylindricalReservoir):
                     'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
-        self.initial_timestep_count = self.ParameterDict[self.initial_timestep_count.Name] = intParameter(
+        self.initial_timestep_count = intParameter(
             'SBT Initial Timestep Count',
             DefaultValue=5,
             AllowableRange = [1,150],
             UnitType=Units.NONE,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
-            UI={
-                "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 740,
-                "dependency": None,
-            },
         )
-        self.final_timestep_count = self.ParameterDict[self.final_timestep_count.Name] = floatParameter(
+        self.final_timestep_count = floatParameter(
             'SBT Final Timestep Count',
             DefaultValue=70,
             Min=5,
@@ -667,14 +661,8 @@ class SBTReservoir(CylindricalReservoir):
             UnitType=Units.NONE,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
-            UI={
-                "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 750,
-                "dependency": None,
-            },
         )
-        self.initial_final_timestep_transition = self.ParameterDict[self.initial_final_timestep_transition.Name] = floatParameter(
+        self.initial_final_timestep_transition = floatParameter(
             'SBT Initial to Final Timestep Transition',
             DefaultValue=9900,
             Min=1,
@@ -684,12 +672,6 @@ class SBTReservoir(CylindricalReservoir):
             CurrentUnits=TimeUnit.SECOND,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
-            UI={
-                "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 760,
-                "dependency": None,
-            },
         )
         self.generate_wireframe_graphics = self.ParameterDict[self.generate_wireframe_graphics.Name] = boolParameter(
             'SBT Generate Wireframe Graphics',
@@ -699,8 +681,8 @@ class SBTReservoir(CylindricalReservoir):
             ToolTipText='Switch to control the generation of a wireframe drawing of a SBT wells configuration',
             UI={
                 "tab": "Reservoir",
-                "group": "SBT solver controls",
-                "order": 770,
+                "group": "SBT model",
+                "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Reservoir Model', 'operator': 'in', 'values': [8]},

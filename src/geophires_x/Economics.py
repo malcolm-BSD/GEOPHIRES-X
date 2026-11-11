@@ -22,7 +22,7 @@ from geophires_x.EconomicsUtils import BuildPricingModel, end_price_or_max, wacc
 from geophires_x.ParameterUtils import expand_schedule_dsl, CALCULATED_PARAMETER_PLACEHOLDER_VALUE
 from geophires_x.GeoPHIRESUtils import quantity
 from geophires_x.OptionList import Configuration, WellDrillingCostCorrelation, EconomicModel, EndUseOptions, PlantType, \
-    _WellDrillingCostCorrelationCitation, DepreciationSchedule
+    _WellDrillingCostCorrelationCitation, DepreciationSchedule, VALCOCalculationMode
 from geophires_x.Parameter import intParameter, floatParameter, OutputParameter, ReadParameter, boolParameter, \
     coerce_int_params_to_enum_values, listParameter, Parameter, strParameter
 from geophires_x.SurfacePlantUtils import MAX_CONSTRUCTION_YEARS
@@ -468,8 +468,8 @@ class Economics:
                         f'For traditional hydrothermal reservoirs, this parameter should be set to $0.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 30,
+                "group": "Common Development costs (CAPEX)",
+                "order": 200,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -493,8 +493,8 @@ class Economics:
             ToolTipText=f'Reservoir stimulation capital cost per injection well {before_stim_modifiers_note}',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 40,
+                "group": "Common Development costs (CAPEX)",
+                "order": 220,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -520,8 +520,8 @@ class Economics:
                         f'{stimulation_cost_per_production_well_default_value_note}',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 50,
+                "group": "Common Development costs (CAPEX)",
+                "order": 230,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -543,8 +543,8 @@ class Economics:
                         f'{self.stimulation_cost_per_production_well.Name} = {CALCULATED_PARAMETER_PLACEHOLDER_VALUE}.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 60,
+                "group": "Common Development costs (CAPEX)",
+                "order": 240,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -566,8 +566,8 @@ class Economics:
             ToolTipText="Multiplier for reservoir stimulation capital cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 70,
+                "group": "Common Development costs (CAPEX)",
+                "order": 210,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -605,8 +605,8 @@ class Economics:
                         f'(Not applied if {self.ccstimfixed.Name} is provided.)',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 80,
+                "group": "Common Development costs (CAPEX)",
+                "order": 250,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -627,8 +627,8 @@ class Economics:
             ToolTipText="Total exploration capital cost",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 90,
+                "group": "Common cost overrides",
+                "order": 4,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -648,8 +648,8 @@ class Economics:
             ToolTipText="Multiplier for built-in exploration capital cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 100,
+                "group": "Common cost overrides",
+                "order": 5,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -678,7 +678,7 @@ class Economics:
                         f'{per_injection_well_cost_name} is provided.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common Development costs (CAPEX)",
                 "order": 110,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -700,8 +700,8 @@ class Economics:
                         'including indirect costs and contingency',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 120,
+                "group": "Common Development costs (CAPEX)",
+                "order": 130,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -725,8 +725,8 @@ class Economics:
                         f'{inj_well_cost_adjustment_factor_name}.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 130,
+                "group": "Common Development costs (CAPEX)",
+                "order": 120,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -757,7 +757,7 @@ class Economics:
                         f"{self.production_well_cost_adjustment_factor.Name}.",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common Development costs (CAPEX)",
                 "order": 140,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -788,7 +788,7 @@ class Economics:
             ToolTipText="Total annual wellfield O&M cost",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common operating costs",
                 "order": 150,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -809,7 +809,7 @@ class Economics:
             ToolTipText="Multiplier for built-in wellfield O&M cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common operating costs",
                 "order": 160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -839,7 +839,7 @@ class Economics:
                         "costs as much as the original wellfield.",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common Development costs (CAPEX)",
                 "order": 170,
                 "dependency": None,
             },
@@ -858,7 +858,7 @@ class Economics:
             ToolTipText="Total surface plant capital cost",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 180,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -879,7 +879,7 @@ class Economics:
             ToolTipText="Multiplier applied to surface plant capital cost, whether calculated by the built-in correlation or derived from a provided Capital Cost for Power Plant for Electricity Generation. Not applied when Surface Plant Capital Cost (total) is provided.",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 190,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -905,7 +905,7 @@ class Economics:
                        f'({self._default_Power_plant_cost_USD_per_kWe} USD/kWe)',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 200,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -933,8 +933,8 @@ class Economics:
             ToolTipText="Total field gathering system capital cost",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 210,
+                "group": "Common Development costs (CAPEX)",
+                "order": 300,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -954,8 +954,8 @@ class Economics:
             ToolTipText="Multiplier for built-in field gathering system capital cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 220,
+                "group": "Common Development costs (CAPEX)",
+                "order": 310,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Total Capital Cost',
@@ -980,7 +980,7 @@ class Economics:
             ToolTipText="Total annual surface plant O&M cost",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common operating costs",
                 "order": 230,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1001,7 +1001,7 @@ class Economics:
             ToolTipText="Multiplier for built-in surface plant O&M cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common operating costs",
                 "order": 240,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1025,7 +1025,7 @@ class Economics:
             ToolTipText="Total annual make-up water cost",
             UI={
                 "tab": "Economics",
-                "group": "Water costs",
+                "group": "Common operating costs",
                 "order": 250,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1046,7 +1046,7 @@ class Economics:
             ToolTipText="Multiplier for built-in make-up water cost correlation",
             UI={
                 "tab": "Economics",
-                "group": "Water costs",
+                "group": "Common operating costs",
                 "order": 260,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1072,7 +1072,7 @@ class Economics:
                         f'this is treated as the {overnight_capital_cost_output_parameter().Name}.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common cost overrides",
                 "order": 2,
                 "dependency": None,
             },
@@ -1091,7 +1091,7 @@ class Economics:
             ToolTipText="Total initial O&M cost.",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common cost overrides",
                 "order": 3,
                 "dependency": None,
             },
@@ -1117,7 +1117,7 @@ class Economics:
                         'the user can select an even smaller time step, e.g., 1 h (or 8760 time steps per year).',
             UI={
                 "tab": "Project",
-                "group": "Project settings",
+                "group": "Model controls",
                 "order": 6,
                 "dependency": None,
             },
@@ -1134,7 +1134,7 @@ class Economics:
             ToolTipText="Fixed charge rate (FCR) used in the Fixed Charge Rate Model",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 300,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1158,7 +1158,7 @@ class Economics:
                         "is provided, the other's value will be automatically set to the same value.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 310,
                 "dependency": None,
             },
@@ -1176,8 +1176,8 @@ class Economics:
                         "This parameter is ignored unless XLCO(E|H|C) calculations are enabled.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Shared Assumptions",
-                "order": 320,
+                "group": "XLCO",
+                "order": 540,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1212,8 +1212,8 @@ class Economics:
             ToolTipText="Avoided emissions intensity for electricity production used for XLCOE carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Electricity Benefits",
-                "order": 400,
+                "group": "XLCO",
+                "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1237,8 +1237,8 @@ class Economics:
             ToolTipText="Carbon price used for XLCO(E|H|C) market carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Shared Assumptions",
-                "order": 330,
+                "group": "XLCO",
+                "order": 550,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1259,8 +1259,8 @@ class Economics:
             ToolTipText="Renewable Energy Credit price used for XLCOE market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Electricity Benefits",
-                "order": 410,
+                "group": "XLCO",
+                "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1282,8 +1282,8 @@ class Economics:
             ToolTipText="Displaced water use intensity used for XLCOE social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Electricity Benefits",
-                "order": 420,
+                "group": "XLCO",
+                "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1307,8 +1307,8 @@ class Economics:
             ToolTipText="Water shadow price used for XLCO(E|H|C) social water-offset benefits, interpreted as USD per m3.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Shared Assumptions",
-                "order": 340,
+                "group": "XLCO",
+                "order": 560,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1330,8 +1330,8 @@ class Economics:
             ToolTipText="XLCO(E|H|C) market input for idle-rig discounts applied to drilling and completion CAPEX only.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Shared Assumptions",
-                "order": 350,
+                "group": "XLCO",
+                "order": 570,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1350,8 +1350,8 @@ class Economics:
             ToolTipText="Construction jobs per rig-equivalent used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Employment Assumptions",
-                "order": 360,
+                "group": "XLCO",
+                "order": 580,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1370,8 +1370,8 @@ class Economics:
             ToolTipText="Operations jobs per average MW used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Employment Assumptions",
-                "order": 370,
+                "group": "XLCO",
+                "order": 590,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1390,8 +1390,8 @@ class Economics:
             ToolTipText="Multiplier applied to XLCO(E|H|C) direct construction and operations jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Employment Assumptions",
-                "order": 380,
+                "group": "XLCO",
+                "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1412,8 +1412,8 @@ class Economics:
             ToolTipText="Average monthly wage used for XLCO(E|H|C) social jobs benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Employment Assumptions",
-                "order": 390,
+                "group": "XLCO",
+                "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1434,8 +1434,8 @@ class Economics:
             ToolTipText="Avoided emissions intensity used for XLCOH carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Heat Benefits",
-                "order": 430,
+                "group": "XLCO",
+                "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1460,8 +1460,8 @@ class Economics:
             ToolTipText="Displaced water use intensity used for XLCOH social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Heat Benefits",
-                "order": 450,
+                "group": "XLCO",
+                "order": 670,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1488,8 +1488,8 @@ class Economics:
             ToolTipText="Thermal Energy Credit used for XLCOH market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Heat Benefits",
-                "order": 440,
+                "group": "XLCO",
+                "order": 660,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1516,8 +1516,8 @@ class Economics:
             ToolTipText="Avoided emissions intensity used for XLCOC carbon-offset benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Cooling Benefits",
-                "order": 460,
+                "group": "XLCO",
+                "order": 680,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1540,8 +1540,8 @@ class Economics:
             ToolTipText="Cooling Renewable Energy Credit used for future XLCOC market benefits.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Cooling Benefits",
-                "order": 470,
+                "group": "XLCO",
+                "order": 690,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1562,8 +1562,8 @@ class Economics:
             ToolTipText="Displaced water use intensity used for XLCOC social water-offset benefits in m3/MWh.",
             UI={
                 "tab": "Economics",
-                "group": "XLCO Cooling Benefits",
-                "order": 480,
+                "group": "XLCO",
+                "order": 700,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do XLCO(E|H|C) Calculations',
@@ -1590,16 +1590,23 @@ class Economics:
         )
         self.VALCOCalculationMode = self.ParameterDict[self.VALCOCalculationMode.Name] = strParameter(
             "VALCO Calculation Mode",
-            DefaultValue="Direct",
+            DefaultValue=VALCOCalculationMode.DIRECT.value,
+            ValuesEnum=VALCOCalculationMode,
             UnitType=Units.NONE,
             Required=False,
             ErrMessage="assume default VALCO calculation mode (Direct)",
-            ToolTipText="VALCO calculation mode. Direct is the v1 supported mode.",
+            ToolTipText=("Select Direct to provide value components explicitly, or Derived to calculate value "
+                         "components from capacity, flexibility, emissions, and water-benefit inputs."),
             UI={
                 "tab": "Economics",
-                "group": "VALCO controls",
-                "order": 5,
-                "dependency": None,
+                "group": "VALCO",
+                "order": 521,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [   {   'parameter': 'Do VALCO(E|H|C) Calculations',
+                                          'operator': 'in',
+                                          'values': [True]}],
+                    'reason': 'Used only when value-adjusted levelized-cost calculations are enabled.'},
             },
         )
         self.VALCOESystemAverageEnergyValue = self.ParameterDict[self.VALCOESystemAverageEnergyValue.Name] = floatParameter(
@@ -1614,8 +1621,8 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
-                "order": 520,
+                "group": "VALCO",
+                "order": 522,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do VALCO(E|H|C) Calculations',
@@ -1639,7 +1646,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 530,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1664,7 +1671,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 540,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1689,7 +1696,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 550,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1717,7 +1724,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 560,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1742,7 +1749,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOE calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 570,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1768,7 +1775,7 @@ class Economics:
             ToolTipText="Derived-mode electricity basis capacity value used to calculate VALCOE technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 580,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1795,7 +1802,7 @@ class Economics:
             ToolTipText="Derived-mode electricity capacity credit used to calculate VALCOE technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 590,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1821,7 +1828,7 @@ class Economics:
             ToolTipText="Derived-mode electricity base flexibility value used to calculate VALCOE technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 600,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1847,7 +1854,7 @@ class Economics:
             ToolTipText="Derived-mode electricity flexibility multiplier used to calculate VALCOE technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO electricity",
+                "group": "VALCO",
                 "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1875,7 +1882,7 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1903,7 +1910,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1931,7 +1938,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1959,7 +1966,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -1990,7 +1997,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 660,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2018,7 +2025,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOH calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 670,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2047,7 +2054,7 @@ class Economics:
             ToolTipText="Derived-mode heat basis capacity value used to calculate VALCOH technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 680,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2077,7 +2084,7 @@ class Economics:
             ToolTipText="Derived-mode heat capacity credit used to calculate VALCOH technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 690,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2106,7 +2113,7 @@ class Economics:
             ToolTipText="Derived-mode heat base flexibility value used to calculate VALCOH technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 700,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2135,7 +2142,7 @@ class Economics:
             ToolTipText="Derived-mode heat flexibility multiplier used to calculate VALCOH technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO heat",
+                "group": "VALCO",
                 "order": 710,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2166,7 +2173,7 @@ class Economics:
             ToolTipText="Direct-input system average energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 720,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2190,7 +2197,7 @@ class Economics:
             ToolTipText="Direct-input technology energy value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 730,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2214,7 +2221,7 @@ class Economics:
             ToolTipText="Direct-input system average capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 740,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2238,7 +2245,7 @@ class Economics:
             ToolTipText="Direct-input technology capacity value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 750,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2265,7 +2272,7 @@ class Economics:
             ToolTipText="Direct-input system average flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 760,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2289,7 +2296,7 @@ class Economics:
             ToolTipText="Direct-input technology flexibility value used in VALCOC calculations.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 770,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2314,7 +2321,7 @@ class Economics:
             ToolTipText="Derived-mode cooling basis capacity value used to calculate VALCOC technology capacity value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 780,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2340,7 +2347,7 @@ class Economics:
             ToolTipText="Derived-mode cooling capacity credit used to calculate VALCOC technology capacity value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 790,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2365,7 +2372,7 @@ class Economics:
             ToolTipText="Derived-mode cooling base flexibility value used to calculate VALCOC technology flexibility value in USD/kW-yr.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 800,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2390,7 +2397,7 @@ class Economics:
             ToolTipText="Derived-mode cooling flexibility multiplier used to calculate VALCOC technology flexibility value.",
             UI={
                 "tab": "Economics",
-                "group": "VALCO cooling",
+                "group": "VALCO",
                 "order": 810,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2423,8 +2430,8 @@ class Economics:
                         f"{royalty_rate_and_schedule_mutual_exclusivity_note}",
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 820,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1300,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Economic Model', 'operator': 'in', 'values': [5]},
@@ -2451,8 +2458,8 @@ class Economics:
                         f"{rate_based_only_param_note}",
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 830,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1310,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Economic Model', 'operator': 'in', 'values': [5]},
@@ -2475,8 +2482,8 @@ class Economics:
                         f'{rate_based_only_param_note}',
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 840,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1320,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Economic Model', 'operator': 'in', 'values': [5]},
@@ -2501,8 +2508,8 @@ class Economics:
                         f"{rate_based_only_param_note}",
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 850,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1330,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'Economic Model', 'operator': 'in', 'values': [5]},
@@ -2528,8 +2535,8 @@ class Economics:
                         f'{royalty_rate_and_schedule_mutual_exclusivity_note}',
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 860,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1340,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2554,8 +2561,8 @@ class Economics:
                         f'thereafter.',
             UI={
                 "tab": "Economics",
-                "group": "SAM Economic parameters",
-                "order": 870,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1350,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2576,8 +2583,8 @@ class Economics:
                         "separate from the main project discount rate.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 880,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1360,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2602,7 +2609,7 @@ class Economics:
                         'See https://github.com/NREL/GEOPHIRES-X/discussions/344 for further details.',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 890,
                 "dependency": None,
             },
@@ -2621,7 +2628,7 @@ class Economics:
             ToolTipText="Fraction of geothermal project financing through bonds (debt/loans).",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Tax-aware financing — BICYCLE and SAM",
                 "order": 900,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2643,7 +2650,7 @@ class Economics:
             ToolTipText="Inflated bond interest rate (for debt/loans)",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Tax-aware financing — BICYCLE and SAM",
                 "order": 910,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2663,8 +2670,8 @@ class Economics:
             ToolTipText='Inflated bond interest rate during construction (for debt/loans)',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 920,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1370,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2683,8 +2690,8 @@ class Economics:
             ToolTipText='Up-front fee charged as a percentage of construction debt drawn (for debt/loans)',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 925,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1375,
                 "dependency": {
                     "effect": "enable",
                     "match": "all",
@@ -2708,8 +2715,8 @@ class Economics:
                         f"and may not exceed it. SAM Single Owner PPA economic model only.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 930,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1380,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2732,8 +2739,8 @@ class Economics:
                         "partner). SAM Single Owner PPA economic model only.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 10,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1390,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2754,8 +2761,8 @@ class Economics:
                         "them. SAM Single Owner PPA economic model only.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 940,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2774,7 +2781,7 @@ class Economics:
             ToolTipText="Inflated equity interest rate (see docs)",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "BICYCLE financing and taxes",
                 "order": 950,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2794,7 +2801,7 @@ class Economics:
             ToolTipText="Inflation rate",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 960,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -2821,7 +2828,7 @@ class Economics:
             ToolTipText="Combined income tax rate (see docs)",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Tax-aware financing — BICYCLE and SAM",
                 "order": 970,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2841,7 +2848,7 @@ class Economics:
             ToolTipText="Gross revenue tax rate (see docs)",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "BICYCLE financing and taxes",
                 "order": 980,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2861,7 +2868,7 @@ class Economics:
             ToolTipText="Investment tax credit rate (ITC). For SAM Economic Models, this is the federal rate.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 990,
                 "dependency": None,
             },
@@ -2877,8 +2884,8 @@ class Economics:
             ToolTipText='State investment tax credit amount (state ITC).',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 1000,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2897,7 +2904,7 @@ class Economics:
             ToolTipText="Property tax rate (see docs)",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Tax-aware financing — BICYCLE and SAM",
                 "order": 1010,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -2922,7 +2929,7 @@ class Economics:
                         'calculated automatically by compounding Inflation Rate over Construction Years.',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 1020,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -2946,8 +2953,8 @@ class Economics:
                         f'and normalized to sum to 1.0.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 1030,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -2988,8 +2995,8 @@ class Economics:
                         f'prior to the first construction year.',
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
-                "order": 1040,
+                "group": "SAM financing, construction, and royalties",
+                "order": 1430,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Economic Model', 'operator': 'in', 'values': [5]}],
@@ -3012,8 +3019,8 @@ class Economics:
                         'affected by this parameter.)',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 1050,
+                "group": "Common cost overrides",
+                "order": 6,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -3038,8 +3045,8 @@ class Economics:
                         f'{_WellDrillingCostCorrelationCitation.GEOVISION.value}.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 20,
+                "group": "Common Development costs (CAPEX)",
+                "order": 100,
                 "dependency": None,
             },
         )
@@ -3104,7 +3111,7 @@ class Economics:
                         "cement, insulated insert",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Simple CLGS cost inputs",
                 "order": 1090,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -3131,8 +3138,8 @@ class Economics:
                         "casing, cement, insulated insert",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 1100,
+                "group": "Common Development costs (CAPEX)",
+                "order": 160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Well Geometry Configuration',
@@ -3155,8 +3162,8 @@ class Economics:
                         f'calculated as a percentage of the direct cost.',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 1110,
+                "group": "Common Development costs (CAPEX)",
+                "order": 150,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -3167,7 +3174,7 @@ class Economics:
         default_indirect_capital_cost_percentage = 12
         self.indirect_capital_cost_percentage = \
           self.ParameterDict[self.indirect_capital_cost_percentage.Name] = floatParameter(
-            'Indirect Capital Cost Percentage',
+            'Common Indirect Capital Cost Percentage',
             DefaultValue=default_indirect_capital_cost_percentage,
             Min=0,
             Max=100,
@@ -3186,8 +3193,8 @@ class Economics:
                         f'(default {self.stimulation_indirect_capital_cost_percentage.DefaultValue}%).',
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
-                "order": 1120,
+                "group": "Common cost overrides",
+                "order": 7,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Total Capital Cost', 'operator': 'provided', 'values': [False]}],
@@ -3210,7 +3217,7 @@ class Economics:
             ToolTipText="Absorption chiller capital cost",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 1130,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3236,7 +3243,7 @@ class Economics:
             ToolTipText="Absorption chiller O&M cost",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Common operating costs",
                 "order": 1140,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3262,7 +3269,7 @@ class Economics:
             ToolTipText="Heat pump capital cost",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 1150,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3288,7 +3295,7 @@ class Economics:
             ToolTipText="Price of peaking fuel for peaking boilers",
             UI={
                 "tab": "Economics",
-                "group": "Peaking boiler economics",
+                "group": "Common surface plant and end-use costs",
                 "order": 1160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3311,7 +3318,7 @@ class Economics:
             ToolTipText="Peaking boiler efficiency",
             UI={
                 "tab": "Economics",
-                "group": "Peaking boiler economics",
+                "group": "Common surface plant and end-use costs",
                 "order": 1170,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3333,7 +3340,7 @@ class Economics:
             ToolTipText="Peaking boiler cost per kW of maximum peaking boiler demand",
             UI={
                 "tab": "Economics",
-                "group": "Peaking boiler economics",
+                "group": "Common surface plant and end-use costs",
                 "order": 1180,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3386,7 +3393,7 @@ class Economics:
             ToolTipText="Transmission/pipeline Cost rate per km, in KUSD/km.",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 1200,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -3579,8 +3586,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Heat sale pricing",
-                "order": 10,
+                "group": "Common revenues, incentives, and employment",
+                "order": 640,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3602,8 +3609,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Heat sale pricing",
-                "order": 20,
+                "group": "Common revenues, incentives, and employment",
+                "order": 650,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3626,8 +3633,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Heat sale pricing",
-                "order": 30,
+                "group": "Common revenues, incentives, and employment",
+                "order": 660,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3651,8 +3658,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Heat sale pricing",
-                "order": 40,
+                "group": "Common revenues, incentives, and employment",
+                "order": 670,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3674,8 +3681,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Electricity sale pricing",
-                "order": 10,
+                "group": "Common revenues, incentives, and employment",
+                "order": 490,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3700,8 +3707,8 @@ class Economics:
                         "lifetime, then the value will have no effect beyond allowing escalation to occur every year.",
             UI={
                 "tab": "Economics",
-                "group": "Electricity sale pricing",
-                "order": 20,
+                "group": "Common revenues, incentives, and employment",
+                "order": 610,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3721,8 +3728,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Electricity sale pricing",
-                "order": 30,
+                "group": "Common revenues, incentives, and employment",
+                "order": 620,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3743,8 +3750,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Electricity sale pricing",
-                "order": 40,
+                "group": "Common revenues, incentives, and employment",
+                "order": 630,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'End-Use Option',
@@ -3763,8 +3770,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Cooling sale pricing",
-                "order": 10,
+                "group": "Common revenues, incentives, and employment",
+                "order": 680,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3782,8 +3789,8 @@ class Economics:
             CurrentUnits=EnergyCostUnit.DOLLARSPERKWH,
             UI={
                 "tab": "Economics",
-                "group": "Cooling sale pricing",
-                "order": 20,
+                "group": "Common revenues, incentives, and employment",
+                "order": 690,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3802,8 +3809,8 @@ class Economics:
             ToolTipText="Number of years after start of project before start of escalation",
             UI={
                 "tab": "Economics",
-                "group": "Cooling sale pricing",
-                "order": 30,
+                "group": "Common revenues, incentives, and employment",
+                "order": 700,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3823,8 +3830,8 @@ class Economics:
             ToolTipText="additional cost per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Cooling sale pricing",
-                "order": 40,
+                "group": "Common revenues, incentives, and employment",
+                "order": 710,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {'parameter': 'End-Use Option', 'operator': 'in', 'values': [2]},
@@ -3842,8 +3849,8 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
-                "order": 1390,
+                "group": "Carbon Pricing",
+                "order": 510,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Do Carbon Price Calculations',
@@ -3862,7 +3869,7 @@ class Economics:
             CurrentUnits=CostPerMassUnit.DOLLARSPERLB,
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
+                "group": "Carbon Pricing",
                 "order": 1400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3883,7 +3890,7 @@ class Economics:
             ToolTipText="Number of years after start of project before start of Carbon incentives",
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
+                "group": "Carbon Pricing",
                 "order": 1410,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3905,7 +3912,7 @@ class Economics:
             ToolTipText="additional value per year of price after escalation starts",
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
+                "group": "Carbon Pricing",
                 "order": 1420,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3927,7 +3934,7 @@ class Economics:
             ToolTipText="CO2 intensity of the grid (how much CO2 is produced per kWh of electricity produced (0.93916924 lbs/kWh for Texas ERCOT))",
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
+                "group": "Carbon Pricing",
                 "order": 1430,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3953,7 +3960,7 @@ class Economics:
                         "(0.070324961 lbs/kWh; https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references))",
             UI={
                 "tab": "Economics",
-                "group": "Carbon pricing and emissions",
+                "group": "Carbon Pricing",
                 "order": 1440,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -3977,7 +3984,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Fees, grants, and incentives",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1450,
                 "dependency": None,
             },
@@ -3991,7 +3998,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Fees, grants, and incentives",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1460,
                 "dependency": None,
             },
@@ -4005,7 +4012,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Fees, grants, and incentives",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1470,
                 "dependency": None,
             },
@@ -4022,7 +4029,7 @@ class Economics:
             ToolTipText="Fixed percent reduction in annual tax rate",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 1480,
                 "dependency": None,
             },
@@ -4036,7 +4043,7 @@ class Economics:
             CurrentUnits=CurrencyUnit.MDOLLARS,
             UI={
                 "tab": "Economics",
-                "group": "Fees, grants, and incentives",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1490,
                 "dependency": None,
             },
@@ -4058,7 +4065,7 @@ class Economics:
                         "will be automatically set to the same value.",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common financial assumptions",
                 "order": 1500,
                 "dependency": None,
             },
@@ -4076,7 +4083,7 @@ class Economics:
             ToolTipText="CHP Electrical Plant Cost Allocation Ratio (cost electrical plant/total CAPEX)",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Common surface plant and end-use costs",
                 "order": 1510,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -4098,7 +4105,7 @@ class Economics:
             ToolTipText="Production tax credit for electricity in $/kWh",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1520,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -4120,7 +4127,7 @@ class Economics:
             ToolTipText="Production tax credit for heat in $/MMBTU",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1530,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -4145,7 +4152,7 @@ class Economics:
             ToolTipText="Production tax credit for cooling in $/MMBTU",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1540,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -4165,7 +4172,7 @@ class Economics:
             ToolTipText="Production tax credit for duration in years",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1550,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -4190,7 +4197,7 @@ class Economics:
             ToolTipText="Production tax credit inflation adjusted",
             UI={
                 "tab": "Economics",
-                "group": "Financing and tax",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1560,
                 "dependency": {   'effect': 'enable',
                     'match': 'any',
@@ -4216,7 +4223,7 @@ class Economics:
             ToolTipText="Estimated jobs created per MW of electricity produced, per https://geothermal.org/resources/geothermal-basics",
             UI={
                 "tab": "Economics",
-                "group": "Employment assumptions",
+                "group": "Common revenues, incentives, and employment",
                 "order": 1570,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -5077,6 +5084,25 @@ class Economics:
             model.logger.warning(_msg)
 
         if len(model.InputParameters) > 0:
+            legacy_indirect_cost_name = 'Indirect Capital Cost Percentage'
+            if legacy_indirect_cost_name in model.InputParameters:
+                if self.indirect_capital_cost_percentage.Name in model.InputParameters:
+                    _warn(
+                        f'Ignoring deprecated input "{legacy_indirect_cost_name}" because '
+                        f'"{self.indirect_capital_cost_percentage.Name}" is also provided.'
+                    )
+                else:
+                    ReadParameter(
+                        model.InputParameters[legacy_indirect_cost_name],
+                        self.indirect_capital_cost_percentage,
+                        model,
+                    )
+                    _warn(
+                        f'Input "{legacy_indirect_cost_name}" is deprecated; use '
+                        f'"{self.indirect_capital_cost_percentage.Name}" instead.'
+                    )
+                del model.InputParameters[legacy_indirect_cost_name]
+
             # loop through all the parameters that the user wishes to set, looking for parameters that match this object
             for item in self.ParameterDict.items():
                 input_key = item[0].strip()
@@ -5096,6 +5122,9 @@ class Economics:
 
                     elif ParameterToModify.Name == "Depreciation Schedule":
                         ParameterToModify.value = DepreciationSchedule.from_input_string(ParameterReadIn.sValue)
+
+                    elif ParameterToModify.Name == "VALCO Calculation Mode":
+                        ParameterToModify.value = VALCOCalculationMode.from_input_string(ParameterReadIn.sValue).value
 
                     elif ParameterToModify.Name == "Reservoir Stimulation Capital Cost Adjustment Factor":
                         if self.ccstimfixed.Valid and ParameterToModify.Valid:

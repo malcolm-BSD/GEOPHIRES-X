@@ -89,8 +89,8 @@ class Reservoir:
             ToolTipText="Depth of the reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir location and limits",
-                "order": 100,
+                "group": "Limits",
+                "order": 10,
                 "dependency": None,
             },
         )
@@ -109,26 +109,20 @@ class Reservoir:
                         "GEOPHIRES will cap the drilling depth to stay below this maximum temperature.",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir location and limits",
-                "order": 120,
+                "group": "Limits",
+                "order": 20,
                 "dependency": None,
             },
         )
 
-        self.numseg = self.ParameterDict[self.numseg.Name] = intParameter(
+        self.numseg = intParameter(
             "Number of Segments",
             DefaultValue=1,
             AllowableRange=[1],
             UnitType=Units.NONE,
             Required=True,
             ErrMessage="assume default number of segments (1)",
-            ToolTipText="Number of rock segments from surface to reservoir depth with specific geothermal gradient",
-            UI={
-                "tab": "Reservoir",
-                "group": "Geothermal gradient profile",
-                "order": 150,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated input; the number of segments is derived from Gradients and Thicknesses.",
         )
 
         self.gradient = self.ParameterDict[self.gradient.Name] = listParameter(
@@ -144,13 +138,13 @@ class Reservoir:
             ToolTipText="Geothermal gradient(s)",
             UI={
                 "tab": "Reservoir",
-                "group": "Geothermal gradient profile",
-                "order": 130,
+                "group": "Gradient",
+                "order": 30,
                 "dependency": None,
             },
         )
 
-        self.gradient1 = self.ParameterDict[self.gradient1.Name] = floatParameter(
+        self.gradient1 = floatParameter(
             "Gradient 1",
             DefaultValue=50,
             Min=0.0,
@@ -160,16 +154,10 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 1 (50 deg.C/km)",
-            ToolTipText="Geothermal gradient 1 in rock segment 1",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 160,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the first value in Gradients",
         )
 
-        self.gradient2 = self.ParameterDict[self.gradient2.Name] = floatParameter(
+        self.gradient2 = floatParameter(
             "Gradient 2",
             DefaultValue=0.0,
             Min=0.0,
@@ -179,16 +167,10 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 2 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 2 in rock segment 2",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 170,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the second value in Gradients",
         )
 
-        self.gradient3 = self.ParameterDict[self.gradient3.Name] = floatParameter(
+        self.gradient3 = floatParameter(
             "Gradient 3",
             DefaultValue=0.0,
             Min=0.0,
@@ -198,16 +180,10 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 3 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 3 in rock segment 3",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 180,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the third value in Gradients",
         )
 
-        self.gradient4 = self.ParameterDict[self.gradient4.Name] = floatParameter(
+        self.gradient4 = floatParameter(
             "Gradient 4",
             DefaultValue=0.0,
             Min=0.0,
@@ -217,13 +193,7 @@ class Reservoir:
             CurrentUnits=TemperatureGradientUnit.DEGREESCPERKM,
             Required=True,
             ErrMessage="assume default geothermal gradient 4 (0 deg.C/km)",
-            ToolTipText="Geothermal gradient 4 in rock segment 4",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 190,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the fourth value in Gradients",
         )
 
         self.layerthickness = self.ParameterDict[self.layerthickness.Name] = listParameter(
@@ -240,13 +210,13 @@ class Reservoir:
             ToolTipText="Thicknesses of rock segments",
             UI={
                 "tab": "Reservoir",
-                "group": "Geothermal gradient profile",
-                "order": 140,
+                "group": "Gradient",
+                "order": 40,
                 "dependency": None,
             },
         )
 
-        self.layerthickness1 = self.ParameterDict[self.layerthickness1.Name] = floatParameter(
+        self.layerthickness1 = floatParameter(
             "Thickness 1",
             DefaultValue=2.0,
             Min=0.01,
@@ -255,16 +225,10 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 1 (2 km)",
-            ToolTipText="Thickness of rock segment 1",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 200,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the first value in Thicknesses",
         )
 
-        self.layerthickness2 = self.ParameterDict[self.layerthickness2.Name] = floatParameter(
+        self.layerthickness2 = floatParameter(
             "Thickness 2",
             DefaultValue=0.01,
             Min=0.01,
@@ -273,16 +237,10 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 2 (0 km)",
-            ToolTipText="Thickness of rock segment 2",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 210,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the second value in Thicknesses",
         )
 
-        self.layerthickness3 = self.ParameterDict[self.layerthickness3.Name] = floatParameter(
+        self.layerthickness3 = floatParameter(
             "Thickness 3",
             DefaultValue=0.01,
             Min=0.01,
@@ -291,16 +249,10 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 3 (0 km)",
-            ToolTipText="Thickness of rock segment 3",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 220,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the third value in Thicknesses",
         )
 
-        self.layerthickness4 = self.ParameterDict[self.layerthickness4.Name] = floatParameter(
+        self.layerthickness4 = floatParameter(
             "Thickness 4",
             DefaultValue=0.01,
             Min=0.01,
@@ -309,13 +261,7 @@ class Reservoir:
             PreferredUnits=LengthUnit.KILOMETERS,
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 4 (0 km)",
-            ToolTipText="Thickness of rock segment 4",
-            UI={
-                "tab": "Reservoir",
-                "group": "Legacy gradient inputs",
-                "order": 230,
-                "dependency": None,
-            },
+            ToolTipText="Deprecated alias for the fourth value in Thicknesses",
         )
 
         # noinspection SpellCheckingInspection
@@ -334,8 +280,8 @@ class Reservoir:
                         '; '.join([f'{it.int_value}: {it.name}: {it.value}' for it in ReservoirVolume]),
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 10,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 100,
                 "dependency": None,
             },
         )
@@ -351,9 +297,14 @@ class Reservoir:
                         '; '.join([f'{it.int_value}: {it.value}' for it in FractureShape]),
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 20,
-                "dependency": None,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 150,
+                "dependency": {   'effect': 'enable',
+                    'match': 'all',
+                    'conditions': [
+                        {'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 3]},
+                    ],
+                    'reason': 'Fracture geometry is not used when only reservoir volume is specified.'},
             },
         )
 
@@ -369,11 +320,14 @@ class Reservoir:
             ToolTipText="Effective heat transfer area per fracture",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 30,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 160,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [1]}],
+                    'conditions': [
+                        {'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 3]},
+                        {'parameter': 'Fracture Shape', 'operator': 'in', 'values': [1]},
+                    ],
                     'reason': 'Direct input for a circular fracture with known area.'},
             },
         )
@@ -390,11 +344,14 @@ class Reservoir:
             ToolTipText="Diameter (if fracture shape = 2) or height (if fracture shape = 3 or 4) of each fracture",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 40,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 170,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [2, 3, 4]}],
+                    'conditions': [
+                        {'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 3]},
+                        {'parameter': 'Fracture Shape', 'operator': 'in', 'values': [2, 3, 4]},
+                    ],
                     'reason': 'Direct input for diameter-defined circular, square, and rectangular fractures.'},
             },
         )
@@ -413,11 +370,14 @@ class Reservoir:
                         "extent, not its aperture or thickness.",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 50,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 180,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Fracture Shape', 'operator': 'in', 'values': [4]}],
+                    'conditions': [
+                        {'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 3]},
+                        {'parameter': 'Fracture Shape', 'operator': 'in', 'values': [4]},
+                    ],
                     'reason': 'Direct input only for a rectangular fracture.'},
             },
         )
@@ -432,17 +392,17 @@ class Reservoir:
             ToolTipText="Number of identical parallel fractures in EGS fracture-based reservoir model.",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 60,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 120,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Reservoir Volume Option',
                                           'operator': 'in',
-                                          'values': [1, 3, 4]},
+                                          'values': [1, 3]},
                                       {   'parameter': 'Number of Fractures per Stimulated Well',
                                           'operator': 'provided',
                                           'values': [False]}],
-                    'reason': 'Fracture count is calculated instead when Reservoir Volume Option is 2.'},
+                    'reason': 'Fracture count is an input only for Reservoir Volume Options 1 and 3.'},
             },
         )
 
@@ -462,18 +422,18 @@ class Reservoir:
                         f'{model_economics_stimulation_cost_per_production_well_name} is provided.)',
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 70,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 130,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Reservoir Volume Option',
                                           'operator': 'in',
-                                          'values': [1, 3, 4]},
+                                          'values': [1, 3]},
                                       {   'parameter': 'Number of Fractures',
                                           'operator': 'provided',
                                           'values': [False]}],
-                    'reason': 'Alternative per-stimulated-well fracture count; mutually exclusive with Number of '
-                              'Fractures.'},
+                    'reason': 'Alternative fracture-count input for Reservoir Volume Options 1 and 3; mutually '
+                              'exclusive with Number of Fractures.'},
             },
         )
 
@@ -490,12 +450,12 @@ class Reservoir:
             in EGS fracture-based reservoir",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 80,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 140,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
-                    'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2, 4]}],
-                    'reason': 'Fracture separation is calculated instead when Reservoir Volume Option is 3.'},
+                    'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [1, 2]}],
+                    'reason': 'Fracture separation is an input only for Reservoir Volume Options 1 and 2.'},
             },
         )
 
@@ -511,8 +471,8 @@ class Reservoir:
             ToolTipText="Geothermal reservoir volume",
             UI={
                 "tab": "Reservoir",
-                "group": "Fracture and reservoir volume",
-                "order": 90,
+                "group": "Reservoir volume and Fracture properties",
+                "order": 110,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Volume Option', 'operator': 'in', 'values': [2, 3, 4]}],
@@ -535,8 +495,8 @@ class Reservoir:
                         "(total geofluid lost)/(total geofluid produced).",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 330,
+                "group": "Rock and flow properties",
+                "order": 280,
                 "dependency": None,
             },
         )
@@ -555,8 +515,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock heat capacity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir rock properties",
-                "order": 240,
+                "group": "Rock and flow properties",
+                "order": 200,
                 "dependency": None,
             },
         )
@@ -575,8 +535,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock density",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir rock properties",
-                "order": 250,
+                "group": "Rock and flow properties",
+                "order": 210,
                 "dependency": None,
             },
         )
@@ -594,8 +554,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir rock thermal conductivity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir rock properties",
-                "order": 260,
+                "group": "Rock and flow properties",
+                "order": 220,
                 "dependency": None,
             },
         )
@@ -613,8 +573,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir permeability",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir rock properties",
-                "order": 270,
+                "group": "Rock and flow properties",
+                "order": 230,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -635,8 +595,8 @@ class Reservoir:
             ToolTipText="Constant and uniform reservoir porosity",
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir rock properties",
-                "order": 280,
+                "group": "Rock and flow properties",
+                "order": 240,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [2, 6]}],
@@ -657,9 +617,9 @@ class Reservoir:
             ToolTipText="Surface temperature used for calculating bottom-hole temperature "
                         "(with geothermal gradient and reservoir depth)",
             UI={
-                "tab": "Reservoir",
-                "group": "Reservoir location and limits",
-                "order": 110,
+                "tab": "Project",
+                "group": "Model controls",
+                "order": 7,
                 "dependency": None,
             },
         )
@@ -830,6 +790,60 @@ class Reservoir:
         # superclass parameters in your class.
 
         if len(model.InputParameters) > 0:
+            legacy_segment_count_name = self.numseg.Name
+            if legacy_segment_count_name in model.InputParameters:
+                model.logger.warning(
+                    f'"{legacy_segment_count_name}" is deprecated and ignored; '
+                    f'it is derived from "{self.gradient.Name}" and "{self.layerthickness.Name}".'
+                )
+                del model.InputParameters[legacy_segment_count_name]
+
+            def apply_legacy_list_inputs(canonical_parameter, legacy_parameters) -> None:
+                supplied_legacy_parameters = [
+                    parameter for parameter in legacy_parameters if parameter.Name in model.InputParameters
+                ]
+                if not supplied_legacy_parameters:
+                    return
+
+                if canonical_parameter.Name in model.InputParameters:
+                    model.logger.warning(
+                        f'Ignoring deprecated inputs '
+                        f'[{", ".join(parameter.Name for parameter in supplied_legacy_parameters)}] '
+                        f'because "{canonical_parameter.Name}" is provided.'
+                    )
+                else:
+                    model.logger.warning(
+                        f'Inputs [{", ".join(parameter.Name for parameter in supplied_legacy_parameters)}] '
+                        f'are deprecated; use "{canonical_parameter.Name}" instead.'
+                    )
+                    for position, legacy_parameter in enumerate(legacy_parameters):
+                        if legacy_parameter.Name not in model.InputParameters:
+                            continue
+                        ReadParameter(
+                            model.InputParameters[legacy_parameter.Name],
+                            legacy_parameter,
+                            model,
+                        )
+                        set_or_append(canonical_parameter.value, position, legacy_parameter.value)
+                    canonical_parameter.Provided = True
+
+                for legacy_parameter in supplied_legacy_parameters:
+                    del model.InputParameters[legacy_parameter.Name]
+
+            apply_legacy_list_inputs(
+                self.gradient,
+                [self.gradient1, self.gradient2, self.gradient3, self.gradient4],
+            )
+            apply_legacy_list_inputs(
+                self.layerthickness,
+                [
+                    self.layerthickness1,
+                    self.layerthickness2,
+                    self.layerthickness3,
+                    self.layerthickness4,
+                ],
+            )
+
             # loop through all the parameters that the user wishes to set, looking for parameters that match this object
             for item in self.ParameterDict.items():
                 ParameterToModify = item[1]
@@ -855,7 +869,7 @@ class Reservoir:
                     elif ParameterToModify.Name == "Reservoir Volume Option":
                         ParameterToModify.value = ReservoirVolume.from_input_string(ParameterReadIn.sValue)
 
-                        if ParameterToModify.value == ReservoirVolume.RES_VOL_ONLY and ParameterToModify.value in [
+                        if ParameterToModify.value == ReservoirVolume.RES_VOL_ONLY and self.resoption.value in [
                             ReservoirModel.MULTIPLE_PARALLEL_FRACTURES, ReservoirModel.LINEAR_HEAT_SWEEP]:
                             ParameterToModify.value = ReservoirVolume.RES_VOL_FRAC_NUM
                             msg = ('If user-selected reservoir model is 1 or 2, then user-selected reservoir volume '
@@ -877,23 +891,6 @@ class Reservoir:
                         else:
                             # fracshape = 4  Rectangular fracture
                             ParameterToModify.value = FractureShape.RECTANGULAR
-
-                    elif ParameterToModify.Name.startswith('Gradient '):
-                        parts = ParameterReadIn.Name.split(' ')
-                        position = int(parts[1]) - 1
-                        set_or_append(model.reserv.gradient.value, position, ParameterToModify.value)
-
-                    elif ParameterToModify.Name.startswith('Thickness '):
-                        parts = ParameterReadIn.Name.split(' ')
-                        position = int(parts[1]) - 1
-                        num_segments = len(model.reserv.layerthickness.value)
-                        if position < num_segments:
-                            set_or_append(model.reserv.layerthickness.value, position, ParameterToModify.value)
-                        else:
-                            model.logger.error(f'Cannot set {ParameterToModify.Name} to {ParameterToModify.value} '
-                                               f'because only {num_segments} segments are defined.')
-                            # Don't raise exception since we can ignore and the user will see the incorrectly configured
-                            # segment(s) in the result.
 
                     elif ParameterToModify.Name.startswith("Fracture Separation"):
                         self.fracsepcalc.value = self.fracsep.value

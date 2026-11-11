@@ -65,7 +65,7 @@ class AGSEconomics(Economics.Economics):
             ErrMessage="assume default Operation & Maintenance cost of surface plant expressed as fraction of total surface plant capital cost (0.015)",
             UI={
                 "tab": "Economics",
-                "group": "Operating costs",
+                "group": "Simple CLGS cost inputs",
                 "order": 1580,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
@@ -92,7 +92,7 @@ class AGSEconomics(Economics.Economics):
             ErrMessage="assume default Capital cost for surface plant for direct-use system (100 $/kWth)",
             UI={
                 "tab": "Economics",
-                "group": "Capital costs",
+                "group": "Simple CLGS cost inputs",
                 "order": 1590,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',

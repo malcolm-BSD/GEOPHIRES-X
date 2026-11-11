@@ -39,7 +39,7 @@ class TOUGH2Reservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "TOUGH2 model",
-                "order": 900,
+                "order": 800,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -55,7 +55,7 @@ class TOUGH2Reservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "TOUGH2 model",
-                "order": 910,
+                "order": 810,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -75,7 +75,7 @@ class TOUGH2Reservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "TOUGH2 model",
-                "order": 920,
+                "order": 820,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],
@@ -94,7 +94,7 @@ class TOUGH2Reservoir(Reservoir):
             UI={
                 "tab": "Reservoir",
                 "group": "TOUGH2 model",
-                "order": 930,
+                "order": 830,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Reservoir Model', 'operator': 'in', 'values': [6]}],

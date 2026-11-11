@@ -128,6 +128,20 @@ class OperatingMode(GeophiresInputEnum):
         raise ValueError(f'Unknown Operating Mode input value: {input_string}')
 
 
+class VALCOCalculationMode(GeophiresInputEnum):
+    DIRECT = 1, "Direct"
+    DERIVED = 2, "Derived"
+
+    @staticmethod
+    def from_input_string(input_string: str) -> 'VALCOCalculationMode':
+        normalized = input_string.strip().lower()
+        for member in __class__:
+            if normalized in [str(member.int_value), member.value.lower()]:
+                return member
+
+        raise ValueError(f'Unknown VALCO Calculation Mode input value: {input_string}')
+
+
 class DispatchDemandSource(GeophiresInputEnum):
     ANNUAL_HEAT_DEMAND = 1, "Annual Heat Demand"
     ANNUAL_ELECTRICITY_DEMAND = 2, "Annual Electricity Demand"

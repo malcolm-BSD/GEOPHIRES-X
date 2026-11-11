@@ -49,7 +49,7 @@ class SFReservoir(Reservoir):
             ToolTipText="specify the thermal drawdown for reservoir model 3 and 4",
             UI={
                 "tab": "Reservoir",
-                "group": "Thermal drawdown models",
+                "group": "Thermal drawdown and output profile options",
                 "order": 400,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',

@@ -50,8 +50,8 @@ class SUTRAWellBores(WellBores):
             ToolTipText="Number of (identical) production wells",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 10,
+                "group": "Wellfield sizing and geometry",
+                "order": 100,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [{'parameter': 'Number of Doublets', 'operator': 'provided', 'values': [False]}],
@@ -69,8 +69,8 @@ class SUTRAWellBores(WellBores):
             ToolTipText="Number of (identical) injection wells",
             UI={
                 "tab": "WellBores",
-                "group": "Wellfield sizing",
-                "order": 20,
+                "group": "Wellfield sizing and geometry",
+                "order": 110,
                 "dependency": {   'effect': 'enable',
                     'match': 'all',
                     'conditions': [   {   'parameter': 'Number of Doublets',
@@ -98,8 +98,8 @@ class SUTRAWellBores(WellBores):
             frictional pressure drop and wellbore heat transmission with Rameys model",
             UI={
                 "tab": "WellBores",
-                "group": "Vertical well geometry",
-                "order": 50,
+                "group": "Wellfield sizing and geometry",
+                "order": 140,
                 "dependency": None,
             },
         )
@@ -118,8 +118,8 @@ class SUTRAWellBores(WellBores):
             frictional pressure drop and wellbore heat transmission with Rameys model",
             UI={
                 "tab": "WellBores",
-                "group": "Vertical well geometry",
-                "order": 60,
+                "group": "Wellfield sizing and geometry",
+                "order": 150,
                 "dependency": None,
             },
         )
@@ -139,8 +139,8 @@ class SUTRAWellBores(WellBores):
                         'pressure drop in the reservoir between injection well and production well (see docs)',
             UI={
                 "tab": "Reservoir",
-                "group": "Reservoir flow properties",
-                "order": 300,
+                "group": "Rock and flow properties",
+                "order": 250,
                 "dependency": None,
             },
         )

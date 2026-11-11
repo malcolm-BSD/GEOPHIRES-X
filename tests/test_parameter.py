@@ -314,7 +314,7 @@ class ParameterTestCase(BaseTestCase):
             "Lateral Cement Thickness": "= lateral_casing_thickness * 2",
             # Independent economic percentages
             "Contingency Percentage": "= indirect_capital_cost_percentage - 5",
-            "Indirect Capital Cost Percentage": "= 15",
+            "Common Indirect Capital Cost Percentage": "= 15",
             "Well Drilling and Completion Indirect Capital Cost Percentage": "= indirect_capital_cost_percentage / 3",
             "Reservoir Stimulation Indirect Capital Cost Percentage": "= 6",
         }
@@ -349,7 +349,7 @@ class ParameterTestCase(BaseTestCase):
             "Lateral Casing Thickness": 0.02,
             "Lateral Cement Thickness": 0.04,
             "Contingency Percentage": 10.0,
-            "Indirect Capital Cost Percentage": 15.0,
+            "Common Indirect Capital Cost Percentage": 15.0,
             "Well Drilling and Completion Indirect Capital Cost Percentage": 5.0,
             "Reservoir Stimulation Indirect Capital Cost Percentage": 6.0,
         }
