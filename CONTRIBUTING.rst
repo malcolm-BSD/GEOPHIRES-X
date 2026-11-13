@@ -131,6 +131,10 @@ add fixed files (or manually fix in some cases). Example::
 5. Verify that tests pass with your changes. In PyCharm, you can run unit tests by right-clicking the ``tests/`` folder and selecting "Run 'Python tests in tests'".
 If you want to be extra thorough you can `run tox locally <#Tox-tests>`__ but in general it is more practical to run unit tests in PyCharm locally and then let GitHub Actions on your fork run the full ``tox`` suite.
 
+The ``tests/zz_geophires_monte_carlo_tests/`` package deliberately sorts last in
+both unittest and pytest discovery. This lets other tests report failures before
+the more expensive Monte Carlo simulations run.
+
 6. Push your changes to your fork::
 
     git push

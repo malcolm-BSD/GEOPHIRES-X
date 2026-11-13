@@ -80,6 +80,9 @@ Simulation Metadata
       Warning: the reservoir dimensions and thermo-physical properties
                listed below are default values if not provided by the user.
                They are only used for calculating remaining heat content.
+      Fracture separation calculated with reservoir volume and number of fractures as input
+      Number of fractures:                                    10
+      Fracture separation:                                   55.56 meter
       Reservoir volume:                               125000000 m**3
       Reservoir hydrostatic pressure:                         28542.06 kPa
       Plant outlet pressure:                               1674.57 kPa

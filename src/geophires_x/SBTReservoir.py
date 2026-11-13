@@ -645,15 +645,16 @@ class SBTReservoir(CylindricalReservoir):
                     'reason': 'Used by implemented SBT U-loop and EavorLoop configurations.'},
             },
         )
-        self.initial_timestep_count = intParameter(
+        self.initial_timestep_count = self.ParameterDict[self.initial_timestep_count.Name] = intParameter(
             'SBT Initial Timestep Count',
             DefaultValue=5,
             AllowableRange = [1,150],
             UnitType=Units.NONE,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
+            IncludeInGeneratedSchema=False,
         )
-        self.final_timestep_count = floatParameter(
+        self.final_timestep_count = self.ParameterDict[self.final_timestep_count.Name] = floatParameter(
             'SBT Final Timestep Count',
             DefaultValue=70,
             Min=5,
@@ -661,8 +662,11 @@ class SBTReservoir(CylindricalReservoir):
             UnitType=Units.NONE,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
+            IncludeInGeneratedSchema=False,
         )
-        self.initial_final_timestep_transition = floatParameter(
+        self.initial_final_timestep_transition = self.ParameterDict[
+            self.initial_final_timestep_transition.Name
+        ] = floatParameter(
             'SBT Initial to Final Timestep Transition',
             DefaultValue=9900,
             Min=1,
@@ -672,6 +676,7 @@ class SBTReservoir(CylindricalReservoir):
             CurrentUnits=TimeUnit.SECOND,
             ErrMessage='deprecated parameter is ignored',
             ToolTipText='Deprecated compatibility input; ignored because the SBT solver uses an internal time grid.',
+            IncludeInGeneratedSchema=False,
         )
         self.generate_wireframe_graphics = self.ParameterDict[self.generate_wireframe_graphics.Name] = boolParameter(
             'SBT Generate Wireframe Graphics',

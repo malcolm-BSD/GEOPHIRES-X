@@ -339,6 +339,8 @@ class Parameter(HasQuantity):
              will resolve those sources and then apply the parameter's normal type, range, and unit validation. Collection
              values are accepted only by list/time-series parameters and scalar parameters with a dedicated collection mode.
              Filename parameters retain bare file/URL references and may select a filename from a JSON document.
+        IncludeInGeneratedSchema (boolean, True): Whether schema generators should expose this parameter. Deprecated
+             compatibility parameters remain available at runtime but may set this to False to stay out of public schemas.
         UI (dict): Presentation metadata kept with the parameter definition. The dictionary contains ``tab``, ``group``,
              ``order``, and ``dependency``. ``dependency`` defaults to ``None`` and may define the
              controller conditions that enable this parameter. Conditions use ``operator='in'`` for value matching or
@@ -357,6 +359,7 @@ class Parameter(HasQuantity):
     UnitType: IntEnum = Units.NONE
     PreferredUnits: Enum = None
     AllowExtendedInput: bool = True
+    IncludeInGeneratedSchema: bool = True
     UI: dict[str, object] = field(
         default_factory=lambda: {
             "tab": "Project",

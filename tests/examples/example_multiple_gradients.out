@@ -78,6 +78,9 @@ Simulation Metadata
       Fracture model = Square
       Well separation: fracture height:                     600.00 meter
       Fracture area:                                     360000.00 m**2
+      Fracture separation calculated with reservoir volume and number of fractures as input
+      Number of fractures:                                    20
+      Fracture separation:                                  146.20 meter
       Reservoir volume:                              1000000000 m**3
       Reservoir hydrostatic pressure:                         38390.69 kPa
       Plant outlet pressure:                               1530.99 kPa

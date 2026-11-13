@@ -1,11 +1,38 @@
 from __future__ import annotations
 
+import gc
 import unittest
+import weakref
 
 from tests.base_test_case import BaseTestCase
 
 
 class TestBaseTestCase(BaseTestCase):
+    def test_simulation_cache_cleanup_releases_models_and_clgs_data(self):
+        from geophires_x.AGSWellBores import data
+        from geophires_x_schema_generator import GeophiresXSchemaGenerator
+
+        class CachedData:
+            pass
+
+        model = GeophiresXSchemaGenerator._get_dummy_model()
+        model.read_parameters()
+        model.reserv.Calculate(model)
+        cached_data = CachedData()
+        model.cached_test_data = cached_data
+        data._cache["test-cache-cleanup"] = cached_data
+        model_reference = weakref.ref(model)
+        data_reference = weakref.ref(cached_data)
+        del model, cached_data
+        gc.collect()
+        self.assertIsNotNone(model_reference())
+        self.assertIsNotNone(data_reference())
+
+        self._clear_simulation_caches()
+
+        self.assertIsNone(model_reference())
+        self.assertIsNone(data_reference())
+
     def test_assertAlmostEqualWithinPercentage(self):
         self.assertAlmostEqualWithinPercentage(100, 100, percent=5)
         self.assertAlmostEqualWithinPercentage(100, 95, percent=5)

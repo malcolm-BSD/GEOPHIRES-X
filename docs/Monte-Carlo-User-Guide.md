@@ -27,7 +27,7 @@ def monte_carlo():
         MonteCarloRequest(
             SimulationProgram.GEOPHIRES,
 
-            # Files from tests/geophires_monte_carlo_tests - copy these into the same directory as main.py
+            # Files from tests/zz_geophires_monte_carlo_tests - copy these into the same directory as main.py
             Path('GEOPHIRES-example1.txt').absolute(),
             Path('MC_GEOPHIRES_Settings_file.txt').absolute(),
             output_file=Path('MC_GEOPHIRES_Result.txt').absolute()

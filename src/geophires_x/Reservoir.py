@@ -115,7 +115,7 @@ class Reservoir:
             },
         )
 
-        self.numseg = intParameter(
+        self.numseg = self.ParameterDict[self.numseg.Name] = intParameter(
             "Number of Segments",
             DefaultValue=1,
             AllowableRange=[1],
@@ -123,6 +123,7 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default number of segments (1)",
             ToolTipText="Deprecated input; the number of segments is derived from Gradients and Thicknesses.",
+            IncludeInGeneratedSchema=False,
         )
 
         self.gradient = self.ParameterDict[self.gradient.Name] = listParameter(
@@ -144,7 +145,7 @@ class Reservoir:
             },
         )
 
-        self.gradient1 = floatParameter(
+        self.gradient1 = self.ParameterDict[self.gradient1.Name] = floatParameter(
             "Gradient 1",
             DefaultValue=50,
             Min=0.0,
@@ -155,9 +156,10 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradient 1 (50 deg.C/km)",
             ToolTipText="Deprecated alias for the first value in Gradients",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.gradient2 = floatParameter(
+        self.gradient2 = self.ParameterDict[self.gradient2.Name] = floatParameter(
             "Gradient 2",
             DefaultValue=0.0,
             Min=0.0,
@@ -168,9 +170,10 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradient 2 (0 deg.C/km)",
             ToolTipText="Deprecated alias for the second value in Gradients",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.gradient3 = floatParameter(
+        self.gradient3 = self.ParameterDict[self.gradient3.Name] = floatParameter(
             "Gradient 3",
             DefaultValue=0.0,
             Min=0.0,
@@ -181,9 +184,10 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradient 3 (0 deg.C/km)",
             ToolTipText="Deprecated alias for the third value in Gradients",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.gradient4 = floatParameter(
+        self.gradient4 = self.ParameterDict[self.gradient4.Name] = floatParameter(
             "Gradient 4",
             DefaultValue=0.0,
             Min=0.0,
@@ -194,6 +198,7 @@ class Reservoir:
             Required=True,
             ErrMessage="assume default geothermal gradient 4 (0 deg.C/km)",
             ToolTipText="Deprecated alias for the fourth value in Gradients",
+            IncludeInGeneratedSchema=False,
         )
 
         self.layerthickness = self.ParameterDict[self.layerthickness.Name] = listParameter(
@@ -216,7 +221,7 @@ class Reservoir:
             },
         )
 
-        self.layerthickness1 = floatParameter(
+        self.layerthickness1 = self.ParameterDict[self.layerthickness1.Name] = floatParameter(
             "Thickness 1",
             DefaultValue=2.0,
             Min=0.01,
@@ -226,9 +231,10 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 1 (2 km)",
             ToolTipText="Deprecated alias for the first value in Thicknesses",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.layerthickness2 = floatParameter(
+        self.layerthickness2 = self.ParameterDict[self.layerthickness2.Name] = floatParameter(
             "Thickness 2",
             DefaultValue=0.01,
             Min=0.01,
@@ -238,9 +244,10 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 2 (0 km)",
             ToolTipText="Deprecated alias for the second value in Thicknesses",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.layerthickness3 = floatParameter(
+        self.layerthickness3 = self.ParameterDict[self.layerthickness3.Name] = floatParameter(
             "Thickness 3",
             DefaultValue=0.01,
             Min=0.01,
@@ -250,9 +257,10 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 3 (0 km)",
             ToolTipText="Deprecated alias for the third value in Thicknesses",
+            IncludeInGeneratedSchema=False,
         )
 
-        self.layerthickness4 = floatParameter(
+        self.layerthickness4 = self.ParameterDict[self.layerthickness4.Name] = floatParameter(
             "Thickness 4",
             DefaultValue=0.01,
             Min=0.01,
@@ -262,6 +270,7 @@ class Reservoir:
             CurrentUnits=LengthUnit.KILOMETERS,
             ErrMessage="assume default layer thickness 4 (0 km)",
             ToolTipText="Deprecated alias for the fourth value in Thicknesses",
+            IncludeInGeneratedSchema=False,
         )
 
         # noinspection SpellCheckingInspection

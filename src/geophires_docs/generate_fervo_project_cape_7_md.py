@@ -37,6 +37,7 @@ from geophires_x.ParameterUtils import COMMENT_PARAMETER_NAME_PREFIX
 from geophires_x_client import GeophiresInputParameters
 from geophires_x_client import GeophiresXResult
 from geophires_x_client import ImmutableGeophiresInputParameters
+from geophires_x_schema_generator import get_hidden_input_parameter_schemas
 
 # Module-level variable to hold the current project root for schema access
 _current_project_root: Path | None = None
@@ -56,7 +57,10 @@ def _get_geophires_request_schema() -> dict[str, Any]:
 
 
 def _get_input_parameter_schema(param_name: str) -> dict[str, Any]:
-    return _get_geophires_request_schema()["properties"][param_name]
+    properties = _get_geophires_request_schema()["properties"]
+    if param_name in properties:
+        return properties[param_name]
+    return get_hidden_input_parameter_schemas()[param_name]
 
 
 def _get_input_parameter_schema_type(param_name: str) -> dict[str, Any]:
@@ -68,7 +72,7 @@ def _get_input_parameter_category(param_name: str) -> str:
 
 
 def _get_input_parameter_units(param_name: str) -> str | None:
-    unit = _get_geophires_request_schema()["properties"][param_name]["units"]
+    unit = _get_input_parameter_schema(param_name)["units"]
 
     if unit == "":
         return "dimensionless"

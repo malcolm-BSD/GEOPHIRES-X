@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import gc
 import inspect
 import math
 import numbers
@@ -108,7 +109,27 @@ class BaseTestCase(unittest.TestCase):
             for artifact_path in sorted(new_artifacts, key=lambda path: len(path.parts), reverse=True):
                 cls._remove_test_artifact(artifact_path)
         finally:
+            cls._clear_simulation_caches()
             super().tearDownClass()
+
+    @staticmethod
+    def _clear_simulation_caches() -> None:
+        # Cached reservoir calculations retain entire Models, including large CLGS data arrays.
+        # Keep caching within each test class, but release simulations before the next class runs.
+        from geophires_x.AGSWellBores import data
+        from geophires_x.CylindricalReservoir import CylindricalReservoir
+        from geophires_x.Reservoir import Reservoir
+        from geophires_x.SBTReservoir import SBTReservoir
+
+        for calculation in (
+            Reservoir.Calculate,
+            CylindricalReservoir.Calculate,
+            SBTReservoir.Calculate_Coaxial,
+            SBTReservoir.Calculate_Uloop,
+        ):
+            calculation.cache_clear()
+        data._cache.clear()
+        gc.collect()
 
     @classmethod
     def _test_asset_url(cls, repository_relative_path: str | Path) -> str:

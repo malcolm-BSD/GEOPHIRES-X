@@ -53,6 +53,9 @@ RESERVOIR PARAMETERS,Fracture model,,Square,
 RESERVOIR PARAMETERS,Bottom-hole temperature,,170.0,degC
 RESERVOIR PARAMETERS,Well separation: fracture height,,900.0,meter
 RESERVOIR PARAMETERS,Fracture area,,810000.0,m**2
+RESERVOIR PARAMETERS,Number of fractures,,20,count
+RESERVOIR PARAMETERS,Fracture separation,,64.98,meter
+RESERVOIR PARAMETERS,Reservoir volume calculation note,,Fracture separation calculated with reservoir volume and number of fractures as input,
 RESERVOIR PARAMETERS,Reservoir volume,,1000000000,m**3
 RESERVOIR PARAMETERS,Reservoir hydrostatic pressure,,28841.05,kPa
 RESERVOIR PARAMETERS,Plant outlet pressure,,1067.94,kPa

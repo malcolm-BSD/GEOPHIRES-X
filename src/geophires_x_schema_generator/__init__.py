@@ -4,6 +4,7 @@ import json
 import math
 import os
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
@@ -47,6 +48,21 @@ _log = _get_logger()
 _UI_TAB_LABELS = {
     "project": "Project Control",
 }
+
+
+@lru_cache(maxsize=1)
+def get_hidden_input_parameter_schemas() -> dict[str, dict[str, Any]]:
+    """Provide legacy input metadata for exports without exposing it in the public schema."""
+    input_parameters_json, _ = GeophiresXSchemaGenerator().get_parameters_json(include_hidden_parameters=True)
+    return {
+        name: {
+            "category": parameter["parameter_category"],
+            "type": parameter["json_parameter_type"],
+            "units": parameter["CurrentUnits"] if isinstance(parameter["CurrentUnits"], str) else None,
+        }
+        for name, parameter in json.loads(input_parameters_json).items()
+        if not parameter["IncludeInGeneratedSchema"]
+    }
 
 
 class GeophiresXSchemaGenerator:
@@ -283,13 +299,19 @@ class GeophiresXSchemaGenerator:
             metadata_by_parameter[name] = metadata
         return metadata_by_parameter
 
-    def get_parameters_json(self) -> tuple[str, str]:
+    def get_parameters_json(self, *, include_hidden_parameters: bool = False) -> tuple[str, str]:
+        """Serialize parameter metadata, optionally including runtime compatibility inputs."""
+
         def with_category(param_dict: dict, category: str):
             def _with_cat(p: Parameter, cat: str):
                 p.parameter_category = cat
                 return p
 
-            return {k: _with_cat(v, category) for k, v in param_dict.items()}
+            return {
+                k: _with_cat(v, category)
+                for k, v in param_dict.items()
+                if include_hidden_parameters or getattr(v, "IncludeInGeneratedSchema", True)
+            }
 
         parameter_sources = self.get_parameter_sources()
         output_params = {}

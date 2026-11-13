@@ -208,11 +208,28 @@ class GeophiresXTestCase(BaseTestCase):
             assert len(example_files) > 10, "Test integrity check failed: list of example files is too small."
 
         regenerate_cmds = []
+        example_url_assets = {
+            "example5c.txt": {"Reservoir Output File Name": "ReservoirOutput.txt"},
+            "SUTRAExample1a.txt": {
+                "SUTRA Annual Heat File Name": "annual_heat.csv",
+                "SUTRA Heat Budget File Name": "heat_budget.csv",
+                "SUTRA Balance and Storage Well Output File Name": "balance_and_storage_well_output.csv",
+            },
+        }
         for example_file_path in example_files:
             with self.subTest(msg=example_file_path):
                 print(f"Running example test {example_file_path}")
                 input_params = GeophiresInputParameters(
-                    from_file_path=self._get_test_file_path(Path("examples", example_file_path))
+                    from_file_path=self._get_test_file_path(Path("examples", example_file_path)),
+                    # Exercise URL loading using versioned local assets rather than live GitHub requests.
+                    # Keep params unset for other examples so relative file inputs retain their base directory.
+                    params=(
+                        {
+                            name: self._test_asset_url(Path("tests/assets/params", filename))
+                            for name, filename in example_url_assets.get(example_file_path, {}).items()
+                        }
+                        or None
+                    ),
                 )
                 with frozen_example_weather(example_file_path):
                     geophires_result: GeophiresXResult = self._sanitize_nan(

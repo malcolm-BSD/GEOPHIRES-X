@@ -275,7 +275,12 @@ class ImmutableGeophiresInputParameters(GeophiresInputParameters):
                 comment_entry = param_value_raw
                 value_entry = ""
             elif parse_units_and_comments:
-                param_schema = request_schema["properties"].get(param_name, {param_name: {}})
+                param_schema = request_schema["properties"].get(param_name)
+                if param_schema is None:
+                    # Import lazily: schema generation also uses client result classes.
+                    from geophires_x_schema_generator import get_hidden_input_parameter_schemas
+
+                    param_schema = get_hidden_input_parameter_schemas().get(param_name, {})
                 is_array_type = param_schema.get("type") == "array"
 
                 value_non_value_split = (

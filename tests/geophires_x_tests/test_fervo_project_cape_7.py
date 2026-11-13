@@ -24,6 +24,26 @@ from geophires_x_client import ImmutableGeophiresInputParameters
 
 
 class FervoProjectCape7TestCase(BaseTestCase):
+    def test_reservoir_table_documents_hidden_legacy_inputs(self):
+        input_params = ImmutableGeophiresInputParameters(
+            params={
+                "Number of Segments": 3,
+                "Gradient 1": 74,
+                "Thickness 1": 2.5,
+            }
+        )
+        table = generate_fervo_project_cape_7_md.get_fpc_category_parameters_table_md(input_params, "Reservoir")
+        table = table.replace("\u00a0", " ")
+        self.assertIn("| Number of Segments | 3 |", table)
+        self.assertIn("| Gradient 1 | 74 \u2103/km |", table)
+        self.assertIn("| Thickness 1 | 2.5 km |", table)
+
+        properties = generate_fervo_project_cape_7_md._get_geophires_request_schema()["properties"]
+        for name in ["Number of Segments", "Gradient 1", "Thickness 1"]:
+            self.assertNotIn(name, properties)
+        with self.assertRaises(KeyError):
+            generate_fervo_project_cape_7_md._get_input_parameter_schema("Unknown Case Study Parameter")
+
     def test_internal_consistency(self):
         fpc7_result: GeophiresXResult = GeophiresXResult(
             self._get_test_file_path("../examples/Fervo_Project_Cape-7.out")
