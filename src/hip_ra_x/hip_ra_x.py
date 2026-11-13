@@ -1167,7 +1167,7 @@ class HIP_RA_X:
             console.print(inputs_table)
             console.print(" ")
             console.print(outputs_table)
-            console.save_html("d:\\temp\\test_table.html")
+            console.save_html(output_filename)
 
         except FileNotFoundError as ex:
             traceback_str = traceback.format_exc()

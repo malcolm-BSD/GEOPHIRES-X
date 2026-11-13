@@ -34,6 +34,31 @@ from tests.base_test_case import BaseTestCase
 
 # noinspection PyTypeChecker
 class HipRaXTestCase(BaseTestCase):
+    def test_html_output_uses_requested_filename(self):
+        with tempfile.TemporaryDirectory(prefix="hip-ra-x-html-") as temp_dir:
+            html_path = Path(temp_dir) / "requested report.html"
+            output_path = Path(temp_dir) / "case.out"
+            params = {
+                "Reservoir Temperature": 250.0,
+                "Rejection Temperature": 60.0,
+                "Reservoir Porosity": 10.0,
+                "Reservoir Area": 55.0,
+                "Reservoir Thickness": 0.25,
+                "Reservoir Life Cycle": 25,
+                "HTML Output File": str(html_path),
+                "Print Output to Console": False,
+            }
+            with redirect_stdout(io.StringIO()):
+                result = HipRaXClient().get_hip_ra_x_result(
+                    HipRaInputParameters(params, output_file_path=output_path)
+                )
+            self.assertIsNotNone(result.result)
+            self.assertTrue(output_path.is_file())
+            html = html_path.read_text(encoding="utf-8")
+            self.assertIn("<html", html)
+            self.assertIn("SUMMARY OF INPUTS", html)
+            self.assertIn("SUMMARY OF RESULTS", html)
+
     def test_hip_ra_x_examples(self):
         example_files = self._list_test_files_dir(test_files_dir="./examples")
         assert len(example_files) > 0  # test integrity check - no files means something is misconfigured
