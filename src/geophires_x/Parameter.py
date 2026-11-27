@@ -9,7 +9,7 @@ import sys
 import csv
 import math
 from collections.abc import Iterable
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 import os
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -360,7 +360,7 @@ class Parameter(HasQuantity):
     PreferredUnits: Enum = None
     AllowExtendedInput: bool = True
     IncludeInGeneratedSchema: bool = True
-    UI: dict[str, object] = field(
+    UI: Dict[str, object] = field(
         default_factory=lambda: {
             "tab": "Project",
             "group": "",
