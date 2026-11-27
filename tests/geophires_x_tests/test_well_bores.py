@@ -241,6 +241,29 @@ class WellBoresTestCase(BaseTestCase):
                 )
             )
 
+    def test_wanju_temperature_at_shared_output_times(self):
+        example = self._get_test_file_path("../examples/Wanju_Yuan_Closed-Loop_Geothermal_Energy_Recovery.txt")
+        annual = None
+        for steps_per_year in (1, 4, 10):
+            with self.subTest(steps_per_year=steps_per_year):
+                model = Model(enable_geophires_logging_config=False, input_file=str(example))
+                for name, value in (("Plant Lifetime", "4"), ("Time steps per year", str(steps_per_year))):
+                    model.InputParameters[name] = ParameterEntry(Name=name, sValue=value)
+                model.read_parameters()
+                model.reserv.Calculate(model)
+                model.wellbores.Calculate(model)
+                temperatures = model.wellbores.ProducedTemperature.value
+                self.assertEqual(4 * steps_per_year, len(temperatures))
+                self.assertLess(temperatures[-1], temperatures[0])
+                self.assertTrue(all(a >= b for a, b in zip(temperatures, temperatures[1:])))
+                if annual is None:
+                    annual = temperatures
+                else:
+                    # All three grids include 0, 4/3, 8/3, and 4 years.
+                    stride = (len(temperatures) - 1) // (len(annual) - 1)
+                    for observed, expected in zip(temperatures[::stride], annual):
+                        self.assertAlmostEqual(expected, observed, places=8)
+
     def test_redrilling_thermal_drawdown_dominates(self):
         """
         Verify that if thermal drawdown triggers before well integrity failure,

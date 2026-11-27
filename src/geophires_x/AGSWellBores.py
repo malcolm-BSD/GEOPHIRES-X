@@ -23,7 +23,6 @@ from .OptionList import WorkingFluid, Configuration
 import h5py
 import scipy
 from scipy.interpolate import interpn, interp1d
-from scipy import signal
 import itertools as itern
 
 from .WellBores import WellBores, RameyCalc, ProdPressureDropAndPumpingPowerUsingIndexes, WellPressureDrop, \
@@ -862,7 +861,10 @@ class AGSWellBores(WellBores):
             self.x_boundary = self.y_boundary = self.z_boundary = 2.0e15
             self.y_well = 0.5 * self.y_boundary  # Nonvertical wellbore in the center
             self.z_well = 0.5 * self.z_boundary  # Nonvertical wellbore in the center
-            self.al = 365.0 / 4.0 * model.economics.timestepsperyear.value
+            # The Wanju solver stores one native temperature value per project year.
+            # Its internal clock is in days and should not depend on the requested
+            # GEOPHIRES surface-plant output resolution.
+            self.al = 365.0
             self.time_max = model.surfaceplant.plant_lifetime.value * 365.0
             self.rhorock = model.reserv.rhorock.value
             self.cprock = model.reserv.cprock.value
@@ -889,9 +891,14 @@ class AGSWellBores(WellBores):
                 self.time_operation.value += self.al
 
             self.time_operation.value = t  # set it back for use in later loop
-            # interpolate the result to a longer array
-            self.NonverticalProducedTemperature.value = signal.resample(self.NonverticalProducedTemperature.value,
-                                                                        len(model.reserv.Tresoutput.value))
+            # Interpolate the annual Wanju temperatures onto the GEOPHIRES output times. Unlike Fourier
+            # resampling, time-coordinate interpolation does not assume the temperature history is periodic.
+            wanju_time_years = np.arange(len(self.NonverticalProducedTemperature.value), dtype=float)
+            self.NonverticalProducedTemperature.value = np.interp(
+                model.reserv.timevector.value,
+                wanju_time_years,
+                self.NonverticalProducedTemperature.value,
+            )
 
             # Calculate the temperature drop as the fluid makes it way to the surface (or use a constant value)
             # if not Ramey, hard code a user-supplied temperature drop.
