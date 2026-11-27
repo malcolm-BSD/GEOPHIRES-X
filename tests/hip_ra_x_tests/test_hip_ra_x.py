@@ -49,9 +49,7 @@ class HipRaXTestCase(BaseTestCase):
                 "Print Output to Console": False,
             }
             with redirect_stdout(io.StringIO()):
-                result = HipRaXClient().get_hip_ra_x_result(
-                    HipRaInputParameters(params, output_file_path=output_path)
-                )
+                result = HipRaXClient().get_hip_ra_x_result(HipRaInputParameters(params, output_file_path=output_path))
             self.assertIsNotNone(result.result)
             self.assertTrue(output_path.is_file())
             html = html_path.read_text(encoding="utf-8")
