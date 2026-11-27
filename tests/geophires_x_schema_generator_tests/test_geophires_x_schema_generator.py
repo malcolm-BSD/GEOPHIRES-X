@@ -365,8 +365,8 @@ class GeophiresXSchemaGeneratorTestCase(BaseTestCase):
                 with self.subTest(group=group, paired_adjustment_factor=parameter_name):
                     self.assertGreater(index, 0)
                     self.assertEqual(
-                        parameter_name.removesuffix(" Adjustment Factor"),
-                        ordered_group_names[index - 1],
+                        ordered_group_names[index - 1] + " Adjustment Factor",
+                        parameter_name,
                     )
 
         economics_group_minimum_orders = {

@@ -58,7 +58,7 @@ class Model(object):
         """
 
         # get logging started
-        self.logger = logging.getLogger('root') # TODO should be getting __name__ logger instead of root
+        self.logger = logging.getLogger()
 
         if enable_geophires_logging_config:
             logging.config.fileConfig(Path(Path(__file__).parent, 'logging.conf'))
